@@ -1,0 +1,24 @@
+{
+  "name": "Concentrador-Fedicom3",
+  "version": "0.0.1",
+  "description": "Concentrador Fedicom 3",
+  "main": "fedicom3.js",
+  "scripts": {
+    "test": "nodemon fedicom3.js",
+    "start": "nohup node fedicom3.js > consultasProymon.log &"
+  },
+  "keywords": [
+    "fedicom",
+    "fedicom3"
+  ],
+  "author": "Alejandro Abad <alejandro.abad@hefame.es>",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "mongoose": "^5.2.12",
+    "morgan": "^1.9.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.4"
+  }
+}
