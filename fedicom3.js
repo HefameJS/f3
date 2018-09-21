@@ -1,3 +1,4 @@
+require('./util/nativeExtensions');
 global.config = require('./config');
 
 
