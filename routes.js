@@ -22,7 +22,9 @@ module.exports = function(app) {
 
   /* RUTAS */
   app.route('/authenticate')
-	.get(authenticate.test);
+    .post(authenticate.doAuth)
+    .get(authenticate.verifyToken);
+
 
 
 

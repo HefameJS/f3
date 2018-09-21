@@ -12,6 +12,7 @@ mongoose.connect('mongodb://proyman:87654321@hhub1.hefame.es:27017,hhub2.hefame.
 var app = require('express')();
 app.use(require('body-parser').json({extended: true}));
 app.use(require('morgan')('dev'));
+app.use(require('express-bearer-token')());
 
 var port = process.env.PORT || 50000;
 app.listen(port);

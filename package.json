@@ -15,14 +15,17 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.3",
+    "express-bearer-token": "^2.2.0",
+    "jsonwebtoken": "^8.3.0",
     "mongoose": "^5.2.12",
-    "morgan": "^1.9.0"
+    "morgan": "^1.9.0",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "nodemon": "^1.18.4"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/AlejandroAbad/Fedicom3.git"
+    "type": "git",
+    "url": "https://github.com/AlejandroAbad/Fedicom3.git"
   }
 }
