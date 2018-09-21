@@ -1,49 +1,42 @@
 
 
 class FedicomError {
-  constructor(error, text, httpCode) {
+
+  constructor(error, descripcion, httpCode) {
+    this.itemList = [];
+    this.httpCode = 500;
+    this.add(error, descripcion, httpCode);
+  }
+
+  add(error, descripcion, httpCode) {
 
     // Se llama al constructor pasando strings para construir manualmente el objeto de error
-    if (error && text && typeof error === 'string' && typeof text === 'string') {
-      return this.__setObjectData(error, text, httpCode);
+    if (error && descripcion && typeof error === 'string' && typeof descripcion === 'string') {
+      this.httpCode = (typeof statusCode === 'number') ?  statusCode : this.httpCode ;
+      this.itemList.push( { codigo: error, descripcion: descripcion } );
+      return;
     }
 
     // Se llama utilizando un error devuelto por Express.
     if (error && error.type && error.statusCode) {
-      switch (error.type) {
-        case 'entity.parse.failed' : return this.__setObjectData('CORE-400', 'No se entiende el cuerpo del mensaje', error.statusCode);
-        default:
-          console.log('ERROR EXPRESS NO CONTROLADO: ' + error.type);
-          return this.__setObjectData('CORE-000', 'Error desconocido [' + error.type + ']', error.statusCode);
+      this.httpCode = (typeof statusCode === 'number') ?  error.statusCode : this.httpCode ;
+
+      if (error.type === 'entity.parse.failed') {
+        this.itemList.push( { codigo: 'CORE-400', descripcion: 'No se entiende el cuerpo del mensaje' } );
+      } else {
+        console.error('ERROR EXPRESS NO CONTROLADO: ' + error.type);
+        this.itemList.push( { codigo: 'CORE-001', descripcion: 'Error desconocido [' + error.type + ']' } );
       }
+      return;
     }
 
     // Si los parámetros de la llamada no son válidos
-    return this.__setObjectData('CORE-001', 'Error desconocido.', 500);
+    this.itemList.push( { codigo: 'CORE-000', descripcion: 'Error desconocido' } );
 
-
-  }
-
-  __setObjectData(fedicomCode, text, statusCode) {
-    this.fedicomCode = fedicomCode;
-    this.text = text;
-    this.statusCode = (typeof statusCode === 'number') ?  statusCode : 500 ;
-  }
-
-
-
-  toJson(asObject) {
-    var error = {
-      codigo: this.fedicomCode,
-      descripcion: this.text
-    }
-
-    if (asObject) return error;
-    else return [error];
   }
 
   send(expressRes) {
-    return expressRes.status(this.statusCode).json(this.toJson());
+    return expressRes.status(this.httpCode).json(this.itemList);
   }
 
 }

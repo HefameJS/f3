@@ -13,7 +13,7 @@ module.exports = function(app) {
   app.use(function (error, req, res, next) {
     if (error) {
       var fedicomError = new FedicomError(error);
-      return res.status(fedicomError.statusCode).json(fedicomError.toJson());
+      return fedicomError.send(res);
     }
     else {
       next();
@@ -33,7 +33,7 @@ module.exports = function(app) {
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
     var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
-    res.status(fedicomError.statusCode).json(fedicomError.toJson());
+    return fedicomError.send(res);
   });
 
 };
