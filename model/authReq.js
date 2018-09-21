@@ -2,6 +2,8 @@
 const config = global.config;
 const crypto = require('../util/crypto');
 const FedicomError = require('./fedicomError');
+const domain = require('./domain');
+
 
 
 class AuthReq {
@@ -15,6 +17,12 @@ class AuthReq {
         if (!json.password) error.add('AUTH-004', 'El parámetro password es obligatorio', 400);
         throw error;
       }
+
+      this.domain = domain.verify(json.domain);
+      if (this.domain === false) {
+        throw new FedicomError('AUTH-Z01', 'El dominio no existe', 401);
+      }
+
     }
 
     generateJWT(includePassword) {
