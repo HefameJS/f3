@@ -12,7 +12,12 @@ const FedicomError = require('../model/FedicomError');
 exports.doAuth = function (req, res) {
 
   var AuthReq = require('../model/authReq');
-  var authReq = new AuthReq(req.body);
+  try {
+    var authReq = new AuthReq(req.body);
+  } catch (ex) {
+    console.error(ex);
+    return ex.send(res);
+  }
 
   isap.authenticate( authReq, function (sapErr, sapRes, sapBody) {
     if (sapErr) {
