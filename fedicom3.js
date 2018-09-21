@@ -1,3 +1,6 @@
+global.config = require('./config');
+
+
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://proyman:87654321@hhub1.hefame.es:27017,hhub2.hefame.es:27017,hhub3.hefame.es:27017/proyman?replicaSet=rs0', { useNewUrlParser: true });
