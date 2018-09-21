@@ -42,6 +42,10 @@ class FedicomError {
     else return [error];
   }
 
+  send(expressRes) {
+    return expressRes.status(this.statusCode).json(this.toJson());
+  }
+
 }
 
 module.exports = FedicomError;
