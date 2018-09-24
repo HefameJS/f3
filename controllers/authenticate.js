@@ -28,7 +28,7 @@ exports.doAuth = function (req, res) {
       console.error("HA OCURRIDO UN ERROR EN LA COMUNICACION CON SAP");
       console.error(sapErr);
       var token = authReq.generateJWT(true);
-      var responseBody = {auth_token: token, error: sapErr};
+      var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
       Events.registerAuthResponse(res, responseBody, 'OK_NO_SAP');
       return;
