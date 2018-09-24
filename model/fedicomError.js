@@ -47,6 +47,7 @@ class FedicomError {
       this.httpCode = (typeof statusCode === 'number') ?  error.statusCode : this.httpCode ;
 
       if (error.type === 'entity.parse.failed') {
+        this.httpCode = 400;
         this.itemList.push( { codigo: 'CORE-400', descripcion: 'No se entiende el cuerpo del mensaje' } );
       } else {
         console.error('ERROR EXPRESS NO CONTROLADO: ' + error.type);
