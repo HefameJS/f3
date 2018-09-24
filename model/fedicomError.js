@@ -37,7 +37,7 @@ class FedicomError {
 
     // Se llama al constructor pasando strings para construir manualmente el objeto de error
     if (error && descripcion && typeof error === 'string' && typeof descripcion === 'string') {
-      this.httpCode = (typeof statusCode === 'number') ?  statusCode : this.httpCode ;
+      this.httpCode = (typeof httpCode === 'number') ? httpCode : this.httpCode ;
       this.itemList.push( { codigo: error, descripcion: descripcion } );
       return this;
     }
