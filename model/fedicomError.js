@@ -61,7 +61,8 @@ class FedicomError {
   }
 
   send(expressRes) {
-    return expressRes.status(this.httpCode).json(this.itemList);
+    expressRes.status(this.httpCode).json(this.itemList);
+    return this.itemList;
   }
 
 }
