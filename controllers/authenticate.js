@@ -1,15 +1,19 @@
 'use strict';
 
 const config = global.config;
-const isap = require('../interfaces/isap');
-
+const Isap = require('../interfaces/isap');
+const Events = require('../interfaces/events');
 const FedicomError = require('../model/FedicomError');
 
 
 
 
 
+
 exports.doAuth = function (req, res) {
+
+  Events.registerAuthRequest(req);
+
 
   var AuthReq = require('../model/authReq');
   try {
@@ -19,23 +23,28 @@ exports.doAuth = function (req, res) {
     return ex.send(res);
   }
 
-  isap.authenticate( authReq, function (sapErr, sapRes, sapBody) {
+  Isap.authenticate( authReq, function (sapErr, sapRes, sapBody) {
     if (sapErr) {
       console.error("HA OCURRIDO UN ERROR EN LA COMUNICACION CON SAP");
       console.error(sapErr);
       var token = authReq.generateJWT(true);
-      res.status(201).json({auth_token: token, error: sapErr});
+      var responseBody = {auth_token: token, error: sapErr};
+      res.status(201).json(responseBody);
+      Events.registerAuthResponse(res, responseBody, 'OK_NO_SAP');
       return;
     }
 
     if (sapBody.username) {
       // AUTH OK POR SAP
       var token = authReq.generateJWT();
-      res.status(201).json({auth_token: token});
+      var responseBody = {auth_token: token};
+      res.status(201).json(responseBody);
+      Events.registerAuthResponse(res, responseBody);
     } else {
       // SAP INDICA QUE EL USUARIO NO ES VALIDO
       var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
-      fedicomError.send(res);
+      var responseBody = fedicomError.send(res);
+      Events.registerAuthResponse(res, responseBody, 'AUTH_ERROR');
     }
 
   });

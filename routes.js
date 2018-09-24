@@ -2,6 +2,8 @@
 'use strict';
 
 const FedicomError = require('./model/FedicomError');
+const Events = require('./interfaces/events');
+const Mongoose = require('mongoose');
 
 module.exports = function(app) {
   var authenticate = require('./controllers/authenticate');
@@ -12,13 +14,20 @@ module.exports = function(app) {
    */
   app.use(function (error, req, res, next) {
     if (error) {
+      req.txId = res.txId = Mongoose.Types.ObjectId();
       var fedicomError = new FedicomError(error);
-      return fedicomError.send(res);
-    }
-    else {
+      var responseBody = fedicomError.send(res);
+      Events.registrarDescarte(req, res, responseBody, error);
+    } else {
       next();
     }
   });
+
+  app.use(function (req, res, next) {
+    req.txId = res.txId = Mongoose.Types.ObjectId();
+    return next();
+  });
+
 
   /* RUTAS */
   app.route('/authenticate')
@@ -32,8 +41,12 @@ module.exports = function(app) {
 
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
+
     var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
-    return fedicomError.send(res);
+    var responseBody = fedicomError.send(res);
+    Events.registrarDescarte(req, res, responseBody, null);
+
+    return;
   });
 
 };
