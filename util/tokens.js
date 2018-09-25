@@ -26,7 +26,8 @@ module.exports.generateJWT = function(authReq, includePassword) {
     // iss: 'HEFAME@' + require('os').hostname() + '.' + config.http.https_port,
     sub: authReq.username,
     exp: Date.timestamp() + (1000 * 60 * config.jwt.token_lifetime_minutes),
-    iat: Date.timestamp()
+    iat: Date.timestamp(),
+	 dom: authReq.domain
   };
 
   if (includePassword) {
