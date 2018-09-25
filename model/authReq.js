@@ -1,6 +1,6 @@
 
 const config = global.config;
-const crypto = require('../util/crypto');
+const Tokens = require('../util/tokens');
 const FedicomError = require('./fedicomError');
 const domain = require('./domain');
 
@@ -26,7 +26,7 @@ class AuthReq {
     }
 
     generateJWT(includePassword) {
-      return crypto.generateJWT(this, includePassword);
+      return Tokens.generateJWT(this, includePassword);
     }
 
 }

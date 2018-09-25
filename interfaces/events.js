@@ -1,4 +1,34 @@
 
+module.exports.emitPedRequest = function (req) {
+  var reqData = {
+    id: req.txId,
+    type: 'PEDIDO',
+    status: 'RECEIVED',
+    clientRequest: {
+      ip: req.ip,
+      protocol: req.protocol,
+      method: req.method,
+      url: req.originalUrl,
+      route: req.route.path,
+      headers: req.headers,
+      body: req.body
+    }
+  }
+  console.log(reqData);
+}
+
+module.exports.emitPedResponse = function (res, responseBody, status) {
+  var resData = {
+    id: res.txId,
+    status: status || 'OK',
+    clientResponse: {
+        status: res.statusCode,
+        headers: res.getHeaders(),
+        body: responseBody
+    }
+  }
+  console.log(resData);
+}
 
 module.exports.emitAuthRequest = function (req) {
   var reqData = {

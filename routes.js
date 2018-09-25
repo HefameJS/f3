@@ -34,7 +34,8 @@ module.exports = function(app) {
     .post(authenticate.doAuth)
     .get(authenticate.verifyToken);
 
-
+	 app.route('/pedido')
+	 	.post(pedido.savePedido)
 
 
 
