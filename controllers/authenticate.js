@@ -55,8 +55,8 @@ Para depuración exclusivamente.
 exports.verifyToken = function (req, res) {
 
   if (req.token) {
-    const crypto = require('../util/crypto');
-    var tokenData = crypto.verifyJWT(req.token);
+    const Tokens = require('../util/tokens');
+    var tokenData = Tokens.verifyJWT(req.token);
     res.status(200).send({token: req.token, token_data: tokenData});
   } else {
     var tokenData = { meta: { ok: false, error: 'No se incluye token' } };
