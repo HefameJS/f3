@@ -7,6 +7,7 @@ const Mongoose = require('mongoose');
 
 module.exports = function(app) {
   var authenticate = require('./controllers/authenticate');
+  var pedidos = require('./controllers/pedidos');
 
   /* Middleware que se ejecuta antes de buscar la ruta correspondiente.
    * Detecta errores comunes en las peticiones entrantes tales como:
@@ -34,8 +35,8 @@ module.exports = function(app) {
     .post(authenticate.doAuth)
     .get(authenticate.verifyToken);
 
-	 app.route('/pedido')
-	 	.post(pedido.savePedido)
+	 app.route('/pedidos')
+	 	.post(pedidos.savePedido)
 
 
 
