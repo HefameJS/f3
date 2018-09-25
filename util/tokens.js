@@ -1,5 +1,6 @@
 
 const config = global.config;
+const FedicomError = require('../model/FedicomError');
 
 module.exports.encrypt = function (text) {
   var crypto = require('crypto');
@@ -37,6 +38,17 @@ module.exports.generateJWT = function(authReq, includePassword) {
 
 
 module.exports.verifyJWT = function(token) {
+
+  if (!token) {
+    return {
+      meta: {
+        ok: false,
+        error: 'No se especifica token',
+        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+      }
+    }
+  }
+
   var jwt = require('jsonwebtoken');
   try {
     var decoded = jwt.verify(token, config.jwt.token_signing_key);
@@ -46,24 +58,35 @@ module.exports.verifyJWT = function(token) {
       var diff = Date.timestamp() - decoded.exp;
       if (diff > (config.jwt.token_validation_skew_clock_seconds * 1000) ) {
         // TOKEN CADUCADO
-        meta.ok = false;
-        meta.error = 'Token caducado';
+        meta = {
+          ok: false,
+          error: 'Token caducado',
+          exception: new FedicomError('AUTH-001', 'Usuario no autentificado', 401)
+        }
+
       } else {
         // TOKEN OK
-        meta.ok = true;
-
         if (decoded.cyp) {
-          meta.verified = false;
-          meta.pwd = module.exports.decrypt(decoded.cyp);
+          meta = {
+            ok: true,
+            verified: false,
+            pwd:  module.exports.decrypt(decoded.cyp)
+          }
         } else {
-          meta.verified = true;
+          meta = {
+            ok: true,
+            verified: true
+          }
         }
 
       }
     } else {
       // ¿No contiene campo 'exp'? ESTO ES UN FAKE
-      meta.ok = false;
-      meta.error = 'Token incompleto';
+      meta = {
+        ok: false,
+        error: 'Token incompleto',
+        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+      }
     }
     decoded.meta = meta;
     return decoded;
@@ -72,10 +95,10 @@ module.exports.verifyJWT = function(token) {
     return {
       meta: {
         ok: false,
-        error: err.message
+        error: err.message,
+        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
       }
     };
   }
-
 
 }
