@@ -1,9 +1,10 @@
 
 const config = global.config;
 const SapSystem = require('../model/sapsystem');
+const Events = require('../interfaces/events');
 const request = require('request');
 
-exports.authenticate = function ( authReq, callback ) {
+exports.authenticate = function ( txId, authReq, callback ) {
 
   var sapSystem = new SapSystem(config.getDefaultSapSystem());
   var url = sapSystem.getURI('/api/zverify_fedi_credentials');
@@ -17,9 +18,12 @@ exports.authenticate = function ( authReq, callback ) {
     body: authReq
   };
 
+  Events.emitSapRequest(txId, httpCallParams);
+
   request(httpCallParams, function(err, res, body) {
+    Events.emitSapResponse(txId, res, body, err);
+
     if (err) {
-      console.log(res);
       callback(err, res, body);
       return;
     }
@@ -29,7 +33,6 @@ exports.authenticate = function ( authReq, callback ) {
     if (statusCodeType === 2) {
         callback(null, res, body);
     } else {
-        console.log(res);
         callback({
           errno: res.statusCode,
           code: res.statusMessage

@@ -17,7 +17,7 @@ module.exports = function(app) {
       req.txId = res.txId = Mongoose.Types.ObjectId();
       var fedicomError = new FedicomError(error);
       var responseBody = fedicomError.send(res);
-      Events.registrarDescarte(req, res, responseBody, error);
+      Events.emitDiscard(req, res, responseBody, error);
     } else {
       next();
     }
@@ -44,7 +44,7 @@ module.exports = function(app) {
 
     var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
     var responseBody = fedicomError.send(res);
-    Events.registrarDescarte(req, res, responseBody, null);
+    Events.emitDiscard(req, res, responseBody, null);
 
     return;
   });
