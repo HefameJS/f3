@@ -42,3 +42,41 @@ exports.authenticate = function ( txId, authReq, callback ) {
   });
 
 }
+
+
+exports.realizarPedido = function ( txId, pedido, callback ) {
+
+	var sapSystem = new SapSystem(config.getDefaultSapSystem());
+	var url = sapSystem.getURI('/api/zsd_ent_ped_api');
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'POST',
+		headers: sapSystem.getAuthHeaders(),
+		body: pedido
+	};
+
+	Events.emitSapRequest(txId, httpCallParams);
+
+	request(httpCallParams, function(err, res, body) {
+		Events.emitSapResponse(txId, res, body, err);
+
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+}
