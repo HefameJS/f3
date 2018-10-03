@@ -24,10 +24,10 @@ module.exports.generateJWT = function(authReq, includePassword) {
   var jwt = require('jsonwebtoken');
   var jwtData = {
     // iss: 'HEFAME@' + require('os').hostname() + '.' + config.http.https_port,
-    sub: authReq.username,
+    username: authReq.username,
     exp: Date.timestamp() + (1000 * 60 * config.jwt.token_lifetime_minutes),
     iat: Date.timestamp(),
-	 dom: authReq.domain
+	 domain: authReq.domain
   };
 
   if (includePassword) {
