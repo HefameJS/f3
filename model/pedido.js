@@ -49,8 +49,8 @@ class Pedido {
 		if (res.incidences.hasError()) this.incidencias = res.incidences.getErrors();
 
 		// GENERACION DE CRC
-		var hash = crypto.createHash('sha256');
-		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,35).toUpperCase();
+		var hash = crypto.createHash('sha1');
+		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
 	}
 
 	setLoginData(token) {

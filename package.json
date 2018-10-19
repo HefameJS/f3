@@ -14,10 +14,10 @@
   "author": "Alejandro Abad <alejandro.abad@hefame.es>",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.3",
+    "express": "^4.16.4",
     "express-bearer-token": "^2.2.0",
     "jsonwebtoken": "^8.3.0",
-    "mongodb": "^3.1.6",
+    "mongodb": "^3.1.8",
     "morgan": "^1.9.0",
     "request": "^2.88.0"
   },

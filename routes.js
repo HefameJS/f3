@@ -3,7 +3,7 @@
 
 const FedicomError = require('./model/FedicomError');
 const Events = require('./interfaces/events');
-const Mongoose = require('mongoose');
+const ObjectID = require('mongodb').ObjectID;
 
 module.exports = function(app) {
   var authenticate = require('./controllers/authenticate');
@@ -25,7 +25,7 @@ module.exports = function(app) {
   });
 
   app.use(function (req, res, next) {
-    req.txId = res.txId = Mongoose.Types.ObjectId();
+    req.txId = res.txId = new ObjectID();
     return next();
   });
 
