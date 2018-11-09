@@ -40,7 +40,6 @@ exports.savePedido = function (req, res) {
 	Imongo.findTxByCrc( pedido, function (err, dbTx) {
 		if (err) {
 			console.log('Error al consultar si el pedido ya estaba en la BBDD');
-			return;
 		}
 
 		console.log('El pedido recuperado de la bbdd es: ');
