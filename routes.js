@@ -1,7 +1,7 @@
 
 'use strict';
 
-const FedicomError = require('./model/FedicomError');
+const FedicomError = require('./model/fedicomError');
 const Events = require('./interfaces/events');
 const ObjectID = require('mongodb').ObjectID;
 
