@@ -46,14 +46,21 @@ exports.savePedido = function (req, res) {
 		console.log(dbTx);
 
 		if (dbTx && dbTx.clientResponse)	{
+			console.log("LO QUE SE MANDO AL CLIENTE ES");
+			console.log("----------------------------");
+			console.log(dbTx.clientResponse);
+			console.log("----------------------------");
+
 			var dupeResponse = dbTx.clientResponse.body;
-			if (!dupeResponse.incidencias) {
-				dupeResponse.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Pedido duplicado'} ];
-			} else {
-				dupeResponse.incidencias.push({codigo: 'PED-WARN-Z99', descripcion: 'Pedido duplicado'});
+			if (!dupeResponse.errno) {
+				if (!dupeResponse.incidencias) {
+					dupeResponse.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Pedido duplicado'} ];
+				} else {
+					dupeResponse.incidencias.push({codigo: 'PED-WARN-Z99', descripcion: 'Pedido duplicado'});
+				}
 			}
 
-			res.status(201).json(dupeResponse);
+			res.status(dbTx.clientResponse.statusCode).json(dupeResponse);
 			Events.emitPedDuplicated(req, res, dupeResponse, dbTx);
 
 		} else {
@@ -64,9 +71,8 @@ exports.savePedido = function (req, res) {
 				if (sapErr) {
 					console.log("INDICENCIA EN LA COMUNICACION SAP");
 					console.log(sapErr);
-
 					res.status(500).json(sapErr);
-					Events.emitPedRes(res, sapBody, 'OK_NO_SAP');
+					Events.emitPedRes(res, sapErr, 'OK_NO_SAP');
 					return;
 				}
 
