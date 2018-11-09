@@ -55,7 +55,7 @@ module.exports.emitSapRequest = function (txId, req) {
 		}
 	}
 
-	Imongo.commit(data);
+	Imongo.buffer(data);
 }
 module.exports.emitSapResponse = function (txId, res, body, error) {
 	var statusCodeType = ( (res && res.statusCode) ? Math.floor(res.statusCode / 100) : 0);
@@ -94,7 +94,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	}
 
 	// console.log(data);
-   Imongo.commit(data);
+   Imongo.buffer(data);
 }
 
 
