@@ -1,6 +1,6 @@
 
 const config = global.config;
-const FedicomError = require('../model/FedicomError');
+const FedicomError = require('../model/fedicomError');
 
 module.exports.encrypt = function (text) {
   var crypto = require('crypto');

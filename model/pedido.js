@@ -1,6 +1,6 @@
 'use strict';
 
-const FedicomError = require('./FedicomError');
+const FedicomError = require('./fedicomError');
 const LineaPedido = require('./lineaPedido');
 const crypto = require('crypto');
 

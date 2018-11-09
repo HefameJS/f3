@@ -1,6 +1,6 @@
 'use strict';
 
-const FedicomError = require('./FedicomError');
+const FedicomError = require('./fedicomError');
 
 class LineaPedido {
 	constructor(json) {

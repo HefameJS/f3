@@ -3,7 +3,7 @@
 const config = global.config;
 const Isap = require('../interfaces/isap');
 const Events = require('../interfaces/events');
-const FedicomError = require('../model/FedicomError');
+const FedicomError = require('../model/fedicomError');
 
 
 
