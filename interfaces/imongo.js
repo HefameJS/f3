@@ -1,8 +1,8 @@
 
 // const mongourl = 'mongodb://fedicom:fedicom@hhub1.hefame.es:27017,hhub2.hefame.es:27017,hhub3.hefame.es:27017/fedicom?replicaSet=rs0';
-
-const mongourl = require('../config').getMongoUrl();
-const dbName = require('../config').mongodb.database;
+const config = global.config;
+const mongourl = config.getMongoUrl();
+const dbName = config.mongodb.database;
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
