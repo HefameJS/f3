@@ -10,12 +10,13 @@
 		"replicaset": "rs0"
 	},
 	"http": {
-		"http_port": 80,
-		"https_port": 443,
-		"ssl_certificate": "/path/to/cert.pem",
-		"ssl_ca_chain": "/path/to/ca_chain.pem",
-		"ssl_key":	"/path/to/key.pem",
-		"ssl_key_passphrase": "theKeyPasswd"
+		"port": 80
+	},
+	"https": {
+		"port": 443,
+		"cert": "path/to/server.crt",
+		"key": "path/to/server.key",
+		"passphrase": "keyPass"
 	},
 	"jwt": {
 		"token_signing_key": "SecretOne",
