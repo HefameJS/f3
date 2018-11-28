@@ -24,5 +24,17 @@ config.getSapSystem = function (sapsid) {
   return null;
 }
 
+config.getMongoUrl = function () {
+	var mc = config.mongodb;
+
+	var servers = mc.hosts.join(',');
+
+	var mdb = 'mongodb://' + mc.username + ':' + mc.pwd + '@' + servers + '/' + mc.database + '?replicaSet=' + mc.replicaset;
+	console.log('Conectandor a ' + mdb);
+	return mdb;
+
+}
+
+
 
 module.exports = config;
