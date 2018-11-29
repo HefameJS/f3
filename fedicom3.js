@@ -1,7 +1,10 @@
 require('./util/nativeExtensions');
 global.config = require('./config');
+global.logger = require('./util/logger');
 
-console.log('Concentrador Fedicom 3 - v0.0.1');
+
+const logS = global.logger.server;
+logS.info('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - v0.0.1 ****');
 
 
 const fs = require('fs');
@@ -27,9 +30,9 @@ var routes = require('./routes');
 routes(app);
 
 var server = http.createServer(app).listen(httpConf.port, function(){
-  console.log("Servidor HTTP a la escucha en el puerto " + httpConf.port);
+  logS.info("Servidor HTTP a la escucha en el puerto %d", httpConf.port);
 });
-
+ 
 var secureServer = https.createServer(httpsConf.ssl, app).listen(httpsConf.port, function(){
-  console.log("Servidor HTTPS a la escucha en el puerto " + httpsConf.port);
+  logS.info("Servidor HTTPS a la escucha en el puerto %d", httpsConf.port);
 });

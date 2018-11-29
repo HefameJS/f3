@@ -10,6 +10,13 @@
 		"replicaset": "rs0",
 		"txCollection": "myCollection"
 	},
+	"logger": {
+		"serverCollection": "serverLogs",
+		"txCollection": "txLogs",
+		"username": null,
+		"pwd": null,
+		"database": null
+	},
 	"http": {
 		"port": 80
 	},
