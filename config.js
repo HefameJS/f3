@@ -24,14 +24,17 @@ config.getSapSystem = function (sapsid) {
   return null;
 }
 
-config.getMongoUrl = function () {
+config.getMongoUrl = function (servers, username, password, database, replicaSet) {
 	var mc = config.mongodb;
+	servers = servers ? servers : mc.hosts;
+	username = username ? username : mc.username;
+	password = password ? password : mc.pwd;
+	database = database ? database : mc.database;
+	replicaSet = replicaSet ? replicaSet : mc.replicaset;
 
-	var servers = mc.hosts.join(',');
+	var servers = servers.join(',');
 
-	var mdb = 'mongodb://' + mc.username + ':' + mc.pwd + '@' + servers + '/' + mc.database + '?replicaSet=' + mc.replicaset;
-	console.log('Conectandor a ' + mdb);
-	return mdb;
+	return 'mongodb://' + username + ':' + password + '@' + servers + '/' + database + '?replicaSet=' + replicaSet;
 
 }
 

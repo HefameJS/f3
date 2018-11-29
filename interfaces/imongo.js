@@ -23,7 +23,7 @@ client.connect(function(err) {
 
 		console.log("Connected successfully to server");
 		db = client.db(dbName);
-		collection = db.collection("pedidos");
+		collection = db.collection(config.mongodb.txCollection);
 	}
 });
 
