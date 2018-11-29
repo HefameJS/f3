@@ -9,7 +9,7 @@ const domain = require('./domain');
 class AuthReq {
     constructor(json) {
       if (json.user && json.password) {
-        this.user = json.user;
+        this.username = json.user;
         this.password = json.password;
       } else {
         var error = new FedicomError();
