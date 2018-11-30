@@ -3,11 +3,17 @@
 
 const FedicomError = require('./model/fedicomError');
 const Events = require('./interfaces/events');
-const ObjectID = require('mongodb').ObjectID;
+var MongoDB = require('mongodb');
+var ObjectID = MongoDB.ObjectID;
+
+const logS = global.logger.server;
+const logTX = global.logger.tx;
 
 module.exports = function(app) {
   var authenticate = require('./controllers/authenticate');
   var pedidos = require('./controllers/pedidos');
+
+
 
   /* Middleware que se ejecuta antes de buscar la ruta correspondiente.
    * Detecta errores comunes en las peticiones entrantes tales como:
@@ -15,7 +21,12 @@ module.exports = function(app) {
    */
   app.use(function (error, req, res, next) {
     if (error) {
-      req.txId = res.txId = Mongoose.Types.ObjectId();
+		var txId = new ObjectID();
+      req.txId = res.txId = txId;
+
+		logS.e( '** Detectada petición erronea ' + txId + ' desde ' + req.ip );
+		logTX.e( txId, ['** OCURRIO UN ERROR AL PARSEAR LA PETICION Y SE DESCARTA', error] );
+
       var fedicomError = new FedicomError(error);
       var responseBody = fedicomError.send(res);
       Events.emitDiscard(req, res, responseBody, error);
@@ -24,10 +35,17 @@ module.exports = function(app) {
     }
   });
 
+
   app.use(function (req, res, next) {
-    req.txId = res.txId = new ObjectID();
+	  var txId = new ObjectID();
+	  req.txId = res.txId = txId;
+
+	  logS.i( '** Detectada petición erronea ' + txId + ' desde ' + req.ip );
+	  logTX.t( txId, 'Iniciando procesamiento de la petición' );
+
     return next();
   });
+
 
 
   /* RUTAS */
