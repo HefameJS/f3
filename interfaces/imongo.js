@@ -69,19 +69,22 @@ function mergeDataWithCache(oldData, newData) {
 exports.commit = function(data, noMerge) {
 
 	var key = data['$setOnInsert']._id ;
+	/*
 	console.log("COMMIT " + key);
 	console.log("================================");
 	console.log(data);
 	console.log("================================");
+	*/
 
 	var cachedData = commitBuffer.get(key);
+	/*
 	if (cachedData && !noMerge) {
 		console.log("AGREGANDO CON DATOS PREEXISTENTES");
 		console.log("---------------");
 		console.log(cachedData);
 		console.log("---------------");
 	}
-
+	*/
 	if (!noMerge)
 		data = mergeDataWithCache(cachedData, data);
 
@@ -111,19 +114,19 @@ exports.commit = function(data, noMerge) {
 exports.buffer = function(data) {
 
 	var key = data['$setOnInsert']._id ;
-
+/*
 	console.log("AÑAIDIENDO DATOS AL BUFFER " + key);
 	console.log("================================");
 	console.log(data);
 	console.log("================================");
-
+*/
 	var cachedData = commitBuffer.get(key);
-
+/*
 	console.log("AGREGANDO CON DATOS PREEXISTENTES");
 	console.log("---------------");
 	console.log(cachedData);
 	console.log("---------------");
-
+*/
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function (key, value) {
 		exports.commit(value, false);
