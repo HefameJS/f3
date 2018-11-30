@@ -24,7 +24,7 @@ module.exports = function(app) {
 		var txId = new ObjectID();
       req.txId = res.txId = txId;
 
-		logS.e( '** Detectada petición erronea ' + txId + ' desde ' + req.ip );
+		logS.e( '** Recibiendo petición erronea ' + txId + ' desde ' + req.ip );
 		logTX.e( txId, ['** OCURRIO UN ERROR AL PARSEAR LA PETICION Y SE DESCARTA', error] );
 
       var fedicomError = new FedicomError(error);
@@ -40,7 +40,7 @@ module.exports = function(app) {
 	  var txId = new ObjectID();
 	  req.txId = res.txId = txId;
 
-	  logS.i( '** Detectada petición erronea ' + txId + ' desde ' + req.ip );
+	  logS.i( '** Recibiendo petición ' + txId + ' desde ' + req.ip );
 	  logTX.t( txId, 'Iniciando procesamiento de la petición' );
 
     return next();
@@ -66,6 +66,7 @@ module.exports = function(app) {
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
 
+    logTX.w( req.txId, 'Se descarta la petición porque el endpoint seleccionado no existe' );
     var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
     var responseBody = fedicomError.send(res);
     Events.emitDiscard(req, res, responseBody, null);

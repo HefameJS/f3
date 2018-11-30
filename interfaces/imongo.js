@@ -1,6 +1,6 @@
-
-// const mongourl = 'mongodb://fedicom:fedicom@hhub1.hefame.es:27017,hhub2.hefame.es:27017,hhub3.hefame.es:27017/fedicom?replicaSet=rs0';
 const config = global.config;
+const logS = global.logger.server;
+
 const mongourl = config.getMongoUrl();
 const dbName = config.mongodb.database;
 
@@ -16,12 +16,10 @@ var commitBuffer = new memCache.Cache();
 // Use connect method to connect to the Server
 client.connect(function(err) {
 	if (err) {
-		console.log("NOT Connected");
-		console.log(err);
+		logS.f(['Error al conectar a la base de datos', err]);
 	}
 	else {
-
-		console.log("Connected successfully to server");
+		logS.i(['Conectado a la base de datos ' + dbName, this]);
 		db = client.db(dbName);
 		collection = db.collection(config.mongodb.txCollection);
 	}
