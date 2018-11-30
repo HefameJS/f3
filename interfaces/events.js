@@ -116,7 +116,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 			},
 			clientResponse: {
 				statusCode: res.statusCode,
-				headers: res.getHeaders(),
+				headers: res.getHeaders ? res.getHeaders() : null,
 				body: responseBody
 			}
 		}
