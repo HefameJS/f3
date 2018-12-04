@@ -6,25 +6,28 @@ const Events = require('../interfaces/events');
 const FedicomError = require('../model/fedicomError');
 
 
-
+const L = global.logger;
 
 
 
 exports.doAuth = function (req, res) {
+	var txId = req.txId;
 
-  Events.emitAuthRequest(req);
+	L.xi(txId, 'Procesando petición de autenticación')
+	Events.emitAuthRequest(req);
 
 
   var AuthReq = require('../model/authReq');
   try {
-    var authReq = new AuthReq(req.body);
+	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {
-    console.error(ex);
-    return ex.send(res);
+	  L.xe(txId, ['Ocurrió un error al analizar la petición de autenticación', ex], 'exception')
+	  return ex.send(res);
   }
 
   Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody) {
     if (sapErr) {
+		L.xe(txId, ['Ocurrió un error en la llamada a SAP', sapErr]);
       var token = authReq.generateJWT(true);
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);

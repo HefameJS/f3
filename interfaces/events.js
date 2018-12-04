@@ -1,8 +1,8 @@
 
-
 const Imongo = require('../interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
 
+const L = global.logger;
 
 module.exports.emitAuthRequest = function (req) {
 
@@ -23,6 +23,7 @@ module.exports.emitAuthRequest = function (req) {
 		}
 	}
 
+	L.xd(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
@@ -38,6 +39,7 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 		}
 	}
 
+	L.xd(res.txId, ['Emitiendo COMMIT para evento AuthResponse', resData['$set']], 'txCommit');
 	Imongo.commit(resData);
 }
 
@@ -55,6 +57,7 @@ module.exports.emitSapRequest = function (txId, req) {
 		}
 	}
 
+	L.xd(txId, ['Emitiendo BUFFER para evento SapRequest', data['$set']], 'txBuffer');
 	Imongo.buffer(data);
 }
 module.exports.emitSapResponse = function (txId, res, body, error) {
@@ -93,7 +96,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		}
 	}
 
-	// console.log(data);
+	L.xd(txId, ['Emitiendo BUFFER para evento SapResponse', data['$set']], 'txBuffer');
    Imongo.buffer(data);
 }
 
@@ -121,6 +124,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 			}
 		}
 	}
+	L.xd(req.txId, ['Emitiendo COMMIT para evento Discard', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
 
@@ -147,6 +151,7 @@ module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx)
 		}
 	}
 
+	L.xd(req.txId, ['Emitiendo COMMIT para evento PedDuplicated', data['$push'].duplicates], 'txCommit');
 	Imongo.commit(data);
 }
 module.exports.emitPedError = function (req, res, responseBody, status) {
@@ -172,6 +177,7 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 		}
 	}
 
+	L.xd(req.txId, ['Emitiendo COMMIT para evento PedError', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
 module.exports.emitPedReq = function(req, pedido) {
@@ -192,6 +198,7 @@ module.exports.emitPedReq = function(req, pedido) {
 		}
 	};
 
+	L.xd(req.txId, ['Emitiendo COMMIT para evento PedReq', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
 }
 module.exports.emitPedRes = function (res, responseBody, status) {
@@ -207,5 +214,6 @@ module.exports.emitPedRes = function (res, responseBody, status) {
 		}
 	}
 
+	L.xd(res.txId, ['Emitiendo COMMIT para evento PedRes', resData['$set']], 'txCommit');
 	Imongo.commit(resData);
 }

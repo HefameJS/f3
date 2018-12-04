@@ -8,7 +8,8 @@
 		],
 		"database": "fedicom",
 		"replicaset": "rs0",
-		"txCollection": "myCollection"
+		"txCollection": "myCollection",
+		"logCollection": "log"
 	},
 	"logger": {
 		"serverCollection": "serverLogs",

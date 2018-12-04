@@ -1,5 +1,5 @@
 const config = global.config;
-const logS = global.logger.server;
+const L = global.logger;
 
 const mongourl = config.getMongoUrl();
 const dbName = config.mongodb.database;
@@ -16,10 +16,10 @@ var commitBuffer = new memCache.Cache();
 // Use connect method to connect to the Server
 client.connect(function(err) {
 	if (err) {
-		logS.f(['Error al conectar a la base de datos', err]);
+		L.f(['Error al conectar a la base de datos', err]);
 	}
 	else {
-		logS.i(['Conectado a la base de datos ' + dbName, this]);
+		L.i(['Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + ']']);
 		db = client.db(dbName);
 		collection = db.collection(config.mongodb.txCollection);
 	}
@@ -29,10 +29,10 @@ exports.ObjectID = ObjectID;
 
 exports.findTxByCrc = function(ped, cb) {
 	if (client.isConnected() ) {
-		console.log("Buscando pedido con CRC " + ped.crc);
+		//console.log("Buscando pedido con CRC " + ped.crc);
 		collection.findOne( {crc: new ObjectID(ped.crc)}, cb );
 	} else {
-		console.log('Not connected to mongo');
+		//console.log('Not connected to mongo');
 	}
 };
 
@@ -67,43 +67,32 @@ function mergeDataWithCache(oldData, newData) {
 exports.commit = function(data, noMerge) {
 
 	var key = data['$setOnInsert']._id ;
-	/*
-	console.log("COMMIT " + key);
-	console.log("================================");
-	console.log(data);
-	console.log("================================");
-	*/
 
 	var cachedData = commitBuffer.get(key);
-	/*
+
 	if (cachedData && !noMerge) {
-		console.log("AGREGANDO CON DATOS PREEXISTENTES");
-		console.log("---------------");
-		console.log(cachedData);
-		console.log("---------------");
-	}
-	*/
-	if (!noMerge)
+		L.xt(key, ['Agregando con datos en cache', {set: cachedData['$set'], push: cachedData['push']}], 'txBuffer');
 		data = mergeDataWithCache(cachedData, data);
+	}
+
 
 	if (client.isConnected() ) {
 	   collection.updateOne( {_id: key }, data, {upsert: true}, function(err, res) {
 			if (err) {
-				console.log("Hubo un error al insertar");
-				console.log(err);
+				L.xt(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				return;
 			}
 
+			L.xd(key, ['COMMIT realizado', {set: data['$set'], push: data['push']}], 'txCommit');
+
 			if (cachedData) {
-				console.log("LIMPIAMOS BUFFER KEY " + key);
+				L.xt(key, ['Limpiando entrada de cache'], 'txCommit');
 				commitBuffer.del(key);
 			}
-
-
 	   });
 	}
 	else {
-	   console.log(reqData);
+	   L.xf(key, ['ERROR AL HACER COMMIT', {set: data['$set'], push: data['push']}], 'txCommit');
 	}
 
 };
@@ -112,27 +101,20 @@ exports.commit = function(data, noMerge) {
 exports.buffer = function(data) {
 
 	var key = data['$setOnInsert']._id ;
-/*
-	console.log("AÑAIDIENDO DATOS AL BUFFER " + key);
-	console.log("================================");
-	console.log(data);
-	console.log("================================");
-*/
+
+	L.xd(key, ['Añadiendo datos al buffer', {set: data['$set'], push: data['push']}], 'txBuffer');
+
 	var cachedData = commitBuffer.get(key);
-/*
-	console.log("AGREGANDO CON DATOS PREEXISTENTES");
-	console.log("---------------");
-	console.log(cachedData);
-	console.log("---------------");
-*/
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function (key, value) {
+		L.wt(key, ['Forzando COMMIT por timeout'], 'txCommit'
+
+
+	);
 		exports.commit(value, false);
 	});
 
-	console.log("BUFFER ACTUAL PARA " + key);
-	console.log(commitBuffer.get(key));
-
+	L.xt(key, ['Datos actuales del buffer', {set: mergedData['$set'], push: mergedData['push']}], 'txBuffer');
 
 
 }

@@ -6,8 +6,7 @@ const Events = require('./interfaces/events');
 var MongoDB = require('mongodb');
 var ObjectID = MongoDB.ObjectID;
 
-const logS = global.logger.server;
-const logTX = global.logger.tx;
+const L = global.logger;
 
 module.exports = function(app) {
   var authenticate = require('./controllers/authenticate');
@@ -24,8 +23,8 @@ module.exports = function(app) {
 		var txId = new ObjectID();
       req.txId = res.txId = txId;
 
-		logS.e( '** Recibiendo petición erronea ' + txId + ' desde ' + req.ip );
-		logTX.e( txId, ['** OCURRIO UN ERROR AL PARSEAR LA PETICION Y SE DESCARTA', error] );
+		L.e( '** Recibiendo petición erronea ' + txId + ' desde ' + req.ip );
+		L.xe( txId, ['** OCURRIO UN ERROR AL PARSEAR LA PETICION Y SE DESCARTA', error] );
 
       var fedicomError = new FedicomError(error);
       var responseBody = fedicomError.send(res);
@@ -40,8 +39,8 @@ module.exports = function(app) {
 	  var txId = new ObjectID();
 	  req.txId = res.txId = txId;
 
-	  logS.i( '** Recibiendo petición ' + txId + ' desde ' + req.ip );
-	  logTX.t( txId, 'Iniciando procesamiento de la petición' );
+	  L.i( '** Recibiendo petición ' + txId + ' desde ' + req.ip );
+	  L.xt( txId, 'Iniciando procesamiento de la petición' );
 
     return next();
   });
@@ -66,7 +65,7 @@ module.exports = function(app) {
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
 
-    logTX.w( req.txId, 'Se descarta la petición porque el endpoint seleccionado no existe' );
+    L.xw( req.txId, 'Se descarta la petición porque el endpoint [' + req.originalUrl + '] no existe' );
     var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
     var responseBody = fedicomError.send(res);
     Events.emitDiscard(req, res, responseBody, null);

@@ -7,10 +7,11 @@ const domain = require('./domain');
 
 
 class AuthReq {
-    constructor(json) {
+    constructor(json, txId) {
       if (json.user && json.password) {
         this.username = json.user;
         this.password = json.password;
+		  this.txId = txId
       } else {
         var error = new FedicomError();
         if (!json.user) error.add('AUTH-003', 'El parámetro usuario es obligatorio', 400);
@@ -26,7 +27,7 @@ class AuthReq {
     }
 
     generateJWT(includePassword) {
-      return Tokens.generateJWT(this, includePassword);
+      return Tokens.generateJWT(this, this.txId, includePassword);
     }
 
 }

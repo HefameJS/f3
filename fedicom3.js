@@ -2,10 +2,10 @@ require('./util/nativeExtensions');
 global.config = require('./config');
 global.logger = require('./util/logger');
 
+const L = global.logger;
 
-const logS = global.logger.server;
-logS.info('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - v0.0.1 ****');
-
+console.log('\033c');
+L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - v0.0.1 ****');
 
 const fs = require('fs');
 const http = require('http');
@@ -22,7 +22,7 @@ httpsConf.ssl = {
 
 var app = require('express')();
 app.use(require('body-parser').json({extended: true}));
-app.use(require('morgan')('dev'));
+// app.use(require('morgan')('dev'));
 app.use(require('express-bearer-token')());
 
 // Carga de rutas
@@ -30,9 +30,9 @@ var routes = require('./routes');
 routes(app);
 
 var server = http.createServer(app).listen(httpConf.port, function(){
-  logS.info("Servidor HTTP a la escucha en el puerto %d", httpConf.port);
+  L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
 });
- 
+
 var secureServer = https.createServer(httpsConf.ssl, app).listen(httpsConf.port, function(){
-  logS.info("Servidor HTTPS a la escucha en el puerto %d", httpsConf.port);
+  L.i("Servidor HTTPS a la escucha en el puerto " + httpsConf.port);
 });
