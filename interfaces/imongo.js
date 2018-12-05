@@ -79,7 +79,7 @@ exports.commit = function(data, noMerge) {
 	if (client.isConnected() ) {
 	   collection.updateOne( {_id: key }, data, {upsert: true}, function(err, res) {
 			if (err) {
-				L.xt(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
+				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				return;
 			}
 

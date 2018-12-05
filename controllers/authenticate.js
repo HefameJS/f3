@@ -27,7 +27,7 @@ exports.doAuth = function (req, res) {
 
   Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody) {
     if (sapErr) {
-		L.xe(txId, ['Ocurrió un error en la llamada a SAP', sapErr]);
+		L.xe(txId, ['Ocurrió un error en la llamada a SAP. Se genera token temporal.', sapErr]);
       var token = authReq.generateJWT(true);
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
