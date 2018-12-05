@@ -1,23 +1,5 @@
-
-var log4js = require('log4js'),
-mongoAppender = require('log4js-node-mongodb');
-
 var conf = global.config;
 
-
-/*
-	event.data,
-	event.startTime,
-	event.level,
-	event.category
-
-*/
-function insert(event) {
-
-
-
-
-}
 
 
 const MongoClient = require('mongodb').MongoClient;
@@ -33,11 +15,9 @@ client.connect(function(err, db) {
 		 console.error(err);
 	}
 	else {
-		console.log( (new Date()).toISOString() );
-		console.log('Logger conectado a MongoDB [' + mongoURL + ']');
-		console.log('Base de datos [' + conf.mongodb.database + '] colección ['+ (conf.mongodb.logCollection || 'log') + ']');
 		var db = client.db(conf.mongodb.database);
 		collection = db.collection(conf.mongodb.logCollection || 'log');
+		console.log('[%s] *** Guardando logs en la colección %s.%s de MongoDB.', (new Date()).toISOString(), conf.mongodb.database, conf.mongodb.logCollection || 'log' );
 	}
 });
 
