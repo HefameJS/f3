@@ -107,7 +107,7 @@ exports.buffer = function(data) {
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function (key, value) {
-		L.wt(key, ['Forzando COMMIT por timeout'], 'txCommit'
+		L.xw(key, ['Forzando COMMIT por timeout'], 'txCommit'
 
 
 	);
