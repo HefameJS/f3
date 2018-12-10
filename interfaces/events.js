@@ -7,7 +7,7 @@ const L = global.logger;
 module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
-		$setOnInsert: { _id: req.txId },
+		$setOnInsert: { _id: req.txId, timestamp: new Date() },
 		$set: {
 			type: 'AUTH',
 			status: 'RECEIVED',
@@ -28,7 +28,7 @@ module.exports.emitAuthRequest = function (req) {
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId },
+		$setOnInsert: { _id: res.txId, timestamp: new Date() },
 		$set: {
 			status: status || 'OK',
 			clientResponse: {
@@ -45,17 +45,19 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 
 module.exports.emitSapRequest = function (txId, req) {
 	var data = {
-      $setOnInsert: { _id: txId },
+      $setOnInsert: { _id: txId, timestamp: new Date() },
 		$set: {
-			crc: new ObjectID(req.body.crc),
       	status: 'SENT_TO_SAP',
       	sapRequest: {
+				timestamp: new Date(),
 				method: req.method,
 				headers: req.headers,
 				body: req.body
 			}
 		}
 	}
+
+	if (req.body.crc) data['$set'].crc: new ObjectID(req.body.crc);
 
 	L.xi(txId, ['Emitiendo BUFFER para evento SapRequest', data['$set']], 'txBuffer');
 	Imongo.buffer(data);
@@ -66,6 +68,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 
 	if (error) {
 		sapResponse = {
+			timestamp: new Date(),
 			error: {
 				source: 'NET',
 				statusCode: error.errno || 'UNDEFINED',
@@ -74,6 +77,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		}
 	} else if (statusCodeType !== 2) {
 		sapResponse = {
+			timestamp: new Date(),
 			error: {
 				source: 'SAP',
 				statusCode: res.statusCode,
@@ -82,6 +86,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		}
 	} else {
 		sapResponse = {
+			timestamp: new Date(),
 			statusCode: res.statusCode,
 			headers: res.headers,
 			body: body
@@ -89,7 +94,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	}
 
 	var data = {
-		$setOnInsert: { _id: txId },
+		$setOnInsert: { _id: txId, timestamp: new Date() },
 		$set: {
     		status: 'BACK_FROM_SAP',
     		sapResponse: sapResponse
@@ -105,7 +110,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 module.exports.emitDiscard = function (req, res, responseBody, error) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId },
+		$setOnInsert: { _id: req.txId, timestamp: new Date() },
 		$set: {
 			type: 'DESCARTADO',
 			status: 'DESCARTADO',
@@ -131,7 +136,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx) {
 
 	var data = {
-		$setOnInsert: { _id: originalTx._id },
+		$setOnInsert: { _id: originalTx._id, timestamp: new Date() },
 		$push: {
 			duplicates: {
 				clientRequest: {
@@ -157,7 +162,7 @@ module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx)
 module.exports.emitPedError = function (req, res, responseBody, status) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId },
+		$setOnInsert: { _id: req.txId, timestamp: new Date() },
 		$set: {
 			type: 'PEDIDO',
 			status: status || 'DESCARTADO',
@@ -182,7 +187,7 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 }
 module.exports.emitPedReq = function(req, pedido) {
 	var reqData = {
-		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc) },
+		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc), timestamp: new Date() },
 		$set: {
 			type: 'PEDIDO',
 			status: 'RECEIVED',
@@ -203,7 +208,7 @@ module.exports.emitPedReq = function(req, pedido) {
 }
 module.exports.emitPedRes = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId },
+		$setOnInsert: { _id: res.txId, timestamp: new Date() },
 		$set: {
 			status: status || 'OK',
 			clientResponse: {
