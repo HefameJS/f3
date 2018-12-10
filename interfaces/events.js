@@ -7,8 +7,9 @@ const L = global.logger;
 module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
-		$setOnInsert: { _id: req.txId, timestamp: new Date() },
+		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			type: 'AUTH',
 			status: 'RECEIVED',
 			clientRequest: {
@@ -28,8 +29,9 @@ module.exports.emitAuthRequest = function (req) {
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId, timestamp: new Date() },
+		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			status: status || 'OK',
 			clientResponse: {
 				status: res.statusCode,
@@ -45,8 +47,9 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 
 module.exports.emitSapRequest = function (txId, req) {
 	var data = {
-      $setOnInsert: { _id: txId, timestamp: new Date() },
+      $setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
       	status: 'SENT_TO_SAP',
       	sapRequest: {
 				timestamp: new Date(),
@@ -94,8 +97,9 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	}
 
 	var data = {
-		$setOnInsert: { _id: txId, timestamp: new Date() },
+		$setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
     		status: 'BACK_FROM_SAP',
     		sapResponse: sapResponse
 		}
@@ -110,8 +114,9 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 module.exports.emitDiscard = function (req, res, responseBody, error) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId, timestamp: new Date() },
+		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			type: 'DESCARTADO',
 			status: 'DESCARTADO',
 			clientRequest: {
@@ -136,9 +141,10 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx) {
 
 	var data = {
-		$setOnInsert: { _id: originalTx._id, timestamp: new Date() },
+		$setOnInsert: { _id: originalTx._id, createdAt: new Date() },
 		$push: {
 			duplicates: {
+				timestamp: new Date(),
 				clientRequest: {
 					ip: req.ip,
 					protocol: req.protocol,
@@ -162,8 +168,9 @@ module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx)
 module.exports.emitPedError = function (req, res, responseBody, status) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId, timestamp: new Date() },
+		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			type: 'PEDIDO',
 			status: status || 'DESCARTADO',
 			clientRequest: {
@@ -187,8 +194,9 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 }
 module.exports.emitPedReq = function(req, pedido) {
 	var reqData = {
-		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc), timestamp: new Date() },
+		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc), createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			type: 'PEDIDO',
 			status: 'RECEIVED',
 			clientRequest: {
@@ -208,8 +216,9 @@ module.exports.emitPedReq = function(req, pedido) {
 }
 module.exports.emitPedRes = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId, timestamp: new Date() },
+		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
+			modifiedAt: new Date(),
 			status: status || 'OK',
 			clientResponse: {
 				statusCode: res.statusCode,
