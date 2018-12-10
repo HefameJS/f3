@@ -57,7 +57,7 @@ module.exports.emitSapRequest = function (txId, req) {
 		}
 	}
 
-	if (req.body.crc) data['$set'].crc: new ObjectID(req.body.crc);
+	if (req.body.crc) data['$set'].crc = new ObjectID(req.body.crc);
 
 	L.xi(txId, ['Emitiendo BUFFER para evento SapRequest', data['$set']], 'txBuffer');
 	Imongo.buffer(data);
