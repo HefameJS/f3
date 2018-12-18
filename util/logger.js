@@ -25,7 +25,7 @@ function writeMongo(event) {
 	if (collection) {
 		collection.insertOne(event, { w: 0 });
 	} else {
-conf.mongodb.database
+		// Write temp ?
 	}
 }
 
@@ -38,6 +38,8 @@ function cleanKeys(data) {
 }
 
 function writeServer(data, level, category) {
+	if (!Array.isArray(data)) data = [data];
+
 	var event = {
 		category: category || 'server' ,
 		level: level || 5000,
@@ -49,6 +51,8 @@ function writeServer(data, level, category) {
 }
 
 function writeTx(id, data, level, category) {
+	if (!Array.isArray(data)) data = [data];
+
 	var event = {
 		tx: id,
 		category: category || 'tx' ,
