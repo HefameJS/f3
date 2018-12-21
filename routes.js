@@ -48,10 +48,6 @@ module.exports = function(app) {
 
 
   /* RUTAS */
-	app.route('/')
-		.get(function (req, res) {
-			res.status(200).json( {ok:true} );
-		})
 	app.route('/authenticate')
 		.post(authenticate.doAuth)
 		.get(authenticate.verifyToken);
