@@ -22,7 +22,9 @@ exports.doAuth = function (req, res) {
 	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {
 	  L.xe(txId, ['Ocurrió un error al analizar la petición de autenticación', ex], 'exception')
-	  return ex.send(res);
+	  var responseBody = ex.send(res);
+	  Events.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+	  return;
   }
 
   Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody) {
