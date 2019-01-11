@@ -1,6 +1,8 @@
 
 const Imongo = require('../interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
+const txTypes = require('../model/txTypes');
+const txStatus = require('../model/txStatus');
 
 const L = global.logger;
 
@@ -10,8 +12,8 @@ module.exports.emitAuthRequest = function (req) {
 		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			type: 'AUTH',
-			status: 'RECEIVED',
+			type: txTypes.AUTENTICAR,
+			status: txStatus.RECEPCIONADO,
 			clientRequest: {
 				ip: req.ip,
 				protocol: req.protocol,
@@ -32,7 +34,7 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			status: status || 'OK',
+			status: status || txStatus.OK,
 			clientResponse: {
 				timestamp: new Date(),
 				status: res.statusCode,
@@ -51,7 +53,7 @@ module.exports.emitSapRequest = function (txId, url, req) {
       $setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-      	status: 'SENT_TO_SAP',
+      	status: txStatus.ESPERANDO_INCIDENCIAS, 
       	sapRequest: {
 				timestamp: new Date(),
 				method: req.method,
@@ -102,7 +104,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		$setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-    		status: 'BACK_FROM_SAP',
+    		status: txStatus.INCIDENCIAS_RECIBIDAS,
     		sapResponse: sapResponse
 		}
 	}
@@ -119,8 +121,8 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			type: 'DESCARTADO',
-			status: 'DESCARTADO',
+			type: txTypes.INVALIDO,
+			status: txStatus.DESCARTADO,
 			clientRequest: {
 				ip: req.ip,
 				protocol: req.protocol,
@@ -174,8 +176,8 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 		$setOnInsert: { _id: req.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			type: 'PEDIDO',
-			status: status || 'DESCARTADO',
+			type: txTypes.CREAR_PEDIDO,
+			status: status || txStatus.DESCARTADO,
 			clientRequest: {
 				ip: req.ip,
 				protocol: req.protocol,
@@ -201,8 +203,8 @@ module.exports.emitPedReq = function(req, pedido) {
 		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc), createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			type: 'PEDIDO',
-			status: 'RECEIVED',
+			type: txTypes.CREAR_PEDIDO,
+			status: txStatus.RECEPCIONADO,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.ip,
@@ -224,7 +226,7 @@ module.exports.emitPedRes = function (res, responseBody, status) {
 		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			status: status || 'OK',
+			status: status || txStatus.DESCARTADO,
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,

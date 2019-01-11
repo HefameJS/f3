@@ -4,7 +4,7 @@ const config = global.config;
 const Isap = require('../interfaces/isap');
 const Events = require('../interfaces/events');
 const FedicomError = require('../model/fedicomError');
-
+const txStatus = require('../model/txStatus');
 
 const L = global.logger;
 
@@ -31,7 +31,7 @@ exports.doAuth = function (req, res) {
       var token = authReq.generateJWT(true);
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
-      Events.emitAuthResponse(res, responseBody, 'OK_NO_SAP');
+      Events.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
       return;
     }
 
@@ -45,7 +45,7 @@ exports.doAuth = function (req, res) {
       // SAP INDICA QUE EL USUARIO NO ES VALIDO
       var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
       var responseBody = fedicomError.send(res);
-      Events.emitAuthResponse(res, responseBody, 'AUTH_ERROR');
+      Events.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
     }
 
   });

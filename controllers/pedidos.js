@@ -20,7 +20,7 @@ exports.savePedido = function (req, res) {
 	if (req.token.meta.exception) {
 		console.log(token);
 		var responseBody = req.token.meta.exception.send(res);
-		Events.emitPedError(req, res, responseBody, 'NO_AUTH');
+		Events.emitPedError(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
 		return;
 	}
 
@@ -30,7 +30,7 @@ exports.savePedido = function (req, res) {
 		// Hay fallo al parsear el mensaje del pedido,
 		console.log(ex);
 		var responseBody = ex.send(res);
-		Events.emitPedError(req, res, responseBody, 'BAD_REQUEST');
+		Events.emitPedError(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
 
@@ -71,7 +71,7 @@ exports.savePedido = function (req, res) {
 					console.log("INDICENCIA EN LA COMUNICACION SAP");
 					console.log(sapErr);
 					res.status(500).json(sapErr);
-					Events.emitPedRes(res, sapErr, 'OK_NO_SAP');
+					Events.emitPedRes(res, sapErr, txStatus.NO_SAP);
 					return;
 				}
 
@@ -79,7 +79,7 @@ exports.savePedido = function (req, res) {
 
 				console.log("COMUNICACION CON SAP CORRECTA");
 				res.status(201).json(sapBody);
-				Events.emitPedRes(res, sapBody, 'OK');
+				Events.emitPedRes(res, sapBody, txStatus.ESPERANDO_NUMERO_PEDIDO);
 			});
 		}
 
