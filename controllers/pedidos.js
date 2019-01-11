@@ -16,9 +16,8 @@ const sanitizeSapResponse = require('../util/responseSanitizer');
 exports.savePedido = function (req, res) {
 
 	req.token = Tokens.verifyJWT(req.token);
-	// Fallo en el login
 	if (req.token.meta.exception) {
-		console.log(token);
+		// Fallo en el login
 		var responseBody = req.token.meta.exception.send(res);
 		Events.emitPedError(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
 		return;
@@ -28,7 +27,6 @@ exports.savePedido = function (req, res) {
   		var pedido = new Pedido(req);
 	} catch (ex) {
 		// Hay fallo al parsear el mensaje del pedido,
-		console.log(ex);
 		var responseBody = ex.send(res);
 		Events.emitPedError(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
