@@ -78,7 +78,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 			timestamp: new Date(),
 			error: {
 				source: 'NET',
-				statusCode: error.errno || 'UNDEFINED',
+				statusCode: error.errno || false,
 				message: error.message
 			}
 		}
