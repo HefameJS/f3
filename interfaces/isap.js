@@ -58,7 +58,7 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 		body: pedido
 	};
 
-	Events.emitSapRequest(txId, httpCallParams);
+	Events.emitSapRequest(txId, url, httpCallParams);
 
 	request(httpCallParams, function(err, res, body) {
 		Events.emitSapResponse(txId, res, body, err);

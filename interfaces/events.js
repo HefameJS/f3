@@ -46,7 +46,7 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 	Imongo.commit(resData);
 }
 
-module.exports.emitSapRequest = function (txId, req) {
+module.exports.emitSapRequest = function (txId, url, req) {
 	var data = {
       $setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
@@ -56,7 +56,8 @@ module.exports.emitSapRequest = function (txId, req) {
 				timestamp: new Date(),
 				method: req.method,
 				headers: req.headers,
-				body: req.body
+				body: req.body,
+				url: url
 			}
 		}
 	}
