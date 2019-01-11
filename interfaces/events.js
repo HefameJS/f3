@@ -9,11 +9,14 @@ const L = global.logger;
 module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
-		$setOnInsert: { _id: req.txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: req.txId, 
+			createdAt: new Date(),
+			status: txStatus.RECEPCIONADO
+		},
 		$set: {
 			modifiedAt: new Date(),
 			type: txTypes.AUTENTICAR,
-			status: txStatus.RECEPCIONADO,
 			clientRequest: {
 				ip: req.ip,
 				protocol: req.protocol,
@@ -31,7 +34,10 @@ module.exports.emitAuthRequest = function (req) {
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
 		$set: {
 			modifiedAt: new Date(),
 			status: status || txStatus.OK,
@@ -50,7 +56,10 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 
 module.exports.emitSapRequest = function (txId, url, req) {
 	var data = {
-      $setOnInsert: { _id: txId, createdAt: new Date() },
+      $setOnInsert: {
+			_id: txId,
+			createdAt: new Date()
+		},
 		$set: {
 			modifiedAt: new Date(),
       	status: txStatus.ESPERANDO_INCIDENCIAS,
@@ -101,7 +110,10 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	}
 
 	var data = {
-		$setOnInsert: { _id: txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: txId,
+			createdAt: new Date()
+		},
 		$set: {
 			modifiedAt: new Date(),
     		status: txStatus.INCIDENCIAS_RECIBIDAS,
@@ -118,7 +130,10 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 module.exports.emitDiscard = function (req, res, responseBody, error) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date()
+		},
 		$set: {
 			modifiedAt: new Date(),
 			type: txTypes.INVALIDO,
@@ -145,7 +160,10 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx) {
 
 	var data = {
-		$setOnInsert: { _id: originalTx._id, createdAt: new Date() },
+		$setOnInsert: {
+			_id: originalTx._id,
+			createdAt: new Date()
+		},
 		$push: {
 			duplicates: {
 				timestamp: new Date(),
@@ -173,7 +191,10 @@ module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx)
 module.exports.emitPedError = function (req, res, responseBody, status) {
 
 	var data = {
-		$setOnInsert: { _id: req.txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date()
+		},
 		$set: {
 			modifiedAt: new Date(),
 			type: txTypes.CREAR_PEDIDO,
@@ -202,11 +223,15 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 }
 module.exports.emitPedReq = function(req, pedido) {
 	var reqData = {
-		$setOnInsert: { _id: req.txId, crc: new ObjectID(pedido.crc), createdAt: new Date() },
+		$setOnInsert: {
+			_id: req.txId,
+			crc: new ObjectID(pedido.crc),
+			createdAt: new Date(),
+			status: txStatus.RECEPCIONADO
+		},
 		$set: {
 			modifiedAt: new Date(),
 			type: txTypes.CREAR_PEDIDO,
-			status: txStatus.RECEPCIONADO,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.ip,
