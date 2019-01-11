@@ -34,6 +34,7 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 			modifiedAt: new Date(),
 			status: status || 'OK',
 			clientResponse: {
+				timestamp: new Date(),
 				status: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
@@ -128,6 +129,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 				body: ( error ? error.body : req.body )
 			},
 			clientResponse: {
+				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders ? res.getHeaders() : null,
 				body: responseBody
@@ -182,6 +184,7 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 				body: req.body
 			},
 			clientResponse: {
+				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
@@ -200,6 +203,7 @@ module.exports.emitPedReq = function(req, pedido) {
 			type: 'PEDIDO',
 			status: 'RECEIVED',
 			clientRequest: {
+				authentication: req.token,
       		ip: req.ip,
       		protocol: req.protocol,
       		method: req.method,
@@ -221,6 +225,7 @@ module.exports.emitPedRes = function (res, responseBody, status) {
 			modifiedAt: new Date(),
 			status: status || 'OK',
 			clientResponse: {
+				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
