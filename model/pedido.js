@@ -30,7 +30,10 @@ function parseLines( json ) {
 
 class Pedido {
 
-	constructor(json) {
+	constructor(req) {
+
+		var json = req.body;
+
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
 		if (!json.codigoCliente) fedicomError.add('PED-ERR-002', 'El campo "codigoCliente" es obligatorio', 400);
@@ -43,6 +46,12 @@ class Pedido {
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
 
+		// INFORMACION DE LOGIN INCLUIDA EN EL PEDIDO
+		this.login = {
+			username: req.token.sub,
+			domain: req.token.aud
+		}
+
 		// SANEADO DE LINEAS
 		var res = parseLines( json );
 		this.lineas = res.lineas;
@@ -53,12 +62,6 @@ class Pedido {
 		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
 	}
 
-	setLoginData(token) {
-		this.login = {
-			username: token.sub,
-			domain: token.dom
-		}
-	}
 
 	addIncidencia( err ) {
 		if (!this.incidencias) this.incidencias = err.getErrors();

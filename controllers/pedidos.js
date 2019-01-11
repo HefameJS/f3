@@ -15,18 +15,17 @@ const sanitizeSapResponse = require('../util/responseSanitizer');
 
 exports.savePedido = function (req, res) {
 
-	var token = Tokens.verifyJWT(req.token);
+	req.token = Tokens.verifyJWT(req.token);
 	// Fallo en el login
-	if (token.meta.exception) {
+	if (req.token.meta.exception) {
 		console.log(token);
-		var responseBody = token.meta.exception.send(res);
+		var responseBody = req.token.meta.exception.send(res);
 		Events.emitPedError(req, res, responseBody, 'NO_AUTH');
 		return;
 	}
 
 	try {
-  		var pedido = new Pedido(req.body);
-		pedido.setLoginData(token);
+  		var pedido = new Pedido(req);
 	} catch (ex) {
 		// Hay fallo al parsear el mensaje del pedido,
 		console.log(ex);
