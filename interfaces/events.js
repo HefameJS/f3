@@ -53,7 +53,7 @@ module.exports.emitSapRequest = function (txId, url, req) {
       $setOnInsert: { _id: txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-      	status: txStatus.ESPERANDO_INCIDENCIAS, 
+      	status: txStatus.ESPERANDO_INCIDENCIAS,
       	sapRequest: {
 				timestamp: new Date(),
 				method: req.method,
@@ -142,7 +142,6 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento Discard', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
-
 module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx) {
 
 	var data = {
@@ -170,6 +169,7 @@ module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx)
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedDuplicated', data['$push'].duplicates], 'txCommit');
 	Imongo.commit(data);
 }
+
 module.exports.emitPedError = function (req, res, responseBody, status) {
 
 	var data = {
@@ -179,10 +179,12 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 			type: txTypes.CREAR_PEDIDO,
 			status: status || txStatus.DESCARTADO,
 			clientRequest: {
+				authentication: req.token,
 				ip: req.ip,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
+				route: req.route.path,
 				headers: req.headers,
 				body: req.body
 			},

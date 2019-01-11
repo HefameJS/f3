@@ -8,7 +8,7 @@ const FedicomError = require('../model/fedicomError');
 const Tokens = require('../util/tokens');
 const Pedido = require('../model/pedido');
 const sanitizeSapResponse = require('../util/responseSanitizer');
-
+const txStatus = require('../model/txStatus');
 
 
 
