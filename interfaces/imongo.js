@@ -16,10 +16,10 @@ var commitBuffer = new memCache.Cache();
 // Use connect method to connect to the Server
 client.connect(function(err) {
 	if (err) {
-		L.f(['Error al conectar a la base de datos', err]);
+		L.f(['*** NO SE PUDO CONECTAR A MONGODB ***', mongourl, err]);
 	}
 	else {
-		L.i(['Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + ']']);
+		L.i(['*** Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones']);
 		db = client.db(dbName);
 		collection = db.collection(config.mongodb.txCollection);
 	}
