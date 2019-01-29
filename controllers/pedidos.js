@@ -73,11 +73,13 @@ exports.savePedido = function (req, res) {
 					return;
 				}
 
-				sapBody = sanitizeSapResponse(sapBody);
+
+				var response = sanitizeSapResponse(sapBody, pedido);
+
 
 				console.log("COMUNICACION CON SAP CORRECTA");
-				res.status(201).json(sapBody);
-				Events.emitPedRes(res, sapBody, txStatus.ESPERANDO_NUMERO_PEDIDO);
+				res.status(201).json(response);
+				Events.emitPedRes(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
 			});
 		}
 
