@@ -37,7 +37,7 @@ class Pedido {
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
 		if (!json.codigoCliente) fedicomError.add('PED-ERR-002', 'El campo "codigoCliente" es obligatorio', 400);
-		if (!json.tipoPedido) fedicomError.add('PED-ERR-003', 'El campo "tipoPedido" es obligatorio', 400);
+		// if (!json.tipoPedido) fedicomError.add('PED-ERR-003', 'El campo "tipoPedido" es obligatorio', 400);
 		if (!json.lineas || json.lineas.length === 0) fedicomError.add('PED-ERR-004', 'El campo "lineas" no puede estar vacío', 400);
 		if (!json.numeroPedidoOrigen) fedicomError.add('PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio', 400);
 		if (fedicomError.hasError())	throw fedicomError;
