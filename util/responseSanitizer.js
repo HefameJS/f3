@@ -2,18 +2,20 @@
 const _ = require('underscore');
 
 const removeCab = [ 'login', 'crc' ];
-const removePos = [ 'posicion_sap' ];
+const removePos = [ 'posicion_sap', 'valeestupefacientes' ];
 
 const replaceCab = [ 'numeroPedido', 'codigoCliente', 'direccionEnvio', 'numeroPedidoOrigen', 'tipoPedido', 'codigoAlmacenServicio', 'fechaPedido', 'fechaServicio', 'cargoCooperativo', 'empresaFacturadora' ];
 const replacePos = [ 'codigoArticulo', 'codigoUbicacion', 'codigoArticuloSustituyente', 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'valeEstupefaciente', 'fechaLimiteServicio', 'servicioDemorado', 'estadoServicio', 'servicioAplazado' ];
 
-const removeCabEmptyString = [ 'condicion', 'observaciones', 'direccionEnvio', 'empresaFacturadora' ];
+const removeCabEmptyString = [ 'condicion', 'observaciones', 'direccionEnvio', 'empresaFacturadora', 'tipoPedido' ];
 const removeCabEmptyArray = [ 'notificaciones', 'incidencias', 'alertas' ];
 const removeCabZeroValue = [ 'aplazamiento' ];
+const removeCabIfFalse = [ 'cargoCooperativo' ];
 
 const removePosEmptyString = [ 'codigoUbicacion', 'codigoArticuloSustituyente', 'valeEstupefaciente', 'fechaLimiteServicio', 'estadoServicio', 'servicioAplazado' ];
 const removePosEmptyArray = [ 'notificaciones', 'incidencias', 'alertas' ];
-const removePosZeroValue = [ 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte' ];
+const removePosZeroValue = [ 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'precio' ];
+const removePosIfFalse = [ 'servicioDemorado' ];
 
 var sanearIncidencias = function(message) {
 	message.lineas.forEach( function(linea) {
@@ -72,6 +74,10 @@ var eliminarCamposInnecesarios = function(message) {
 		if (message[field] === 0)	delete message[field];
 	});
 
+	removeCabIfFalse.forEach( function (field) {
+		if (message[field] === false)	delete message[field];
+	});
+
 
 
 
@@ -88,6 +94,9 @@ var eliminarCamposInnecesarios = function(message) {
 			});
 			removePosZeroValue.forEach( function (field) {
 				if (linea[field] === 0)	delete linea[field];
+			});
+			removePosIfFalse.forEach( function (field) {
+				if (linea[field] === false)	delete linea[field];
 			});
 		});
 	}
@@ -107,6 +116,8 @@ var establecerFechas = function(message) {
 	return message;
 };
 
+
+
 module.exports = function(msg, pedidoOriginal) {
 	var message = JSON.parse(JSON.stringify(msg));
 	message = sanearMayusculas(message);
@@ -114,5 +125,6 @@ module.exports = function(msg, pedidoOriginal) {
 	message = establecerNumeroPedido(message, pedidoOriginal);
 	message = establecerFechas(message);
 	message = eliminarCamposInnecesarios(message);
+
 	return message;
 };
