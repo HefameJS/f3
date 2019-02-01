@@ -13,6 +13,7 @@ const txStatus = require('../model/txStatus');
 
 
 
+
 exports.savePedido = function (req, res) {
 
 	req.token = Tokens.verifyJWT(req.token);
@@ -61,9 +62,7 @@ exports.savePedido = function (req, res) {
 			Events.emitPedDuplicated(req, res, dupeResponse, dbTx);
 
 		} else {
-
 			Events.emitPedReq(req, pedido);
-
 			Isap.realizarPedido( req.txId, pedido, function(sapErr, sapRes, sapBody) {
 				if (sapErr) {
 					console.log("INDICENCIA EN LA COMUNICACION SAP");
@@ -82,8 +81,48 @@ exports.savePedido = function (req, res) {
 				Events.emitPedRes(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
 			});
 		}
+	});
+
+}
 
 
-});
+exports.getPedido = function (req, res) {
+
+	var numeroPedido = req.params.numeroPedido || req.query.numeroPedido;
+
+
+	req.token = Tokens.verifyJWT(req.token);
+	if (req.token.meta.exception) {
+		// Fallo en el login
+		var responseBody = req.token.meta.exception.send(res);
+		Events.emitPedQueryError(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
+		return;
+	}
+
+
+
+	Imongo.findTxByCrc( numeroPedido, function (err, dbTx) {
+		if (err) {
+			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
+			var responseBody = error.send(res);
+			Events.emitPedQueryError(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+			return;
+		}
+
+		Events.emitPedQueryReq(req);
+		console.log('El pedido recuperado de la bbdd es: ');
+		console.log(dbTx);
+
+		if (dbTx && dbTx.clientResponse)	{
+			// TODO: Autorizacion
+			var originalBody = dbTx.clientResponse.body;
+			res.status(200).json(originalBody);
+			Events.emitPedQueryRes(res, originalBody, txStatus.OK);
+		} else {
+			var error = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
+			var responseBody = error.send(res);
+			Events.emitPedQueryError(req, res, responseBody, txStatus.NO_EXISTE_PEDIDO);
+		}
+	});
 
 }

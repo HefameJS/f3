@@ -42,7 +42,7 @@ exports.doAuth = function (req, res) {
       var token = authReq.generateJWT();
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
-      Events.emitAuthResponse(res, responseBody);
+      Events.emitAuthResponse(res, responseBody, txStatus.OK);
     } else {
       // SAP INDICA QUE EL USUARIO NO ES VALIDO
       var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);

@@ -10,7 +10,7 @@ module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
 		$setOnInsert: {
-			_id: req.txId, 
+			_id: req.txId,
 			createdAt: new Date(),
 			status: txStatus.RECEPCIONADO
 		},
@@ -40,7 +40,7 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 		},
 		$set: {
 			modifiedAt: new Date(),
-			status: status || txStatus.OK,
+			status: status,
 			clientResponse: {
 				timestamp: new Date(),
 				status: res.statusCode,
@@ -157,6 +157,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento Discard', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
+
 module.exports.emitPedDuplicated = function (req, res, responseBody, originalTx) {
 
 	var data = {
@@ -198,7 +199,7 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 		$set: {
 			modifiedAt: new Date(),
 			type: txTypes.CREAR_PEDIDO,
-			status: status || txStatus.DESCARTADO,
+			status: status,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.ip,
@@ -221,6 +222,93 @@ module.exports.emitPedError = function (req, res, responseBody, status) {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedError', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
+
+module.exports.emitPedQueryError = function (req, res, responseBody, status) {
+
+	var data = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date()
+		},
+		$set: {
+			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
+			modifiedAt: new Date(),
+			type: txTypes.CONSULTAR_PEDIDO,
+			status: status,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento PedQueryError', data['$set']], 'txCommit');
+	Imongo.commit(data);
+}
+
+module.exports.emitPedQueryReq = function(req) {
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			status: txStatus.RECEPCIONADO
+		},
+		$set: {
+			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
+			modifiedAt: new Date(),
+			type: txTypes.CONSULTAR_PEDIDO,
+			clientRequest: {
+				authentication: req.token,
+      		ip: req.ip,
+      		protocol: req.protocol,
+      		method: req.method,
+      		url: req.originalUrl,
+      		route: req.route.path,
+      		headers: req.headers,
+      		body: req.body
+			}
+		}
+	};
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento PedQuery', reqData['$set']], 'txCommit');
+	Imongo.commit(reqData);
+}
+
+module.exports.emitPedQueryRes = function (res, responseBody, status) {
+	var resData = {
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$set: {
+			modifiedAt: new Date(),
+			status: status,
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+	L.xi(res.txId, ['Emitiendo COMMIT para evento PedQueryRes', resData['$set']], 'txCommit');
+	Imongo.commit(resData);
+}
+
+
 module.exports.emitPedReq = function(req, pedido) {
 	var reqData = {
 		$setOnInsert: {
@@ -253,7 +341,7 @@ module.exports.emitPedRes = function (res, responseBody, status) {
 		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
 			modifiedAt: new Date(),
-			status: status || txStatus.DESCARTADO,
+			status: status,
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,

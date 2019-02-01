@@ -53,7 +53,11 @@ module.exports = function(app) {
 		.get(authenticate.verifyToken);
 
 	app.route('/pedidos')
+		.get(pedidos.getPedido)
 		.post(pedidos.savePedido)
+
+	app.route('/pedidos/:numeroPedido')
+		.get(pedidos.getPedido)
 
 
 
