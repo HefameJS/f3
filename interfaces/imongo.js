@@ -27,10 +27,17 @@ client.connect(function(err) {
 
 exports.ObjectID = ObjectID;
 
-exports.findTxByCrc = function(ped, cb) {
+exports.findTxByCrc = function(tx, cb) {
 	if (client.isConnected() ) {
-		//console.log("Buscando pedido con CRC " + ped.crc);
-		collection.findOne( {crc: new ObjectID(ped.crc)}, cb );
+		var crc;
+		try {
+			if (tx.crc)	crc = new ObjectID(tx.crc);
+			else crc = new ObjectID(tx);
+		} catch (ex) {
+			cb(ex, null);
+			return;
+		}
+		collection.findOne( {crc: crc}, cb );
 	} else {
 		//console.log('Not connected to mongo');
 	}
