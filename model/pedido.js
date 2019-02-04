@@ -5,26 +5,16 @@ const LineaPedido = require('./lineaPedido');
 const crypto = require('crypto');
 
 function parseLines( json ) {
-	var r;
-	function rellena ( r ) {
-		r = {
-			incidences: new FedicomError(),
-			lineas: []
-		};
-		json.lineas.forEach( function (e) {
-			console.log("----");
-			console.log(e);
-			try {
-				r.lineas.push(new LineaPedido(e));
-			} catch (error) {
-				console.log(error);
-				r.incidences.merge(error);
-			}
+	var lineas = [];
+	function rellena ( lineas ) {
+
+		json.lineas.forEach( function (linea) {
+			lineas.push(new LineaPedido(linea));
 		});
-		console.log(r);
-		return r;
+
+		return lineas;
 	}
-	return rellena( r );
+	return rellena( lineas );
 }
 
 
@@ -40,7 +30,7 @@ class Pedido {
 		// if (!json.tipoPedido) fedicomError.add('PED-ERR-003', 'El campo "tipoPedido" es obligatorio', 400);
 		if (!json.lineas || json.lineas.length === 0) fedicomError.add('PED-ERR-004', 'El campo "lineas" no puede estar vacío', 400);
 		if (!json.numeroPedidoOrigen) fedicomError.add('PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio', 400);
-		if (fedicomError.hasError())	throw fedicomError;
+		if (fedicomError.hasError()) throw fedicomError;
 		// FIN DE SANEADO
 
 		// COPIA DE PROPIEDADES
@@ -53,9 +43,8 @@ class Pedido {
 		}
 
 		// SANEADO DE LINEAS
-		var res = parseLines( json );
-		this.lineas = res.lineas;
-		if (res.incidences.hasError()) this.incidencias = res.incidences.getErrors();
+		var lineas = parseLines( json );
+		this.lineas = lineas;
 
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
