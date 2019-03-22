@@ -36,76 +36,79 @@ module.exports.generateJWT = function(authReq, jti,  includePassword) {
 		jwtData.cyp = module.exports.encrypt(authReq.password);
 	}
 
-
-
 	var token = jwt.sign(jwtData, config.jwt.token_signing_key);
 	L.xi(jti, ['Generado JWT', token, jwtData], 'jwt');
 	return token;
 }
 
 
-module.exports.verifyJWT = function(token) {
+module.exports.verifyJWT = function(token, txId) {
 
-  if (!token) {
-    return {
-      meta: {
-        ok: false,
-        error: 'No se especifica token',
-        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
-      }
-    }
-  }
+	L.xd(txId, ['Analizando token', token], 'txToken');
 
-  var jwt = require('jsonwebtoken');
-  try {
-    var decoded = jwt.verify(token, config.jwt.token_signing_key);
-    var meta = {};
+	if (!token) {
+		L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
+		return {
+			meta: {
+				ok: false,
+				error: 'No se especifica token',
+				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+			}
+		}
+	}
 
-    if (decoded.exp) {
-      var diff = Date.timestamp() - decoded.exp;
-      if (diff > ( (config.jwt.token_validation_skew_clock_seconds || 10) * 1000) ) {
-        // TOKEN CADUCADO
-        meta = {
-          ok: false,
-          error: 'Token caducado',
-          exception: new FedicomError('AUTH-001', 'Usuario no autentificado', 401)
-        }
+	var jwt = require('jsonwebtoken');
+	try {
+		var decoded = jwt.verify(token, config.jwt.token_signing_key);
+		var meta = {};
 
-      } else {
-        // TOKEN OK
-        if (decoded.cyp) {
-          meta = {
-            ok: true,
-            verified: false,
-            pwd:  module.exports.decrypt(decoded.cyp)
-          }
-        } else {
-          meta = {
-            ok: true,
-            verified: true
-          }
-        }
+		if (decoded.exp) {
+			var diff = Date.timestamp() - decoded.exp;
+			if (diff > ( (config.jwt.token_validation_skew_clock_seconds || 10) * 1000) ) {
+				L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
+				// TOKEN CADUCADO
+				meta = {
+					ok: false,
+					error: 'Token caducado',
+					exception: new FedicomError('AUTH-001', 'Usuario no autentificado', 401)
+				}
+			} else {
+				// TOKEN OK
+				if (decoded.cyp) {
+					L.xd(txId, ['El token es correcto, pero no se verificó en SAP'], 'txToken');
+					meta = {
+						ok: true,
+						verified: false,
+						pwd:  module.exports.decrypt(decoded.cyp)
+					}
+				} else {
+					meta = {
+						ok: true,
+						verified: true
+					}
+				}
+      	}
+		} else {
+			// ¿No contiene campo 'exp'? ESTO ES UN FAKE
+			L.xd(txId, ['El token no contiene el campo EXP, esto es un ataque.'], 'txToken');
+	      meta = {
+				ok: false,
+				error: 'Token incompleto',
+				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+			}
+		}
+		decoded.meta = meta;
+		return decoded;
 
-      }
-    } else {
-      // ¿No contiene campo 'exp'? ESTO ES UN FAKE
-      meta = {
-        ok: false,
-        error: 'Token incompleto',
-        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
-      }
-    }
-    decoded.meta = meta;
-    return decoded;
+	} catch(err) {
 
-  } catch(err) {
-    return {
-      meta: {
-        ok: false,
-        error: err.message,
-        exception: new FedicomError('AUTH-002', 'Token inválido', 401)
-      }
-    };
-  }
-
+		L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
+		return {
+			meta: {
+				ok: false,
+				error: err.message,
+				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+			}
+		};
+	}
 }

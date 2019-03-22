@@ -10,28 +10,35 @@ const Pedido = require('../model/pedido');
 const sanitizeSapResponse = require('../util/responseSanitizer');
 const txStatus = require('../model/txStatus');
 
+const L = global.logger;
 
 
 
 
 exports.savePedido = function (req, res) {
 
-	req.token = Tokens.verifyJWT(req.token);
+	L.xi(req.txId, ['Procesando transmisión como ENTRADA DE PEDIDO']);
+
+	req.token = Tokens.verifyJWT(req.token, req.txId);
 	if (req.token.meta.exception) {
-		// Fallo en el login
+		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
 		var responseBody = req.token.meta.exception.send(res);
 		Events.emitPedError(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
 		return;
 	}
+	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
 
+	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
 	try {
   		var pedido = new Pedido(req);
 	} catch (ex) {
 		// Hay fallo al parsear el mensaje del pedido,
 		var responseBody = ex.send(res);
+		L.xe(req.txId, ['Se detectó un error en el contenido de la transmisión. Se transmite el error al cliente', ex, responseBody]);
 		Events.emitPedError(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
+	L.xd(req.txId, ['El el conenido de la transmisión es un pedido correcto', pedido]);
 
 
 
@@ -44,10 +51,7 @@ exports.savePedido = function (req, res) {
 		console.log(dbTx);
 
 		if (dbTx && dbTx.clientResponse)	{
-			console.log("LO QUE SE MANDO AL CLIENTE ES");
-			console.log("----------------------------");
-			console.log(dbTx.clientResponse);
-			console.log("----------------------------");
+			console.log("El pedido es duplicado");
 
 			var dupeResponse = dbTx.clientResponse.body;
 			if (!dupeResponse.errno) {
@@ -87,6 +91,8 @@ exports.savePedido = function (req, res) {
 
 
 exports.getPedido = function (req, res) {
+
+	L.xi(req.txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
 
 	var numeroPedido = req.params.numeroPedido || req.query.numeroPedido;
 

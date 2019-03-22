@@ -4,12 +4,14 @@ const FedicomError = require('./fedicomError');
 const LineaPedido = require('./lineaPedido');
 const crypto = require('crypto');
 
-function parseLines( json ) {
+const L = global.logger;
+
+function parseLines( json, txId ) {
 	var lineas = [];
 	function rellena ( lineas ) {
 
 		json.lineas.forEach( function (linea) {
-			lineas.push(new LineaPedido(linea));
+			lineas.push(new LineaPedido(linea, txId));
 		});
 
 		return lineas;
@@ -43,12 +45,13 @@ class Pedido {
 		}
 
 		// SANEADO DE LINEAS
-		var lineas = parseLines( json );
+		var lineas = parseLines( json, req.txId );
 		this.lineas = lineas;
 
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
+		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 	}
 
 
