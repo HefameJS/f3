@@ -5,7 +5,7 @@
   "main": "fedicom3.js",
   "scripts": {
     "test": "nodemon fedicom3.js",
-    "start": "nohup node fedicom3.js > consultasProymon.log &"
+    "start": "nohup node fedicom3.js > fedicom3-core.log &"
   },
   "keywords": [
     "fedicom",
