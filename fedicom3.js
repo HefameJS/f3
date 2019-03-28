@@ -31,6 +31,8 @@ try {
 }
 
 var app = require('express')();
+app.disable('x-powered-by');
+app.disable('etag');
 app.use(require('body-parser').json({extended: true}));
 app.use(require('express-bearer-token')());
 
