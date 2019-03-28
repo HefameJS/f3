@@ -38,6 +38,7 @@ module.exports = function(app) {
   app.use(function (req, res, next) {
 	  var txId = new ObjectID();
 	  req.txId = res.txId = txId;
+	  res.setHeader('X-TxID', txId);
 
 	  L.i( '** Recibiendo transmisión ' + txId + ' desde ' + req.ip );
 	  L.xt( txId, 'Iniciando procesamiento de la transmisión' );
