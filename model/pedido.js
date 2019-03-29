@@ -60,6 +60,15 @@ class Pedido {
 		var lineas = parseLines( json, req.txId );
 		this.lineas = lineas;
 
+		// SANEADO DEL NUMERO DE CLIENTE
+		if (this.codigoCliente.endsWith('@hefame')) {
+			L.xd(req.txId, "Saneando el codigo del cliente porque acaba en '@hefame'");
+			this.codigoCliente = this.codigoCliente.substring(0, this.codigoCliente.length - 7);
+		}
+
+
+
+
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
