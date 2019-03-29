@@ -23,10 +23,17 @@ var sanearIncidencias = function(message) {
 			if (incidencia.codigo === 'X5') {
 				incidencia.codigo = 'LIN-PED-WARN-003';
 				incidencia.descripcion = 'No trabajado';
-
 				message.incidencias.push({
 					codigo: 'PED-WARN-003',
 					descripcion: 'No trabajado'
+				});
+			}
+			if (incidencia.codigo === 'Z3') {
+				incidencia.codigo = 'LIN-PED-WARN-011';
+				incidencia.descripcion = 'Baja';
+				message.incidencias.push({
+					codigo: 'PED-WARN-011',
+					descripcion: 'Baja'
 				});
 			}
 		});
@@ -118,8 +125,16 @@ var establecerFechas = function(message) {
 
 
 
+
 module.exports = function(msg, pedidoOriginal) {
+
 	var message = JSON.parse(JSON.stringify(msg));
+
+	// Si el mensaje es un array, no hay que sanearlo
+	if (Array.isArray(message)) {
+		return message;
+	}
+
 	message = sanearMayusculas(message);
 	message = sanearIncidencias(message);
 	message = establecerNumeroPedido(message, pedidoOriginal);
