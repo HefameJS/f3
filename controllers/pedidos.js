@@ -79,10 +79,13 @@ exports.savePedido = function (req, res) {
 
 				var response = sanitizeSapResponse(sapBody, pedido);
 
-
-				console.log("COMUNICACION CON SAP CORRECTA");
-				res.status(201).json(response);
-				Events.emitPedRes(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
+				if (Array.isArray(response)) {
+					res.status(400).json(response);
+					Events.emitPedRes(res, response, txStatus.RECHAZADO_SAP);
+				} else {
+					res.status(201).json(response);
+					Events.emitPedRes(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
+				}
 			});
 		}
 	});
