@@ -80,7 +80,7 @@ exports.savePedido = function (req, res) {
 				var response = sanitizeSapResponse(sapBody, pedido);
 
 				if (Array.isArray(response)) {
-					res.status(400).json(response);
+					res.status(412).json(response);
 					Events.emitPedRes(res, response, txStatus.RECHAZADO_SAP);
 				} else {
 					res.status(201).json(response);
