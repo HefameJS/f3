@@ -20,22 +20,7 @@ const removePosIfFalse = [ 'servicioDemorado' ];
 var sanearIncidencias = function(message) {
 	message.lineas.forEach( function(linea) {
 		linea.incidencias.forEach( function(incidencia) {
-			if (incidencia.codigo === 'X5') {
-				incidencia.codigo = 'LIN-PED-WARN-003';
-				incidencia.descripcion = 'No trabajado';
-				message.incidencias.push({
-					codigo: 'PED-WARN-003',
-					descripcion: 'No trabajado'
-				});
-			}
-			if (incidencia.codigo === 'Z3') {
-				incidencia.codigo = 'LIN-PED-WARN-011';
-				incidencia.descripcion = 'Baja';
-				message.incidencias.push({
-					codigo: 'PED-WARN-011',
-					descripcion: 'Baja'
-				});
-			}
+
 		});
 	});
 
