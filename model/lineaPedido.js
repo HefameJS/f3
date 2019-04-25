@@ -5,25 +5,34 @@ const FedicomError = require('./fedicomError');
 const L = global.logger;
 
 class LineaPedido {
-	constructor(json, txId) {
+	constructor(json, txId, parent) {
 		// SANEADO OBLIGATORIO
 
-		var fedicomError = new FedicomError();
+
+		var errorPosicion = new FedicomError();
+
 		// if (json.orden === undefined) fedicomError.add('LIN-PED-ERR-001', 'El campo "orden" es obligatorio. Se descarta la línea.', 400);
-		if (!json.codigoArticulo) fedicomError.add('LIN-PED-ERR-001', 'El campo "codigoArticulo" es obligatorio', 400);
+
+		// 001 - Control de codigo de artículo
+		if (!json.codigoArticulo) {
+			errorPosicion.add('LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido', 400);
+		}
+
+		// 002 - Control de la cantidad
 		if (!json.cantidad) {
-			fedicomError.add('LIN-PED-ERR-002', 'El campo "cantidad" es obligatorio', 400);
+			errorPosicion.add('LIN-PED-ERR-002', 'El campo "cantidad" es inválido', 400);
 		} else {
 			json.cantidad = Number(json.cantidad);
 			if (!json.cantidad || json.cantidad <= 0 || json.cantidad === Number.NaN || json.cantidad === Number.NEGATIVE_INFINITY || json.cantidad === Number.POSITIVE_INFINITY ) {
-				fedicomError.add('LIN-PED-ERR-002', 'El campo "cantidad" debe ser numerico y mayor que cero', 400);
+				errorPosicion.add('LIN-PED-ERR-002', 'El parámetro "cantidad" es inválido', 400);
 			}
 		}
-		if (fedicomError.hasError()) {
-			this.incidencias = fedicomError.getErrors();
-			L.xw(txId, ['Se ha descartado la línea de pedido por un error en la petición.', this.incidencias]);
+
+		// Añadimos las incidencias a la linea
+		if (errorPosicion.hasError()) {
+			this.incidencias = errorPosicion.getErrors();
+			L.xw(txId, ['Se ha descartado la línea de pedido por errores en la petición.', this.incidencias]);
 		}
-		// FIN SANEADO
 
 
 		// COPIA DE PROPIEDADES
