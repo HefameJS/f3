@@ -1,5 +1,6 @@
 
 const _ = require('underscore');
+const utf8 = require('utf8');
 
 const removeCab = [ 'login', 'crc' ];
 const removePos = [ 'posicion_sap', 'valeestupefacientes' ];
@@ -102,6 +103,23 @@ var establecerFechas = function(message) {
 };
 
 
+var sanearUnicode = function(message) {
+	const utf8 = require('utf8');
+
+	if (message.observaciones) {
+		message.observaciones = utf8.encode(message.observaciones);
+	}
+
+	if (message.lineas && message.lineas.length) {
+		message.lineas.forEach( function (linea) {
+			if (linea.observaciones) {
+				linea.observaciones = utf8.encode(linea.observaciones);
+			}
+		});
+	}
+
+	return message;
+}
 
 
 module.exports = function(msg, pedidoOriginal) {
@@ -117,6 +135,7 @@ module.exports = function(msg, pedidoOriginal) {
 	message = establecerNumeroPedido(message, pedidoOriginal);
 	message = establecerFechas(message);
 	message = eliminarCamposInnecesarios(message);
+	message = sanearUnicode(message);
 
 	return message;
 };
