@@ -19,16 +19,6 @@ const removePosIfFalse = [ 'servicioDemorado' ];
 
 
 
-var sanearIncidencias = function(transmision) {
-/*
-	transmision.lineas.forEach( function(linea) {
-		linea.incidencias.forEach( function(incidencia) {
-
-		});
-	});
-*/
-	return transmision;
-};
 
 var sanearMayusculas = function(message) {
 	replaceCab.forEach( function (field) {
@@ -124,7 +114,6 @@ module.exports = function(msg, pedidoOriginal) {
 	}
 
 	message = sanearMayusculas(message);
-	message = sanearIncidencias(message);
 	message = establecerNumeroPedido(message, pedidoOriginal);
 	message = establecerFechas(message);
 	message = eliminarCamposInnecesarios(message);
