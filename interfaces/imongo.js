@@ -6,7 +6,10 @@ const dbName = config.mongodb.database;
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const client = new MongoClient(mongourl, {useNewUrlParser: true});
+const client = new MongoClient(mongourl, {
+	useNewUrlParser: true,
+	autoReconnect: true
+});
 var	db, collection;
 
 var memCache = require('memory-cache');
@@ -39,7 +42,8 @@ exports.findTxByCrc = function(tx, cb) {
 		}
 		collection.findOne( {crc: crc}, cb );
 	} else {
-		//console.log('Not connected to mongo');
+		L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
+		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
 
@@ -113,11 +117,8 @@ exports.buffer = function(data) {
 
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
-	commitBuffer.put(key, mergedData, 5000, function (key, value) {
-		L.xw(key, ['Forzando COMMIT por timeout'], 'txCommit'
-
-
-	);
+	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
+		L.xw(key, ['Forzando COMMIT por timeout'], 'txCommit');
 		exports.commit(value, false);
 	});
 
