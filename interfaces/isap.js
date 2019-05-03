@@ -15,7 +15,8 @@ exports.authenticate = function ( txId, authReq, callback ) {
     url: url,
     method: 'POST',
     headers: sapSystem.getAuthHeaders(),
-    body: authReq
+    body: authReq,
+	 encoding: 'latin1'
   };
 
   Events.emitSapRequest(txId, url, httpCallParams);
@@ -55,7 +56,8 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 		url: url,
 		method: 'POST',
 		headers: sapSystem.getAuthHeaders(),
-		body: pedido
+		body: pedido,
+		encoding: 'latin1'
 	};
 
 	Events.emitSapRequest(txId, url, httpCallParams);
