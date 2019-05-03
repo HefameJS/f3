@@ -38,17 +38,14 @@ exports.savePedido = function (req, res) {
 		Events.emitPedError(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(req.txId, ['El el conenido de la transmisión es un pedido correcto', pedido]);
+	L.xd(req.txId, ['El conenido de la transmisión es un pedido correcto', pedido]);
 
 
 
 	Imongo.findTxByCrc( pedido, function (err, dbTx) {
 		if (err) {
-			console.log('Error al consultar si el pedido ya estaba en la BBDD');
+			L.xe(req.txId, ['Error al consultar si el pedido ya estaba en la BBDD']);
 		}
-
-		console.log('El pedido recuperado de la bbdd es: ');
-		console.log(dbTx);
 
 		if (dbTx && dbTx.clientResponse)	{
 			console.log("El pedido es duplicado");
