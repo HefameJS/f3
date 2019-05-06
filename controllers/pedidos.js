@@ -44,7 +44,7 @@ exports.savePedido = function (req, res) {
 
 	Imongo.findTxByCrc( pedido, function (err, dbTx) {
 		if (err) {
-			L.xe(req.txId, ['Error al consultar si el pedido ya estaba en la BBDD']);
+			L.xw(req.txId, ['Se asume que el pedido no es duplicado']);
 		}
 
 		if (dbTx && dbTx.clientResponse)	{
