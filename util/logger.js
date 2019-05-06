@@ -52,7 +52,7 @@ function writeMongo(event) {
 	}
 
 	if (event.tx)
-		console.log(prepend + '[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] [' + event.tx.toString() + '] ' + event.data);
+		console.log(prepend + '[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
 	else
 		console.log(prepend + '[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
 
