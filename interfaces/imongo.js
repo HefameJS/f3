@@ -15,6 +15,8 @@ var	db, collection;
 var memCache = require('memory-cache');
 var commitBuffer = new memCache.Cache();
 
+const iSqlite = require('./isqlite');
+
 
 // Use connect method to connect to the Server
 client.connect(function(err) {
@@ -37,6 +39,7 @@ exports.findTxByCrc = function(tx, cb) {
 			if (tx.crc)	crc = new ObjectID(tx.crc);
 			else crc = new ObjectID(tx);
 		} catch (ex) {
+			L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC', ex], 'crc');
 			cb(ex, null);
 			return;
 		}
@@ -91,19 +94,20 @@ exports.commit = function(data, noMerge) {
 	   collection.updateOne( {_id: key }, data, {upsert: true}, function(err, res) {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
-				return;
-			}
-
-			L.xd(key, ['COMMIT realizado', {set: data['$set'], push: data['push']}], 'txCommit');
-
-			if (cachedData) {
-				L.xt(key, ['Limpiando entrada de cache'], 'txCommit');
-				commitBuffer.del(key);
+				iSqlite.storeTx(data);
+			} else {
+				L.xd(key, ['COMMIT realizado', {set: data['$set'], push: data['push']}], 'txCommit');
 			}
 	   });
 	}
 	else {
 	   L.xf(key, ['ERROR AL HACER COMMIT', {set: data['$set'], push: data['push']}], 'txCommit');
+		iSqlite.storeTx(data);
+	}
+
+	if (cachedData) {
+		L.xt(key, ['Limpiando entrada de cache'], 'txCommit');
+		commitBuffer.del(key);
 	}
 
 };

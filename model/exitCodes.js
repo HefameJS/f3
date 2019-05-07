@@ -17,6 +17,8 @@ module.exports = {
 	E_MDB_NO_USER: 15,
 	E_MDB_NO_PASS: 16,
 	E_MDB_NO_DATABASE: 17,
+	E_NO_SQLITE_CONFIG: 18,
+	E_SQLITE_NO_PATH: 19,
 
 
 

@@ -11,6 +11,9 @@
 		"txCollection": "myCollection",
 		"logCollection": "log"
 	},
+	"sqlite": {
+		"db_path": "./db/sqlite.db"
+	},
 	"logger": {
 		"serverCollection": "serverLogs",
 		"txCollection": "txLogs",

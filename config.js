@@ -90,6 +90,16 @@ var configVerificator = {
 			console.error("No se ha definido el nombre de la base de datos de MongoDB (mongodb.database)");
 			process.exit(err.E_MDB_NO_DATABASE);
 		}
+	},
+	sqlite: function(config) {
+		if (!config.sqlite) {
+			console.error("No se ha definido el nodo para SQLite (sqlite)");
+			process.exit(err.E_NO_SQLITE_CONFIG);
+		}
+		if (!config.sqlite.db_path) {
+			console.error("No se ha definido el path para la base de datos de SQLite (sqlite.db_path)");
+			process.exit(err.E_SQLITE_NO_PATH);
+		}
 	}
 };
 var config = {};
@@ -109,6 +119,7 @@ try {
 	configVerificator.https(config);
 	configVerificator.jwt(config);
 	configVerificator.mongodb(config);
+	configVerificator.sqlite(config);
 
 
 } catch (exception) {
