@@ -1,3 +1,6 @@
+'use strict';
+const BASE = global.BASE;
+
 var conf = global.config;
 
 module.exports = {

@@ -1,3 +1,5 @@
+'use strict';
+const BASE = global.BASE;
 const config = global.config;
 const L = global.logger;
 
@@ -15,7 +17,7 @@ var	db, collection;
 var memCache = require('memory-cache');
 var commitBuffer = new memCache.Cache();
 
-const iSqlite = require('./isqlite');
+const iSqlite = require(BASE + 'interfaces/isqlite');
 
 
 // Use connect method to connect to the Server

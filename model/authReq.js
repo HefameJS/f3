@@ -1,8 +1,9 @@
-
+'use strict';
+const BASE = global.BASE;
 const config = global.config;
-const Tokens = require('../util/tokens');
-const FedicomError = require('./fedicomError');
-const domain = require('./domain');
+const Tokens = require(BASE + 'util/tokens');
+const FedicomError = require(BASE + 'fedicomError');
+const domain = require(BASE + 'model/domain');
 
 
 

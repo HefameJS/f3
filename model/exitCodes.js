@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
 
 	E_NO_CONFIG: 1,

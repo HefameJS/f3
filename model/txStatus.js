@@ -1,3 +1,7 @@
+'use strict';
+
+
+
 module.exports = {
 
 	OK: 0,

@@ -1,10 +1,14 @@
-require('./util/nativeExtensions');
-console.log('\033c');
+'use strict';
+global.BASE = __dirname + '/';
+const BASE = global.BASE;
 
-const errCode = require('./model/exitCodes');
+require(BASE + 'util/nativeExtensions');
+//console.log('\033c');
 
-global.config = require('./config');
-global.logger = require('./util/logger');
+const errCode = require(BASE + 'model/exitCodes');
+
+global.config = require(BASE + 'config');
+global.logger = require(BASE + 'util/logger');
 
 
 const L = global.logger;
@@ -37,7 +41,7 @@ app.use(require('body-parser').json({extended: true}));
 app.use(require('express-bearer-token')());
 
 // Carga de rutas
-var routes = require('./routes');
+var routes = require(BASE + 'routes');
 routes(app);
 
 try {

@@ -1,7 +1,8 @@
 'use strict';
-
+const BASE = global.BASE;
 const L = global.logger;
-const err = require('./model/exitCodes');
+
+const err = require(BASE + 'model/exitCodes');
 
 var configVerificator = {
 	sapSystems: function(config) {

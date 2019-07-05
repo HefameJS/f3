@@ -1,3 +1,5 @@
+'use strict';
+const BASE = global.BASE;
 
 const _ = require('underscore');
 

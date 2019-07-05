@@ -1,10 +1,12 @@
-
-const Imongo = require('../interfaces/imongo');
+'use strict';
+const BASE = global.BASE;
+const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
-const txTypes = require('../model/txTypes');
-const txStatus = require('../model/txStatus');
-
+const txTypes = require(BASE + 'model/txTypes');
+const txStatus = require(BASE + 'model/txStatus');
 const L = global.logger;
+
+
 
 module.exports.emitAuthRequest = function (req) {
 

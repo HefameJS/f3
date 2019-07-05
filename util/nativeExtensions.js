@@ -1,3 +1,6 @@
+'use strict';
+const BASE = global.BASE;
+
 var dateFormat = require('dateformat');
 
 // Date.timestamp() devuelve el timestamp actual

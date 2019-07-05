@@ -1,3 +1,7 @@
+'use strict';
+
+
+
 module.exports = {
 
 	INVALIDO: 999,
@@ -6,7 +10,8 @@ module.exports = {
 	CREAR_PEDIDO: 10,
 	CONSULTAR_PEDIDO: 11,
 
-	CREAR_ABONO: 20,
+	CREAR_DEVOLUCION: 20,
+	CONSULTAR_DEVOLUCION: 21,
 
 	BUSCAR_ALBARANES: 30,
 	CONSULTAR_ALBARAN: 31,

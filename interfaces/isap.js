@@ -1,7 +1,8 @@
-
+'use strict';
+const BASE = global.BASE;
 const config = global.config;
-const SapSystem = require('../model/sapsystem');
-const Events = require('../interfaces/events');
+const SapSystem = require(BASE + 'model/sapsystem');
+const Events = require(BASE + 'interfaces/events');
 const request = require('request');
 
 exports.authenticate = function ( txId, authReq, callback ) {

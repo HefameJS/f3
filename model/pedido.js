@@ -1,7 +1,9 @@
 'use strict';
+const BASE = global.BASE;
 
-const FedicomError = require('./fedicomError');
-const LineaPedido = require('./lineaPedido');
+
+const FedicomError = require(BASE + 'model/fedicomError');
+const LineaPedido = require(BASE + 'model/lineaPedido');
 const crypto = require('crypto');
 
 const L = global.logger;

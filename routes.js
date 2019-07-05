@@ -1,16 +1,16 @@
-
 'use strict';
+const BASE = global.BASE;
 
-const FedicomError = require('./model/fedicomError');
-const Events = require('./interfaces/events');
+const FedicomError = require(BASE + 'model/fedicomError');
+const Events = require(BASE + 'interfaces/events');
 var MongoDB = require('mongodb');
 var ObjectID = MongoDB.ObjectID;
 
 const L = global.logger;
 
 module.exports = function(app) {
-  var authenticate = require('./controllers/authenticate');
-  var pedidos = require('./controllers/pedidos');
+  var authenticate = require(BASE + 'controllers/authenticate');
+  var pedidos = require(BASE + 'controllers/pedidos');
 
 
 

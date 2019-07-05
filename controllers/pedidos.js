@@ -1,14 +1,14 @@
 'use strict';
-
+const BASE = global.BASE;
 const config = global.config;
-const Isap = require('../interfaces/isap');
-const Imongo = require('../interfaces/imongo');
-const Events = require('../interfaces/events');
-const FedicomError = require('../model/fedicomError');
-const Tokens = require('../util/tokens');
-const Pedido = require('../model/pedido');
-const sanitizeSapResponse = require('../util/responseSanitizer');
-const txStatus = require('../model/txStatus');
+const Isap = require(BASE + 'interfaces/isap');
+const Imongo = require(BASE + 'interfaces/imongo');
+const Events = require(BASE + 'interfaces/events');
+const FedicomError = require(BASE + 'model/fedicomError');
+const Tokens = require(BASE + 'util/tokens');
+const Pedido = require(BASE + 'model/pedido');
+const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
+const txStatus = require(BASE + 'model/txStatus');
 
 const L = global.logger;
 

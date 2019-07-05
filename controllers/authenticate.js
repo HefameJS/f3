@@ -1,11 +1,10 @@
 'use strict';
-
+const BASE = global.BASE;
 const config = global.config;
-const Isap = require('../interfaces/isap');
-const Events = require('../interfaces/events');
-const FedicomError = require('../model/fedicomError');
-const txStatus = require('../model/txStatus');
-
+const Isap = require(BASE + 'interfaces/isap');
+const Events = require(BASE + 'interfaces/events');
+const FedicomError = require(BASE + 'model/fedicomError');
+const txStatus = require(BASE + 'model/txStatus');
 const L = global.logger;
 
 
@@ -17,7 +16,7 @@ exports.doAuth = function (req, res) {
 	Events.emitAuthRequest(req);
 
 
-  var AuthReq = require('../model/authReq');
+  var AuthReq = require(BASE + 'model/authReq');
   try {
 	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {
@@ -60,7 +59,7 @@ Para depuración exclusivamente.
 exports.verifyToken = function (req, res) {
 
   if (req.token) {
-    const Tokens = require('../util/tokens');
+    const Tokens = require(BASE + 'util/tokens');
     var tokenData = Tokens.verifyJWT(req.token);
     res.status(200).send({token: req.token, token_data: tokenData});
   } else {
