@@ -1,11 +1,13 @@
 'use strict';
 const BASE = global.BASE;
+const L = global.logger;
 const config = global.config;
+
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const txStatus = require(BASE + 'model/txStatus');
-const L = global.logger;
+
 
 
 
@@ -13,7 +15,7 @@ exports.doAuth = function (req, res) {
 	var txId = req.txId;
 
 	L.xi(txId, 'Procesando petición de autenticación')
-	Events.emitAuthRequest(req);
+	Events.authentication.emitAuthRequest(req);
 
 
   var AuthReq = require(BASE + 'model/authReq');
@@ -22,7 +24,7 @@ exports.doAuth = function (req, res) {
   } catch (ex) {
 	  L.xe(txId, ['Ocurrió un error al analizar la petición de autenticación', ex], 'exception')
 	  var responseBody = ex.send(res);
-	  Events.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+	  Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
 	  return;
   }
 
@@ -32,7 +34,7 @@ exports.doAuth = function (req, res) {
       var token = authReq.generateJWT(true);
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
-      Events.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
+      Events.authentication.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
       return;
     }
 
@@ -41,12 +43,12 @@ exports.doAuth = function (req, res) {
       var token = authReq.generateJWT();
       var responseBody = {auth_token: token};
       res.status(201).json(responseBody);
-      Events.emitAuthResponse(res, responseBody, txStatus.OK);
+      Events.authentication.emitAuthResponse(res, responseBody, txStatus.OK);
     } else {
       // SAP INDICA QUE EL USUARIO NO ES VALIDO
       var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
       var responseBody = fedicomError.send(res);
-      Events.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
+      Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
     }
 
   });

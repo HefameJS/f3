@@ -20,10 +20,10 @@ exports.authenticate = function ( txId, authReq, callback ) {
 	 encoding: 'latin1'
   };
 
-  Events.emitSapRequest(txId, url, httpCallParams);
+  Events.sap.emitSapRequest(txId, url, httpCallParams);
 
   request(httpCallParams, function(err, res, body) {
-    Events.emitSapResponse(txId, res, body, err);
+    Events.sap.emitSapResponse(txId, res, body, err);
 
     if (err) {
       callback(err, res, body);
@@ -45,7 +45,6 @@ exports.authenticate = function ( txId, authReq, callback ) {
 
 }
 
-
 exports.realizarPedido = function ( txId, pedido, callback ) {
 
 	var sapSystem = new SapSystem(config.getDefaultSapSystem());
@@ -61,10 +60,10 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 		encoding: 'latin1'
 	};
 
-	Events.emitSapRequest(txId, url, httpCallParams);
+	Events.sap.emitSapRequest(txId, url, httpCallParams);
 
 	request(httpCallParams, function(err, res, body) {
-		Events.emitSapResponse(txId, res, body, err);
+		Events.sap.emitSapResponse(txId, res, body, err);
 
 		if (err) {
 			callback(err, res, body);
