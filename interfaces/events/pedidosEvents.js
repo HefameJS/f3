@@ -17,6 +17,9 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 			_id: originalTx._id,
 			createdAt: new Date()
 		},
+		$set: {
+			modifiedAt: new Date()
+		},
 		$push: {
 			duplicates: {
 				timestamp: new Date(),

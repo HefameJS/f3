@@ -54,6 +54,9 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 			_id: originalTx._id,
 			createdAt: new Date()
 		},
+		$set: {
+			modifiedAt: new Date()
+		},
 		$push: {
 			duplicates: {
 				timestamp: new Date(),
