@@ -8,6 +8,8 @@ const L = global.logger;
 
 
 
+module.exports.devoluciones = require('./events/devolucionesEvents');
+
 module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
