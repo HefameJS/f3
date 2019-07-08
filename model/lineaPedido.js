@@ -1,9 +1,10 @@
 'use strict';
 const BASE = global.BASE;
-console.log(BASE + 'model/fedicomError');
+const L = global.logger;
+
 const FedicomError = require(BASE + 'model/fedicomError');
 
-const L = global.logger;
+
 
 class LineaPedido {
 	constructor(json, txId, parent) {
