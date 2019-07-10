@@ -8,7 +8,6 @@ module.exports.verify = function(domain) {
     if (idx > -1) {
       return module.exports.domains[idx];
     }
-    return false;
   }
   return module.exports.domains[0];
 }
