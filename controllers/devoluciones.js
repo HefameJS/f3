@@ -8,7 +8,7 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
-const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
+const sanearDevolucionSAP = require(BASE + 'util/devolucionesSanitizer');
 const txStatus = require(BASE + 'model/txStatus');
 
 
@@ -66,31 +66,21 @@ exports.saveDevolucion = function (req, res) {
 		} else {
 
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
-			/*
-			Isap.realizarPedido( req.txId, pedido, function(sapErr, sapRes, sapBody) {
+
+			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody) {
 				if (sapErr) {
 					console.log("INDICENCIA EN LA COMUNICACION SAP");
 					console.log(sapErr);
 					res.status(500).json(sapErr);
-					Events.emitPedRes(res, sapErr, txStatus.NO_SAP);
+					Events.devoluciones.emitResponseDevolucion(res, sapErr, txStatus.NO_SAP);
 					return;
 				}
 
+				var response = sanearDevolucionSAP(sapBody, devolucion);
+				res.status(201).json(response);
+				Events.devoluciones.emitResponseDevolucion(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
 
-				var response = sanitizeSapResponse(sapBody, pedido);
-
-				if (Array.isArray(response)) {
-					res.status(412).json(response);
-					Events.emitPedRes(res, response, txStatus.RECHAZADO_SAP);
-				} else {
-					res.status(201).json(response);
-					Events.emitPedRes(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
-				}
 			});
-			*/
-
-			res.status(201).json(devolucion);
-			Events.devoluciones.emitResponseDevolucion(res, devolucion, txStatus.OK);
 
 
 		}

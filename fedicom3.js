@@ -1,6 +1,7 @@
 'use strict';
 global.BASE = __dirname + '/';
 const BASE = global.BASE;
+process.title = 'fedicom3-core';
 
 require(BASE + 'util/nativeExtensions');
 //console.log('\033c');

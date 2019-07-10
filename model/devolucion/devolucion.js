@@ -60,12 +60,12 @@ class Devolucion {
 	parseLines( json, txId ) {
 		var lineas = [];
 		var crc = '';
-		var hash = crypto.createHash('sha1');
 		function rellena ( lineas ) {
 
 			json.lineas.forEach( function (linea) {
 				var nuevaLinea = new LineaDevolucion(linea, txId);
 				lineas.push(nuevaLinea);
+				var hash = crypto.createHash('sha1');
 				crc = hash.update(crc + nuevaLinea.crc).digest('hex');
 			});
 
