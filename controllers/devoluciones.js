@@ -78,7 +78,7 @@ exports.saveDevolucion = function (req, res) {
 
 				var response = sanearDevolucionSAP(sapBody, devolucion);
 				res.status(201).json(response);
-				Events.devoluciones.emitResponseDevolucion(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO);
+				Events.devoluciones.emitResponseDevolucion(res, response, txStatus.OK);
 
 			});
 
