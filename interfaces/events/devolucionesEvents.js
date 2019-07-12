@@ -60,8 +60,6 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion', data['$set']], 'txCommit');
 	Imongo.commit(data);
 }
-
-
 module.exports.emitDevolucionDuplicada = function (req, res, responseBody, originalTx) {
 
 	var data = {
@@ -96,8 +94,6 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada', data['$push'].duplicates], 'txCommit');
 	Imongo.commit(data);
 }
-
-
 module.exports.emitRequestDevolucion = function(req, devolucion) {
 	var reqData = {
 		$setOnInsert: {
@@ -127,8 +123,6 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
 }
-
-
 module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 	var resData = {
 		$setOnInsert: { _id: res.txId, createdAt: new Date() },
