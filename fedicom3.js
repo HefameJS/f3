@@ -3,11 +3,12 @@ global.BASE = __dirname + '/';
 const BASE = global.BASE;
 process.title = 'fedicom3-core';
 
+
 require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/exitCodes');
-
+global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + Math.floor(Math.random()*100000000000);
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
@@ -16,6 +17,7 @@ const L = global.logger;
 
 
 L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - v0.0.1 ****');
+L.i('**** ID de instancia: ' + global.instanceID );
 
 const fs = require('fs');
 const http = require('http');
