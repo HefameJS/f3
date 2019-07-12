@@ -39,17 +39,17 @@ exports.saveDevolucion = function (req, res) {
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(req.txId, ['El conenido de la transmisión es una devolución correcta', devolucion]);
+	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
 
 
-
+	L.xd(req.txId, ['Comprobando si la devolución es un duplicado', devolucion.crc], 'txCRC');
 	Imongo.findTxByCrc( devolucion, function (err, dbTx) {
 		if (err) {
-			L.xw(req.txId, ['Se asume que la devolución no es duplicado']);
+			L.xe(req.txId, ['Error al buscar duplicados. Se asume que la devolución no es duplicado', err], 'txCRC');
 		}
 
 		if (dbTx && dbTx.clientResponse)	{
-			console.log("La devolución es un duplicado");
+			L.xw(req.txId, ['Se encontró un duplicado de la transmisión', dbTx], 'txCRC');
 
 			var dupeResponse = dbTx.clientResponse.body;
 			if (!dupeResponse.errno) {
@@ -64,7 +64,7 @@ exports.saveDevolucion = function (req, res) {
 			Events.devoluciones.emitDevolucionDuplicada(req, res, dupeResponse, dbTx);
 
 		} else {
-
+			L.xd(req.txId, ['No se encontró ninguna transmisión anterior con este CRC', err, dbTx], 'txCRC');
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
 
 			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody) {
