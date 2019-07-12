@@ -4,18 +4,18 @@ const BASE = global.BASE;
 const _ = require('underscore');
 
 const removeCab = [ 'login', 'crc' ];
-const removePos = [ 'posicion_sap', 'valeestupefacientes' ];
+const removePos = [ ];
 
-const replaceCab = [ 'numeroDevolucion', 'fechaDevolucion', 'codigoCliente'];
-const replacePos = [ 'numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'codigoMotivo'];
+const replaceCab = [ 'numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'];
+const replacePos = [ 'numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente' ];
 
-const removeCabEmptyString = [ ];
-const removeCabEmptyArray = [ ];
+const removeCabEmptyString = [ 'codigoRecogida', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora', 'observaciones' ];
+const removeCabEmptyArray = [ 'incidencias' ];
 const removeCabZeroValue = [ ];
 const removeCabIfFalse = [ ];
 
-const removePosEmptyString = [ ];
-const removePosEmptyArray = [ ];
+const removePosEmptyString = [ 'numeroAlbaran', 'fechaAlbaran', 'descripcionArticulo', 'lote', 'fechaCaducidad', 'descripcionMotivo', 'valeEstupefaciente', 'observaciones' ];
+const removePosEmptyArray = [ 'incidencias' ];
 const removePosZeroValue = [ ];
 const removePosIfFalse = [ ];
 
