@@ -61,6 +61,7 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 			duplicates: {
 				timestamp: new Date(),
 				clientRequest: {
+					authentication: req.token,
 					ip: req.ip,
 					protocol: req.protocol,
 					method: req.method,

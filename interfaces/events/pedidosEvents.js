@@ -24,6 +24,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 			duplicates: {
 				timestamp: new Date(),
 				clientRequest: {
+					authentication: req.token,
 					ip: req.ip,
 					protocol: req.protocol,
 					method: req.method,
