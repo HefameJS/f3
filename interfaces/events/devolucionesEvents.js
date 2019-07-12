@@ -9,6 +9,19 @@ const txStatus = require(BASE + 'model/txStatus');
 
 const L = global.logger;
 
+function identifyAuthenticatingUser(req) {
+	if (req && req.token && req.token.sub) {
+		return req.token.sub;
+	}
+	return undefined;
+}
+
+function identifyClient(req) {
+	if (req && req.body && req.body.codigoCliente) {
+		return req.body.codigoCliente;
+	}
+	return undefined;
+}
 
 
 
@@ -17,7 +30,9 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date()
+			createdAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req)
 		},
 		$set: {
 			modifiedAt: new Date(),
@@ -89,7 +104,9 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 			_id: req.txId,
 			crc: new ObjectID(devolucion.crc),
 			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: txStatus.RECEPCIONADO,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req)
 		},
 		$set: {
 			modifiedAt: new Date(),

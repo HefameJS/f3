@@ -8,6 +8,12 @@ const txTypes = require(BASE + 'model/txTypes');
 const txStatus = require(BASE + 'model/txStatus');
 
 
+function identifyAuthenticatingUser(req) {
+	if (req && req.body && req.body.user) {
+		return req.body.user;
+	}
+	return undefined;
+}
 
 
 module.exports.emitAuthRequest = function (req) {
@@ -16,7 +22,8 @@ module.exports.emitAuthRequest = function (req) {
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: txStatus.RECEPCIONADO,
+			authenticatingUser: identifyAuthenticatingUser(req)
 		},
 		$set: {
 			modifiedAt: new Date(),
@@ -32,6 +39,8 @@ module.exports.emitAuthRequest = function (req) {
 			}
 		}
 	}
+
+
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);

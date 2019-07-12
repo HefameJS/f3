@@ -7,6 +7,19 @@ const ObjectID = Imongo.ObjectID;
 const txTypes = require(BASE + 'model/txTypes');
 const txStatus = require(BASE + 'model/txStatus');
 
+function identifyAuthenticatingUser(req) {
+	if (req && req.token && req.token.sub) {
+		return req.token.sub;
+	}
+	return undefined;
+}
+
+function identifyClient(req) {
+	if (req && req.body && req.body.codigoCliente) {
+		return req.body.codigoCliente;
+	}
+	return undefined;
+}
 
 
 
@@ -50,7 +63,9 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date()
+			createdAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req)
 		},
 		$set: {
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
@@ -84,7 +99,8 @@ module.exports.emitRequestConsultarPedido = function(req) {
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: txStatus.RECEPCIONADO,
+			authenticatingUser: identifyAuthenticatingUser(req)
 		},
 		$set: {
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
@@ -133,7 +149,9 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date()
+			createdAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req)
 		},
 		$set: {
 			modifiedAt: new Date(),
@@ -167,7 +185,9 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 			_id: req.txId,
 			crc: new ObjectID(pedido.crc),
 			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: txStatus.RECEPCIONADO,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req)
 		},
 		$set: {
 			modifiedAt: new Date(),
