@@ -31,7 +31,25 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 			createdAt: new Date(),
 			type: txTypes.PEDIDO_DUPLICADO,
 			status: txStatus.DUPLICADO,
-			originalTx: originalTx._id
+			originalTx: originalTx._id,
+			iid: global.instanceID,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req),
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
 		}
 	}
 
@@ -41,25 +59,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 			createdAt: new Date()
 		},
 		$push: {
-			duplicates: {
-				timestamp: new Date(),
-				_id: req.txId,
-				iid: global.instanceID,
-				clientRequest: {
-					authentication: req.token,
-					ip: req.ip,
-					protocol: req.protocol,
-					method: req.method,
-					url: req.originalUrl,
-					headers: req.headers,
-					body: req.body
-				},
-				clientResponse: {
-					statusCode: res.statusCode,
-					headers: res.getHeaders(),
-					body: responseBody
-				}
-			}
+			duplicates: data['$setOnInsert']
 		}
 	}
 
