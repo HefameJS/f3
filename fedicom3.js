@@ -8,7 +8,9 @@ require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/exitCodes');
-global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + Math.floor(Math.random()*100000000000);
+global.serverVersion = '0.1.5';
+global.protocolVersion = '3.3.5';
+global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
@@ -16,8 +18,9 @@ global.logger = require(BASE + 'util/logger');
 const L = global.logger;
 
 
-L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - v0.0.1 ****');
-L.i('**** ID de instancia: ' + global.instanceID );
+L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
+L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
+L.i('*** ID de instancia: ' + global.instanceID );
 
 const fs = require('fs');
 const http = require('http');
