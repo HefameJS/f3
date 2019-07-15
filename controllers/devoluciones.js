@@ -52,12 +52,15 @@ exports.saveDevolucion = function (req, res) {
 			L.xw(req.txId, ['Se encontró un duplicado de la transmisión', dbTx], 'txCRC');
 
 			var dupeResponse = dbTx.clientResponse.body;
-			if (!dupeResponse.errno) {
-				if (!dupeResponse.incidencias) {
-					dupeResponse.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'} ];
-				} else {
-					dupeResponse.incidencias.push({codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'});
-				}
+
+			if (dbTx.clientResponse.statusCode === 201 && dupeResponse.length > 0) {
+				dupeResponse.forEach( function (dev) {
+					if (!dev.incidencias) {
+						dev.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'} ];
+					} else {
+						dev.incidencias.push({codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'});
+					}
+				});
 			}
 
 			res.status(dbTx.clientResponse.statusCode).json(dupeResponse);

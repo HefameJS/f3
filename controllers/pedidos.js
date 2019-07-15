@@ -51,7 +51,7 @@ exports.savePedido = function (req, res) {
 			L.xi(req.txId, 'Detectado pedido duplicado');
 
 			var dupeResponse = dbTx.clientResponse.body;
-			if (!dupeResponse.errno) {
+			if (dbTx.clientResponse.statusCode === 201 && dupeResponse) {
 				if (!dupeResponse.incidencias) {
 					dupeResponse.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Pedido duplicado'} ];
 				} else {
