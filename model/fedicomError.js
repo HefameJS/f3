@@ -48,16 +48,16 @@ class FedicomError {
 
       if (error.type === 'entity.parse.failed') {
         this.httpCode = 400;
-        this.itemList.push( { codigo: 'CORE-400', descripcion: 'No se entiende el cuerpo del mensaje' } );
+        this.itemList.push( { codigo: 'HTTP-400', descripcion: 'No se entiende el cuerpo del mensaje' } );
       } else {
         console.error('ERROR EXPRESS NO CONTROLADO: ' + error.type);
-        this.itemList.push( { codigo: 'CORE-001', descripcion: 'Error desconocido [' + error.type + ']' } );
+        this.itemList.push( { codigo: 'HTTP-500', descripcion: 'Error desconocido [' + error.type + ']' } );
       }
       return this;
     }
 
     // Si los parámetros de la llamada no son válidos
-    this.itemList.push( { codigo: 'CORE-000', descripcion: 'Error desconocido' } );
+    this.itemList.push( { codigo: 'HTTP-500', descripcion: 'Error desconocido' } );
     return this;
   }
 

@@ -107,7 +107,7 @@ module.exports = function(app) {
   app.use(function(req, res, next) {
 
     L.xw( req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe' );
-    var fedicomError = new FedicomError('CORE-404', 'No existe el endpoint indicado.', 404);
+    var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
     var responseBody = fedicomError.send(res);
     Events.emitDiscard(req, res, responseBody, null);
 
