@@ -51,8 +51,9 @@ class Devolucion {
 		}
 
 		// GENERACION DE CRC
+		var timestamp = Math.floor(Date.timestamp() / 100000); // Con esto redondeamos mas o menos a 16.6 minutos
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.crc + this.codigoCliente).digest('hex').substring(0,24).toUpperCase();
+		this.crc = hash.update(this.crc + this.codigoCliente + timestamp).digest('hex').substring(0,24).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 	}
 
