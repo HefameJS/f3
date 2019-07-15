@@ -27,15 +27,23 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 
 	var data = {
 		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			type: txTypes.PEDIDO_DUPLICADO,
+			status: txStatus.DUPLICADO,
+			originalTx: originalTx._id
+		}
+	}
+
+	var dataUpdate = {
+		$setOnInsert: {
 			_id: originalTx._id,
 			createdAt: new Date()
-		},
-		$set: {
-			modifiedAt: new Date()
 		},
 		$push: {
 			duplicates: {
 				timestamp: new Date(),
+				_id: req.txId,
 				iid: global.instanceID,
 				clientRequest: {
 					authentication: req.token,
@@ -55,7 +63,8 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado', data['$push'].duplicates], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado', data, dataUpdate['$push'].duplicates], 'txCommit');
+	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
 }
 

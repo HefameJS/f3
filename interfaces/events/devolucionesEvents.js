@@ -65,16 +65,24 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 
 	var data = {
 		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			type: txTypes.DEVOLUCION_DUPLICADA,
+			status: txStatus.DUPLICADO,
+			originalTx: originalTx._id
+		}
+	}
+
+	var dataUpdate = {
+		$setOnInsert: {
 			_id: originalTx._id,
 			createdAt: new Date()
 		},
-		$set: {
-			modifiedAt: new Date()
-		},
 		$push: {
 			duplicates: {
-				iid: global.instanceID,
 				timestamp: new Date(),
+				_id: req.txId,
+				iid: global.instanceID,
 				clientRequest: {
 					authentication: req.token,
 					ip: req.ip,
@@ -93,7 +101,8 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada', data['$push'].duplicates], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada', data, dataUpdate['$push'].duplicates], 'txCommit');
+	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
 }
 module.exports.emitRequestDevolucion = function(req, devolucion) {
