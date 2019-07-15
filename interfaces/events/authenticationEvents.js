@@ -23,7 +23,8 @@ module.exports.emitAuthRequest = function (req) {
 			_id: req.txId,
 			createdAt: new Date(),
 			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req)
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID
 		},
 		$set: {
 			modifiedAt: new Date(),

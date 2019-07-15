@@ -32,7 +32,8 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 			_id: req.txId,
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req)
+			client: identifyClient(req),
+			iid: global.instanceID
 		},
 		$set: {
 			modifiedAt: new Date(),
@@ -72,6 +73,7 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 		},
 		$push: {
 			duplicates: {
+				iid: global.instanceID,
 				timestamp: new Date(),
 				clientRequest: {
 					authentication: req.token,
@@ -102,7 +104,8 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 			createdAt: new Date(),
 			status: txStatus.RECEPCIONADO,
 			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req)
+			client: identifyClient(req),
+			iid: global.instanceID
 		},
 		$set: {
 			modifiedAt: new Date(),

@@ -36,6 +36,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 		$push: {
 			duplicates: {
 				timestamp: new Date(),
+				iid: global.instanceID,
 				clientRequest: {
 					authentication: req.token,
 					ip: req.ip,
@@ -65,7 +66,8 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			_id: req.txId,
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req)
+			client: identifyClient(req),
+			iid: global.instanceID
 		},
 		$set: {
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
@@ -100,7 +102,8 @@ module.exports.emitRequestConsultarPedido = function(req) {
 			_id: req.txId,
 			createdAt: new Date(),
 			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req)
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID
 		},
 		$set: {
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
@@ -151,7 +154,8 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 			_id: req.txId,
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req)
+			client: identifyClient(req),
+			iid: global.instanceID
 		},
 		$set: {
 			modifiedAt: new Date(),
@@ -187,7 +191,8 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 			createdAt: new Date(),
 			status: txStatus.RECEPCIONADO,
 			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req)
+			client: identifyClient(req),
+			iid: global.instanceID
 		},
 		$set: {
 			modifiedAt: new Date(),
