@@ -1,0 +1,35 @@
+<h1>Desarrollo FEDICOM 3 - HEFAME</h1>
+<p>Trabajando sobre el documento v3.3.5 con los cambios hablados en la reunión del 11/07/2019</p>
+<p><a href="/api-fedicom3.pdf">Descargar documento</a></p>
+
+<h2>/authenticate</h2>
+<p>Servicio de autenticación implementado y funcionando según norma Fedicom v3.3.5</p>
+
+<h2>/pedidos</h2>
+<p>Servicio de entrada de pedidos funcionando, con varias limitaciones que estamos trabajando para corregir:</p>
+<ul>
+	<li>En caso de faltas, no se están devolviendo los códigos de incidencia estandarizados en Fedicom3, sino los internos de SAP.</li>
+	<li>No se van a proponer nunca servicios demorados</li>
+	<li>Cuando falta alguno de los campos "codigoArticulo" o "cantidad" en una línea de pedido no se controla bien la respuesta</li>
+	<li>Se ignora el campo "condicion" en las líneas de pedidos</li>
+	<li>Se ignora el campo "fechaServicio" en la cabecera</li>
+	<li>Cuando se envía una línea con "valeEstupefaciente", en la respuesta este campo no aparece'</li>
+	<li>El "orden" de las líneas de pedido no se está respetando correctamente'</li>
+</ul>
+
+<h2>/devoluciones</h2>
+<p>Servicio de devoluciones funcionando según norma Fedicom v3.3.5 (11/07/2019)</p>
+<ul>
+	<li>Servicio de creación de devoluciones implementado y funcionando según norma Fedicom v3.3.5 (11/07/2019)</li>
+	<li>Los motivos 01 (caducidad) y 02 (alerta sanitaria) ya no requiren indicar albarán</li>
+	<li><b>Servicio de consulta de devoluciones NO implementado aún</b></li>
+</ul>
+
+<h2>/albaranes</h2>
+<p>Esta funcionalidad NO está implementada en el concentrador de Hefame.</p>
+
+<h2>/facturas</h2>
+<p>Esta funcionalidad NO está implementada en el concentrador de Hefame.</p>
+
+<h2>/confirmacionAlbaran</h2>
+<p>Esta funcionalidad NO está implementada en el concentrador de Hefame.</p>

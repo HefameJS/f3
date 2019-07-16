@@ -69,37 +69,10 @@ module.exports = function(app) {
 
 
 	app.route('/info').get(function (req, res) {
-
-		res.status(200).json({
-			version: "Trabajando sobre el documento v3.3.5 con los cambios hablados en la reunión del 11/07/2019",
-			autenticacion: {
-				1: 'Servicio de autenticación implementado y funcionando según norma Fedicom v3.3.5 (11/07/2019)',
-			},
-			pedidos: {
-				1: 'En caso de faltas, no se están devolviendo los códigos de incidencia estandarizados en Fedicom3',
-				2: 'No se van a proponer nunca servicios demorados',
-				3: 'Cuando falta alguno de los campos "codigoArticulo" o "cantidad" en una línea de pedido no se controla bien la respuesta',
-				4: 'Se ignora el campo "condicion" en las líneas de pedidos',
-				5: 'Se ignora el campo "fechaServicio" en la cabecera',
-				6: 'Cuando se envía una línea con "valeEstupefaciente", en la respuesta este campo no aparece',
-				7: 'El "orden" de las líneas de pedido no se está respetando correctamente'
-			},
-			devoluciones: {
-				1: 'Servicio de creación de devoluciones implementado y funcionando según norma Fedicom v3.3.5 (11/07/2019). Los motivos 01 (caducidad) y 02 (alerta sanitaria) ya no requiren indicar albarán',
-				2: 'Servicio de consulta de devoluciones NO implementado'
-			},
-			albaranes: {
-				1: 'ESTA FUNCIONALIDAD NO ESTA IMPLEMENTADA'
-			},
-			facturas: {
-				1: 'ESTA FUNCIONALIDAD NO ESTA IMPLEMENTADA'
-			},
-			confirmacionAlbaran: {
-				1: 'ESTA FUNCIONALIDAD NO ESTA IMPLEMENTADA'
-			}
-
-		});
-
+		res.status(200).sendFile(BASE + 'serverinfo.html');
+	});
+	app.route('/api-fedicom3.pdf').get(function (req, res) {
+		res.status(200).sendFile(BASE + 'api-fedicom3.pdf');
 	});
 
 
