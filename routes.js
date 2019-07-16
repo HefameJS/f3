@@ -40,6 +40,9 @@ module.exports = function(app) {
 	  var txId = new ObjectID();
 	  req.txId = res.txId = txId;
 	  res.setHeader('X-TxID', txId);
+	  res.setHeader('Software-ID', "0026");
+	  res.setHeader('Content-Api-Version', global.protocolVersion);
+
 
 	  L.i( '** Recibiendo transmisión ' + txId + ' desde ' + req.ip );
 	  L.xt( txId, 'Iniciando procesamiento de la transmisión' );
