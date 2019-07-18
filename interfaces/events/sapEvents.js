@@ -78,3 +78,41 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	L.xi(txId, ['Emitiendo BUFFER para evento SapResponse', data['$set']], 'txBuffer');
    Imongo.buffer(data);
 }
+
+
+
+module.exports.emitConfirmacionPedido = function (req, res, responseBody, status) {
+
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			status: status,
+			iid: global.instanceID
+		},
+		$set: {
+			modifiedAt: new Date(),
+			type: txTypes.CONFIRMACION_PEDIDO,
+			clientRequest: {
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				status: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
+	Imongo.commit(reqData);
+}

@@ -9,11 +9,13 @@ var ObjectID = MongoDB.ObjectID;
 const L = global.logger;
 
 module.exports = function(app) {
-  var authenticate = require(BASE + 'controllers/authenticate');
-  var pedidos = require(BASE + 'controllers/pedidos');
-  var controladorDevoluciones = require(BASE + 'controllers/devoluciones');
 
-
+	var controllers = {
+		authenticate: require(BASE + 'controllers/authenticate'),
+  		pedidos: require(BASE + 'controllers/pedidos'),
+  		devoluciones: require(BASE + 'controllers/devoluciones'),
+  		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido')
+	}
 
   /* Middleware que se ejecuta antes de buscar la ruta correspondiente.
    * Detecta errores comunes en las peticiones entrantes tales como:
@@ -54,21 +56,24 @@ module.exports = function(app) {
 
   /* RUTAS */
 	app.route('/authenticate')
-		.post(authenticate.doAuth)
-		.get(authenticate.verifyToken);
+		.post(controllers.authenticate.doAuth)
+		.get(controllers.authenticate.verifyToken);
 
 	app.route('/pedidos')
-		.get(pedidos.getPedido)
-		.post(pedidos.savePedido);
+		.get(controllers.pedidos.getPedido)
+		.post(controllers.pedidos.savePedido);
 
 	app.route('/pedidos/:numeroPedido')
-		.get(pedidos.getPedido);
+		.get(controllers.pedidos.getPedido);
 
 	app.route('/devoluciones')
-		.post(controladorDevoluciones.saveDevolucion);
+		.post(controllers.devoluciones.saveDevolucion);
 
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(controladorDevoluciones.getDevolucion);
+		.get(controllers.devoluciones.getDevolucion);
+
+	app.route('/confirmaPedido')
+		.post(controllers.confirmacionPedido.confirmaPedido);
 
 
 	app.route('/info').get(function (req, res) {
