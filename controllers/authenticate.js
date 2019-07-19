@@ -6,6 +6,7 @@ const config = global.config;
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
+const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/txStatus');
 
 
@@ -22,8 +23,7 @@ exports.doAuth = function (req, res) {
   try {
 	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {
-	  L.xe(txId, ['Ocurrió un error al analizar la petición de autenticación', ex], 'exception')
-	  var responseBody = ex.send(res);
+	  var responseBody = controllerHelper.sendException(ex, req, res);
 	  Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
 	  return;
   }

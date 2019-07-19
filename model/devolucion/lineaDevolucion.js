@@ -3,6 +3,7 @@ const BASE = global.BASE;
 const L = global.logger;
 const FedicomError = require(BASE + 'model/fedicomError');
 const crypto = require('crypto');
+const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaDevolucion {
 	constructor(json, txId, parent) {
@@ -12,37 +13,15 @@ class LineaDevolucion {
 
 		var errorPosicion = new FedicomError();
 
-
-		// 001 - Control de codigo de artículo
-		if (!json.codigoArticulo) {
-			errorPosicion.add('LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio', 400);
-		}
-
-		// 002 - Control de la cantidad
-		if (!json.cantidad) {
-			errorPosicion.add('LIN-DEV-ERR-002', 'El campo "cantidad" es obligatorio', 400);
-		} else {
-			json.cantidad = Number(json.cantidad);
-			if (!json.cantidad || json.cantidad <= 0 || json.cantidad === Number.NaN || json.cantidad === Number.NEGATIVE_INFINITY || json.cantidad === Number.POSITIVE_INFINITY ) {
-				errorPosicion.add('LIN-PED-ERR-002', 'El parámetro "cantidad" es incorrecto', 400);
-			}
-		}
-
-		// 003 - Control del codigo de motivo
-		if (!json.codigoMotivo) {
-			errorPosicion.add('LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio', 400);
-		} else {
-			var codigoMotivo = Number(json.codigoMotivo);
-			if (!codigoMotivo || codigoMotivo <= 0 || codigoMotivo > 10 || codigoMotivo === Number.NaN || codigoMotivo === Number.NEGATIVE_INFINITY || codigoMotivo === Number.POSITIVE_INFINITY ) {
-				errorPosicion.add('LIN-PED-ERR-003', 'El parámetro "codigoMotivo" es incorrecto', 400);
-			}
-		}
+		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio');
+		FieldChecker.checkExistsAndPositiveInteger(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto');
+		FieldChecker.checkExistsAndPositiveInteger(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio');
 
 		// 004 - numeroAlbaran y fechaAlbaran
 		var codigoMotivo = Number(json.codigoMotivo);
 		if (codigoMotivo !== 1 && codigoMotivo !== 2) { // Si no es 01 - Caducidad o 02 - Alerta sanitaria
-			if (!json.numeroAlbaran) errorPosicion.add('LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio', 400);
-			if (!json.fechaAlbaran) errorPosicion.add('LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio', 400);
+			FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio');
+			FieldChecker.checkExists(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio');
 		}
 
 		// Añadimos las incidencias a la linea
@@ -50,6 +29,8 @@ class LineaDevolucion {
 		if (errorPosicion.hasError()) {
 			this.sap_ignore = true;
 			this.incidencias = errorPosicion.getErrors();
+			if (json.cantidad) this.cantidadFalta = json.cantidadbonificacion;
+			if (json.cantidadbonificacion) this.cantidadBonificacionFalta = json.cantidadbonificacion;
 			L.xw(txId, ['Se ha descartado la línea de devolución por errores en la petición.', this.incidencias]);
 		}
 

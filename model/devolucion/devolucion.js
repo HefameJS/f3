@@ -2,6 +2,7 @@
 const BASE = global.BASE;
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaDevolucion = require(BASE + 'model/devolucion/lineaDevolucion');
+const FieldChecker = require(BASE + 'util/fieldChecker');
 const crypto = require('crypto');
 
 const L = global.logger;
@@ -15,14 +16,9 @@ class Devolucion {
 
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
-		if (!json.codigoCliente) {
-			L.xw(req.txId, ['Error al analizar la petición', 'DEV-ERR-001', 'El campo "codigoCliente" es obligatorio']);
-			fedicomError.add('PED-ERR-002', 'El campo "codigoCliente" es obligatorio', 400);
-		}
-		if (!json.lineas || json.lineas.length === 0) {
-			L.xw(req.txId, ['Error al analizar la petición', 'DEV-ERR-002', 'El campo "lineas" no puede estar vacío']);
-			fedicomError.add('PED-ERR-004', 'El campo "lineas" no puede estar vacío', 400);
-		}
+
+		FieldChecker.checkExists(json.codigoCliente, fedicomError, 'DEV-ERR-001', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'DEV-ERR-002', 'El campo "lineas" no puede estar vacío');
 
 		if (fedicomError.hasError()) {
 			L.xe(req.txId, 'La devolución contiene errores. Se aborta el procesamiento de la misma');
@@ -69,10 +65,6 @@ class Devolucion {
 		return rellena( lineas );
 	}
 
-	addIncidencia( err ) {
-		if (!this.incidencias) this.incidencias = err.getErrors();
-		else this.incidencias.merge(err);
-	}
 
 }
 

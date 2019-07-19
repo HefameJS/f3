@@ -9,6 +9,7 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
 const sanearDevolucionSAP = require(BASE + 'util/devolucionesSanitizer');
+const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/txStatus');
 
 
@@ -33,9 +34,7 @@ exports.saveDevolucion = function (req, res) {
 	try {
   		var devolucion = new Devolucion(req);
 	} catch (ex) {
-		// Hay fallo al parsear el mensaje de devolución
-		var responseBody = ex.send(res);
-		L.xe(req.txId, ['Se detectó un error en el contenido de la transmisión. Se transmite el error al cliente', ex, responseBody]);
+		var responseBody = controllerHelper.sendException(ex, req, res);
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}

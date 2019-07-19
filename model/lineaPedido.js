@@ -3,8 +3,7 @@ const BASE = global.BASE;
 const L = global.logger;
 
 const FedicomError = require(BASE + 'model/fedicomError');
-
-
+const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaPedido {
 	constructor(json, txId, parent) {
@@ -13,27 +12,24 @@ class LineaPedido {
 
 		var errorPosicion = new FedicomError();
 
-		// if (json.orden === undefined) fedicomError.add('LIN-PED-ERR-001', 'El campo "orden" es obligatorio. Se descarta la línea.', 400);
-
 		// 001 - Control de codigo de artículo
-		if (!json.codigoArticulo) {
-			errorPosicion.add('LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido', 400);
-		}
+		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');
+		var errorCantidad = FieldChecker.checkExistsAndPositiveInteger(json.cantidad, errorPosicion, 'LIN-PED-ERR-002','El campo "cantidad" es inválido');
+		FieldChecker.checkPositiveInteger(json.orden, errorPosicion, 'LIN-PED-ERR-003', 'El campo "orden" es inválido');
 
-		// 002 - Control de la cantidad
-		if (!json.cantidad) {
-			errorPosicion.add('LIN-PED-ERR-002', 'El campo "cantidad" es inválido', 400);
-		} else {
-			json.cantidad = Number(json.cantidad);
-			if (!json.cantidad || json.cantidad <= 0 || json.cantidad === Number.NaN || json.cantidad === Number.NEGATIVE_INFINITY || json.cantidad === Number.POSITIVE_INFINITY ) {
-				errorPosicion.add('LIN-PED-ERR-002', 'El parámetro "cantidad" es inválido', 400);
-			}
-		}
 
 		// Añadimos las incidencias a la linea
 		if (errorPosicion.hasError()) {
 			this.sap_ignore = true;
 			this.incidencias = errorPosicion.getErrors();
+
+			if (!errorCantidad) {
+				json.cantidadFalta = json.cantidad;
+			}
+			if (!FieldChecker.checkExistsAndPositiveInteger(json.cantidadBonificacion, null)) {
+				json.cantidadBonificacionFalta = json.cantidadBonificacion;
+			}
+
 			L.xw(txId, ['Se ha descartado la línea de pedido por errores en la petición.', this.incidencias]);
 		}
 

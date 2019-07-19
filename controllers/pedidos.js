@@ -8,6 +8,7 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido');
 const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
+const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/txStatus');
 
 const L = global.logger;
@@ -32,17 +33,7 @@ exports.savePedido = function (req, res) {
 	try {
   		var pedido = new Pedido(req);
 	} catch (ex) {
-		// Hay fallo al parsear el mensaje del pedido,
-
-		var responseBody = '';
-		if (ex.send) {
-			responseBody = ex.send(res);
-		} else {
-			var error = new FedicomError('HTTP-500', 'Error interno del servidor - ' + req.txId, 500);
-			responseBody = error.send(res);
-		}
-
-		L.xe(req.txId, ['Se detectó un error en el contenido de la transmisión. Se transmite el error al cliente', ex, responseBody]);
+		var responseBody = controllerHelper.sendException(ex, req, res);
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}

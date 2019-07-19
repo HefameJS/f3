@@ -4,6 +4,7 @@ const BASE = global.BASE;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaPedido = require(BASE + 'model/lineaPedido');
+const FieldChecker = require(BASE + 'util/fieldChecker');
 const crypto = require('crypto');
 
 const L = global.logger;
@@ -30,22 +31,12 @@ class Pedido {
 
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
-		if (!json.codigoCliente) {
-			L.xw(req.txId, 'Error al analizar la peticion', 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
-			fedicomError.add('PED-ERR-002', 'El campo "codigoCliente" es obligatorio', 400);
-		}
-		// if (!json.tipoPedido) fedicomError.add('PED-ERR-003', 'El campo "tipoPedido" es obligatorio', 400);
-		if (!json.lineas || json.lineas.length === 0) {
-			L.xw(req.txId, 'Error al analizar la peticion', 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-			fedicomError.add('PED-ERR-004', 'El campo "lineas" no puede estar vacío', 400);
-		}
-		if (!json.numeroPedidoOrigen) {
-			L.xw(req.txId, 'Error al analizar la peticion', 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-			fedicomError.add('PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio', 400);
-		}
+		FieldChecker.checkExists(json.codigoCliente, fedicomError, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
+		FieldChecker.checkExists(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
+
 		if (fedicomError.hasError()) {
 			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
-
 			throw fedicomError;
 		}
 		// FIN DE SANEADO
@@ -69,11 +60,6 @@ class Pedido {
 		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 	}
 
-
-	addIncidencia( err ) {
-		if (!this.incidencias) this.incidencias = err.getErrors();
-		else this.incidencias.merge(err);
-	}
 
 }
 
