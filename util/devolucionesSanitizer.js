@@ -4,7 +4,7 @@ const BASE = global.BASE;
 const _ = require('underscore');
 
 const removeCab = [ 'login', 'crc' ];
-const removePos = [ ];
+const removePos = [ 'sap_ignore' ];
 
 const replaceCab = [ 'numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'];
 const replacePos = [ 'numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente' ];

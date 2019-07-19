@@ -48,7 +48,7 @@ class LineaDevolucion {
 		// Añadimos las incidencias a la linea
 
 		if (errorPosicion.hasError()) {
-			this.procesar = false;
+			this.sap_ignore = true;
 			this.incidencias = errorPosicion.getErrors();
 			L.xw(txId, ['Se ha descartado la línea de devolución por errores en la petición.', this.incidencias]);
 		}

@@ -32,6 +32,7 @@ class LineaPedido {
 
 		// Añadimos las incidencias a la linea
 		if (errorPosicion.hasError()) {
+			this.sap_ignore = true;
 			this.incidencias = errorPosicion.getErrors();
 			L.xw(txId, ['Se ha descartado la línea de pedido por errores en la petición.', this.incidencias]);
 		}
