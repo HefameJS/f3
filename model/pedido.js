@@ -44,7 +44,8 @@ class Pedido {
 			fedicomError.add('PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio', 400);
 		}
 		if (fedicomError.hasError()) {
-			L.xe(req.txId, 'El pedido contiene errores. Se aborta el procesamiento del mismo');
+			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
+
 			throw fedicomError;
 		}
 		// FIN DE SANEADO
@@ -61,15 +62,6 @@ class Pedido {
 		// SANEADO DE LINEAS
 		var lineas = parseLines( json, req.txId );
 		this.lineas = lineas;
-
-		// SANEADO DEL NUMERO DE CLIENTE
-		if (this.codigoCliente.endsWith('@hefame')) {
-			L.xd(req.txId, "Saneando el codigo del cliente porque acaba en '@hefame'");
-			this.codigoCliente = this.codigoCliente.substring(0, this.codigoCliente.length - 7);
-		}
-
-
-
 
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
