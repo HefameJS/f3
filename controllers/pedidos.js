@@ -33,7 +33,15 @@ exports.savePedido = function (req, res) {
   		var pedido = new Pedido(req);
 	} catch (ex) {
 		// Hay fallo al parsear el mensaje del pedido,
-		var responseBody = ex.send(res);
+
+		var responseBody = '';
+		if (ex.send) {
+			responseBody = ex.send(res);
+		} else {
+			var error = new FedicomError('HTTP-500', 'Error interno del servidor - ' + req.txId, 500);
+			responseBody = error.send(res);
+		}
+
 		L.xe(req.txId, ['Se detectó un error en el contenido de la transmisión. Se transmite el error al cliente', ex, responseBody]);
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
