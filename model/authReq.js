@@ -16,6 +16,11 @@ class AuthReq {
 			if (json.user && json.apikey) {
 				this.username = json.user;
 				this.password = json.apikey;
+			} else {
+				var error = new FedicomError();
+				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
+				if (!json.apikey)		error.add('AUTH-Z04', 'El parámetro "apikey" es obligatorio', 400);
+				throw error;
 			}
 		} else { // ASUMIMOS QUE EL DOMINIO ES FEDICOM
 			if (json.user && json.password) {
@@ -23,18 +28,16 @@ class AuthReq {
 				this.password = json.password;
 			} else {
 				var error = new FedicomError();
-				if (!json.user)		error.add('AUTH-003', 'El parámetro usuario es obligatorio', 400);
-				if (!json.password)	error.add('AUTH-004', 'El parámetro password es obligatorio', 400);
+				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
+				if (!json.password)	error.add('AUTH-004', 'El parámetro "password" es obligatorio', 400);
 				throw error;
 			}
 		}
 
-
-
-
     }
 
     generateJWT(includePassword) {
+		 console.log(this);
       return Tokens.generateJWT(this, this.txId, includePassword);
     }
 
