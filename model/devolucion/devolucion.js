@@ -44,12 +44,6 @@ class Devolucion {
 		this.lineas = lineas;
 		this.crc = crc;
 
-		// SANEADO DEL NUMERO DE CLIENTE
-		if (this.codigoCliente.endsWith('@hefame')) {
-			L.xd(req.txId, "Saneando el codigo del cliente porque acaba en '@hefame'");
-			this.codigoCliente = this.codigoCliente.substring(0, this.codigoCliente.length - 7);
-		}
-
 		// GENERACION DE CRC
 		var timestamp = Math.floor(Date.timestamp() / 100000); // Con esto redondeamos mas o menos a 16.6 minutos
 		var hash = crypto.createHash('sha1');
