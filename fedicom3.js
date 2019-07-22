@@ -41,6 +41,8 @@ try {
 }
 
 var app = require('express')();
+var cors = require('cors');
+app.use(cors());
 app.disable('x-powered-by');
 app.disable('etag');
 app.use(require('body-parser').json({extended: true}));
