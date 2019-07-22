@@ -37,7 +37,6 @@ class AuthReq {
     }
 
     generateJWT(includePassword) {
-		 console.log(this);
       return Tokens.generateJWT(this, this.txId, includePassword);
     }
 

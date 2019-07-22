@@ -94,6 +94,7 @@ module.exports.emitConfirmacionPedido = function (req, res, responseBody, status
 			modifiedAt: new Date(),
 			type: txTypes.CONFIRMACION_PEDIDO,
 			clientRequest: {
+				authentication: req.token,
 				ip: req.ip,
 				protocol: req.protocol,
 				method: req.method,
