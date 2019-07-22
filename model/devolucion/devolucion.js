@@ -51,6 +51,8 @@ class Devolucion {
 	parseLines( json, txId ) {
 		var lineas = [];
 		var crc = '';
+		var ordenes = [];
+
 		function rellena ( lineas ) {
 
 			json.lineas.forEach( function (linea) {
@@ -58,6 +60,24 @@ class Devolucion {
 				lineas.push(nuevaLinea);
 				var hash = crypto.createHash('sha1');
 				crc = hash.update(crc + nuevaLinea.crc).digest('hex');
+
+				// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
+				if (nuevaLinea.orden) {
+					ordenes.push(parseInt(nuevaLinea.orden));
+				}
+
+			});
+
+			// Rellenamos el orden en las lineas donde no viene.
+			var nextOrder = 1;
+			lineas.forEach( function (linea) {
+				if (!linea.orden) {
+					while (ordenes.includes(nextOrder)) {
+						nextOrder ++;
+					}
+					linea.orden = nextOrder;
+					nextOrder ++;
+				}
 			});
 
 			return [lineas, crc];
