@@ -11,12 +11,30 @@ const L = global.logger;
 
 function parseLines( json, txId ) {
 	var lineas = [];
+	var ordenes = [];
 	function rellena ( lineas ) {
 
 		json.lineas.forEach( function (linea) {
-			lineas.push(new LineaPedido(linea, txId));
+			var lineaPedido = new LineaPedido(linea, txId);
+			lineas.push(lineaPedido);
+
+			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
+			if (lineaPedido.orden) {
+				ordenes.push(parseInt(lineaPedido.orden));
+			}
 		});
 
+		// Rellenamos el orden.
+		var nextOrder = 1;
+		lineas.forEach( function (linea) {
+			if (!linea.orden) {
+				while (ordenes.includes(nextOrder)) {
+					nextOrder ++;
+				}
+				linea.orden = nextOrder;
+				nextOrder ++;
+			}
+		});
 		return lineas;
 	}
 	return rellena( lineas );
