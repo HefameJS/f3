@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-
+const FedicomError = require(BASE + 'model/fedicomError');
 const _ = require('underscore');
 
 const removeCab = [ 'login', 'crc' ];
@@ -103,7 +103,21 @@ var establecerFechas = function(message) {
 	return message;
 };
 
+var eliminaIncidenciasDeBloqueos = function(message) {
 
+	var lengthBefore = message.length;
+
+	message = message.filter(function(item) {
+    	return !item || !item.codigo || !item.codigo.startsWith('SAP-IGN');
+	});
+
+	if (lengthBefore !== message.length) {
+		var error = new FedicomError('PED-ERR-999', 'No se pudo guardar el pedido. Contacte con su comercial.');
+		message.push(error.getErrors()[0]);
+	}
+
+	return message;
+}
 
 module.exports = function(msg, pedidoOriginal) {
 
@@ -111,6 +125,7 @@ module.exports = function(msg, pedidoOriginal) {
 
 	// Si el mensaje es un array, no hay que sanearlo
 	if (Array.isArray(message)) {
+		message = eliminaIncidenciasDeBloqueos(message);
 		return message;
 	}
 
