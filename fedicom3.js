@@ -8,7 +8,7 @@ require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/exitCodes');
-global.serverVersion = '0.2.1';
+global.serverVersion = '0.2.2';
 global.protocolVersion = '3.3.5';
 global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 global.config = require(BASE + 'config');
