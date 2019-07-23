@@ -42,7 +42,7 @@ try {
 
 var app = require('express')();
 var cors = require('cors');
-app.use(cors());
+app.use(cors({exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version']}));
 app.disable('x-powered-by');
 app.disable('etag');
 app.use(require('body-parser').json({extended: true}));
