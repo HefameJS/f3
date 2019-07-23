@@ -8,6 +8,13 @@ const txTypes = require(BASE + 'model/txTypes');
 const txStatus = require(BASE + 'model/txStatus');
 
 
+function identifyAuthenticatingUser(req) {
+	if (req && req.token && req.token.sub) {
+		return req.token.sub;
+	}
+	return undefined;
+}
+
 module.exports.emitSapRequest = function (txId, url, req) {
 	var data = {
       $setOnInsert: {
@@ -88,7 +95,8 @@ module.exports.emitConfirmacionPedido = function (req, res, responseBody, status
 			_id: req.txId,
 			createdAt: new Date(),
 			status: status,
-			iid: global.instanceID
+			iid: global.instanceID,
+			authenticatingUser: identifyAuthenticatingUser(req)
 		},
 		$set: {
 			modifiedAt: new Date(),
