@@ -9,7 +9,7 @@ const removePos = [ 'posicion_sap', 'valeestupefacientes', 'sap_ignore' ];
 const replaceCab = [ 'numeroPedido', 'codigoCliente', 'direccionEnvio', 'numeroPedidoOrigen', 'tipoPedido', 'codigoAlmacenServicio', 'fechaPedido', 'fechaServicio', 'cargoCooperativo', 'empresaFacturadora' ];
 const replacePos = [ 'codigoArticulo', 'codigoUbicacion', 'codigoArticuloSustituyente', 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'valeEstupefaciente', 'fechaLimiteServicio', 'servicioDemorado', 'estadoServicio', 'servicioAplazado' ];
 
-const removeCabEmptyString = [ 'condicion', 'observaciones', 'direccionEnvio', 'empresaFacturadora', 'tipoPedido' ];
+const removeCabEmptyString = [ 'condicion', 'observaciones', 'direccionEnvio', 'empresaFacturadora', 'tipoPedido', 'fechaServicio' ];
 const removeCabEmptyArray = [ 'notificaciones', 'incidencias', 'alertas' ];
 const removeCabZeroValue = [ 'aplazamiento' ];
 const removeCabIfFalse = [ 'cargoCooperativo' ];
@@ -97,9 +97,7 @@ var establecerNumeroPedido = function(message, pedidoOriginal) {
 
 var establecerFechas = function(message) {
 	if (!message.fechaPedido)
-		message.fechaPedido = Date.fedicomDate();
-	if (!message.fechaServicio)
-		message.fechaServicio = message.fechaPedido;
+		message.fechaPedido = Date.fedicomDateTime();
 	return message;
 };
 
