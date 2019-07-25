@@ -19,7 +19,7 @@ exports.doAuth = function (req, res) {
 	Events.authentication.emitAuthRequest(req);
 
 
-  var AuthReq = require(BASE + 'model/authReq');
+  var AuthReq = require(BASE + 'model/auth/authReq');
   try {
 	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {

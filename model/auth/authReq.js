@@ -3,7 +3,7 @@ const BASE = global.BASE;
 const config = global.config;
 const Tokens = require(BASE + 'util/tokens');
 const FedicomError = require(BASE + 'model/fedicomError');
-const domain = require(BASE + 'model/domain');
+const domain = require(BASE + 'model/auth/domain');
 
 
 
