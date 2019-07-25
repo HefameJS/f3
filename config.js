@@ -2,7 +2,7 @@
 const BASE = global.BASE;
 const L = global.logger;
 
-const err = require(BASE + 'model/exitCodes');
+const err = require(BASE + 'model/static/exitCodes');
 
 var configVerificator = {
 	sapSystems: function(config) {

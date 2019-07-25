@@ -7,7 +7,7 @@ process.title = 'fedicom3-core';
 require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
-const errCode = require(BASE + 'model/exitCodes');
+const errCode = require(BASE + 'model/static/exitCodes');
 global.serverVersion = '0.2.2';
 global.protocolVersion = '3.3.5';
 global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
