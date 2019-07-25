@@ -52,6 +52,8 @@ class LineaDevolucion {
 		if (this.codigoArticulo) crc += this.codigoArticulo;
 		if (this.codigoMotivo) crc += this.codigoMotivo;
 		if (this.cantidad) crc += this.cantidad;
+		if (this.lote) crc += this.lote;
+		if (this.fechaCaducidad) crc += this.fechaCaducidad;
 		if (this.valeEstupefaciente) crc += this.valeEstupefaciente;
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(crc).digest('hex');
