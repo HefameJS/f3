@@ -3,7 +3,7 @@ const BASE = global.BASE;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
-const LineaPedido = require(BASE + 'model/lineaPedido');
+const LineaPedido = require(BASE + 'model/pedido/lineaPedido');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 const crypto = require('crypto');
 
