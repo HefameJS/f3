@@ -6,7 +6,7 @@ const L = global.logger;
 const Events = require(BASE + 'interfaces/events');
 //const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
-const txStatus = require(BASE + 'model/txStatus');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 
 

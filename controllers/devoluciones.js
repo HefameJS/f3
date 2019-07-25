@@ -10,7 +10,7 @@ const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
 const sanearDevolucionSAP = require(BASE + 'util/devolucionesSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
-const txStatus = require(BASE + 'model/txStatus');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 
 

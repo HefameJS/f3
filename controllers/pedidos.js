@@ -9,7 +9,7 @@ const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
 const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
-const txStatus = require(BASE + 'model/txStatus');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 const L = global.logger;
 

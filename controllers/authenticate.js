@@ -7,7 +7,7 @@ const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const controllerHelper = require(BASE + 'util/controllerHelper');
-const txStatus = require(BASE + 'model/txStatus');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 
 

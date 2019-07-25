@@ -4,8 +4,8 @@ const L = global.logger;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
-const txTypes = require(BASE + 'model/txTypes');
-const txStatus = require(BASE + 'model/txStatus');
+const txTypes = require(BASE + 'model/static/txTypes');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 
 
