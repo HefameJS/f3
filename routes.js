@@ -76,14 +76,6 @@ module.exports = function(app) {
 		.post(controllers.confirmacionPedido.confirmaPedido);
 
 
-	app.route('/info').get(function (req, res) {
-		res.status(200).sendFile(BASE + 'serverinfo.html');
-	});
-	app.route('/api-fedicom3.pdf').get(function (req, res) {
-		res.status(200).sendFile(BASE + 'api-fedicom3.pdf');
-	});
-
-
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
 
