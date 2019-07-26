@@ -8,6 +8,8 @@ const dbName = config.mongodb.database;
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
+const txTypes = require(BASE + 'model/static/txTypes');
+
 const client = new MongoClient(mongourl, {
 	useNewUrlParser: true,
 	autoReconnect: true
@@ -23,10 +25,10 @@ const iSqlite = require(BASE + 'interfaces/isqlite');
 // Use connect method to connect to the Server
 client.connect(function(err) {
 	if (err) {
-		L.f(['*** NO SE PUDO CONECTAR A MONGODB ***', mongourl, err]);
+		L.f(['*** NO SE PUDO CONECTAR A MONGODB ***', mongourl, err], 'mongodb');
 	}
 	else {
-		L.i(['*** Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones']);
+		L.i(['*** Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones'], 'mongodb');
 		db = client.db(dbName);
 		collection = db.collection(config.mongodb.txCollection);
 	}
@@ -48,6 +50,16 @@ exports.findTxByCrc = function(tx, cb) {
 		collection.findOne( {crc: crc}, cb );
 	} else {
 		L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
+		cb({error: "No conectado a MongoDB"}, null);
+	}
+};
+
+exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
+	if (client.isConnected() ) {
+		L.xd(txId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
+		collection.findOne( {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}, cb );
+	} else {
+		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };

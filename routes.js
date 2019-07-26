@@ -67,6 +67,7 @@ module.exports = function(app) {
 		.get(controllers.pedidos.getPedido);
 
 	app.route('/devoluciones')
+		.get(controllers.devoluciones.getDevolucion)
 		.post(controllers.devoluciones.saveDevolucion);
 
 	app.route('/devoluciones/:numeroDevolucion')

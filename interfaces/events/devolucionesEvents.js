@@ -167,3 +167,94 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 	Imongo.commit(resData);
 	L.yell(res.txId, txTypes.CREAR_DEVOLUCION, status, [responseBody]);
 }
+
+
+
+
+module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, status) {
+
+	var data = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req),
+			iid: global.instanceID
+		},
+		$set: {
+			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
+			modifiedAt: new Date(),
+			type: txTypes.CONSULTAR_DEVOLUCION,
+			status: status,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarDevolucion', data['$set']], 'txCommit');
+	Imongo.commit(data);
+}
+module.exports.emitRequestConsultarDevolucion = function(req) {
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			status: txStatus.RECEPCIONADO,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID
+		},
+		$set: {
+			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
+			modifiedAt: new Date(),
+			type: txTypes.CONSULTAR_DEVOLUCION,
+			clientRequest: {
+				authentication: req.token,
+      		ip: req.ip,
+      		protocol: req.protocol,
+      		method: req.method,
+      		url: req.originalUrl,
+      		route: req.route.path,
+      		headers: req.headers,
+      		body: req.body
+			}
+		}
+	};
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion', reqData['$set']], 'txCommit');
+	Imongo.commit(reqData);
+}
+module.exports.emitResponseConsultarDevolucion = function (res, responseBody, status) {
+	var resData = {
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$set: {
+			modifiedAt: new Date(),
+			status: status,
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarDevolucion', resData['$set']], 'txCommit');
+	Imongo.commit(resData);
+}
