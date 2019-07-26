@@ -1,6 +1,7 @@
 'use strict';
 const BASE = global.BASE;
-
+const txTypes = require(BASE + 'model/static/txTypes');
+const txStatus = require(BASE + 'model/static/txStatus');
 var conf = global.config;
 
 module.exports = {
@@ -20,7 +21,22 @@ module.exports = {
 	xe: function (id, data, category) { writeTx(id, data, 9000, category); },
 
 	f: function (data, category) { writeServer(data, 10000, category); },
-	xf: function (id, data, category) { writeTx(id, data, 10000, category); }
+	xf: function (id, data, category) { writeTx(id, data, 10000, category); },
+
+	yell: function (txId, txType, txStat, data) {
+		if (!Array.isArray(data)) data = [data];
+
+		var event = {
+			tx: txId,
+			yell: true,
+			txType: txType,
+			txStatus: txStat,
+			data: data,
+			timestamp: new Date()
+		};
+		writeMongo(event);
+	}
+
 };
 var L = module.exports;
 

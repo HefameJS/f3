@@ -45,6 +45,8 @@ module.exports.emitAuthRequest = function (req) {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
+
+	L.yell(req.txId, txTypes.AUTENTICAR, txStatus.RECEPCIONADO, [reqData['$setOnInsert'].authenticatingUser]);
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
@@ -66,4 +68,5 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse', resData['$set']], 'txCommit');
 	Imongo.commit(resData);
+	L.yell(res.txId, txTypes.AUTENTICAR, status, []);
 }

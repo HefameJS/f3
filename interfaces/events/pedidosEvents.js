@@ -66,6 +66,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado', data, dataUpdate['$push'].duplicates], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
+	L.yell(req.txId, txTypes.PEDIDO_DUPLICADO, txStatus.DUPLICADO, [originalTx._id]);
 }
 
 module.exports.emitErrorConsultarPedido = function (req, res, responseBody, status) {
@@ -191,6 +192,7 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento emitErrorCrearPedido', data['$set']], 'txCommit');
 	Imongo.commit(data);
+	L.yell(req.txId, txTypes.CREAR_PEDIDO, status, [identifyAuthenticatingUser(req), responseBody]);
 }
 module.exports.emitRequestCrearPedido = function(req, pedido) {
 	var reqData = {
@@ -221,6 +223,7 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedReq', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
+	L.yell(req.txId, txTypes.CREAR_PEDIDO, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), pedido.crc, req.body]);
 }
 module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
 	var resData = {
@@ -239,4 +242,5 @@ module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento PedRes', resData['$set']], 'txCommit');
 	Imongo.commit(resData);
+	L.yell(res.txId, txTypes.CREAR_PEDIDO, status, [responseBody]);
 }

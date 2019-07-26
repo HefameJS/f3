@@ -47,4 +47,5 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 	}
 	L.xi(req.txId, ['Emitiendo COMMIT para evento Discard', data['$set']], 'txCommit');
 	Imongo.commit(data);
+	L.yell(req.txId, txTypes.INVALIDO, txStatus.DESCARTADO, [data['$set'].clientRequest]);
 }

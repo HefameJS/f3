@@ -23,44 +23,6 @@ function identifyClient(req) {
 	return undefined;
 }
 
-
-
-module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, status) {
-
-	var data = {
-		$setOnInsert: {
-			_id: req.txId,
-			createdAt: new Date(),
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
-			iid: global.instanceID
-		},
-		$set: {
-			modifiedAt: new Date(),
-			type: txTypes.CREAR_DEVOLUCION,
-			status: status,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.ip,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: responseBody
-			}
-		}
-	}
-
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion', data['$set']], 'txCommit');
-	Imongo.commit(data);
-}
 module.exports.emitDevolucionDuplicada = function (req, res, responseBody, originalTx) {
 
 	var data = {
@@ -104,6 +66,45 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada', data, dataUpdate['$push'].duplicates], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
+	L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTx._id]);
+}
+
+module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, status) {
+
+	var data = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req),
+			iid: global.instanceID
+		},
+		$set: {
+			modifiedAt: new Date(),
+			type: txTypes.CREAR_DEVOLUCION,
+			status: status,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			}
+		}
+	}
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion', data['$set']], 'txCommit');
+	Imongo.commit(data);
+	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, status, [identifyAuthenticatingUser(req), responseBody]);
 }
 module.exports.emitRequestDevolucion = function(req, devolucion) {
 	var reqData = {
@@ -134,6 +135,7 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
+	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), devolucion.crc, req.body]);
 }
 module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 	var resData = {
@@ -152,4 +154,5 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseDevolucion', resData['$set']], 'txCommit');
 	Imongo.commit(resData);
+	L.yell(res.txId, txTypes.CREAR_DEVOLUCION, status, [responseBody]);
 }

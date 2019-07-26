@@ -120,8 +120,7 @@ module.exports.emitConfirmacionPedido = function (req, res, responseBody, status
 		}
 	}
 
-
-
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
+	L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, status, [req.body]);
 }

@@ -3,7 +3,7 @@
 
 
 module.exports = {
-
+	DESCONOCIDO: 999,
 	OK: 0,
 	RECEPCIONADO: 1,
 	ESPERANDO_INCIDENCIAS: 2,
