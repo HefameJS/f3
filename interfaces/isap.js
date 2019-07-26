@@ -6,9 +6,13 @@ const Events = require(BASE + 'interfaces/events');
 const request = require('request');
 
 exports.authenticate = function ( txId, authReq, callback ) {
-
-  var sapSystem = new SapSystem(config.getDefaultSapSystem());
-  var url = sapSystem.getURI('/api/zverify_fedi_credentials');
+	var sapSystemData = authReq.sap_system ? config.getSapSystem(authReq.sap_system) : config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zverify_fedi_credentials');
 
   var httpCallParams = {
     followAllRedirects: true,
@@ -26,20 +30,20 @@ exports.authenticate = function ( txId, authReq, callback ) {
     Events.sap.emitSapResponse(txId, res, body, err);
 
     if (err) {
-      callback(err, res, body);
+      callback(err, res, body, false);
       return;
     }
 
     var statusCodeType = Math.floor(res.statusCode / 100);
 
-    if (statusCodeType === 2) {
-        callback(null, res, body);
-    } else {
-        callback({
-          errno: res.statusCode,
-          code: res.statusMessage
-        }, res, body)
-    }
+	 	if (statusCodeType === 2) {
+			callback(null, res, body, false);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body, false)
+		}
 
   });
 

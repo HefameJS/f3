@@ -34,6 +34,8 @@ class AuthReq {
 			}
 		}
 
+		// COPIA DE PROPIEDADES
+		Object.assign(this, json);
     }
 
     generateJWT(includePassword) {

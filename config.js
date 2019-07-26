@@ -138,7 +138,7 @@ config.getSapSystem = function (sapsid) {
   if (sapsid && this.sap_systems[sapsid]) {
     return this.sap_systems[sapsid];
   }
-  L.e("No se encuentra el sistema SAP [" + sapsid + "]");
+  global.logger.e("No se encuentra el sistema SAP [" + sapsid + "]");
   return null;
 }
 config.getMongoUrl = function (servers, username, password, database, replicaSet) {

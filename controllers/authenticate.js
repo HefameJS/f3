@@ -29,14 +29,21 @@ exports.doAuth = function (req, res) {
   }
 
 	if (authReq.domain === 'FEDICOM') {
-		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody) {
+		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody, abort) {
 			if (sapErr) {
-				L.xe(txId, ['Ocurrió un error en la llamada a SAP. Se genera token temporal.', sapErr]);
-				var token = authReq.generateJWT(true);
-				var responseBody = {auth_token: token};
-				res.status(201).json(responseBody);
-				Events.authentication.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
+				L.xe(txId, ['Ocurrió un error en la llamada a SAP. Se genera token temporal.', sapErr, abort]);
+				if (abort) {
+					var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
+					var responseBody = fedicomError.send(res);
+					Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+				} else {
+					var token = authReq.generateJWT(true);
+					var responseBody = {auth_token: token};
+					res.status(201).json(responseBody);
+					Events.authentication.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
+				}
 				return;
+
 			}
 
 			if (sapBody.username) {
