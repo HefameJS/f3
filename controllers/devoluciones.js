@@ -69,13 +69,19 @@ exports.saveDevolucion = function (req, res) {
 			L.xd(req.txId, ['No se encontró ninguna transmisión anterior con este CRC', err, dbTx], 'txCRC');
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
 
-			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody) {
+			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody, abort) {
 				if (sapErr) {
-					console.log("INDICENCIA EN LA COMUNICACION SAP");
-					console.log(sapErr);
-					res.status(500).json(sapErr);
-					Events.devoluciones.emitResponseDevolucion(res, sapErr, txStatus.NO_SAP);
-					return;
+					if (abort) {
+						var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
+						var responseBody = fedicomError.send(res);
+						Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+					} else {
+						L.xe(req.txId, ['Incidencia en la comunicación con SAP', sapErr]);
+						// TODO: AQUI DEBEMOS GENERAR MENSAJE DE VUELVA CON DEVOLUCION SIMULADA .. O NO
+						res.status(500).json(sapErr);
+						Events.devoluciones.emitResponseDevolucion(res, sapErr, txStatus.NO_SAP);
+						return;
+					}
 				}
 
 				var response = sanearDevolucionSAP(sapBody, devolucion);

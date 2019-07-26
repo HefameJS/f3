@@ -50,8 +50,12 @@ exports.authenticate = function ( txId, authReq, callback ) {
 }
 
 exports.realizarPedido = function ( txId, pedido, callback ) {
-
-	var sapSystem = new SapSystem(config.getDefaultSapSystem());
+	var sapSystemData = pedido.sap_system ? config.getSapSystem(pedido.sap_system) : config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
 	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos');
 
 	var httpCallParams = {
@@ -89,8 +93,12 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 
 
 exports.realizarDevolucion = function ( txId, devolucion, callback ) {
-
-	var sapSystem = new SapSystem(config.getDefaultSapSystem());
+	var sapSystemData = devolucion.sap_system ? config.getSapSystem(devolucion.sap_system) : config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
 	var url = sapSystem.getURI('/api/zsd_ent_ped_api/devoluciones');
 
 	var httpCallParams = {
