@@ -74,12 +74,12 @@ exports.saveDevolucion = function (req, res) {
 					if (abort) {
 						var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
 						var responseBody = fedicomError.send(res);
-						Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+						Events.devoluciones.emitResponseDevolucion(res, responseBody, txStatus.PETICION_INCORRECTA);
 					} else {
 						L.xe(req.txId, ['Incidencia en la comunicación con SAP', sapErr]);
-						// TODO: AQUI DEBEMOS GENERAR MENSAJE DE VUELVA CON DEVOLUCION SIMULADA .. O NO
-						res.status(500).json(sapErr);
-						Events.devoluciones.emitResponseDevolucion(res, sapErr, txStatus.NO_SAP);
+						var fedicomError = new FedicomError('HTTP-503', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
+						var responseBody = fedicomError.send(res)
+						Events.devoluciones.emitResponseDevolucion(res, responseBody, txStatus.NO_SAP);
 						return;
 					}
 				}

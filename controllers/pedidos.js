@@ -70,11 +70,11 @@ exports.savePedido = function (req, res) {
 					if (abort) {
 						var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
 						var responseBody = fedicomError.send(res);
-						Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+						Events.pedidos.emitResponseCrearPedido(res, responseBody, txStatus.PETICION_INCORRECTA);
 					} else {
 						L.xe(req.txId, ['Incidencia en la comunicación con SAP', sapErr]);
-						// TODO: AQUI DEBEMOS GENERAR MENSAJE DE VUELVA CON FALTAS SIMULADAS
-						res.status(500).json(sapErr);
+						pedido.simulaFaltas();
+						res.status(201).json(pedido);
 						Events.pedidos.emitResponseCrearPedido(res, sapErr, txStatus.NO_SAP);
 					}
 					return;

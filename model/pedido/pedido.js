@@ -78,6 +78,22 @@ class Pedido {
 		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 	}
 
+	simulaFaltas() {
+		this.lineas.forEach( function (linea) {
+			linea.simulaFaltas();
+		});
+		var fedicomError = {codigo: 'PED-WARN-999', descripcion: 'Pedido recibido - Incidencias no disponibles'};
+		if (this.incidencias && this.incidencias.push) {
+			this.incidencias.push( fedicomError );
+		} else {
+			this.incidencias = [fedicomError];
+		}
+		this.fechaPedido = Date.fedicomDateTime();
+		this.numeroPedido = this.crc;
+		delete this.crc;
+		delete this.login;
+	}
+
 
 }
 
