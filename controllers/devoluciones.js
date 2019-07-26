@@ -55,9 +55,9 @@ exports.saveDevolucion = function (req, res) {
 			if (dbTx.clientResponse.statusCode === 201 && dupeResponse.length > 0) {
 				dupeResponse.forEach( function (dev) {
 					if (!dev.incidencias) {
-						dev.incidencias = [ {codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'} ];
+						dev.incidencias = [ {codigo: 'PED-WARN-999', descripcion: 'Devolución duplicada'} ];
 					} else {
-						dev.incidencias.push({codigo: 'PED-WARN-Z99', descripcion: 'Devolución duplicada'});
+						dev.incidencias.push({codigo: 'PED-WARN-999', descripcion: 'Devolución duplicada'});
 					}
 				});
 			}
@@ -101,6 +101,9 @@ exports.saveDevolucion = function (req, res) {
 exports.getDevolucion = function (req, res) {
 
 	L.xi(req.txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
-	res.status(503).json(new FedicomError(503, 'No implementado', 503));
+	(new FedicomError('HTTP-503', 'No implementado', 503)).send(res);
+
+
+
 
 }
