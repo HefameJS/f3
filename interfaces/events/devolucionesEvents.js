@@ -138,9 +138,20 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), devolucion.crc, req.body]);
 }
 module.exports.emitResponseDevolucion = function (res, responseBody, status) {
+
+	var numerosDevolucion = [];
+	if (responseBody && responseBody.length > 0) {
+		responseBody.forEach( function (devolucion) {
+			if (devolucion && devolucion.numeroDevolucion) {
+					numerosDevolucion.push(devolucion.numeroDevolucion);
+			}
+		});
+	}
+
 	var resData = {
 		$setOnInsert: { _id: res.txId, createdAt: new Date() },
 		$set: {
+			numerosDevolucion: numerosDevolucion,
 			modifiedAt: new Date(),
 			status: status,
 			clientResponse: {
