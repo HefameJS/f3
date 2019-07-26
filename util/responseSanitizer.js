@@ -14,7 +14,7 @@ const removeCabEmptyArray = [ 'notificaciones', 'incidencias', 'alertas' ];
 const removeCabZeroValue = [ 'aplazamiento' ];
 const removeCabIfFalse = [ 'cargoCooperativo' ];
 
-const removePosEmptyString = [ 'codigoUbicacion', 'codigoArticuloSustituyente', 'valeEstupefaciente', 'fechaLimiteServicio', 'estadoServicio', 'servicioAplazado' ];
+const removePosEmptyString = [ 'codigoUbicacion', 'codigoArticuloSustituyente', 'valeEstupefaciente', 'fechaLimiteServicio', 'estadoServicio', 'servicioAplazado', 'observaciones' ];
 const removePosEmptyArray = [ 'notificaciones', 'incidencias', 'alertas' ];
 const removePosZeroValue = [ 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'precio' ];
 const removePosIfFalse = [ 'servicioDemorado' ];
