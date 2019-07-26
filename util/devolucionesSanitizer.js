@@ -7,7 +7,7 @@ const removeCab = [ 'login', 'crc' ];
 const removePos = [ 'sap_ignore' ];
 
 const replaceCab = [ 'numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'];
-const replacePos = [ 'numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente' ];
+const replacePos = [ 'numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente', 'fechaCaducidad' ];
 
 const removeCabEmptyString = [ 'codigoRecogida', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora', 'observaciones' ];
 const removeCabEmptyArray = [ 'incidencias' ];
