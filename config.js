@@ -101,7 +101,25 @@ var configVerificator = {
 			console.error("No se ha definido el path para la base de datos de SQLite (sqlite.db_path)");
 			process.exit(err.E_SQLITE_NO_PATH);
 		}
+	},
+	watchdog: function(config) {
+		if (!config.watchdog) {
+			console.error("No se encuentra definido el nodo WATCHDOG (watchdog)")
+			process.exit(err.E_NO_WATCHDOG_CONFIG);
+		}
+		this.watchdog_http(config);
+	},
+	watchdog_http: function (config) {
+		if (!config.watchdog.https) {
+			console.error("No se ha definido el nodo WATCHDOG - HTTPS (watchdog.https)");
+			process.exit(err.E_WATCHDOG_NO_HTTPS);
+		}
+		if (!config.watchdog.https.port) {
+			console.error("No se ha definido el puerto para WATCHDOG - HTTPS (watchdog.https.port)");
+			process.exit(err.E_WATCHDOG_NO_HTTPS_PORT);
+		}
 	}
+
 };
 var config = {};
 

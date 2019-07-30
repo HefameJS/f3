@@ -14,6 +14,7 @@ module.exports.devoluciones = require('./events/devolucionesEvents');
 module.exports.pedidos = require('./events/pedidosEvents');
 module.exports.authentication = require('./events/authenticationEvents');
 module.exports.sap = require('./events/sapEvents');
+module.exports.retransmit = require('./events/retransmit');
 
 
 

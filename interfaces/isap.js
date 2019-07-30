@@ -5,7 +5,7 @@ const SapSystem = require(BASE + 'model/sapsystem');
 const Events = require(BASE + 'interfaces/events');
 const request = require('request');
 
-exports.authenticate = function ( txId, authReq, callback ) {
+exports.authenticate = function ( txId, authReq, callback, noEvents) {
 	var sapSystemData = authReq.sap_system ? config.getSapSystem(authReq.sap_system) : config.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
@@ -91,7 +91,6 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 	});
 }
 
-
 exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 	var sapSystemData = devolucion.sap_system ? config.getSapSystem(devolucion.sap_system) : config.getDefaultSapSystem();
 	if (!sapSystemData) {
@@ -132,4 +131,37 @@ exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 		}
 
 	});
+}
+
+exports.retransmit = function ( txId, sapRequest, callback) {
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: sapRequest.url,
+		method: sapRequest.method,
+		headers: sapSystem.getAuthHeaders(),
+		body: sapRequest.body,
+		encoding: 'latin1'
+	};
+
+	request(httpCallParams, function(err, res, body) {
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+
+
 }

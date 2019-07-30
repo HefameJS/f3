@@ -70,12 +70,12 @@ exports.savePedido = function (req, res) {
 					if (abort) {
 						var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
 						var responseBody = fedicomError.send(res);
-						Events.pedidos.emitResponseCrearPedido(res, responseBody, txStatus.PETICION_INCORRECTA);
+						Events.pedidos.emitResponseCrearPedido(res, responseBody, txStatus.SISTEMA_SAP_NO_DEFINIDO);
 					} else {
 						L.xe(req.txId, ['Incidencia en la comunicación con SAP', sapErr]);
 						pedido.simulaFaltas();
 						res.status(201).json(pedido);
-						Events.pedidos.emitResponseCrearPedido(res, sapErr, txStatus.NO_SAP);
+						Events.pedidos.emitResponseCrearPedido(res, pedido, txStatus.NO_SAP);
 					}
 					return;
 				}
@@ -84,7 +84,7 @@ exports.savePedido = function (req, res) {
 				var response = sanitizeSapResponse(sapBody, pedido);
 
 				if (Array.isArray(response)) {
-					res.status(412).json(response);
+					res.status(409).json(response);
 					Events.pedidos.emitResponseCrearPedido(res, response, txStatus.RECHAZADO_SAP);
 				} else {
 					res.status(201).json(response);

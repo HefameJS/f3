@@ -35,7 +35,7 @@ exports.doAuth = function (req, res) {
 				if (abort) {
 					var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
 					var responseBody = fedicomError.send(res);
-					Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+					Events.authentication.emitAuthResponse(res, responseBody, txStatus.SISTEMA_SAP_NO_DEFINIDO);
 				} else {
 					var token = authReq.generateJWT(true);
 					var responseBody = {auth_token: token};

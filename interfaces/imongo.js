@@ -36,6 +36,24 @@ client.connect(function(err) {
 
 exports.ObjectID = ObjectID;
 
+
+exports.findTxById= function(txId, id, cb) {
+	if (client.isConnected() ) {
+		try {
+			id = new ObjectID(id);
+		} catch (ex) {
+			L.xe(txId, ['**** Error al buscar la transmisión por ID', id, ex]);
+			cb(ex, null);
+			return;
+		}
+		collection.findOne( {_id: id}, cb );
+	} else {
+		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
+		cb({error: "No conectado a MongoDB"}, null);
+	}
+};
+
+
 exports.findTxByCrc = function(tx, cb) {
 	if (client.isConnected() ) {
 		var crc;
@@ -85,6 +103,7 @@ function mergeDataWithCache(oldData, newData) {
 			}
 		}
 
+		//TODO: Hacer merge PUSH
 		return oldData;
 	} else {
 		return newData;
@@ -99,7 +118,7 @@ exports.commit = function(data, noMerge) {
 	var cachedData = commitBuffer.get(key);
 
 	if (cachedData && !noMerge) {
-		L.xt(key, ['Agregando con datos en cache', {set: cachedData['$set'], push: cachedData['push']}], 'txBuffer');
+		L.xt(key, ['Agregando con datos en cache', {setOnInsert: cachedData['$setOnInsert'], set: cachedData['$set'], push: cachedData['$push']}], 'txBuffer');
 		data = mergeDataWithCache(cachedData, data);
 	}
 
@@ -110,12 +129,12 @@ exports.commit = function(data, noMerge) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				iSqlite.storeTx(data);
 			} else {
-				L.xd(key, ['COMMIT realizado', {set: data['$set'], push: data['push']}], 'txCommit');
+				L.xd(key, ['COMMIT realizado', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txCommit');
 			}
 	   });
 	}
 	else {
-	   L.xf(key, ['ERROR AL HACER COMMIT', {set: data['$set'], push: data['push']}], 'txCommit');
+	   L.xf(key, ['ERROR AL HACER COMMIT', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txCommit');
 		iSqlite.storeTx(data);
 	}
 
@@ -131,7 +150,7 @@ exports.buffer = function(data) {
 
 	var key = data['$setOnInsert']._id ;
 
-	L.xd(key, ['Añadiendo datos al buffer', {set: data['$set'], push: data['push']}], 'txBuffer');
+	L.xd(key, ['Añadiendo datos al buffer', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txBuffer');
 
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
@@ -140,7 +159,7 @@ exports.buffer = function(data) {
 		exports.commit(value, false);
 	});
 
-	L.xt(key, ['Datos actuales del buffer', {set: mergedData['$set'], push: mergedData['push']}], 'txBuffer');
+	L.xt(key, ['Datos actuales del buffer', {setOnInsert: mergedData['$setOnInsert'], set: mergedData['$set'], push: mergedData['$push']}], 'txBuffer');
 
 
 }

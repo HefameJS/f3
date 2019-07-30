@@ -35,9 +35,47 @@ module.exports = {
 			timestamp: new Date()
 		};
 		writeMongo(event);
-	}
+	},
 
 };
+
+if (process.title === 'fedicom3-watchdog') {
+	module.exports = {
+		t: function (data, category) { writeServer(data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
+		xt: function (id, data, category) { writeTx(id, data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		d: function (data, category) { writeServer(data, 3000, category ? 'watchdog-' + category : 'watchdog'); },
+		xd: function (id, data, category) { writeTx(id, data, 3000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		i: function (data, category) { writeServer(data, 5000, category ? 'watchdog-' + category : 'watchdog'); },
+		xi: function (id, data, category) { writeTx(id, data, 5000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		w: function (data, category) { writeServer(data, 7000, category ? 'watchdog-' + category : 'watchdog'); },
+		xw: function (id, data, category) { writeTx(id, data, 7000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		e: function (data, category) { writeServer(data, 9000, category ? 'watchdog-' + category : 'watchdog'); },
+		xe: function (id, data, category) { writeTx(id, data, 9000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		f: function (data, category) { writeServer(data, 10000, category ? 'watchdog-' + category : 'watchdog'); },
+		xf: function (id, data, category) { writeTx(id, data, 10000, category ? 'watchdog-' + category : 'watchdog'); },
+
+		yell: function (txId, txType, txStat, data) {
+			if (!Array.isArray(data)) data = [data];
+
+			var event = {
+				tx: txId,
+				yell: true,
+				txType: txType,
+				txStatus: txStat,
+				data: data,
+				timestamp: new Date()
+			};
+			writeMongo(event);
+		},
+	};
+}
+
+
 var L = module.exports;
 
 const MongoClient = require('mongodb').MongoClient;
@@ -58,7 +96,7 @@ client.connect(function(err, db) {
 		var db = client.db(conf.mongodb.database);
 		var colName = conf.mongodb.logCollection || 'log';
 		collection = db.collection(colName);
-		L.i(['*** Conectado a la colección [' + conf.mongodb.database + '.' + colName + '] para almacenamiento de logs']);
+		L.i(['*** Conectado a la colección [' + conf.mongodb.database + '.' + colName + '] para almacenamiento de logs'], 'logs');
 	}
 });
 

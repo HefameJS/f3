@@ -52,5 +52,13 @@
 			"username": "fedicom",
 			"password": "secretT01"
 		}
+	},
+	"watchdog": {
+		"https": {
+			"port": 50010,
+			"cert": "ssl/server.crt",
+			"key": "ssl/server.key",
+			"passphrase": ""
+		}
 	}
 }
