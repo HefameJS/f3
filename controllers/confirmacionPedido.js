@@ -24,7 +24,7 @@ exports.confirmaPedido = function (req, res) {
 		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
 	} catch (ex) {
 		var responseBody = controllerHelper.sendException(ex, req, res);
-		Events.pedidos.emitConfirmacionPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+		Events.sap.emitConfirmacionPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
 
