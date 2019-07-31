@@ -3,7 +3,7 @@ const BASE = global.BASE;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
-const LineaConfirmacionPedido = require(BASE + 'model/pedido/confirmacionLineaPedidoSAP');
+const ConfirmacionLineaPedidoSAP = require(BASE + 'model/pedido/confirmacionLineaPedidoSAP');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 const crypto = require('crypto');
 
@@ -18,9 +18,10 @@ function parseLines( json, txId ) {
 	function rellena ( lineas ) {
 
 		json.lineas.forEach( function (linea) {
-			var lineaPedido = new LineaConfirmacionPedido(linea, txId);
+			var lineaPedido = new ConfirmacionLineaPedidoSAP(linea, txId);
 			lineas.push(lineaPedido);
 		});
+		return lineas;
 
 	}
 	return rellena( lineas );
@@ -56,7 +57,10 @@ class ConfirmacionPedidoSAP {
 		// RE-GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigocliente + this.numeropedidoorigen).digest('hex').substring(0,24).toUpperCase();
-		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC')
+		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC');
+
+
+
 	}
 
 

@@ -87,8 +87,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 }
 
 
-
-module.exports.emitConfirmacionPedido = function (req, res, responseBody, status) {
+module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, status) {
 
 	var reqData = {
 		$setOnInsert: {
@@ -120,7 +119,70 @@ module.exports.emitConfirmacionPedido = function (req, res, responseBody, status
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido', reqData['$set']], 'txCommit');
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, status, [req.body]);
+}
+
+module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, originalTx) {
+
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			status: txStatus.OK,
+			iid: global.instanceID,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			confirmingId: originalTx._id,
+			modifiedAt: new Date(),
+			type: txTypes.CONFIRMACION_PEDIDO,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				status: res.statusCode,
+				headers: res.getHeaders(),
+				body: confirmTxBody
+			}
+		}
+	}
+
+	var numerosPedidoSAP = confirmTxBody.numeropedido.push ? confirmTxBody.numeropedido : [confirmTxBody.numeropedido];
+	var updateData = {
+		$setOnInsert: {
+			_id: originalTx._id
+		},
+		$set: {
+			modifiedAt: new Date(),
+			status: txStatus.OK,
+			numerosPedidoSAP: numerosPedidoSAP
+		},
+		$push:{
+			sapConfirms: {
+				txId: req.txId,
+				timestamp: new Date(),
+				sapSystem: identifyAuthenticatingUser(req),
+				body: confirmTxBody
+			}
+		}
+	}
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido',
+		reqData['$setOnInsert'],
+		updateData['$set'],
+		updateData['$push'],
+		], 'txCommit');
+	Imongo.commit(reqData);
+	Imongo.commit(updateData);
+
+	// L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, [confirmTxBody]);
+	L.yell(originalTx._id, originalTx.type, txStatus.OK, numerosPedidoSAP);
 }
