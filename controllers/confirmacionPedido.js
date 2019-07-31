@@ -4,7 +4,8 @@ const config = global.config;
 const L = global.logger;
 
 const Events = require(BASE + 'interfaces/events');
-//const FedicomError = require(BASE + 'model/fedicomError');
+const FedicomError = require(BASE + 'model/fedicomError');
+const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
 const Tokens = require(BASE + 'util/tokens');
 const txStatus = require(BASE + 'model/static/txStatus');
 
@@ -16,18 +17,23 @@ const txStatus = require(BASE + 'model/static/txStatus');
 exports.confirmaPedido = function (req, res) {
 
 	L.xi(req.txId, ['Procesando confirmación de pedido']);
-
 	req.token = Tokens.verifyJWT(req.token, req.txId);
+	L.xd(req.txId, ['Datos de confirmacion recibidos', req.body]);
 
-	var confirmacion = req.body;
-	L.xd(req.txId, ['Datos de confirmacion recibidos', confirmacion]);
+	try {
+		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
+	} catch (ex) {
+		var responseBody = controllerHelper.sendException(ex, req, res);
+		Events.pedidos.emitConfirmacionPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+		return;
+	}
 
-	var response = {
-		ok: true
-	};
+	res.status(200).json({ok: true, procesado: confirmacionPedidoSAP});
 
-	res.status(200).json(response);
-	Events.sap.emitConfirmacionPedido(req, res, response, txStatus.OK);
+	Events.sap.emitConfirmacionPedido(req, res, confirmacionPedidoSAP, txStatus.OK);
+
+
+
 
 
 
