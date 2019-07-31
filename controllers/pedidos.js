@@ -37,7 +37,7 @@ exports.savePedido = function (req, res) {
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(req.txId, ['El conenido de la transmisión es un pedido correcto', pedido]);
+	L.xd(req.txId, ['El contenido de la transmisión es un pedido correcto', pedido]);
 
 
 
