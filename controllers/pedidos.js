@@ -116,6 +116,7 @@ exports.getPedido = function (req, res) {
 	Events.pedidos.emitRequestConsultarPedido(req);
 	Imongo.findTxByCrc( numeroPedido, function (err, dbTx) {
 		if (err) {
+			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			var responseBody = error.send(res);
 			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
