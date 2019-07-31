@@ -55,7 +55,7 @@ class ConfirmacionPedidoSAP {
 
 		// RE-GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
+		this.crc = hash.update(this.codigocliente + this.numeropedidoorigen).digest('hex').substring(0,24).toUpperCase();
 		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC')
 	}
 
