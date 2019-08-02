@@ -33,9 +33,6 @@ module.exports =  {
 				if (errorObject) errorObject.add(errorCode, errorDesc, 400);
 				return true;
 			}
-		} else {
-			if (errorObject) errorObject.add(errorCode, errorDesc, 400);
-			return true;
 		}
 		return false;
 	},

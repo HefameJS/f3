@@ -18,9 +18,9 @@ class ConfirmacionLineaPedidoSAP {
 			FieldChecker.checkExistsAndPositiveInteger(json.posicion_sap, errorPosicion, 'SAP-ERR-LIN-002', 'El campo "posicion_sap" es inválido');
 			FieldChecker.checkExists(json.codigoarticulo, errorPosicion, 'SAP-ERR-LIN-003', 'El campo "codigoarticulo" es inválido');
 			FieldChecker.checkExistsAndPositiveInteger(json.cantidad, errorPosicion, 'SAP-ERR-LIN-004', 'El campo "cantidad" es inválido');
-			FieldChecker.checkExists(json.cantidadfalta , errorPosicion, 'SAP-ERR-LIN-005', 'El campo "cantidadfalta" es inválido');
-			FieldChecker.checkPositiveInteger(json.cantidadbonificacion , errorPosicion, 'SAP-ERR-LIN-006', 'El campo "cantidadbonificacion" es inválido');
-			FieldChecker.checkPositiveInteger(json.cantidadbonificacionfalta, errorPosicion, 'SAP-ERR-LIN-007', 'El campo "cantidadbonificacionfalta" es inválido');
+			FieldChecker.checkExistsAndPositiveInteger(json.cantidadfalta , errorPosicion, 'SAP-ERR-LIN-005', 'El campo "cantidadfalta" es inválido');
+			FieldChecker.checkExistsAndPositiveInteger(json.cantidadbonificacion , errorPosicion, 'SAP-ERR-LIN-006', 'El campo "cantidadbonificacion" es inválido');
+			FieldChecker.checkExistsAndPositiveInteger(json.cantidadbonificacionfalta, errorPosicion, 'SAP-ERR-LIN-007', 'El campo "cantidadbonificacionfalta" es inválido');
 			FieldChecker.checkExists(json.codigoalmacenservicio, errorPosicion, 'SAP-ERR-LIN-008', 'El campo "codigoalmacenservicio" es inválido');
 		}
 		// Añadimos las incidencias a la linea
