@@ -12,7 +12,7 @@ class ConfirmacionLineaPedidoSAP {
 
 		// 001 - Control de codigo de artículo
 		if (json.sap_ignore) {
-			errorPosicion.add('SAP-WARN-LIN-001', errorDesc, 400);
+			errorPosicion.add('SAP-WARN-LIN-001', 'Línea ignorada por errores de sintáxis', 400);
 		} else {
 			FieldChecker.checkExistsAndPositiveInteger(json.orden, errorPosicion, 'SAP-ERR-LIN-001', 'El campo "orden" es inválido');
 			FieldChecker.checkExistsAndPositiveInteger(json.posicion_sap, errorPosicion, 'SAP-ERR-LIN-002', 'El campo "posicion_sap" es inválido');
