@@ -13,9 +13,10 @@ class LineaDevolucion {
 
 		var errorPosicion = new FedicomError();
 
+		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido');
 		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio');
-		FieldChecker.checkExistsAndPositiveInteger(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto');
-		FieldChecker.checkExistsAndPositiveInteger(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio');
+		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto');
+		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio');
 
 		// 004 - numeroAlbaran y fechaAlbaran
 		var codigoMotivo = Number(json.codigoMotivo);

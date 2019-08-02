@@ -14,8 +14,8 @@ class LineaPedido {
 
 		// 001 - Control de codigo de artículo
 		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');
-		var errorCantidad = FieldChecker.checkExistsAndPositiveInteger(json.cantidad, errorPosicion, 'LIN-PED-ERR-002','El campo "cantidad" es inválido');
-		FieldChecker.checkGreaterThanZero(json.orden, errorPosicion, 'LIN-PED-ERR-003', 'El campo "orden" es inválido');
+		var errorCantidad = FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002','El campo "cantidad" es inválido');
+		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-PED-ERR-003', 'El campo "orden" es inválido');
 
 
 		// Añadimos las incidencias a la linea
