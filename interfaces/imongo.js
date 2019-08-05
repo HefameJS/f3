@@ -85,13 +85,17 @@ exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
 
 function mergeDataWithCache(oldData, newData) {
 	if (oldData) {
-		if (!oldData['$setOnInsert']) {
-			oldData['$setOnInsert'] = newData['$setOnInsert'];
-		} else {
-			for (var value in newData['$setOnInsert']) {
-				oldData['$setOnInsert'][value] = newData['$setOnInsert'][value]
+		if (newData['$setOnInsert']) {
+			if (oldData['$setOnInsert']) {
+				for (var value in newData['$setOnInsert']) {
+					oldData['$setOnInsert'][value] = newData['$setOnInsert'][value];
+				}
+			} else {
+				oldData['$setOnInsert'] = newData['$setOnInsert'];
 			}
+
 		}
+
 
 		if (newData['$set']) {
 			if (oldData['$set']) {
@@ -103,12 +107,39 @@ function mergeDataWithCache(oldData, newData) {
 			}
 		}
 
+		if (newData['$push']) {
+			if (oldData['$push']) {
+				for (arrayName in newData['$push']) {
+					if (oldData['$push'][arrayName]) {
+						if (!oldData['$push'][arrayName]['$each'] || !oldData['$push'][arrayName]['$each'].push ) {
+							oldData['$push'][arrayName] = {
+								'$each': [ oldData['$push'][arrayName] ]
+							};
+						}
+						if (newData['$push'][arrayName]['$each'] && newData['$push'][arrayName]['$each'].forEach) {
+							newData['$push'][arrayName]['$each'].forEach( function (element) {
+								oldData['$push'][arrayName]['$each'].push(element);
+							});
+						} else {
+							oldData['$push'][arrayName]['$each'].push(newData['$push'][arrayName]);
+						}
+					} else {
+						oldData['$push'][arrayName] = newData['$push'][arrayName];
+					}
+				}
+			}
+			else {
+				oldData['$push'] = newData['$push'];
+			}
+		}
+
 		//TODO: Hacer merge PUSH
 		return oldData;
 	} else {
 		return newData;
 	}
 }
+
 
 
 exports.commit = function(data, noMerge) {
