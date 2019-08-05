@@ -26,7 +26,7 @@ class LineaPedido {
 			if (!errorCantidad) {
 				json.cantidadFalta = json.cantidad;
 			}
-			if (!FieldChecker.checkExistsAndPositiveInteger(json.cantidadBonificacion, null)) {
+			if (!FieldChecker.checkExistsAndPositive(json.cantidadBonificacion, null)) {
 				json.cantidadBonificacionFalta = json.cantidadBonificacion;
 			}
 
