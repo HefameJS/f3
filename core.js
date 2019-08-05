@@ -45,7 +45,7 @@ var cors = require('cors');
 app.use(cors({exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version']}));
 app.disable('x-powered-by');
 app.disable('etag');
-app.use(require('body-parser').json({extended: true}));
+app.use(require('body-parser').json({extended: true, limit: '5mb'}));
 app.use(require('express-bearer-token')());
 
 // Carga de rutas
