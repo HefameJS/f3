@@ -124,7 +124,7 @@ exports.commit = function(data, noMerge) {
 
 
 	if (client.isConnected() ) {
-	   collection.updateOne( {_id: key }, data, {upsert: true}, function(err, res) {
+	   collection.updateOne( {_id: key }, data, {upsert: true, w: 0}, function(err, res) {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				iSqlite.storeTx(data);
