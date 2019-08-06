@@ -45,6 +45,7 @@ exports.doAuth = function (req, res) {
 				return;
 
 			}
+			// Ojo que sapRes podría ser NULL si hubo acierto en caché
 
 			if (sapBody.username) {
 				// AUTH OK POR SAP

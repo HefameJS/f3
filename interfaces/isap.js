@@ -1,11 +1,21 @@
 'use strict';
 const BASE = global.BASE;
 const config = global.config;
+const L = global.logger;
 const SapSystem = require(BASE + 'model/sapsystem');
 const Events = require(BASE + 'interfaces/events');
+const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
 const request = require('request');
 
 exports.authenticate = function ( txId, authReq, callback, noEvents) {
+
+	var fromCache = credentialsCache.check(authReq);
+	if (fromCache) {
+		L.xd(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache')
+		callback(null, null, {username: authReq.username}, false);
+		return;
+	}
+
 	var sapSystemData = authReq.sap_system ? config.getSapSystem(authReq.sap_system) : config.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
@@ -37,6 +47,7 @@ exports.authenticate = function ( txId, authReq, callback, noEvents) {
     var statusCodeType = Math.floor(res.statusCode / 100);
 
 	 	if (statusCodeType === 2) {
+			credentialsCache.add(authReq);
 			callback(null, res, body, false);
 		} else {
 			callback({
