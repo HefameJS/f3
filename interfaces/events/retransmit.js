@@ -76,7 +76,7 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 
 
 	// Hacemos un UPDATE del estado original !
-	if ( originalTxId && (originalTx.status !== 0 && originalTx.status !== 4) && originalTx.status !== retransStatus) {
+	if ( originalTxId && (originalTx.status !== txStatus.OK && originalTx.status !== txStatus.ESPERANDO_NUMERO_PEDIDO) && originalTx.status !== retransStatus) {
 		dataUpdate = {
 			$setOnInsert: {
 				_id: originalTxId,

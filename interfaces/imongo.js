@@ -117,9 +117,7 @@ function mergeDataWithCache(oldData, newData) {
 							};
 						}
 						if (newData['$push'][arrayName]['$each'] && newData['$push'][arrayName]['$each'].forEach) {
-							newData['$push'][arrayName]['$each'].forEach( function (element) {
-								oldData['$push'][arrayName]['$each'].push(element);
-							});
+qui
 						} else {
 							oldData['$push'][arrayName]['$each'].push(newData['$push'][arrayName]);
 						}
