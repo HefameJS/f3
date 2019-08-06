@@ -101,17 +101,17 @@ client.connect(function(err, db) {
 });
 
 function writeMongo(event) {
-	var prepend = '> ';
+	//var prepend = '> ';
 	if (collection) {
 		collection.insertOne(event, { w: 0 });
 	} else {
-		prepend = 'E ';
+		if (event.tx)
+			console.log('[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
+		else
+			console.log('[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
 	}
 
-	if (event.tx)
-		console.log(prepend + '[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
-	else
-		console.log(prepend + '[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
+
 
 }
 
