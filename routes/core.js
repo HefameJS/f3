@@ -14,7 +14,8 @@ module.exports = function(app) {
 		authenticate: require(BASE + 'controllers/authenticate'),
   		pedidos: require(BASE + 'controllers/pedidos'),
   		devoluciones: require(BASE + 'controllers/devoluciones'),
-  		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido')
+  		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
+		stats: require(BASE + 'controllers/stats')
 	}
 
   /* Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -76,6 +77,8 @@ module.exports = function(app) {
 	app.route('/confirmaPedido')
 		.post(controllers.confirmacionPedido.confirmaPedido);
 
+	app.route('/stats').get(controllers.stats.getStats);
+	app.route('/stats/:item').get(controllers.stats.getStats);
 
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
   app.use(function(req, res, next) {
