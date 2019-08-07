@@ -11,6 +11,7 @@ const ObjectID = require('mongodb').ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
 
 const NUM_CONN = config.mongodb.connections || 10;
+const WRITE_CONCERN = config.mongodb.writeconcern || 1;
 var lastConnIndex = -1;
 const clientPool = [];
 
@@ -206,7 +207,7 @@ exports.commit = function(data, noMerge) {
 
 	var db = getDB();
 	if (db) {
-	   db.collection.updateOne( {_id: key }, data, {upsert: true, w: 0}, function(err, res) {
+	   db.collection.updateOne( {_id: key }, data, {upsert: true, w: 1}, function(err, res) {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				iSqlite.storeTx(data);
