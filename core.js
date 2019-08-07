@@ -1,7 +1,7 @@
 'use strict';
 global.BASE = __dirname + '/';
 const BASE = global.BASE;
-process.title = 'fedicom3-core';
+
 
 
 require(BASE + 'util/nativeExtensions');
@@ -14,24 +14,25 @@ global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.ti
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
-
 const L = global.logger;
-
-
-L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
-L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
-L.i('*** ID de instancia: ' + global.instanceID );
 
 var cluster = require('cluster');
 
 if (cluster.isMaster) {
 
-	var cpuCount = require('os').cpus().length;
+	process.title = 'fedicom3-core-master';
+	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
+	L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
+	L.i('*** ID de instancia: ' + global.instanceID );
+
+	var cpuCount = require('os').cpus().length * 2;
 	for (var i = 0; i < cpuCount; i += 1) {
 		 cluster.fork();
 	}
 
 } else {
+	process.title = 'fedicom3-core-worker-' + cluster.worker.id;
+
 	const fs = require('fs');
 	const http = require('http');
 	const https = require('https');
@@ -91,3 +92,13 @@ if (cluster.isMaster) {
 		process.exit(errCode.E_HTTPS_SERVER_ERROR);
 	}
 }
+
+
+cluster.on('exit', function (worker) {
+
+    // Replace the dead worker,
+    // we're not sentimental
+    console.log('Worker %d died :(', worker.id);
+    cluster.fork();
+
+});
