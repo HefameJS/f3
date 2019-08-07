@@ -10,12 +10,53 @@ const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
 
+const NUM_CONN = config.mongodb.connections || 10;
+var lastConnIndex = -1;
+const clientPool = [];
+
+const connectInstance = function(i) {
+	clientPool[i] = {
+		client: new MongoClient(mongourl, {
+			useNewUrlParser: true,
+			autoReconnect: true
+		}),
+		db: null,
+		collection: null
+	};
+
+	clientPool[i].client.connect(function(err) {
+		if (err) {
+			L.f(['*** Error en la conexión #' + i + ' de MongoDB ***', mongourl, err], 'mongodb');
+		}
+		else {
+			L.i(['*** Conexión #' + i + ' a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones'], 'mongodb');
+			clientPool[i].db = clientPool[i].client.db(dbName);
+			clientPool[i].collection = clientPool[i].db.collection(config.mongodb.txCollection);
+		}
+	});
+}
+
+for (var i = 0 ; i < NUM_CONN ; i++) {
+	connectInstance(i);
+}
+
+function getDB() {
+	if (!clientPool.length) return null;
+	lastConnIndex = (++lastConnIndex) % clientPool.length;
+	console.log('retr ' + lastConnIndex);
+	var conn = clientPool[lastConnIndex];
+	if (conn.client.isConnected())
+		return conn;
+	return null;
+}
+
+/*
 const client = new MongoClient(mongourl, {
 	useNewUrlParser: true,
 	autoReconnect: true
 });
 var	db, collection;
-
+*/
 var memCache = require('memory-cache');
 var commitBuffer = new memCache.Cache();
 
@@ -23,6 +64,7 @@ const iSqlite = require(BASE + 'interfaces/isqlite');
 
 
 // Use connect method to connect to the Server
+/*
 client.connect(function(err) {
 	if (err) {
 		L.f(['*** NO SE PUDO CONECTAR A MONGODB ***', mongourl, err], 'mongodb');
@@ -33,12 +75,23 @@ client.connect(function(err) {
 		collection = db.collection(config.mongodb.txCollection);
 	}
 });
+*/
 
 exports.ObjectID = ObjectID;
 
+exports.connectionStatus = function() {
+	var connections = {};
+	clientPool.forEach( function (connection, i) {
+		connections[i] = {
+			connected: connection.client.isConnected()
+		}
+	});
+	return connections;
+}
 
 exports.findTxById= function(txId, id, cb) {
-	if (client.isConnected() ) {
+	var db = getDB();
+	if (db) {
 		try {
 			id = new ObjectID(id);
 		} catch (ex) {
@@ -46,7 +99,7 @@ exports.findTxById= function(txId, id, cb) {
 			cb(ex, null);
 			return;
 		}
-		collection.findOne( {_id: id}, cb );
+		db.collection.findOne( {_id: id}, cb );
 	} else {
 		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -55,7 +108,8 @@ exports.findTxById= function(txId, id, cb) {
 
 
 exports.findTxByCrc = function(tx, cb) {
-	if (client.isConnected() ) {
+	var db = getDB();
+	if (db) {
 		var crc;
 		try {
 			if (tx.crc)	crc = new ObjectID(tx.crc);
@@ -65,7 +119,7 @@ exports.findTxByCrc = function(tx, cb) {
 			cb(ex, null);
 			return;
 		}
-		collection.findOne( {crc: crc}, cb );
+		db.collection.findOne( {crc: crc}, cb );
 	} else {
 		L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -73,9 +127,10 @@ exports.findTxByCrc = function(tx, cb) {
 };
 
 exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
-	if (client.isConnected() ) {
+	var db = getDB();
+	if (db) {
 		L.xd(txId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
-		collection.findOne( {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}, cb );
+		db.collection.findOne( {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}, cb );
 	} else {
 		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -138,8 +193,6 @@ qui
 	}
 }
 
-
-
 exports.commit = function(data, noMerge) {
 
 	var key = data['$setOnInsert']._id ;
@@ -151,9 +204,9 @@ exports.commit = function(data, noMerge) {
 		data = mergeDataWithCache(cachedData, data);
 	}
 
-
-	if (client.isConnected() ) {
-	   collection.updateOne( {_id: key }, data, {upsert: true, w: 0}, function(err, res) {
+	var db = getDB();
+	if (db) {
+	   db.collection.updateOne( {_id: key }, data, {upsert: true, w: 0}, function(err, res) {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
 				iSqlite.storeTx(data);

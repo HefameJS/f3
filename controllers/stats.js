@@ -15,8 +15,19 @@ module.exports.getStats = function (req, res) {
 
 	if(req.params.item === 'fedicomCredentialsCache') {
 		res.status(200).json(credentialsCache.stats());
-	} else {
+	}
+	else if(req.params.item === 'mdbStatus') {
+		res.status(200).json(getMongoConnectionStatus());
+	}
+	else {
 		res.status(404).json({ok: false, msg: 'Elemento no encontrado'});
 	}
+
+}
+
+
+function getMongoConnectionStatus() {
+	var Imongo = require(BASE + 'interfaces/imongo');
+	return {ok: true, data: Imongo.connectionStatus()};
 
 }

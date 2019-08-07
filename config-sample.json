@@ -8,6 +8,7 @@
 		],
 		"database": "fedicom",
 		"replicaset": "rs0",
+		"connections": 10,
 		"txCollection": "myCollection",
 		"logCollection": "log"
 	},
