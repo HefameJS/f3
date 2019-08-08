@@ -2,6 +2,7 @@
 const BASE = global.BASE;
 const txTypes = require(BASE + 'model/static/txTypes');
 const txStatus = require(BASE + 'model/static/txStatus');
+var cluster = require('cluster');
 var conf = global.config;
 
 module.exports = {
@@ -105,10 +106,14 @@ function writeMongo(event) {
 	if (collection) {
 		collection.insertOne(event, { w: 0 });
 	} else {
-		if (event.tx)
-			console.log('[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
-		else
-			console.log('[' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
+		if (event.tx) {
+			var workerId = cluster.isMaster ? 'master' : 'th#'+cluster.worker.id;
+			console.log('['+workerId+'][' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
+		}
+	}
+	if (!event.tx) {// Log a nivel del global los mandamos a consola
+		var workerId = cluster.isMaster ? 'master' : 'th#'+cluster.worker.id;
+		console.log('['+workerId+'][' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
 	}
 
 

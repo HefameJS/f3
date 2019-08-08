@@ -125,11 +125,7 @@ var config = {};
 
 var filepath = process.env.F3_CONFIG_FILE || './config.json';
 try {
-	console.log("Leyendo configuración del servicio del fichero [%s]", filepath);
 	config = require(filepath);
-
-	console.log("Leida configuracion");
-	console.log(config);
 
 	// Verificando la configuración mínima.
 	// Los siguientes métodos detienen la ejecución en caso de fallo

@@ -6,33 +6,34 @@ require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/static/exitCodes');
-global.serverVersion = '0.5.1';
+global.serverVersion = '0.5.2';
 global.protocolVersion = '3.3.5';
 
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
+const config = global.config;
 const L = global.logger;
 
 var cluster = require('cluster');
 
 if (cluster.isMaster) {
 
-	process.title = 'fedicom3-core-master';
+	process.title = 'f3-core-master';
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
 	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 	L.i('*** ID master: ' + global.instanceID );
 
-	
-	var cpuCount = require('os').cpus().length * 2;
-	for (var i = 0; i < cpuCount; i += 1) {
+
+	var workerCount = Math.max(parseInt(config.workers), 1) || (require('os').cpus().length - 1 || 1);
+	L.i('** Lanzando ' + workerCount + ' workers' );
+	for (var i = 0; i < workerCount; i ++) {
 		 cluster.fork();
 	}
-	cluster.fork();
 
 } else {
 
-	process.title = 'fedicom3-core-worker-' + cluster.worker.id;
+	process.title = 'f3-core-worker-' + cluster.worker.id;
 	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 	L.i('*** ID worker: ' + global.instanceID );
 
