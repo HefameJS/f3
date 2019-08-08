@@ -6,6 +6,7 @@ const config = global.config;
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
+const AuthReq = require(BASE + 'model/auth/authReq');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 
@@ -18,8 +19,6 @@ exports.doAuth = function (req, res) {
 	L.xi(txId, 'Procesando petición de autenticación')
 	Events.authentication.emitAuthRequest(req);
 
-
-  var AuthReq = require(BASE + 'model/auth/authReq');
   try {
 	  var authReq = new AuthReq(req.body, txId);
   } catch (ex) {
