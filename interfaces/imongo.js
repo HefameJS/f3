@@ -173,7 +173,9 @@ function mergeDataWithCache(oldData, newData) {
 							};
 						}
 						if (newData['$push'][arrayName]['$each'] && newData['$push'][arrayName]['$each'].forEach) {
-qui
+							newData['$push'][arrayName]['$each'].forEach( function (element) {
+								oldData['$push'][arrayName]['$each'].push(element);
+							});
 						} else {
 							oldData['$push'][arrayName]['$each'].push(newData['$push'][arrayName]);
 						}
