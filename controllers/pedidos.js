@@ -52,12 +52,12 @@ exports.savePedido = function (req, res) {
 			var dupeResponse = dbTx.clientResponse.body;
 			if (dbTx.clientResponse.statusCode === 201 && dupeResponse) {
 				if (!dupeResponse.incidencias) {
-					dupeResponse.incidencias = [ {codigo: 'PED-WARN-999', descripcion: 'Transmisión duplicada'} ];
+					dupeResponse.incidencias = [ {codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'} ];
 				} else {
-					dupeResponse.incidencias.push({codigo: 'PED-WARN-999', descripcion: 'Transmisión duplicada'});
+					dupeResponse.incidencias.push({codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'});
 				}
 			} else if (dupeResponse && dupeResponse.push) {
-				dupeResponse.push({codigo: 'PED-WARN-999', descripcion: 'Transmisión duplicada'});
+				dupeResponse.push({codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'});
 			}
 
 			res.status(dbTx.clientResponse.statusCode).json(dupeResponse);
