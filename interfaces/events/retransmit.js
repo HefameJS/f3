@@ -117,8 +117,6 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 		};
 	}
 
-	console.log(dataUpdate);
-
 	L.xi(req.txId, ['Emitiendo COMMIT para evento Retransmit', data['$set'], dataUpdate['$setOnInsert'], dataUpdate['$set'], dataUpdate['$push']], 'txCommit');
 
 	if (originalTxId) Imongo.commit(dataUpdate);
@@ -135,4 +133,112 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 
 	L.yell(originalTxId, txTypes.RETRANSMISION_PEDIDO, newStatus, [yellData]);
 
+}
+
+module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newStatus, newResponseBody, force) {
+
+	L.yell(retransmissionId, 0, 0, [retransmissionId, originalTx, newStatus, newResponseBody, force]);
+
+	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
+	newStatus = newStatus !== null ? newStatus : txStatus.PETICION_INCORRECTA;
+
+	var dataSolicitante = {
+			$setOnInsert: {
+				_id: retransmissionId,
+				createdAt: new Date(),
+			},
+			$set: {
+				type: txTypes.RETRANSMISION_PEDIDO,
+				status: newStatus,
+				forced: force,
+				originalTx: originalTxId,
+				iid: global.instanceID,
+				authenticatingUser: 'WatchDog'
+			}
+		};
+
+	var dataUpdate = null;
+	// Hacemos un UPDATE del estado original !
+	if ( originalTxId && (originalTx.status !== txStatus.OK && originalTx.status !== txStatus.ESPERANDO_NUMERO_PEDIDO) && originalTx.status < newStatus && newResponseBody) {
+		dataUpdate = {
+			$setOnInsert: {
+				_id: originalTxId,
+				createdAt: new Date()
+			},
+			$set: {
+				clientResponse: newResponseBody,
+				status: newStatus,
+				modifiedAt: new Date()
+			},
+			$push: {
+				retransmissions: {
+					_id: retransmissionId,
+					createdAt: new Date(),
+					oldStatus: originalTx.status,
+					oldClientResponse: originalTx.clientResponse,
+					dataChange: true,
+					forced: force,
+					rtStatus: newStatus
+				}
+			}
+		};
+	} else {
+		dataUpdate = {
+			$setOnInsert: {
+				_id: originalTxId,
+				createdAt: new Date()
+			},
+			$push: {
+				retransmissions: {
+					_id: retransmissionId,
+					createdAt: new Date(),
+					dataChange: false,
+					force: force,
+					rtStatus: newStatus
+				}
+			}
+		};
+	}
+
+
+	L.xi(retransmissionId, ['Emitiendo COMMIT para evento AutoRetransmit', dataSolicitante['$set'], dataUpdate['$setOnInsert'], dataUpdate['$set'], dataUpdate['$push']], 'txCommit');
+
+	if (originalTxId) Imongo.commit(dataUpdate);
+	Imongo.commit(dataSolicitante);
+
+	var newStatus = dataUpdate['$set'] ? dataUpdate['$set'].status || originalTx.status : originalTx.status;
+	var yellData = {
+		retransmissionTxId: retransmissionId,
+		oldStatus: originalTx.status,
+		newStatus: newStatus,
+		dataUpdated: dataUpdate['$set'] ? true : false
+	};
+	if (originalTxId) yellData.originalTx = originalTxId;
+
+	L.yell(originalTxId, txTypes.RETRANSMISION_PEDIDO, newStatus, [yellData]);
+
+}
+
+
+module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus) {
+
+	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
+	if (originalTxId) {
+		var dataUpdate = {
+			$setOnInsert: {
+				_id: originalTxId,
+				createdAt: new Date()
+			},
+			$set: {
+				status: newStatus,
+				modifiedAt: new Date()
+			}
+		};
+
+		L.xi(originalTx, ['Emitiendo COMMIT para evento StatusFix', dataUpdate['$set']], 'txCommit');
+		Imongo.commit(dataUpdate);
+
+		L.yell(originalTxId, txTypes.CREAR_PEDIDO, newStatus, ['StatusFix']);
+
+	}
 }

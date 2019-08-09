@@ -64,3 +64,7 @@ try {
 	L.f(ex);
 	process.exit(errCode.E_HTTPS_SERVER_ERROR);
 }
+
+
+
+const mdbWatchdog = require(BASE + 'watchdog/mdb');

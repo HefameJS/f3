@@ -9,6 +9,7 @@ const dbName = config.mongodb.database;
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
+const txStatus = require(BASE + 'model/static/txStatus');
 
 const NUM_CONN = config.mongodb.connections || 10;
 const WRITE_CONCERN = config.mongodb.writeconcern || 1;
@@ -36,7 +37,6 @@ const connectInstance = function(i) {
 		}
 	});
 }
-
 for (var i = 0 ; i < NUM_CONN ; i++) {
 	connectInstance(i);
 }
@@ -44,39 +44,19 @@ for (var i = 0 ; i < NUM_CONN ; i++) {
 function getDB() {
 	if (!clientPool.length) return null;
 	lastConnIndex = (++lastConnIndex) % clientPool.length;
-	console.log('retr ' + lastConnIndex);
 	var conn = clientPool[lastConnIndex];
 	if (conn.client.isConnected())
 		return conn;
 	return null;
 }
 
-/*
-const client = new MongoClient(mongourl, {
-	useNewUrlParser: true,
-	autoReconnect: true
-});
-var	db, collection;
-*/
+
 var memCache = require('memory-cache');
 var commitBuffer = new memCache.Cache();
 
 const iSqlite = require(BASE + 'interfaces/isqlite');
 
 
-// Use connect method to connect to the Server
-/*
-client.connect(function(err) {
-	if (err) {
-		L.f(['*** NO SE PUDO CONECTAR A MONGODB ***', mongourl, err], 'mongodb');
-	}
-	else {
-		L.i(['*** Conectado a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones'], 'mongodb');
-		db = client.db(dbName);
-		collection = db.collection(config.mongodb.txCollection);
-	}
-});
-*/
 
 exports.ObjectID = ObjectID;
 
@@ -106,8 +86,6 @@ exports.findTxById= function(txId, id, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-
-
 exports.findTxByCrc = function(tx, cb) {
 	var db = getDB();
 	if (db) {
@@ -126,7 +104,6 @@ exports.findTxByCrc = function(tx, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-
 exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
 	var db = getDB();
 	if (db) {
@@ -137,7 +114,43 @@ exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
+exports.findTxByNumeroPedido = function(txId, numeroPedido, cb) {
+	var db = getDB();
+	if (db) {
+		L.xd(txId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
+		db.collection.findOne( {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}, cb );
+	} else {
+		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
+		cb({error: "No conectado a MongoDB"}, null);
+	}
+};
 
+/*	Obtiene las transmisiones que son candidatas de retransmitir */
+exports.findCandidatosRetransmision = function(limit, cb) {
+	var db = getDB();
+	if (db) {
+		var query1 = {
+			type: txTypes.CREAR_PEDIDO,
+			status: txStatus.NO_SAP
+		};
+		var query2 = {
+			type: txTypes.CREAR_PEDIDO,
+			status: {'$in': [txStatus.RECEPCIONADO, txStatus.ESPERANDO_INCIDENCIAS, txStatus.INCIDENCIAS_RECIBIDAS, txStatus.ESPERANDO_NUMERO_PEDIDO]},
+			modifiedAt: { $lt : new Date(Date.timestamp() - 1000 * 60 * 1) }
+		};
+		var query = {
+			'$or': [query1, query2]
+		};
+
+		limit = limit ? limit : 10;
+		
+		L.d(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
+		db.collection.find(query).limit(limit).toArray(cb);
+	} else {
+		L.e(['**** Error al localizar la transmisión'], 'mongodb');
+		cb({error: "No conectado a MongoDB"}, null);
+	}
+}
 
 function mergeDataWithCache(oldData, newData) {
 	if (oldData) {
