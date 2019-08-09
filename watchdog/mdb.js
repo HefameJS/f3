@@ -19,8 +19,6 @@ var retransmissionSearch = false;
 
 var interval = setInterval(function() {
 
-	console.log('retransmissionsInProgress = ' + retransmissionsInProgress);
-
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 	retransmissionSearch = true;

@@ -143,8 +143,8 @@ exports.findCandidatosRetransmision = function(limit, cb) {
 		};
 
 		limit = limit ? limit : 10;
-		
-		L.d(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
+
+		// L.d(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
 		db.collection.find(query).limit(limit).toArray(cb);
 	} else {
 		L.e(['**** Error al localizar la transmisión'], 'mongodb');
