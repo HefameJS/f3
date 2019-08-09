@@ -20,7 +20,7 @@ class LineaDevolucion {
 
 		// 004 - numeroAlbaran y fechaAlbaran
 		var codigoMotivo = Number(json.codigoMotivo);
-		if (codigoMotivo !== 1 && codigoMotivo !== 2) { // Si no es 01 - Caducidad o 02 - Alerta sanitaria
+		if (codigoMotivo !== 2) { // Si no es 02 - Alerta sanitaria
 			FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio');
 			FieldChecker.checkExists(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio');
 		}
