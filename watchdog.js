@@ -1,7 +1,7 @@
 'use strict';
 global.BASE = __dirname + '/';
 const BASE = global.BASE;
-process.title = 'fedicom3-watchdog';
+process.title = 'f3-watchdog';
 
 
 require(BASE + 'util/nativeExtensions');
