@@ -85,6 +85,11 @@ var eliminarCamposInnecesarios = function(message) {
 			removePosIfFalse.forEach( function (field) {
 				if (linea[field] === false)	delete linea[field];
 			});
+
+			if (linea.servicioDemorado) {
+				linea.estadoServicio = 'SR';
+			}
+
 		});
 	}
 	return message;
