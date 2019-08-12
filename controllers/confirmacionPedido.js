@@ -45,8 +45,8 @@ exports.confirmaPedido = function (req, res) {
 		}
 
 		L.xi(req.txId, ['Se selecciona la transmisión con ID para confirmar', dbTx._id], 'confirm');
-		res.status(200).json(confirmacionPedidoSAP);
-		Events.sap.emitConfirmacionPedido(req, res, confirmacionPedidoSAP, dbTx);
+		res.status(200).json({ok: true});
+		Events.sap.emitConfirmacionPedido(req, res, {ok: true}, dbTx);
 
 	} );
 
