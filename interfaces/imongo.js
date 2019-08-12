@@ -261,3 +261,47 @@ exports.buffer = function(data) {
 
 
 }
+
+
+function convertToOidsAndDates(data) {
+	if (data['$setOnInsert']) {
+		var setOI = data['$setOnInsert'];
+		if (setOI._id) 		setOI._id 			= new ObjectID(setOI._id);
+		if (setOI.createdAt) setOI.createdAt 	= new Date(setOI.createdAt);
+	}
+
+	if (data['$set']) {
+		var set = data['$set'];
+		if (set.crc)			set.crc				= new ObjectID(set.crc);
+		if (set.modifiedAt)	set.modifiedAt		= new Date(set.modifiedAt);
+	}
+
+	// TODO: Hay que convertir a OID todos los campos necesarios, ya que se guardan como string en Sqlite
+}
+
+
+exports.updateFromSqlite = function(data, cb) {
+
+	convertToOidsAndDates(data);
+	var key = data['$setOnInsert']._id ;
+
+
+
+	var db = getDB();
+	if (db) {
+	   db.collection.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
+			if (err) {
+				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
+				cb(false);
+			} else {
+				L.xd(key, ['COMMIT desde SQLite realizado', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txSqliteCommit');
+				cb(true);
+			}
+	   });
+	}
+	else {
+	   L.xe(key, ['** No conectador a MongoDB'], 'txSqliteCommit');
+		cb(false);
+	}
+
+};

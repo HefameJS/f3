@@ -68,3 +68,4 @@ try {
 
 
 const mdbWatchdog = require(BASE + 'watchdog/mdb');
+const sqliteWatchdog = require(BASE + 'watchdog/sqlite');
