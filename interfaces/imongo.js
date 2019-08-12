@@ -126,7 +126,7 @@ exports.findTxByNumeroPedido = function(txId, numeroPedido, cb) {
 };
 
 /*	Obtiene las transmisiones que son candidatas de retransmitir */
-exports.findCandidatosRetransmision = function(limit, cb) {
+exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
 	var db = getDB();
 	if (db) {
 		var query1 = {
@@ -136,7 +136,7 @@ exports.findCandidatosRetransmision = function(limit, cb) {
 		var query2 = {
 			type: txTypes.CREAR_PEDIDO,
 			status: {'$in': [txStatus.RECEPCIONADO, txStatus.ESPERANDO_INCIDENCIAS, txStatus.INCIDENCIAS_RECIBIDAS, txStatus.ESPERANDO_NUMERO_PEDIDO]},
-			modifiedAt: { $lt : new Date(Date.timestamp() - 1000 * 60 * 1) }
+			modifiedAt: { $lt : new Date(Date.timestamp() - (1000 * minimumAge) ) }
 		};
 		var query = {
 			'$or': [query1, query2]
