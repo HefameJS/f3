@@ -22,6 +22,13 @@ L.i('**** ARRANCANDO WATCHDOG FEDICOM 3 - ' + global.serverVersion + ' ****');
 L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID );
 
+var pidFile = (config.pid || '.') + '/' + process.title + '.pid';
+require('fs').writeFile(pidFile, process.pid, function(err) {
+	 if(err) {
+		  L.e(["Error al escribir el fichero del PID",err]);
+	 }
+});
+
 const fs = require('fs');
 const http = require('http');
 const https = require('https');

@@ -1,5 +1,6 @@
 {
 	"workers": 8,
+	"pid": "/var/run/f3",
 	"mongodb": {
 		"username": "fedicom",
 		"pwd": "fedicom3",

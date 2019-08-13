@@ -25,6 +25,14 @@ if (cluster.isMaster) {
 	L.i('*** ID master: ' + global.instanceID );
 
 
+	var pidFile = (config.pid || '.') + '/' + process.title + '.pid';
+	require('fs').writeFile(pidFile, process.pid, function(err) {
+	    if(err) {
+	        L.e(["Error al escribir el fichero del PID",err]);
+	    }
+	});
+
+
 	var workerCount = Math.max(parseInt(config.workers), 1) || (require('os').cpus().length - 1 || 1);
 	L.i('** Lanzando ' + workerCount + ' workers' );
 	for (var i = 0; i < workerCount; i ++) {
