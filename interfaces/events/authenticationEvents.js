@@ -21,13 +21,15 @@ module.exports.emitAuthRequest = function (req) {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			iid: global.instanceID
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.RECEPCIONADO
 		},
 		$set: {
-			modifiedAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID,
 			type: txTypes.AUTENTICAR,
 			clientRequest: {
 				ip: req.ip,
@@ -41,12 +43,10 @@ module.exports.emitAuthRequest = function (req) {
 		}
 	}
 
-
-
-	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest'], 'txCommit');
 	Imongo.commit(reqData);
 
-	L.yell(req.txId, txTypes.AUTENTICAR, txStatus.RECEPCIONADO, [reqData['$setOnInsert'].authenticatingUser]);
+	//L.yell(req.txId, txTypes.AUTENTICAR, txStatus.RECEPCIONADO, [reqData['$setOnInsert'].authenticatingUser]);
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
@@ -54,9 +54,11 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 			_id: res.txId,
 			createdAt: new Date()
 		},
-		$set: {
+		$max: {
 			modifiedAt: new Date(),
 			status: status,
+		},
+		$set: {
 			clientResponse: {
 				timestamp: new Date(),
 				status: res.statusCode,
@@ -66,7 +68,8 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse', resData['$set']], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse'], 'txCommit');
 	Imongo.commit(resData);
-	L.yell(res.txId, txTypes.AUTENTICAR, status, []);
+
+	//L.yell(res.txId, txTypes.AUTENTICAR, status, []);
 }

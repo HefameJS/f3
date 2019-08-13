@@ -63,7 +63,7 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada', data, dataUpdate['$push'].duplicates], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
 	L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTx._id]);
@@ -77,9 +77,7 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
-			iid: global.instanceID
-		},
-		$set: {
+			iid: global.instanceID,
 			modifiedAt: new Date(),
 			type: txTypes.CREAR_DEVOLUCION,
 			status: status,
@@ -102,7 +100,7 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion', data['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
 	Imongo.commit(data);
 	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, status, [identifyAuthenticatingUser(req), responseBody]);
 }
@@ -110,15 +108,17 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
-			crc: new ObjectID(devolucion.crc),
-			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
-			iid: global.instanceID
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.RECEPCIONADO
 		},
 		$set: {
-			modifiedAt: new Date(),
+			crc: new ObjectID(devolucion.crc),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req),
+			iid: global.instanceID,
 			type: txTypes.CREAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
@@ -133,7 +133,7 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion'], 'txCommit');
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), devolucion.crc, req.body]);
 }
@@ -149,11 +149,16 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 	}
 
 	var resData = {
-		$setOnInsert: { _id: res.txId, createdAt: new Date() },
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: status
+		},
 		$set: {
 			numerosDevolucion: numerosDevolucion,
-			modifiedAt: new Date(),
-			status: status,
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
@@ -163,7 +168,7 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseDevolucion', resData['$set']], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseDevolucion'], 'txCommit');
 	Imongo.commit(resData);
 	L.yell(res.txId, txTypes.CREAR_DEVOLUCION, status, [responseBody]);
 }
@@ -179,9 +184,7 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
-			iid: global.instanceID
-		},
-		$set: {
+			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
 			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_DEVOLUCION,
@@ -205,21 +208,23 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarDevolucion', data['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarDevolucion'], 'txCommit');
 	Imongo.commit(data);
 }
 module.exports.emitRequestConsultarDevolucion = function(req) {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			iid: global.instanceID
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.RECEPCIONADO
 		},
 		$set: {
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
@@ -234,7 +239,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion'], 'txCommit');
 	Imongo.commit(reqData);
 }
 module.exports.emitResponseConsultarDevolucion = function (res, responseBody, status) {
@@ -243,9 +248,11 @@ module.exports.emitResponseConsultarDevolucion = function (res, responseBody, st
 			_id: res.txId,
 			createdAt: new Date()
 		},
-		$set: {
+		$max: {
 			modifiedAt: new Date(),
-			status: status,
+			status: status
+		},
+		$set: {
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
@@ -255,6 +262,6 @@ module.exports.emitResponseConsultarDevolucion = function (res, responseBody, st
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarDevolucion', resData['$set']], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarDevolucion'], 'txCommit');
 	Imongo.commit(resData);
 }

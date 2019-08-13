@@ -165,10 +165,12 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 				_id: originalTxId,
 				createdAt: new Date()
 			},
+			$max: {
+				modifiedAt: new Date(),
+				status: newStatus
+			},
 			$set: {
 				clientResponse: newResponseBody,
-				status: newStatus,
-				modifiedAt: new Date()
 			},
 			$push: {
 				retransmissions: {
@@ -201,7 +203,7 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 	}
 
 
-	L.xi(retransmissionId, ['Emitiendo COMMIT para evento AutoRetransmit', dataSolicitante['$set'], dataUpdate['$setOnInsert'], dataUpdate['$set'], dataUpdate['$push']], 'txCommit');
+	L.xi(retransmissionId, ['Emitiendo COMMIT para evento AutoRetransmit'], 'txCommit');
 
 	if (originalTxId) Imongo.commit(dataUpdate);
 	Imongo.commit(dataSolicitante);
@@ -229,13 +231,13 @@ module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus
 				_id: originalTxId,
 				createdAt: new Date()
 			},
-			$set: {
+			$max: {
 				status: newStatus,
 				modifiedAt: new Date()
 			}
 		};
 
-		L.xi(originalTx, ['Emitiendo COMMIT para evento StatusFix', dataUpdate['$set']], 'txCommit');
+		L.xi(originalTx, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
 		Imongo.commit(dataUpdate);
 
 		L.yell(originalTxId, txTypes.CREAR_PEDIDO, newStatus, ['StatusFix']);

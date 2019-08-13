@@ -50,13 +50,10 @@ function getDB() {
 	return null;
 }
 
-
 var memCache = require('memory-cache');
 var commitBuffer = new memCache.Cache();
 
 const iSqlite = require(BASE + 'interfaces/isqlite');
-
-
 
 exports.ObjectID = ObjectID;
 
@@ -209,14 +206,21 @@ function mergeDataWithCache(oldData, newData) {
 	}
 }
 
+function toLogStructure(data) {
+	return {
+		setOnInsert: data['$setOnInsert'],
+		max: data['$max'],
+		set: data['$set'],
+		push: data['$push']
+	}
+}
+
 exports.commit = function(data, noMerge) {
 
 	var key = data['$setOnInsert']._id ;
 
 	var cachedData = commitBuffer.get(key);
-
 	if (cachedData && !noMerge) {
-		L.xt(key, ['Agregando con datos en cache', {setOnInsert: cachedData['$setOnInsert'], set: cachedData['$set'], push: cachedData['$push']}], 'txBuffer');
 		data = mergeDataWithCache(cachedData, data);
 	}
 
@@ -224,20 +228,19 @@ exports.commit = function(data, noMerge) {
 	if (db) {
 	   db.collection.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
 			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'txCommit');
+				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
 				iSqlite.storeTx(data);
 			} else {
-				L.xd(key, ['COMMIT realizado', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txCommit');
+				L.xd(key, ['COMMIT OK', toLogStructure(data)], 'mdbCommit');
 			}
 	   });
 	}
 	else {
-	   L.xf(key, ['ERROR AL HACER COMMIT', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txCommit');
+	   L.xf(key, ['ERROR AL HACER COMMIT', toLogStructure(data)], 'mdbCommit');
 		iSqlite.storeTx(data);
 	}
 
 	if (cachedData) {
-		L.xt(key, ['Limpiando entrada de cache'], 'txCommit');
 		commitBuffer.del(key);
 	}
 
@@ -248,17 +251,14 @@ exports.buffer = function(data) {
 
 	var key = data['$setOnInsert']._id ;
 
-	L.xd(key, ['Añadiendo datos al buffer', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txBuffer');
+	L.xd(key, ['BUFFER OK', toLogStructure(data)], 'mdbBuffer');
 
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
-		L.xw(key, ['Forzando COMMIT por timeout'], 'txCommit');
+		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
 		exports.commit(value, false);
 	});
-
-	L.xt(key, ['Datos actuales del buffer', {setOnInsert: mergedData['$setOnInsert'], set: mergedData['$set'], push: mergedData['$push']}], 'txBuffer');
-
 
 }
 
@@ -285,8 +285,6 @@ exports.updateFromSqlite = function(data, cb) {
 	convertToOidsAndDates(data);
 	var key = data['$setOnInsert']._id ;
 
-
-
 	var db = getDB();
 	if (db) {
 	   db.collection.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
@@ -294,13 +292,13 @@ exports.updateFromSqlite = function(data, cb) {
 				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
 				cb(false);
 			} else {
-				L.xd(key, ['COMMIT desde SQLite realizado', {setOnInsert: data['$setOnInsert'], set: data['$set'], push: data['$push']}], 'txSqliteCommit');
+				L.xd(key, ['COMMIT desde SQLite OK', toLogStructure(data)], 'txSqliteCommit');
 				cb(true);
 			}
 	   });
 	}
 	else {
-	   L.xe(key, ['** No conectador a MongoDB'], 'txSqliteCommit');
+	   L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
 		cb(false);
 	}
 

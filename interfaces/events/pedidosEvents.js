@@ -63,7 +63,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado', data, dataUpdate['$push'].duplicates], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
 	L.yell(req.txId, txTypes.PEDIDO_DUPLICADO, txStatus.DUPLICADO, [originalTx._id]);
@@ -77,9 +77,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			createdAt: new Date(),
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
-			iid: global.instanceID
-		},
-		$set: {
+			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
 			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_PEDIDO,
@@ -110,14 +108,16 @@ module.exports.emitRequestConsultarPedido = function(req) {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			iid: global.instanceID
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.RECEPCIONADO
 		},
 		$set: {
+			authenticatingUser: identifyAuthenticatingUser(req),
+			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
@@ -132,7 +132,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido'], 'txCommit');
 	Imongo.commit(reqData);
 }
 module.exports.emitResponseConsultarPedido = function (res, responseBody, status) {
@@ -141,9 +141,11 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 			_id: res.txId,
 			createdAt: new Date()
 		},
-		$set: {
+		$max: {
 			modifiedAt: new Date(),
-			status: status,
+			status: status
+		},
+		$set: {
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
@@ -153,7 +155,7 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido', resData['$set']], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido'], 'txCommit');
 	Imongo.commit(resData);
 }
 
@@ -163,14 +165,12 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
+			modifiedAt: new Date(),
+			status: status,
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
-			iid: global.instanceID
-		},
-		$set: {
-			modifiedAt: new Date(),
+			iid: global.instanceID,
 			type: txTypes.CREAR_PEDIDO,
-			status: status,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.ip,
@@ -190,7 +190,7 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido', data['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);
 	L.yell(req.txId, txTypes.CREAR_PEDIDO, status, [identifyAuthenticatingUser(req), responseBody]);
 }
@@ -198,15 +198,17 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
-			crc: new ObjectID(pedido.crc),
-			createdAt: new Date(),
-			status: txStatus.RECEPCIONADO,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
-			iid: global.instanceID
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.RECEPCIONADO
 		},
 		$set: {
-			modifiedAt: new Date(),
+			crc: new ObjectID(pedido.crc),
+			authenticatingUser: identifyAuthenticatingUser(req),
+			client: identifyClient(req),
+			iid: global.instanceID,
 			type: txTypes.CREAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
@@ -221,16 +223,21 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestCrearPedido', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestCrearPedido'], 'txCommit');
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CREAR_PEDIDO, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), pedido.crc, req.body]);
 }
 module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
 	var resData = {
-		$setOnInsert: { _id: res.txId, createdAt: new Date() },
-		$set: {
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$max: {
 			modifiedAt: new Date(),
 			status: status,
+		},
+		$set: {
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
@@ -240,7 +247,7 @@ module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido', resData['$set']], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
 	Imongo.commit(resData);
 	L.yell(res.txId, txTypes.CREAR_PEDIDO, status, [responseBody]);
 }

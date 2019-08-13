@@ -21,9 +21,11 @@ module.exports.emitSapRequest = function (txId, url, req) {
 			_id: txId,
 			createdAt: new Date()
 		},
-		$set: {
+		$max: {
 			modifiedAt: new Date(),
-      	status: txStatus.ESPERANDO_INCIDENCIAS,
+			status: txStatus.ESPERANDO_INCIDENCIAS
+		},
+		$set: {
       	sapRequest: {
 				timestamp: new Date(),
 				method: req.method,
@@ -36,7 +38,7 @@ module.exports.emitSapRequest = function (txId, url, req) {
 
 	if (req.body.crc) data['$set'].crc = new ObjectID(req.body.crc);
 
-	L.xi(txId, ['Emitiendo BUFFER para evento SapRequest', data['$set']], 'txBuffer');
+	L.xi(txId, ['Emitiendo BUFFER para evento SapRequest'], 'txBuffer');
 	Imongo.buffer(data);
 }
 module.exports.emitSapResponse = function (txId, res, body, error) {
@@ -75,14 +77,16 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 			_id: txId,
 			createdAt: new Date()
 		},
-		$set: {
+		$max: {
 			modifiedAt: new Date(),
-    		status: txStatus.INCIDENCIAS_RECIBIDAS,
+    		status: txStatus.INCIDENCIAS_RECIBIDAS
+		},
+		$set: {
     		sapResponse: sapResponse
 		}
 	}
 
-	L.xi(txId, ['Emitiendo BUFFER para evento SapResponse', data['$set']], 'txBuffer');
+	L.xi(txId, ['Emitiendo BUFFER para evento SapResponse'], 'txBuffer');
    Imongo.buffer(data);
 }
 
@@ -93,12 +97,10 @@ module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, s
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
+			modifiedAt: new Date(),
 			status: status,
 			iid: global.instanceID,
-			authenticatingUser: identifyAuthenticatingUser(req)
-		},
-		$set: {
-			modifiedAt: new Date(),
+			authenticatingUser: identifyAuthenticatingUser(req),
 			type: txTypes.CONFIRMACION_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
@@ -119,7 +121,7 @@ module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, s
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido', reqData['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, status, [req.body]);
 }
@@ -158,11 +160,14 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 	var numerosPedidoSAP = (confirmTxBody.numeropedido && confirmTxBody.numeropedido.push) ? confirmTxBody.numeropedido : (confirmTxBody.numeropedido ? [confirmTxBody.numeropedido] : undefined);
 	var updateData = {
 		$setOnInsert: {
-			_id: originalTx._id
+			_id: originalTx._id,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.OK
 		},
 		$set: {
-			modifiedAt: new Date(),
-			status: txStatus.OK,
 			numerosPedidoSAP: numerosPedidoSAP
 		},
 		$push:{
@@ -175,11 +180,7 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido',
-		reqData['$setOnInsert'],
-		updateData['$set'],
-		updateData['$push'],
-		], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
 	Imongo.commit(reqData);
 	Imongo.commit(updateData);
 
