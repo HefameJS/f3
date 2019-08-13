@@ -155,7 +155,7 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 		}
 	}
 
-	var numerosPedidoSAP = (confirmTxBody.numeropedido && confirmTxBody.numeropedido.push) ? confirmTxBody.numeropedido : (confirmTxBody.numeropedido ? [confirmTxBody.numeropedido] : undefined);
+	var numerosPedidoSAP = (req.body && req.body.numeropedido && req.body.numeropedido.push) ? req.body.numeropedido : (req.body && req.body.numeropedido ? [req.body.numeropedido] : undefined);
 	var updateData = {
 		$setOnInsert: {
 			_id: originalTx._id,
