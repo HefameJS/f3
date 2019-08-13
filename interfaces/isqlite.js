@@ -30,10 +30,10 @@ var storeTx = function(data) {
 
 	db.run('INSERT INTO tx(uid, txid, data) VALUES(?, ?, ?)', [uid, key, JSON.stringify(data)], function(err) {
 		if(err) {
-			L.xf(key, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, data], 'sqlite');
+			L.xf(data['$setOnInsert']._id, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, data], 'sqlite');
 			return;
 		}
-		L.xw(key, ['* Actualización de la transacción almacenada en base de datos auxiliar', uid], 'sqlite');
+		L.xw(data['$setOnInsert']._id, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
 	});
 
 }
