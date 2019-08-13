@@ -67,57 +67,56 @@ exports.connectionStatus = function() {
 	return connections;
 }
 
-exports.findTxById= function(txId, id, cb) {
+exports.findTxById= function(myId, id, cb) {
 	var db = getDB();
 	if (db) {
 		try {
 			id = new ObjectID(id);
 		} catch (ex) {
-			L.xe(txId, ['**** Error al buscar la transmisión por ID', id, ex]);
+			L.xe(myId, ['**** Error al buscar la transmisión por ID', id, ex]);
 			cb(ex, null);
 			return;
 		}
 		db.collection.findOne( {_id: id}, cb );
 	} else {
-		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
+		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-exports.findTxByCrc = function(tx, cb) {
+exports.findTxByCrc = function(myId, crc, cb) {
 	var db = getDB();
 	if (db) {
-		var crc;
 		try {
-			if (tx.crc)	crc = new ObjectID(tx.crc);
-			else crc = new ObjectID(tx);
+			if (crc.crc)	crc = new ObjectID(crc.crc);
+			else crc = new ObjectID(crc);
 		} catch (ex) {
-			L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC', ex], 'crc');
+			L.xe(myId, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC', ex], 'crc');
 			cb(ex, null);
 			return;
 		}
 		db.collection.findOne( {crc: crc}, cb );
 	} else {
-		L.xe(tx, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
+		L.xe(myId, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-exports.findTxByNumeroDevolucion = function(txId, numeroDevolucion, cb) {
+exports.findTxByNumeroDevolucion = function(myId, numeroDevolucion, cb) {
 	var db = getDB();
 	if (db) {
-		L.xd(txId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
+		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
 		db.collection.findOne( {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}, cb );
 	} else {
-		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
+		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-exports.findTxByNumeroPedido = function(txId, numeroPedido, cb) {
+exports.findTxByNumeroPedido = function(myId, numeroPedido, cb) {
 	var db = getDB();
 	if (db) {
-		L.xd(txId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
+		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
 		db.collection.findOne( {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}, cb );
 	} else {
-		L.xe(txId, ['**** Error al localizar la transmisión'], 'mongodb');
+		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };

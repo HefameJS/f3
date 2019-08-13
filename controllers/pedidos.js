@@ -41,7 +41,7 @@ exports.savePedido = function (req, res) {
 
 
 
-	Imongo.findTxByCrc( pedido, function (err, dbTx) {
+	Imongo.findTxByCrc(req.txId, pedido, function (err, dbTx) {
 		if (err) {
 			L.xw(req.txId, ['Se asume que el pedido no es duplicado']);
 		}
@@ -114,7 +114,7 @@ exports.getPedido = function (req, res) {
 
 
 	Events.pedidos.emitRequestConsultarPedido(req);
-	Imongo.findTxByCrc( numeroPedido, function (err, dbTx) {
+	Imongo.findTxByCrc(req.txId, numeroPedido, function (err, dbTx) {
 		if (err) {
 			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);

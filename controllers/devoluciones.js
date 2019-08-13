@@ -42,7 +42,7 @@ exports.saveDevolucion = function (req, res) {
 
 
 	L.xd(req.txId, ['Comprobando si la devolución es un duplicado', devolucion.crc], 'txCRC');
-	Imongo.findTxByCrc( devolucion, function (err, dbTx) {
+	Imongo.findTxByCrc(req.txId, devolucion, function (err, dbTx) {
 		if (err) {
 			L.xe(req.txId, ['Error al buscar duplicados. Se asume que la devolución no es duplicado', err], 'txCRC');
 		}

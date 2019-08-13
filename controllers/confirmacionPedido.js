@@ -29,7 +29,7 @@ exports.confirmaPedido = function (req, res) {
 		return;
 	}
 
-	Imongo.findTxByCrc( confirmacionPedidoSAP.crc, function(err, dbTx) {
+	Imongo.findTxByCrc(req.txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
 		if (err) {
 			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', err]);
 			var responseBody = controllerHelper.sendException(err, req, res);

@@ -233,7 +233,7 @@ module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus
 			}
 		};
 
-		L.xi(originalTx, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
+		L.xi(originalTxId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
 		Imongo.commit(dataUpdate);
 
 		L.yell(originalTxId, txTypes.CREAR_PEDIDO, newStatus, ['StatusFix']);
