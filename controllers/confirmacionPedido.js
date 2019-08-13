@@ -17,7 +17,7 @@ const controllerHelper = require(BASE + 'util/controllerHelper');
 
 exports.confirmaPedido = function (req, res) {
 
-	L.xi(req.txId, ['Procesando confirmación de pedido']);
+	L.xi(req.txId, ['Procesando confirmación de confirmación de pedido']);
 	req.token = Tokens.verifyJWT(req.token, req.txId);
 	L.xd(req.txId, ['Datos de confirmacion recibidos', req.body]);
 
@@ -33,7 +33,7 @@ exports.confirmaPedido = function (req, res) {
 		if (err) {
 			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', err]);
 			var responseBody = controllerHelper.sendException(err, req, res);
-			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, txStatus.ERROR_INTERNO);
 			return;
 		}
 

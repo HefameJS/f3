@@ -11,6 +11,9 @@ function identifyAuthenticatingUser(req) {
 	if (req && req.token && req.token.sub) {
 		return req.token.sub;
 	}
+	if (req && req.clientRequest  && req.clientRequest.authentication && req.clientRequest.authentication.sub) {
+		return req.clientRequest.authentication.sub;
+	}
 	return undefined;
 }
 
@@ -132,7 +135,6 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 	L.yell(originalTxId, txTypes.RETRANSMISION_PEDIDO, newStatus, [yellData]);
 
 }
-
 module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newStatus, newResponseBody, force) {
 
 	L.yell(retransmissionId, 0, 0, [retransmissionId, originalTx, newStatus, newResponseBody, force]);
@@ -217,7 +219,6 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 
 }
 
-
 module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus) {
 
 	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
@@ -239,4 +240,55 @@ module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus
 		L.yell(originalTxId, txTypes.CREAR_PEDIDO, newStatus, ['StatusFix']);
 
 	}
+}
+
+module.exports.emitRecoverConfirmacionPedido = function (originalTx, confirmTx) {
+
+	var cBody = confirmTx.clientRequest.body;
+
+
+	var numerosPedidoSAP = undefined;
+	if (cBody.numeropedido) {
+		if (cBody.numeropedido.push) numerosPedidoSAP = cBody.numeropedido;
+		else numerosPedidoSAP = [cBody.numeropedido];
+	}
+
+	var updateData = {
+		$setOnInsert: {
+			_id: originalTx._id,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.OK
+		},
+		$set: {
+			numerosPedidoSAP: numerosPedidoSAP
+		},
+		$push:{
+			sapConfirms: {
+				txId: confirmTx._id,
+				timestamp: new Date(),
+				sapSystem: identifyAuthenticatingUser(confirmTx),
+				body: cBody
+			}
+		}
+	}
+
+	var updateConfirmation = {
+		$setOnInsert: {
+			_id: confirmTx._id,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.CONFIRMACION_RECUPERADA
+		}
+	}
+
+	L.xi(originalTx._id, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido'], 'txCommit');
+	Imongo.commit(updateData);
+	Imongo.commit(updateConfirmation);
+
+	L.yell(originalTx._id, originalTx.type, txStatus.OK, numerosPedidoSAP);
 }

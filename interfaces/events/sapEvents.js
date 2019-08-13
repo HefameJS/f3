@@ -187,3 +187,69 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 	// L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, [confirmTxBody]);
 	L.yell(originalTx._id, originalTx.type, txStatus.OK, numerosPedidoSAP);
 }
+
+module.exports.emitRecoverConfirmacionPedido = function (originalTx, confirmTx) {
+
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			status: txStatus.OK,
+			iid: global.instanceID,
+			authenticatingUser: identifyAuthenticatingUser(req),
+			confirmingId: originalTx._id,
+			type: txTypes.CONFIRMACION_PEDIDO,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.ip,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				status: res.statusCode,
+				headers: res.getHeaders(),
+				body: confirmTxBody
+			}
+		}
+	}
+
+	var numerosPedidoSAP = undefined;
+	if (req.body && req.body.numeropedido) {
+		if (req.body.numeropedido.push) numerosPedidoSAP = req.body.numeropedido;
+		else numerosPedidoSAP = [req.body.numeropedido];
+	}
+
+	var updateData = {
+		$setOnInsert: {
+			_id: originalTx._id,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: txStatus.OK
+		},
+		$set: {
+			numerosPedidoSAP: numerosPedidoSAP
+		},
+		$push:{
+			sapConfirms: {
+				txId: req.txId,
+				timestamp: new Date(),
+				sapSystem: identifyAuthenticatingUser(req),
+				body: confirmTxBody
+			}
+		}
+	}
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
+	Imongo.commit(reqData);
+	Imongo.commit(updateData);
+
+	// L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, [confirmTxBody]);
+	L.yell(originalTx._id, originalTx.type, txStatus.OK, numerosPedidoSAP);
+}

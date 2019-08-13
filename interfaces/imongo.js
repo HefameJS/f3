@@ -120,6 +120,17 @@ exports.findTxByNumeroPedido = function(myId, numeroPedido, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
+exports.findConfirmacionPedidoByCRC = function(myId, crc, cb) {
+	var db = getDB();
+	if (db) {
+		crc = crc.substr(0,8).toUpperCase();
+		L.xd(myId, ['Consulta MDB', {type: txTypes.CONFIRMACION_PEDIDO, "clientRequest_body_crc": crc}], 'mongodb');
+		db.collection.findOne( {type: txTypes.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc}, cb );
+	} else {
+		L.xe(myId, ['**** Error al localizar la Confirmacion de Pedido'], 'mongodb');
+		cb({error: "No conectado a MongoDB"}, null);
+	}
+};
 
 /*	Obtiene las transmisiones que son candidatas de retransmitir */
 exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
