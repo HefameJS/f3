@@ -45,7 +45,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	var statusCodeType = ( (res && res.statusCode) ? Math.floor(res.statusCode / 100) : 0);
 	var sapResponse;
 
-	if (error) {
+	if (error) { // Error de RED
 		sapResponse = {
 			timestamp: new Date(),
 			error: {
@@ -54,7 +54,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 				message: error.message
 			}
 		}
-	} else if (statusCodeType !== 2) {
+	} else if (statusCodeType !== 2) { // Error de SAP
 		sapResponse = {
 			timestamp: new Date(),
 			error: {
@@ -72,6 +72,8 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		}
 	}
 
+	var pedidoAgrupado = (body && body.numeropedido) ? body.numeropedido : undefined;
+
 	var data = {
 		$setOnInsert: {
 			_id: txId,
@@ -82,6 +84,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
     		status: txStatus.INCIDENCIAS_RECIBIDAS
 		},
 		$set: {
+			pedidoAgrupado: pedidoAgrupado,
     		sapResponse: sapResponse
 		}
 	}
@@ -124,7 +127,6 @@ module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, s
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, status, [req.body]);
 }
-
 module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, originalTx) {
 
 	var reqData = {
