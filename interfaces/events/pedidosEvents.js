@@ -46,6 +46,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 				body: req.body
 			},
 			clientResponse: {
+				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody

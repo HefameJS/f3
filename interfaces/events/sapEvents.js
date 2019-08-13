@@ -97,7 +97,6 @@ module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, s
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			modifiedAt: new Date(),
 			status: status,
 			iid: global.instanceID,
 			authenticatingUser: identifyAuthenticatingUser(req),
@@ -136,7 +135,6 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 			iid: global.instanceID,
 			authenticatingUser: identifyAuthenticatingUser(req),
 			confirmingId: originalTx._id,
-			modifiedAt: new Date(),
 			type: txTypes.CONFIRMACION_PEDIDO,
 			clientRequest: {
 				authentication: req.token,

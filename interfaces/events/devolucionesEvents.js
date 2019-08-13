@@ -46,6 +46,7 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 				body: req.body
 			},
 			clientResponse: {
+				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
@@ -172,8 +173,6 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 	Imongo.commit(resData);
 	L.yell(res.txId, txTypes.CREAR_DEVOLUCION, status, [responseBody]);
 }
-
-
 
 
 module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, status) {

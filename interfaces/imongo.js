@@ -162,6 +162,15 @@ function mergeDataWithCache(oldData, newData) {
 
 		}
 
+		if (newData['$max']) {
+			if (oldData['$max']) {
+				for (var value in newData['$max']) {
+					oldData['$max'][value] = newData['$max'][value];
+				}
+			} else {
+				oldData['$max'] = newData['$max'];
+			}
+		}
 
 		if (newData['$set']) {
 			if (oldData['$set']) {
@@ -266,14 +275,48 @@ exports.buffer = function(data) {
 function convertToOidsAndDates(data) {
 	if (data['$setOnInsert']) {
 		var setOI = data['$setOnInsert'];
-		if (setOI._id) 		setOI._id 			= new ObjectID(setOI._id);
-		if (setOI.createdAt) setOI.createdAt 	= new Date(setOI.createdAt);
+		if (setOI._id) setOI._id = new ObjectID(setOI._id);
+		if (setOI.originalTx) setOI.originalTx = new ObjectID(setOI.originalTx);
+		if (setOI.confirmingId) setOI.originalTx = new ObjectID(setOI.originalTx);
+		if (setOI.createdAt) setOI.createdAt = new Date(setOI.createdAt);
+	}
+
+	if (data['$max']) {
+		var max = data['$max'];
+		if (max.modifiedAt) max.modifiedAt = new Date(max.modifiedAt);
 	}
 
 	if (data['$set']) {
 		var set = data['$set'];
-		if (set.crc)			set.crc				= new ObjectID(set.crc);
-		if (set.modifiedAt)	set.modifiedAt		= new Date(set.modifiedAt);
+		if (set.crc) set.crc = new ObjectID(set.crc);
+		if (set.sapRequest && set.sapRequest.timestamp) set.sapRequest.timestamp = new Date(set.sapRequest.timestamp);
+		if (set.sapResponse && set.sapResponse.timestamp) set.sapResponse.timestamp = new Date(set.sapResponse.timestamp);
+		if (set.clientResponse && set.clientResponse.timestamp) set.clientResponse.timestamp = new Date(set.clientResponse.timestamp);
+	}
+
+	if (data['$push']) {
+		var push = data['$push'];
+		if (push.retransmissions && push.retransmissions.length) {
+			push.retransmissions.forEach( function (o) {
+				if (o._id) o._id = new ObjectID(o._id);
+				if (o.createdAt) o.createdAt = new Date(o.createdAt);
+				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
+			})
+		}
+		if (push.sapConfirms && push.sapConfirms.length) {
+			push.sapConfirms.forEach( function (o) {
+				if (o.txId) o.txId = new ObjectID(o.txId);
+				if (o.timestamp) o.timestamp = new Date(o.timestamp);
+			})
+		}
+		if (push.duplicates && push.duplicates.length) {
+			push.duplicates.forEach( function (o) {
+				if (o._id) o._id = new ObjectID(o._id);
+				if (o.createdAt) o.createdAt = new Date(o.createdAt);
+				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);
+				if (o.clientResponse && o.clientResponse.timestamp) o.clientResponse.timestamp = new Date(o.clientResponse.timestamp);
+			})
+		}
 	}
 
 	// TODO: Hay que convertir a OID todos los campos necesarios, ya que se guardan como string en Sqlite

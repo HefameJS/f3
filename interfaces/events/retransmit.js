@@ -44,8 +44,6 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-		},
-		$set: {
 			type: txTypes.RETRANSMISION_PEDIDO,
 			status: retransStatus,
 			forced: forceFlag,
@@ -146,8 +144,6 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 			$setOnInsert: {
 				_id: retransmissionId,
 				createdAt: new Date(),
-			},
-			$set: {
 				type: txTypes.RETRANSMISION_PEDIDO,
 				status: newStatus,
 				forced: force,
