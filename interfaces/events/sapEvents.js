@@ -219,9 +219,9 @@ module.exports.emitRecoverConfirmacionPedido = function (originalTx, confirmTx) 
 	}
 
 	var numerosPedidoSAP = undefined;
-	if (req.body && req.body.numeropedido) {
-		if (req.body.numeropedido.push) numerosPedidoSAP = req.body.numeropedido;
-		else numerosPedidoSAP = [req.body.numeropedido];
+	if (req.body && req.body.sap_pedidosasociados) {
+		if (req.body.sap_pedidosasociados.push) numerosPedidoSAP = req.body.sap_pedidosasociados;
+		else numerosPedidoSAP = [req.body.sap_pedidosasociados];
 	}
 
 	var updateData = {
