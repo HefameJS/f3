@@ -246,11 +246,10 @@ module.exports.emitRecoverConfirmacionPedido = function (originalTx, confirmTx) 
 
 	var cBody = confirmTx.clientRequest.body;
 
-
 	var numerosPedidoSAP = undefined;
-	if (cBody.numeropedido) {
-		if (cBody.numeropedido.push) numerosPedidoSAP = cBody.numeropedido;
-		else numerosPedidoSAP = [cBody.numeropedido];
+	if (cBody.sap_pedidosasociados) {
+		if (cBody.sap_pedidosasociados.push) numerosPedidoSAP = cBody.sap_pedidosasociados;
+		else numerosPedidoSAP = [cBody.sap_pedidosasociados];
 	}
 
 	var updateData = {
