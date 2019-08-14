@@ -74,6 +74,12 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 
 	var pedidoAgrupado = (body && body.numeropedido) ? body.numeropedido : undefined;
 
+	var numerosPedidoSAP = undefined;
+	if (body.sap_pedidosasociados) {
+		if (body.sap_pedidosasociados.push) numerosPedidoSAP = body.sap_pedidosasociados;
+		else numerosPedidoSAP = [body.sap_pedidosasociados];
+	}
+
 	var data = {
 		$setOnInsert: {
 			_id: txId,
@@ -85,6 +91,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		},
 		$set: {
 			pedidoAgrupado: pedidoAgrupado,
+			numerosPedidoSAP: numerosPedidoSAP,
     		sapResponse: sapResponse
 		}
 	}
