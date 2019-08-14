@@ -135,7 +135,7 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion'], 'txCommit');
-	Imongo.commit(reqData);
+	Imongo.buffer(reqData);
 	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), devolucion.crc, req.body]);
 }
 module.exports.emitResponseDevolucion = function (res, responseBody, status) {
@@ -239,7 +239,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion'], 'txCommit');
-	Imongo.commit(reqData);
+	Imongo.buffer(reqData);
 }
 module.exports.emitResponseConsultarDevolucion = function (res, responseBody, status) {
 	var resData = {

@@ -134,7 +134,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido'], 'txCommit');
-	Imongo.commit(reqData);
+	Imongo.buffer(reqData);
 }
 module.exports.emitResponseConsultarPedido = function (res, responseBody, status) {
 	var resData = {

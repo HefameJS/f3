@@ -44,7 +44,7 @@ module.exports.emitAuthRequest = function (req) {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest'], 'txCommit');
-	Imongo.commit(reqData);
+	Imongo.buffer(reqData);
 
 	//L.yell(req.txId, txTypes.AUTENTICAR, txStatus.RECEPCIONADO, [reqData['$setOnInsert'].authenticatingUser]);
 }
