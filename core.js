@@ -22,19 +22,19 @@ if (cluster.isMaster) {
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
 	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
-	L.i('*** ID master: ' + global.instanceID );
+	L.i('*** ID master: ' + global.instanceID , 'cluster');
 
 
 	var pidFile = (config.pid || '.') + '/' + process.title + '.pid';
 	require('fs').writeFile(pidFile, process.pid, function(err) {
 	    if(err) {
-	        L.e(["Error al escribir el fichero del PID",err]);
+	        L.e(["Error al escribir el fichero del PID", err], 'cluster');
 	    }
 	});
 
 
 	var workerCount = Math.max(parseInt(config.workers), 1) || (require('os').cpus().length - 1 || 1);
-	L.i('** Lanzando ' + workerCount + ' workers' );
+	L.i('** Lanzando ' + workerCount + ' workers', 'cluster');
 	for (var i = 0; i < workerCount; i ++) {
 		 cluster.fork();
 	}
@@ -43,7 +43,7 @@ if (cluster.isMaster) {
 
 	process.title = 'f3-core-worker-' + cluster.worker.id;
 	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
-	L.i('*** ID worker: ' + global.instanceID );
+	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
 
 	const fs = require('fs');
 	const http = require('http');
@@ -108,9 +108,8 @@ if (cluster.isMaster) {
 
 cluster.on('exit', function (worker) {
 
-    // Replace the dead worker,
-    // we're not sentimental
-    console.log('Worker %d died :(', worker.id);
+	L.f(['**** Un worker ha muerto. Lo levantamos de entre los muertos', worker.id], 'cluster');
+
     cluster.fork();
 
 });
