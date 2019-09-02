@@ -24,7 +24,8 @@ const connectInstance = function(i) {
 			useUnifiedTopology: true
 		}),
 		db: null,
-		collection: null
+		collection: null,
+		discardCollection: null
 	};
 
 	clientPool[i].client.connect(function(err) {
@@ -33,8 +34,10 @@ const connectInstance = function(i) {
 		}
 		else {
 			L.i(['*** Conexión #' + i + ' a la colección [' + dbName + '.' + config.mongodb.txCollection + '] para almacenamiento de transmisiones'], 'mongodb');
+			L.i(['*** Conexión #' + i + ' a la colección [' + dbName + '.' + config.mongodb.discardCollection + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
 			clientPool[i].db = clientPool[i].client.db(dbName);
 			clientPool[i].collection = clientPool[i].db.collection(config.mongodb.txCollection);
+			clientPool[i].discardCollection = clientPool[i].db.collection(config.mongodb.discardCollection);
 		}
 	});
 }
@@ -235,6 +238,27 @@ function toLogStructure(data) {
 	}
 }
 
+
+exports.commitDiscard = function (data) {
+
+	var key = data['$setOnInsert']._id;
+
+	var db = getDB();
+	if (db) {
+		db.discardCollection.updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
+			if (err) {
+				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD', err], 'mdbCommitDiscard');
+			} else {
+				L.xd(key, ['COMMIT DISCARD OK', toLogStructure(data)], 'mdbCommitDiscard');
+			}
+		});
+	}
+	else {
+		L.xf(key, ['ERROR AL HACER COMMIT DISCARD', toLogStructure(data)], 'mdbCommitDiscard');
+	}
+
+};
+
 exports.commit = function(data, noMerge) {
 
 	var key = data['$setOnInsert']._id ;
@@ -265,6 +289,7 @@ exports.commit = function(data, noMerge) {
 	}
 
 };
+
 
 
 exports.buffer = function(data) {
