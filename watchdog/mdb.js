@@ -22,7 +22,7 @@ var interval = setInterval(function() {
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 	retransmissionSearch = true;
-	Imongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size, mdbwatchConfig.minimum_age, function(err, candidatos)  {
+	Imongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size || 10, mdbwatchConfig.minimum_age || 600, function(err, candidatos)  {
 		retransmissionSearch = false;
 
 		if (err) {
@@ -96,4 +96,4 @@ var interval = setInterval(function() {
 
 	});
 
-}, (mdbwatchConfig.interval * 1000) );
+}, ( (mdbwatchConfig.interval || 5) * 1000) );

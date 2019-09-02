@@ -55,6 +55,18 @@ var configVerificator = {
 			console.error("No se ha definido el puerto para HTTPS (https.port)");
 			process.exit(err.E_NO_HTTPS_PORT);
 		}
+		if (!config.https.cert) {
+			console.error("No se ha definido el certificado para HTTPS (https.cert)");
+			process.exit(err.E_NO_HTTPS_CERT);
+		}
+		if (!config.https.key) {
+			console.error("No se ha definido la clave privada para HTTPS (https.key)");
+			process.exit(err.E_NO_HTTPS_KEY);
+		}
+		if (!config.https.passphrase && config.https.passphrase !== '') {
+			console.error("No se ha definido la passphrase para HTTPS (https.passphrase)");
+			process.exit(err.E_NO_HTTPS_PASSPHRASE);
+		}
 	},
 	jwt: function(config) {
 		if (!config.jwt) {
@@ -91,6 +103,18 @@ var configVerificator = {
 			console.error("No se ha definido el nombre de la base de datos de MongoDB (mongodb.database)");
 			process.exit(err.E_MDB_NO_DATABASE);
 		}
+		if (!config.mongodb.txCollection) {
+			console.error("No se ha definido el nombre de la coleccion de transmisiones de MongoDB (mongodb.txCollection)");
+			process.exit(err.E_MDB_NO_TXCOL);
+		}
+		if (!config.mongodb.discardCollection) {
+			console.error("No se ha definido el nombre de la coleccion de transmisiones descartadas de MongoDB (mongodb.discardCollection)");
+			process.exit(err.E_MDB_NO_DISCARDCOL);
+		}
+		if (!config.mongodb.logCollection) {
+			console.error("No se ha definido el nombre de la coleccion de log de MongoDB (mongodb.logCollection)");
+			process.exit(err.E_MDB_NO_LOGCOL);
+		}
 	},
 	sqlite: function(config) {
 		if (!config.sqlite) {
@@ -118,6 +142,18 @@ var configVerificator = {
 			console.error("No se ha definido el puerto para WATCHDOG - HTTPS (watchdog.https.port)");
 			process.exit(err.E_WATCHDOG_NO_HTTPS_PORT);
 		}
+		if (!config.watchdog.https.cert) {
+			console.error("No se ha definido el certificado para WATCHDOG - HTTPS (watchdog.https.cert)");
+			process.exit(err.E_WATCHDOG_NO_HTTPS_CERT);
+		}
+		if (!config.watchdog.https.key) {
+			console.error("No se ha definido la clave privada para WATCHDOG - HTTPS (watchdog.https.key)");
+			process.exit(err.E_WATCHDOG_NO_HTTPS_KEY);
+		}
+		if (!config.watchdog.https.passphrase && config.watchdog.https.passphrase !== '') {
+			console.error("No se ha definido la passphrase para WATCHDOG - HTTPS (watchdog.https.passphrase)");
+			process.exit(err.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
+		}
 	}
 
 };
@@ -136,6 +172,10 @@ try {
 	configVerificator.mongodb(config);
 	configVerificator.sqlite(config);
 
+	// Configuracion para la instancia de watchdog
+	if (process.title === 'fedicom3-watchdog') {
+		configVerificator.watchdog(config);
+	}
 
 } catch (exception) {
 	console.error("**** NO SE ENCUENTRA EL FICHERO DE CONFIGURACIÓN O NO ES VÁLIDO");

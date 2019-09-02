@@ -63,4 +63,4 @@ var interval = setInterval(function() {
 
 	});
 
-}, (sqlitewatchConfig.interval * 1000) );
+}, ( (sqlitewatchConfig.interval || 5) * 1000) );
