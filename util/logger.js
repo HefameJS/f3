@@ -84,7 +84,8 @@ const ObjectID = require('mongodb').ObjectID;
 const mongoURL = conf.getMongoUrl();
 const client = new MongoClient(mongoURL, {
 	useNewUrlParser: true,
-	autoReconnect: true
+	autoReconnect: true,
+	useUnifiedTopology: true
 });
 
 var collection;

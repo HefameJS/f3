@@ -20,7 +20,8 @@ const connectInstance = function(i) {
 	clientPool[i] = {
 		client: new MongoClient(mongourl, {
 			useNewUrlParser: true,
-			autoReconnect: true
+			autoReconnect: true,
+			useUnifiedTopology: true
 		}),
 		db: null,
 		collection: null

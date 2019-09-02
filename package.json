@@ -1,12 +1,12 @@
 {
-  "name": "Concentrador-Fedicom3",
+  "name": "concentrador-fedicom3",
   "version": "0.0.1",
   "description": "Concentrador Fedicom 3",
   "main": "fedicom3.js",
   "scripts": {
     "test-core": "nodemon core.js",
     "core": "nohup node core.js > fedicom3-core.log &",
-	 "test-watchdog": "nodemon watchdog.js",
+    "test-watchdog": "nodemon watchdog.js",
     "watchdog": "nohup node watchdog.js > fedicom3-watchdog.log &"
   },
   "keywords": [
@@ -22,10 +22,11 @@
     "express-bearer-token": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
     "memory-cache": "git://github.com/AlejandroAbad/node-cache.git",
-    "mongodb": "^3.2.7",
+    "mongodb": "^3.3.2",
     "os": "^0.1.1",
     "request": "^2.88.0",
-    "sqlite3": "^4.0.9",
+    "saslprep": "^1.0.3",
+    "sqlite3": "^4.1.0",
     "underscore": "^1.9.1"
   },
   "devDependencies": {
