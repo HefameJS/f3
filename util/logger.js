@@ -81,7 +81,7 @@ var L = module.exports;
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const mongoURL = conf.getMongoUrl();
+const mongoURL = conf.getMongoLogUrl();
 const client = new MongoClient(mongoURL, {
 	useNewUrlParser: true,
 	autoReconnect: true,

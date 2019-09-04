@@ -206,10 +206,27 @@ config.getMongoUrl = function (servers, username, password, database, replicaSet
 	var servers = servers.join(',');
 
 	var url =  'mongodb://' + username + ':' + password + '@' + servers + '/' + database ;
-	if (replicaSet) url += '?replicaSet=' + replicaSet;
+	if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID;
+	else url += '?appName=' + global.instanceID;
 	return url;
 }
 
+
+config.getMongoLogUrl = function (servers, username, password, database, replicaSet) {
+	var mc = config.mongodb;
+	servers = servers ? servers : mc.hosts;
+	username = username ? username : mc.username;
+	password = password ? password : mc.pwd;
+	database = database ? database : mc.database;
+	replicaSet = replicaSet ? replicaSet : mc.replicaset;
+
+	var servers = servers.join(',');
+
+	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
+	if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID + '-log';
+	else url += '?appName=' + global.instanceID + '-log';
+	return url;
+}
 
 
 module.exports = config;
