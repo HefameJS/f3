@@ -6,8 +6,10 @@ require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/static/exitCodes');
+
 global.serverVersion = '0.5.2';
 global.protocolVersion = '3.3.5';
+global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
@@ -21,7 +23,6 @@ if (cluster.isMaster) {
 	process.title = 'f3-core-master';
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + global.serverVersion + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
-	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
 	L.i('*** ID master: ' + global.instanceID , 'cluster');
 
 
