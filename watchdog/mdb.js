@@ -51,10 +51,10 @@ var interval = setInterval(function() {
 					L.xi(tx._id, 'Recuperando estado de pedido ya que existe confirmación del mismo por SAP', 'mdbwatch');
 					return Events.retransmit.emitStatusFix(myId, tx, txStatus.OK);
 				}
-				// CASO DESCONEXIÓN A MDB: Las confirmaciones de pedido fallan por no poder actualziar el pedido original
+				// SAP NO DA CONFIRMACION
 				else if (tx.status === txStatus.ESPERANDO_NUMERO_PEDIDO) {
 
-					// 1. Buscamos la confirmacion del pedido con el CRC del pedido
+					// 1. Buscamos la tx de confirmacion del pedido con el CRC del pedido
 					L.xi(tx._id, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
 					retransmissionsInProgress++;
 					Imongo.findConfirmacionPedidoByCRC(tx._id, tx.crc.toHexString().substr(0,8), function(err, confirmacionPedido) {
@@ -67,7 +67,7 @@ var interval = setInterval(function() {
 						// 1.2. Ya ha vuelto MDB, pero no hay confirmación
 						if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
 							L.xw(tx._id, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
-							return Events.retransmit.emitStatusFix(myId, tx, txStatus.ESPERA_AGOTADA);
+							Events.retransmit.emitStatusFix(myId, tx, txStatus.ESPERA_AGOTADA);
 							retransmissionsInProgress--;
 							return;
 						}
@@ -82,7 +82,7 @@ var interval = setInterval(function() {
 				}
 				// CASO ERROR: La transmisión falló durante el proceso
 				else {
-					L.xi(tx._id, 'La transmisión está en un estadi inconsistente - La retransmitimos', 'mdbwatch');
+					L.xi(tx._id, 'La transmisión está en un estado inconsistente - La retransmitimos', 'mdbwatch');
 					retransmissionsInProgress++;
 					retransmit(myId, tx._id, true, function(err, newStatus, newBody) {
 						retransmissionsInProgress--;
