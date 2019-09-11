@@ -3,7 +3,7 @@ const BASE = global.BASE;
 const FedicomError = require(BASE + 'model/fedicomError');
 const _ = require('underscore');
 
-const removeCab = [ 'login', 'crc', 'sap_pedidosasociados' ];
+const removeCab = [ 'login', 'crc', 'sap_pedidosasociados', 'sap_url_confirmacion' ];
 const removePos = [ 'posicion_sap', 'valeestupefacientes', 'sap_ignore' ];
 
 const replaceCab = [ 'numeroPedido', 'codigoCliente', 'direccionEnvio', 'numeroPedidoOrigen', 'tipoPedido', 'codigoAlmacenServicio', 'fechaPedido', 'fechaServicio', 'cargoCooperativo', 'empresaFacturadora' ];

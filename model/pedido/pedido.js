@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-
+const config = global.config;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaPedido = require(BASE + 'model/pedido/lineaPedido');
@@ -76,6 +76,9 @@ class Pedido {
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
+
+		// INCLUYE LA URL DE CONFIRMACION PARA SAP
+		this.includeConfirmationUrl();
 	}
 
 	simulaFaltas() {
@@ -92,6 +95,11 @@ class Pedido {
 		this.numeroPedido = this.crc;
 		delete this.crc;
 		delete this.login;
+	}
+
+	includeConfirmationUrl() {
+		var os = require('os');
+		this.sap_url_confirmacion = 'https://' + os.hostname() + '.hefame.es:' + config.https.port + '/confirmaPedido';
 	}
 
 
