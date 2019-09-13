@@ -18,12 +18,10 @@ class LineaDevolucion {
 		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto');
 		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio');
 
-		// 004 - numeroAlbaran y fechaAlbaran
-		var codigoMotivo = Number(json.codigoMotivo);
-		if (codigoMotivo !== 2) { // Si no es 02 - Alerta sanitaria
-			FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio');
-			FieldChecker.checkExists(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio');
-		}
+		// 004 y 005 - numeroAlbaran y fechaAlbaran
+		FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio');
+		FieldChecker.checkExists(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio');
+		
 
 		// Añadimos las incidencias a la linea
 
