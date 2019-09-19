@@ -10,7 +10,6 @@
 		],
 		"database": "fedicom",
 		"replicaset": "rs0",
-		"connections": 10,
 		"writeconcern": 1,
 		"txCollection": "myCollection",
 		"discardCollection": "myDiscardCollection",
