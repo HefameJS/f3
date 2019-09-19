@@ -102,7 +102,7 @@ var establecerNumeroPedido = function(message, pedidoOriginal) {
 
 var establecerFechas = function(message) {
 	if (!message.fechaPedido)
-		message.fechaPedido = Date.fedicomDateTime();
+		message.fechaPedido = Date.toFedicomDateTime();
 	return message;
 };
 

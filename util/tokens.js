@@ -29,8 +29,8 @@ module.exports.generateJWT = function(authReq, jti,  includePassword) {
 		iss: 'HEFAME@' + require('os').hostname(),
 		sub: authReq.username,
 		aud: authReq.domain,
-		exp: Date.timestamp() + (1000 * 60 * (config.jwt.token_lifetime_minutes || 30)),
-		iat: Date.timestamp(),
+		exp: Date.fedicomTimestamp() + (1000 * 60 * (config.jwt.token_lifetime_minutes || 30)),
+		iat: Date.fedicomTimestamp(),
 		jti: jti
 	};
 
@@ -65,7 +65,7 @@ module.exports.verifyJWT = function(token, txId) {
 		var meta = {};
 
 		if (decoded.exp) {
-			var diff = Date.timestamp() - decoded.exp;
+			var diff = Date.fedicomTimestamp() - decoded.exp;
 			if (diff > ( (config.jwt.token_validation_skew_clock_seconds || 10) * 1000) ) {
 				L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
 				// TOKEN CADUCADO

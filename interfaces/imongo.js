@@ -142,7 +142,7 @@ exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
 		var query2 = {
 			type: txTypes.CREAR_PEDIDO,
 			status: {'$in': [txStatus.RECEPCIONADO, txStatus.ESPERANDO_INCIDENCIAS, txStatus.INCIDENCIAS_RECIBIDAS, txStatus.ESPERANDO_NUMERO_PEDIDO]},
-			modifiedAt: { $lt : new Date(Date.timestamp() - (1000 * minimumAge) ) }
+			modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * minimumAge) ) }
 		};
 		var query = {
 			'$or': [query1, query2]

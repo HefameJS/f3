@@ -9,7 +9,7 @@ const errCode = require(BASE + 'model/static/exitCodes');
 
 global.serverVersion = '0.5.2';
 global.protocolVersion = '3.3.5';
-global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
+global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.fedicomTimestamp() + '-' + global.serverVersion;
 
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
@@ -43,7 +43,7 @@ if (cluster.isMaster) {
 } else {
 
 	process.title = 'f3-core-worker-' + cluster.worker.id;
-	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.timestamp() + '-' + global.serverVersion;
+	global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.fedicomTimestamp() + '-' + global.serverVersion;
 	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
 
 	const fs = require('fs');

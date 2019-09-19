@@ -57,10 +57,14 @@ class Pedido {
 			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
 			throw fedicomError;
 		}
-		// FIN DE SANEADO
+		// FIN DE SANEADO OBLIGATORIO
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
+
+		// SANEADO NO OBLIGATORIO
+		
+		// FIN SANEADO NO OBLIGATORIO
 
 		// INFORMACION DE LOGIN INCLUIDA EN EL PEDIDO
 		this.login = {
@@ -91,7 +95,7 @@ class Pedido {
 		} else {
 			this.incidencias = [fedicomError];
 		}
-		this.fechaPedido = Date.fedicomDateTime();
+		this.fechaPedido = Date.toFedicomDateTime();
 		this.numeroPedido = this.crc;
 		delete this.crc;
 		delete this.login;

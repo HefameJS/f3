@@ -19,7 +19,7 @@ class SapSystem {
 
   getAuthHeaders() {
 
-    var salt = Date.timestamp();
+    var salt = Date.fedicomTimestamp();
     var hashAlgo = 'MD5';
     var hashKey = require('crypto').createHash(hashAlgo).update(salt + this.password).digest('hex');
 
