@@ -1,11 +1,14 @@
 'use strict';
 const BASE = global.BASE;
+// const config = global.config;
+const L = global.logger;
+
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaDevolucion = require(BASE + 'model/devolucion/lineaDevolucion');
 const FieldChecker = require(BASE + 'util/fieldChecker');
+const cleanerDevolucion = require(BASE + 'util/cleaner/cleanerDevolucion');
 const crypto = require('crypto');
 
-const L = global.logger;
 
 
 class Devolucion {
@@ -47,6 +50,9 @@ class Devolucion {
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 	}
 
+	clean() {
+		cleanerDevolucion(this);
+	}
 
 	parseLines( json, txId ) {
 		var lineas = [];
@@ -55,8 +61,8 @@ class Devolucion {
 
 		function rellena ( lineas ) {
 
-			json.lineas.forEach( function (linea) {
-				var nuevaLinea = new LineaDevolucion(linea, txId);
+			json.lineas.forEach( function (linea, i) {
+				var nuevaLinea = new LineaDevolucion(linea, txId, i);
 				lineas.push(nuevaLinea);
 				var hash = crypto.createHash('sha1');
 				crc = hash.update(crc + nuevaLinea.crc).digest('hex');

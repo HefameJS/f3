@@ -68,6 +68,7 @@ exports.saveDevolucion = function (req, res) {
 		} else {
 			L.xd(req.txId, ['No se encontró ninguna transmisión anterior con este CRC', err, dbTx], 'txCRC');
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
+			devolucion.clean();
 
 			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody, abort) {
 				if (sapErr) {

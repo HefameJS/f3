@@ -1,5 +1,6 @@
 'use strict';
 const BASE = global.BASE;
+// const config = global.config;
 const L = global.logger;
 
 const FedicomError = require(BASE + 'model/fedicomError');

@@ -6,31 +6,28 @@ const crypto = require('crypto');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaDevolucion {
-	constructor(json, txId, parent) {
+	constructor(json, txId, index) {
 		// SANEADO OBLIGATORIO
 
 		// Nota: Por ahora no vamos a hacer saneado
 
 		var errorPosicion = new FedicomError();
 
-		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido');
-		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio');
-		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto');
-		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio');
+		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido para la línea en posición ' + (index+1));
+		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio para la línea en posición ' + (index+1));
 
 		// 004 y 005 - numeroAlbaran y fechaAlbaran
-		FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio');
-		FieldChecker.checkExists(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es obligatorio');
+		FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es incorrecto para la línea en posición ' + (index+1));
 		
 
 		// Añadimos las incidencias a la linea
 
 		if (errorPosicion.hasError()) {
-			this.sap_ignore = true;
-			this.incidencias = errorPosicion.getErrors();
-			if (json.cantidad) this.cantidadFalta = json.cantidadbonificacion;
-			if (json.cantidadbonificacion) this.cantidadBonificacionFalta = json.cantidadbonificacion;
-			L.xw(txId, ['Se ha descartado la línea de devolución por errores en la petición.', this.incidencias]);
+			L.xw(txId, ['Se ha detectado un error en una línea de devolución.', errorPosicion]);
+			throw errorPosicion;
 		}
 
 		// FIN DEL SANEADO

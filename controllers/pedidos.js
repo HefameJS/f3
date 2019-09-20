@@ -1,6 +1,8 @@
 'use strict';
 const BASE = global.BASE;
-const config = global.config;
+// const config = global.config;
+const L = global.logger;
+
 const Isap = require(BASE + 'interfaces/isap');
 const Imongo = require(BASE + 'interfaces/imongo');
 const Events = require(BASE + 'interfaces/events');
@@ -11,7 +13,7 @@ const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 
-const L = global.logger;
+
 
 
 
@@ -65,6 +67,7 @@ exports.savePedido = function (req, res) {
 
 		} else {
 			Events.pedidos.emitRequestCrearPedido(req, pedido);
+			pedido.clean();
 			Isap.realizarPedido( req.txId, pedido, function(sapErr, sapRes, sapBody, abort) {
 				if (sapErr) {
 					if (abort) {

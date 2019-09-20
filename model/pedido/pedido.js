@@ -1,13 +1,13 @@
 'use strict';
 const BASE = global.BASE;
 const config = global.config;
+const L = global.logger;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaPedido = require(BASE + 'model/pedido/lineaPedido');
 const FieldChecker = require(BASE + 'util/fieldChecker');
+const cleanerPedido = require(BASE + 'util/cleaner/cleanerPedido');
 const crypto = require('crypto');
-
-const L = global.logger;
 
 function parseLines( json, txId ) {
 	var lineas = [];
@@ -57,14 +57,14 @@ class Pedido {
 			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
 			throw fedicomError;
 		}
-		// FIN DE SANEADO OBLIGATORIO
+
+		// SANEADO OBLIGATORIO DE LINEAS
+		var lineas = parseLines(json, req.txId);
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
+		this.lineas = lineas;
 
-		// SANEADO NO OBLIGATORIO
-		
-		// FIN SANEADO NO OBLIGATORIO
 
 		// INFORMACION DE LOGIN INCLUIDA EN EL PEDIDO
 		this.login = {
@@ -72,9 +72,7 @@ class Pedido {
 			domain: req.token.aud
 		}
 
-		// SANEADO DE LINEAS
-		var lineas = parseLines( json, req.txId );
-		this.lineas = lineas;
+		
 
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
@@ -104,6 +102,10 @@ class Pedido {
 	includeConfirmationUrl() {
 		var os = require('os');
 		this.sap_url_confirmacion = 'https://' + os.hostname() + '.hefame.es:' + config.https.port + '/confirmaPedido';
+	}
+
+	clean() {
+		cleanerPedido(this);
 	}
 
 

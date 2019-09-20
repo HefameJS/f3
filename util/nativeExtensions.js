@@ -16,7 +16,7 @@ dateFormat.masks.fedicomDate = 'dd/mm/yyyy';
 dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
 
 /**
- * fedicomDate
+ * Date.toFedicomDate(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 Date.
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  */
@@ -28,7 +28,7 @@ if (!Date.toFedicomDate) {
 }
 
 /**
- * fedicomDateTime
+ * Date.toFedicomDateTime(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 DateTime.
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  */
@@ -39,4 +39,41 @@ if (!Date.toFedicomDateTime) {
 	}
 }
 
+
+/**
+ * Date.fromFedicomDate
+ * Construye un objeto Date a partir de un string en formato Fedicom3 Date.
+ */
+if (!Date.fromFedicomDate) {
+	Date.fromFedicomDate = function (string) {
+		if (!string) return null;
+		
+		var str = string.trim();
+		var parts = str.split('/');
+		if (parts.length != 3) return null;
+		return new Date(parts[2], parts[1] - 1, parts[0], '0', '0', '0');
+	}
+}
+
+/**
+ * Date.fromFedicomDateTime
+ * Construye un objeto Date a partir de un string en formato Fedicom3 DateTime.
+ */
+if (!Date.fromFedicomDateTime) {
+	Date.fromFedicomDateTime = function (string) {
+		if (!string) return null;
+
+		var str = string.trim();
+
+		var parts = str.split(' ');
+		if (parts.length != 2) return null;
+		var dateParts = parts[0].split('/');
+		if (dateParts.length != 3) return null;
+		var timeParts = parts[1].split(':');
+		if (timeParts.length != 3) return null;
+
+
+		return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+	}
+}
 
