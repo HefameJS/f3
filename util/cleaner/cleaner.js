@@ -78,7 +78,7 @@ module.exports = function (json, definicionCampos) {
                 else if (definicionDeCampo.integer.min && valorEnteroDeCampo < definicionDeCampo.integer.min) {
                     incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por ser inferior a ' + definicionDeCampo.integer.min + '.');
                     delete json[campo];
-                } else if (typeof valorDeCampo !== 'numeric') {
+                } else if (typeof valorDeCampo !== 'number') {
                     incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se convierte de ' + typeof valorDeCampo + ' a integer.');
                     json[campo] = valorEnteroDeCampo;
                 }
