@@ -83,7 +83,7 @@ exports.savePedido = function (req, res) {
 					return;
 				}
 
-
+				var status = sapBody.sap_pedidoprocesado ? txStatus.OK : txStatus.ESPERANDO_NUMERO_PEDIDO;
 				var response = sanitizeSapResponse(sapBody, pedido);
 
 				if (Array.isArray(response)) {
@@ -91,7 +91,7 @@ exports.savePedido = function (req, res) {
 					Events.pedidos.emitResponseCrearPedido(res, response, txStatus.RECHAZADO_SAP);
 				} else {
 					res.status(201).json(response);
-					Events.pedidos.emitResponseCrearPedido(res, response, txStatus.ESPERANDO_NUMERO_PEDIDO); // OK!
+					Events.pedidos.emitResponseCrearPedido(res, response, status); // OK!
 				}
 			});
 		}
