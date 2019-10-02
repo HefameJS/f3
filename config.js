@@ -173,7 +173,7 @@ try {
 	configVerificator.sqlite(config);
 
 	// Configuracion para la instancia de watchdog
-	if (process.title === 'fedicom3-watchdog') {
+	if (process.title === global.WATCHDOG_TITLE) {
 		configVerificator.watchdog(config);
 	}
 

@@ -1,7 +1,8 @@
 'use strict';
-global.BASE = __dirname + '/';
+require('./globals'); 
 const BASE = global.BASE;
-process.title = 'f3-watchdog';
+
+process.title = global.WATCHDOG_TITLE;
 
 
 require(BASE + 'util/nativeExtensions');

@@ -1,5 +1,5 @@
 'use strict';
-const BASE = global.BASE;
+// const BASE = global.BASE;
 const config = global.config;
 
 
@@ -40,7 +40,7 @@ module.exports = {
 // YO SOY L !
 const L = module.exports;
 
-if (process.title === 'f3-watchdog') {
+if (process.title === global.WATCHDOG_TITLE) {
 	module.exports = {
 		t: function (data, category) { writeServer(data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
 		xt: function (id, data, category) { writeTx(id, data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
