@@ -14,8 +14,8 @@ class AuthReq {
 
 		if (this.domain === 'APIKEY') {
 			if (json.user && json.apikey) {
-				this.username = json.user;
-				this.password = json.apikey;
+				this.username = json.user.trim();
+				this.password = json.apikey.trim();
 			} else {
 				var error = new FedicomError();
 				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
@@ -24,8 +24,8 @@ class AuthReq {
 			}
 		} else { // ASUMIMOS QUE EL DOMINIO ES FEDICOM
 			if (json.user && json.password) {
-				this.username = json.user;
-				this.password = json.password;
+				this.username = json.user.trim();
+				this.password = json.password.trim();
 			} else {
 				var error = new FedicomError();
 				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
