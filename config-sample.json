@@ -1,6 +1,7 @@
 {
 	"workers": 8,
 	"pid": "/var/run/f3",
+	"depurar_transmisiones": false,
 	"mongodb": {
 		"username": "fedicom",
 		"pwd": "fedicom3",
