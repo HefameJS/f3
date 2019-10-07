@@ -19,13 +19,13 @@ exports.doAuth = function (req, res) {
 	L.xi(txId, 'Procesando petición de autenticación')
 	Events.authentication.emitAuthRequest(req);
 
-  try {
-	  var authReq = new AuthReq(req.body, txId);
-  } catch (ex) {
-	  var responseBody = controllerHelper.sendException(ex, req, res);
-	  Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
-	  return;
-  }
+	try {
+		var authReq = new AuthReq(req.body, txId);
+	} catch (ex) {
+		var responseBody = controllerHelper.sendException(ex, req, res);
+		Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+		return;
+	}
 
 	if (authReq.domain === 'FEDICOM') {
 		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody, abort) {
@@ -72,15 +72,12 @@ Servicio para la verificación de tokens.
 Para depuración exclusivamente.
 */
 exports.verifyToken = function (req, res) {
-
-  if (req.token) {
-    const Tokens = require(BASE + 'util/tokens');
-    var tokenData = Tokens.verifyJWT(req.token);
-    res.status(200).send({token: req.token, token_data: tokenData});
-  } else {
-    var tokenData = { meta: { ok: false, error: 'No se incluye token' } };
-    res.status(200).send({token: req.token, token_data: tokenData});
-  }
-
-
+	if (req.token) {
+		const Tokens = require(BASE + 'util/tokens');
+		var tokenData = Tokens.verifyJWT(req.token);
+		res.status(200).send({token: req.token, token_data: tokenData});
+	} else {
+		var tokenData = { meta: { ok: false, error: 'No se incluye token' } };
+		res.status(200).send({token: req.token, token_data: tokenData});
+	}
 }
