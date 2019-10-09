@@ -197,5 +197,5 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 	Imongo.commit(updateData);
 
 	// L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, [confirmTxBody]);
-	L.yell(originalTx._id, originalTx.type, txStatus.OK, numerosPedidoSAP);
+	L.yell(originalTx._id, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, numerosPedidoSAP);
 }

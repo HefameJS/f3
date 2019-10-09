@@ -137,8 +137,6 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 }
 module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newStatus, newResponseBody, force) {
 
-	L.yell(retransmissionId, 0, 0, [retransmissionId, originalTx, newStatus, newResponseBody, force]);
-
 	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
 	newStatus = newStatus !== null ? newStatus : txStatus.PETICION_INCORRECTA;
 
@@ -206,7 +204,7 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 	if (originalTxId) Imongo.commit(dataUpdate);
 	Imongo.commit(dataSolicitante);
 
-	var newStatus = dataUpdate['$set'] ? dataUpdate['$set'].status || originalTx.status : originalTx.status;
+	// var newStatus = dataUpdate['$set'] ? dataUpdate['$set'].status || originalTx.status : originalTx.status;
 	var yellData = {
 		retransmissionTxId: retransmissionId,
 		oldStatus: originalTx.status,
