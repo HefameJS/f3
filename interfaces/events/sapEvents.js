@@ -75,7 +75,7 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 	var pedidoAgrupado = (body && body.numeropedido) ? body.numeropedido : undefined;
 
 	var numerosPedidoSAP = undefined;
-	if (body.sap_pedidosasociados) {
+	if (body && body.sap_pedidosasociados) {
 		if (body.sap_pedidosasociados.push) numerosPedidoSAP = body.sap_pedidosasociados;
 		else numerosPedidoSAP = [body.sap_pedidosasociados];
 	}
