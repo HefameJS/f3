@@ -145,11 +145,14 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 				_id: retransmissionId,
 				createdAt: new Date(),
 				type: txTypes.RETRANSMISION_PEDIDO,
-				status: newStatus,
 				forced: force,
 				originalTx: originalTxId,
 				iid: global.instanceID,
 				authenticatingUser: 'WatchDog'
+			},
+			$max: {
+				status: newStatus,
+				modifiedAt: new Date()
 			}
 		};
 
