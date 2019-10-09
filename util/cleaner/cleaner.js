@@ -88,7 +88,7 @@ module.exports = function (json, definicionCampos) {
             else if (definicionDeCampo.datetime) {
                 var date = Date.fromFedicomDateTime(valorDeCampo);
                 if (!date) {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-DateTime (yyyy/mm/dd HH:MM:SS).');
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-DateTime (dd/mm/yyyy HH:MM:SS).');
                     delete json[campo];
                 } else {
                     var normalizedDate = Date.toFedicomDateTime(date);
@@ -103,7 +103,7 @@ module.exports = function (json, definicionCampos) {
             else if (definicionDeCampo.date) {
                 var date = Date.fromFedicomDate(valorDeCampo);
                 if (!date) {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-Date (yyyy/mm/dd).');
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-Date (dd/mm/yyyy).');
                     delete json[campo];
                 } else {
                     var normalizedDate = Date.toFedicomDate(date);
