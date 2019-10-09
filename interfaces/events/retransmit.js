@@ -169,7 +169,14 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 				status: newStatus
 			},
 			$set: {
-				clientResponse: newResponseBody,
+				clientResponse: {
+					timestamp: new Date(),
+					headers: {
+						'x-retransmissionid': retransmissionId
+					},
+					statusCode: 200,
+					body: newResponseBody
+				}
 			},
 			$push: {
 				retransmissions: {
