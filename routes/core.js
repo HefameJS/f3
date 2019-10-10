@@ -29,6 +29,9 @@ module.exports = function(app) {
 			var txId = new ObjectID();
 			req.txId = res.txId = txId;
 
+			if (req.headers && req.headers['x-forwarded-for'])
+				req.ip = req.headers['x-forwarded-for'];
+
 			L.e( '** Recibiendo transmisión erronea ' + txId + ' desde ' + req.ip );
 			L.xe( txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error] );
 
@@ -46,6 +49,9 @@ module.exports = function(app) {
 		res.setHeader('X-TxID', txId);
 		res.setHeader('Software-ID', "0026");
 		res.setHeader('Content-Api-Version', global.protocolVersion);
+
+		if (req.headers && req.headers['x-forwarded-for'])
+			req.ip = req.headers['x-forwarded-for'];
 
 
 		L.i( '** Recibiendo transmisión ' + txId + ' desde ' + req.ip );
