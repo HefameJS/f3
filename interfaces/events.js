@@ -31,7 +31,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 			type: txTypes.INVALIDO,
 			status: txStatus.DESCARTADO,
 			clientRequest: {
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

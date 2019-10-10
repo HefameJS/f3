@@ -56,7 +56,7 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 			client: identifyClient(originalTx.clientRequest || null),
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

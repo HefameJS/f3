@@ -37,7 +37,7 @@ module.exports.emitPedidoDuplicado = function (req, res, responseBody, originalT
 			client: identifyClient(req),
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -85,7 +85,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			status: status,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -122,7 +122,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 			type: txTypes.CONSULTAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
-      		ip: req.ip,
+      		ip: req.originIp,
       		protocol: req.protocol,
       		method: req.method,
       		url: req.originalUrl,
@@ -174,7 +174,7 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 			type: txTypes.CREAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -213,7 +213,7 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 			type: txTypes.CREAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
-      		ip: req.ip,
+      		ip: req.originIp,
       		protocol: req.protocol,
       		method: req.method,
       		url: req.originalUrl,

@@ -113,7 +113,7 @@ module.exports.emitErrorConfirmacionPedido = function (req, res, responseBody, s
 			type: txTypes.CONFIRMACION_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -147,7 +147,7 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 			type: txTypes.CONFIRMACION_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

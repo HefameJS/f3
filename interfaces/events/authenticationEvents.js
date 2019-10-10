@@ -32,7 +32,7 @@ module.exports.emitAuthRequest = function (req) {
 			iid: global.instanceID,
 			type: txTypes.AUTENTICAR,
 			clientRequest: {
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

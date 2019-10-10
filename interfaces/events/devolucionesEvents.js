@@ -37,7 +37,7 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 			client: identifyClient(req),
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -84,7 +84,7 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 			status: status,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -123,7 +123,7 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 			type: txTypes.CREAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
-      		ip: req.ip,
+      		ip: req.originIp,
       		protocol: req.protocol,
       		method: req.method,
       		url: req.originalUrl,
@@ -190,7 +190,7 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 			status: status,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ip,
+				ip: req.originIp,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -227,7 +227,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 			type: txTypes.CONSULTAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
-      		ip: req.ip,
+      		ip: req.originIp,
       		protocol: req.protocol,
       		method: req.method,
       		url: req.originalUrl,
