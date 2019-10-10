@@ -9,13 +9,11 @@ require(BASE + 'util/nativeExtensions');
 //console.log('\033c');
 
 const errCode = require(BASE + 'model/static/exitCodes');
-global.serverVersion = '0.3.3';
-global.protocolVersion = '3.3.6';
+
 global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.fedicomTimestamp() + '-' + global.serverVersion + '-wd';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
-
-
+const config = global.config;
 const L = global.logger;
 
 
