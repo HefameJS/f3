@@ -142,7 +142,7 @@ module.exports =  {
 
 		var d = Date.fromFedicomDate(field);
 
-		if (!d || Date.toFedicomDate(d) !== field) {
+		if (!d || Date.toFedicomDate(d) !== field.trim().replace(/\-/g,'/')) {
 			if (errorObject) errorObject.add(errorCode, errorDesc, 400);
 			return true;
 		}

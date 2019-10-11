@@ -48,7 +48,10 @@ if (!Date.fromFedicomDate) {
 	Date.fromFedicomDate = function (string) {
 		if (!string) return null;
 		
+		
 		var str = string.trim();
+		str = str.replace(/\-/g, '/');
+
 		var parts = str.split('/');
 		if (parts.length != 3) return null;
 		return new Date(parts[2], parts[1] - 1, parts[0], '0', '0', '0');
@@ -63,7 +66,9 @@ if (!Date.fromFedicomDateTime) {
 	Date.fromFedicomDateTime = function (string) {
 		if (!string) return null;
 
+
 		var str = string.trim();
+		str = str.replace(/\-/g, '/');
 
 		var parts = str.split(' ');
 		if (parts.length != 2) return null;
