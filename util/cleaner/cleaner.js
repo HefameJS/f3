@@ -117,7 +117,7 @@ module.exports = function (json, definicionCampos) {
             // CAMPOS TIPO BOOLEAN
             else if (definicionDeCampo.boolean) {
                 if (typeof valorDeCampo !== 'boolean') {
-                    if (valorDeCampo.toLowerCase() === 'true') {
+                    if (valorDeCampo && valorDeCampo.toLowerCase && valorDeCampo.toLowerCase() === 'true') {
                         if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se convierte de ' + typeof valorDeCampo + ' a boolean (true).');
                         json[campo] = true;
                     }
@@ -136,7 +136,7 @@ module.exports = function (json, definicionCampos) {
             }
             // CAMPOS TIPO ARRAY
             else if (definicionDeCampo.array) {
-                if (!valorDeCampo && !valorDeCampo.forEach) {
+                if (!valorDeCampo || !valorDeCampo.forEach) {
                     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no ser un array.');
                     delete json[campo];
                 }
