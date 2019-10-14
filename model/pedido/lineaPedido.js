@@ -38,11 +38,6 @@ class LineaPedido {
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
 
-		// CHEQUEO CN7 -> CN6
-		if (this.codigoArticulo.length === 7)
-			this.codigoArticulo = this.codigoArticulo.substr(0,6);
-
-
 
 	}
 
