@@ -92,7 +92,7 @@ module.exports = function (json, definicionCampos) {
                     delete json[campo];
                 } else {
                     var normalizedDate = Date.toFedicomDateTime(date);
-                    if (normalizedDate !== valorDeCampo) {
+                    if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
                         if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha/hora válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
                         json[campo] = normalizedDate;
                     }
@@ -107,7 +107,7 @@ module.exports = function (json, definicionCampos) {
                     delete json[campo];
                 } else {
                     var normalizedDate = Date.toFedicomDate(date);
-                    if (normalizedDate !== valorDeCampo) {
+                    if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
                         if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
                         json[campo] = normalizedDate;
                     }
