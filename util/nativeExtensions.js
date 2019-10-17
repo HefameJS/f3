@@ -48,13 +48,13 @@ if (!Date.fromFedicomDate) {
 	Date.fromFedicomDate = function (string) {
 		if (!string) return null;
 		
-		
-		var str = string.trim();
+		var str = string.trim().split(/\s/)[0];
 		str = str.replace(/\-/g, '/');
 
-		var parts = str.split('/');
+		var parts = str.split(/\//);
+
 		if (parts.length != 3) return null;
-		return new Date(parts[2], parts[1] - 1, parts[0], '0', '0', '0');
+		return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), '0', '0', '0');
 	}
 }
 
