@@ -54,7 +54,7 @@ class Pedido {
 		FieldChecker.checkExists(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
 		if (json.codigoCliente.endsWith('@hefame')) {
-			fedicomError.errorObject.add('PED-ERR-002', 'Indique el "codigoCliente" que no lleva @hefame al final', 400);
+			fedicomError.add('PED-ERR-002', 'Indique el "codigoCliente" que no lleva @hefame al final', 400);
 		}
 
 
