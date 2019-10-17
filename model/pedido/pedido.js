@@ -53,6 +53,11 @@ class Pedido {
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
 		FieldChecker.checkExists(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
+		if (this.codigoCliente.endsWith('@hefame')) {
+			fedicomError.errorObject.add('PED-ERR-002', 'Indique el "codigoCliente" que no lleva @hefame al final', 400);
+		}
+
+
 		if (fedicomError.hasError()) {
 			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
 			throw fedicomError;
