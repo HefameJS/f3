@@ -84,8 +84,8 @@ if (!Date.fromFedicomDateTime) {
 
 
 
-if (!String.prototype.endsWith) {
-	String.prototype.endsWith = function (searchString, position) {
+if (!String.endsWith) {
+	String.endsWith = function (searchString, position) {
 		var subjectString = this.toString();
 		if (typeof position !== 'number' || !isFinite(position)
 			|| Math.floor(position) !== position || position > subjectString.length) {
@@ -96,8 +96,8 @@ if (!String.prototype.endsWith) {
 		return lastIndex !== -1 && lastIndex === position;
 	};
 }
-if (!String.prototype.startsWith) {
-	String.prototype.startsWith = function (searchString, position) {
+if (!String.startsWith) {
+	String.startsWith = function (searchString, position) {
 		position = position || 0;
 		return this.indexOf(searchString, position) === position;
 	};
