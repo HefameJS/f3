@@ -82,24 +82,3 @@ if (!Date.fromFedicomDateTime) {
 	}
 }
 
-
-
-if (!String.endsWith) {
-	String.endsWith = function (searchString, position) {
-		var subjectString = this.toString();
-		if (typeof position !== 'number' || !isFinite(position)
-			|| Math.floor(position) !== position || position > subjectString.length) {
-			position = subjectString.length;
-		}
-		position -= searchString.length;
-		var lastIndex = subjectString.indexOf(searchString, position);
-		return lastIndex !== -1 && lastIndex === position;
-	};
-}
-if (!String.startsWith) {
-	String.startsWith = function (searchString, position) {
-		position = position || 0;
-		return this.indexOf(searchString, position) === position;
-	};
-}
-
