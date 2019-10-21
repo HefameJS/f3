@@ -22,7 +22,7 @@ dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
  */
 if (!Date.toFedicomDate) {
 	Date.toFedicomDate = function (date) {
-		if (!date) date = new Date();
+		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDate")
 	}
 }
@@ -34,7 +34,7 @@ if (!Date.toFedicomDate) {
  */
 if (!Date.toFedicomDateTime) {
 	Date.toFedicomDateTime = function (date) {
-		if (!date) date = new Date();
+		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDateTime")
 	}
 }
@@ -46,15 +46,7 @@ if (!Date.toFedicomDateTime) {
  */
 if (!Date.fromFedicomDate) {
 	Date.fromFedicomDate = function (string) {
-		if (!string) return null;
-		
-		var str = string.trim().split(/\s/)[0];
-		str = str.replace(/\-/g, '/');
-
-		var parts = str.split(/\//);
-
-		if (parts.length != 3) return null;
-		return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]), '0', '0', '0');
+		return Date.fromFedicomDateTime(string);
 	}
 }
 
@@ -66,19 +58,31 @@ if (!Date.fromFedicomDateTime) {
 	Date.fromFedicomDateTime = function (string) {
 		if (!string) return null;
 
-
 		var str = string.trim();
-		str = str.replace(/\-/g, '/');
+		var parts = str.split(/\s+/);
 
-		var parts = str.split(' ');
-		if (parts.length != 2) return null;
-		var dateParts = parts[0].split('/');
+
+		var dateParts = parts[0].split(/[\/\-]/g);
 		if (dateParts.length != 3) return null;
-		var timeParts = parts[1].split(':');
-		if (timeParts.length != 3) return null;
+		
+		if (parseInt(dateParts[2]) < 100) dateParts[2] = parseInt(dateParts[2]) + 2000; // Si el año es de 2 dígitos, le sumamos 2000. Ej. 21/11/19 -> 21/11/2019
 
+		if (parts[1]) {
+			var timeParts = parts[1].split(/\:/);
+			while (timeParts.length < 3) timeParts.push(0);
+		} else {
+			var timeParts = [0,0,0];
+		}
 
-		return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+		try {
+			var date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+			if (!date || !date instanceof Date || isNaN(date)) return null;
+			return date;
+		} catch (exception) {
+			console.log('Error al convertir la fecha', date, exception);
+			return null;
+		}
+
 	}
 }
 
