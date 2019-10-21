@@ -1,13 +1,17 @@
 'use strict';
 
-module.exports.domains = ['FEDICOM', 'APIKEY'];
+module.exports.domains = {
+  fedicom: 'FEDICOM',
+  transfer: 'transfer_laboratorio',
+  apikey: 'APIKEY'
+};
 
 module.exports.verify = function(domain) {
-  if (domain) {
-    var idx = module.exports.domains.indexOf(domain);
-    if (idx > -1) {
-      return module.exports.domains[idx];
+    if (domain) {
+      for (var domainIdx in module.exports.domains) {
+        if (module.exports.domains[domainIdx].toUpperCase() === domain.toUpperCase())
+          return module.exports.domains[domainIdx];
+      }
     }
+    return module.exports.domains.fedicom;
   }
-  return module.exports.domains[0];
-}

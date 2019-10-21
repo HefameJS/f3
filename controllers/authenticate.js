@@ -9,6 +9,8 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const AuthReq = require(BASE + 'model/auth/authReq');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
+const Domain = require(BASE + 'model/auth/domain');
+const Laboratory = require(BASE + 'model/auth/laboratory');
 
 
 
@@ -27,7 +29,8 @@ exports.doAuth = function (req, res) {
 		return;
 	}
 
-	if (authReq.domain === 'FEDICOM') {
+	if (authReq.domain === Domain.domains.fedicom) {
+
 		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody, abort) {
 			if (sapErr) {
 				L.xe(txId, ['Ocurrió un error en la llamada a SAP. Se genera token temporal.', sapErr, abort]);
@@ -59,6 +62,22 @@ exports.doAuth = function (req, res) {
 				Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
 			}
 		});
+	
+	} else if (authReq.domain === Domain.domains.transfer) {
+		if (Laboratory.verify(authReq)) {
+			var token = authReq.generateJWT();
+			var responseBody = { auth_token: token };
+			res.status(201).json(responseBody);
+			Events.authentication.emitAuthResponse(res, responseBody, txStatus.OK);
+		} else {
+			// EL LABORATORIO NO ES VALIDO
+			var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
+			var responseBody = fedicomError.send(res);
+			Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
+		}
+
+
+
 	} else { // ES UN TOKEN DE UN DOMINIO NO FEDICOM - POR AHORA LO DEJAMOS PASAR
 		var token = authReq.generateJWT();
 		var responseBody = {auth_token: token};

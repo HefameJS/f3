@@ -3,16 +3,16 @@ const BASE = global.BASE;
 const config = global.config;
 const Tokens = require(BASE + 'util/tokens');
 const FedicomError = require(BASE + 'model/fedicomError');
-const domain = require(BASE + 'model/auth/domain');
+const Domain = require(BASE + 'model/auth/domain');
 
 
 
 class AuthReq {
 	constructor(json, txId) {
-		this.domain = domain.verify(json.domain);
+		this.domain = Domain.verify(json.domain);
 		this.txId = txId
 
-		if (this.domain === 'APIKEY') {
+		if (this.domain === Domain.domains.apikey) {
 			if (json.user && json.apikey) {
 				this.username = json.user.trim();
 				this.password = json.apikey.trim();
@@ -22,10 +22,15 @@ class AuthReq {
 				if (!json.apikey)		error.add('AUTH-Z04', 'El parámetro "apikey" es obligatorio', 400);
 				throw error;
 			}
-		} else { // ASUMIMOS QUE EL DOMINIO ES FEDICOM
+		} else { // ASUMIMOS QUE ES UNA AUTENTICACION FEDICOM O TRANSFER
 			if (json.user && json.password) {
 				this.username = json.user.trim();
 				this.password = json.password.trim();
+
+				// Comprobación de si es TRANSFER o no
+				if (this.username.startsWith('TR') || this.username.startsWith('TG') || this.username.startsWith('TP')) {
+					this.domain = Domain.domains.transfer;
+				}
 			} else {
 				var error = new FedicomError();
 				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
