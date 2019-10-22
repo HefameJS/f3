@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+ORIGINAL_PWD=$(pwd)
 
 
 # Garantizamos que el usuarios es fedicom3
@@ -65,6 +65,7 @@ update() {
 
     if [ $UPDATE_NPM == 'yes' ]
     then
+        cd $SRCDIR
         npm update
     fi
 }
@@ -72,6 +73,7 @@ update() {
 start() {
     stop
     update
+    cd $SRCDIR
     npm run core
     npm run watchdog
 }
@@ -102,3 +104,6 @@ case $1 in
         status
     ;;
 esac
+
+
+cd $ORIGINAL_PWD
