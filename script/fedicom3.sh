@@ -24,6 +24,7 @@ COREPID=$PIDDIR/f3-core-master.pid
 WDPID=$PIDDIR/f3-watchdog.pid
 WORKERNAME=f3-core-worker
 
+
 UPDATE_GIT=no
 UPDATE_NPM=no
 
@@ -57,6 +58,7 @@ done
 update() {
     if [ $UPDATE_GIT == 'yes' ]
     then
+        GIT_DIR="$SRCDIR/.git"
         git config --global credential.helper cache
         git pull
     fi
