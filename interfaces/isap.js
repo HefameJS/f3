@@ -47,7 +47,9 @@ exports.authenticate = function ( txId, authReq, callback, noEvents) {
     var statusCodeType = Math.floor(res.statusCode / 100);
 
 	 	if (statusCodeType === 2) {
-			credentialsCache.add(authReq);
+			// Solo si SAP responde con el nombre del usuario guardamos la entrada en caché
+			if (body.username && body.username.length > 0)
+				credentialsCache.add(authReq);
 			callback(null, res, body, false);
 		} else {
 			callback({
