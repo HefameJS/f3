@@ -58,7 +58,7 @@ done
 update() {
     if [ $UPDATE_GIT == 'yes' ]
     then
-        GIT_DIR="$SRCDIR/.git"
+        cd $SRCDIR
         git config --global credential.helper cache
         git pull
     fi
