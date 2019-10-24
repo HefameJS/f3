@@ -27,10 +27,10 @@ WORKERNAME=f3-core-worker
 
 UPDATE_GIT=no
 UPDATE_NPM=no
+START_WATCHDOG=no
 
 
-
-while getopts "hgnu" OPT "${@:2}"
+while getopts "hgnuw" OPT "${@:2}"
 do
     case $OPT in
         h ) echo "Mostrar ayuda" ;;
@@ -43,6 +43,9 @@ do
         u ) echo "Se actualizan librerias NPM y codigo desde GIT"
             UPDATE_GIT=yes
             UPDATE_NPM=yes
+            ;;
+        w ) echo "Re inicia el servicio WatchDog"
+            START_WATCHDOG=yes
             ;;
         \? ) echo "[WRN] Se ignoda la opcion invalida -$OPTARG";;
         : )  echo "[ERR] La opcion -$OPTARG requiere un argumento"
@@ -74,13 +77,16 @@ start() {
     stop
     update
     cd $SRCDIR
-    npm run core
-    npm run watchdog
+    npm run core >/dev/null 2>/dev/null
+    if [ "$START_WATCHDOG" == "yes" ]
+    then
+        npm run watchdog >/dev/null 2>/dev/null
+    fi
 }
 
 stop() {
-    kill $(cat $COREPID)
-    kill $(cat $WDPID)
+    kill $(cat $COREPID) 2>/dev/null
+    kill $(cat $WDPID) 2>/dev/null
 }
 
 status() {
