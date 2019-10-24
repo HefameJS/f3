@@ -29,7 +29,7 @@ exports.doAuth = function (req, res) {
 		return;
 	}
 
-	if (authReq.domain === Domain.domains.fedicom) {
+	if (authReq.domain === Domain.domains.fedicom || authReq.domain === Domain.domains.transfer) {
 
 		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody, abort) {
 			if (sapErr) {
@@ -62,21 +62,6 @@ exports.doAuth = function (req, res) {
 				Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
 			}
 		});
-	
-	} else if (authReq.domain === Domain.domains.transfer) {
-		if (Laboratory.verify(authReq)) {
-			var token = authReq.generateJWT();
-			var responseBody = { auth_token: token };
-			res.status(201).json(responseBody);
-			Events.authentication.emitAuthResponse(res, responseBody, txStatus.OK);
-		} else {
-			// EL LABORATORIO NO ES VALIDO
-			var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			var responseBody = fedicomError.send(res);
-			Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
-		}
-
-
 
 	} else { // ES UN TOKEN DE UN DOMINIO NO FEDICOM - POR AHORA LO DEJAMOS PASAR
 		var token = authReq.generateJWT();
