@@ -53,7 +53,7 @@ class Pedido {
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
 		FieldChecker.checkExists(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
-		if (json.codigoCliente.endsWith('@hefame')) {
+		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
 			fedicomError.add('PED-ERR-002', 'Indique el "codigoCliente" que no lleva @hefame al final', 400);
 		}
 
