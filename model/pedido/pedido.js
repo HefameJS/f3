@@ -49,9 +49,9 @@ class Pedido {
 
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
-		FieldChecker.checkExists(json.codigoCliente, fedicomError, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-		FieldChecker.checkExists(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
+		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
 			fedicomError.add('PED-ERR-002', 'Indique el "codigoCliente" que no lleva @hefame al final', 400);
@@ -65,6 +65,8 @@ class Pedido {
 
 		// SANEADO OBLIGATORIO DE LINEAS
 		var lineas = parseLines(json, req.txId);
+
+
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);

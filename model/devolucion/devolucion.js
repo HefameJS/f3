@@ -20,8 +20,8 @@ class Devolucion {
 		// SANEADO OBLIGATORIO
 		var fedicomError = new FedicomError();
 
-		FieldChecker.checkExists(json.codigoCliente, fedicomError, 'DEV-ERR-001', 'El campo "codigoCliente" es obligatorio');
-		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'DEV-ERR-002', 'El campo "lineas" no puede estar vacío');
+		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'DEV-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'DEV-ERR-003', 'El campo "lineas" no puede estar vacío');
 
 		if (fedicomError.hasError()) {
 			L.xe(req.txId, 'La devolución contiene errores. Se aborta el procesamiento de la misma');

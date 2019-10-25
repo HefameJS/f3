@@ -71,7 +71,7 @@ const DEFINICION_CAMPOS_LINEAS = {
  * NOTA: ¡ Se asume que el campo de incidencias viene vacío de entrada tanto a nivel 
  *          de cabecera como de líneas !
  *
- * @param {Pedido} json El objeto pedido a tratar
+ * @param {Devolucion} json El objeto pedido a tratar
  */
 module.exports = function(pedido) {
 
@@ -79,11 +79,19 @@ module.exports = function(pedido) {
     pedido.lineas.forEach( (lineaPedido) => {
         var incidenciasLinea = clean(lineaPedido, DEFINICION_CAMPOS_LINEAS);
         if (incidenciasLinea.hasError()) {
-            lineaPedido.incidencias = incidenciasLinea.getErrors();
+            if (lineaPedido.incidencias && lineaPedido.incidencias.push) {
+                lineaPedido.incidencias.concat(incidenciasLinea.getErrors());
+            } else {
+                lineaPedido.incidencias = incidenciasLinea.getErrors();
+            }
         }
     });
 
-    pedido.incidencias = incidenciasCabecera.getErrors();
+    if (pedido.incidencias && pedido.incidencias.push) {
+        pedido.incidencias.concat(incidenciasCabecera.getErrors());
+    } else {
+        pedido.incidencias = incidenciasCabecera.getErrors();
+    }
 
 };
     
