@@ -14,13 +14,13 @@ class LineaDevolucion {
 		var errorPosicion = new FedicomError();
 
 		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido para la línea en posición ' + (index+1));
-		FieldChecker.checkExists(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "codigoArticulo" es obligatorio para la línea en posición ' + (index+1));
-		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-002', 'El campo "cantidad" es incorrecto para la línea en posición ' + (index+1));
-		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoMotivo" es obligatorio para la línea en posición ' + (index+1));
+		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-004', 'El campo "cantidad" es incorrecto para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio para la línea en posición ' + (index+1));
 
 		// 004 y 005 - numeroAlbaran y fechaAlbaran
-		FieldChecker.checkExists(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-004', 'El campo "numeroAlbaran" es obligatorio para la línea en posición ' + (index+1));
-		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "fechaAlbaran" es incorrecto para la línea en posición ' + (index+1));
+		FieldChecker.checkNotEmptyString(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio para la línea en posición ' + (index+1));
+		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto para la línea en posición ' + (index+1));
 		
 
 		// Añadimos las incidencias a la linea
