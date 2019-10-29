@@ -99,7 +99,6 @@ exports.savePedido = function (req, res) {
 
 }
 
-
 exports.getPedido = function (req, res) {
 
 	L.xi(req.txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
@@ -141,5 +140,16 @@ exports.getPedido = function (req, res) {
 			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, txStatus.NO_EXISTE_PEDIDO);
 		}
 	});
+
+}
+
+exports.updatePedido = function (req, res) {
+
+	L.xi(req.txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);
+
+	var error = new FedicomError('PED-ERR-999', 'No se ha implementado el servicio de actualización de pedidos', 501);
+	var responseBody = error.send(res);
+
+	L.xw(req.txId, [error]);
 
 }

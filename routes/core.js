@@ -15,7 +15,8 @@ module.exports = function(app) {
 	var controllers = {
 		authenticate: require(BASE + 'controllers/authenticate'),
   		pedidos: require(BASE + 'controllers/pedidos'),
-  		devoluciones: require(BASE + 'controllers/devoluciones'),
+		devoluciones: require(BASE + 'controllers/devoluciones'),
+		albaranes: require(BASE + 'controllers/albaranes'),
   		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
 		stats: require(BASE + 'controllers/stats')
 	}
@@ -73,7 +74,8 @@ module.exports = function(app) {
 
 	app.route('/pedidos')
 		.get(controllers.pedidos.getPedido)
-		.post(controllers.pedidos.savePedido);
+		.post(controllers.pedidos.savePedido)
+		.put(controllers.pedidos.updatePedido);
 
 	app.route('/pedidos/:numeroPedido')
 		.get(controllers.pedidos.getPedido);
@@ -84,6 +86,12 @@ module.exports = function(app) {
 
 	app.route('/devoluciones/:numeroDevolucion')
 		.get(controllers.devoluciones.getDevolucion);
+
+	app.route('/albaranes')
+		.get(controllers.albaranes.findAlbaran);
+		
+	app.route('/albaranes/:numeroAlbaran')
+		.get(controllers.albaranes.getAlbaran);
 
 	app.route('/confirmaPedido')
 		.post(controllers.confirmacionPedido.confirmaPedido);

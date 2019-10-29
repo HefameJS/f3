@@ -178,3 +178,144 @@ exports.retransmit = function ( txId, sapRequest, callback) {
 
 
 }
+
+exports.getCabeceraAlbaran = function (txId, numeroAlbaran, callback) {
+
+	var sapSystemData = config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsf_get_order_list/proforma/' + numeroAlbaran);
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'GET',
+		headers: {
+			'Accept-Encoding': 'application/json',
+			'Content-Type': 'application/json',
+			'x-hash': 'MD5',
+			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
+			'x-salt': '123',
+			'x-user': 'salesforce'
+		},
+		encoding: 'latin1'
+	};
+
+	request(httpCallParams, function (err, res, body) {
+
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+}
+
+exports.getPosicionesAlbaran = function (txId, numeroPedido, callback) {
+
+	var sapSystemData = config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsf_get_order_list/' + numeroPedido + '/detail');
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'GET',
+		headers: {
+			'Accept-Encoding': 'application/json',
+			'Content-Type': 'application/json',
+			'x-hash': 'MD5',
+			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
+			'x-salt': '123',
+			'x-user': 'salesforce'
+		},
+		encoding: 'latin1'
+	};
+
+	request(httpCallParams, function (err, res, body) {
+
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+}
+
+
+exports.findAlbaranes = function (txId, query, callback) {
+
+	var sapSystemData = config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsf_get_order_list/find');
+	
+	
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'GET',
+		qs: query,
+		headers: {
+			'Accept-Encoding': 'application/json',
+			'Content-Type': 'application/json',
+			'x-hash': 'MD5',
+			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
+			'x-salt': '123',
+			'x-user': 'salesforce'
+		},
+		encoding: 'latin1'
+	};
+
+	request(httpCallParams, function (err, res, body) {
+
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+}

@@ -4,3 +4,4 @@ config.json
 /db/
 *.log
 *.pid
+test.js

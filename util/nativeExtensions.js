@@ -15,6 +15,8 @@ if (!Date.fedicomTimestamp) {
 dateFormat.masks.fedicomDate = 'dd/mm/yyyy';
 dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
 
+dateFormat.masks.sapDate = 'yyyymmdd';
+
 /**
  * Date.toFedicomDate(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 Date.
@@ -86,3 +88,35 @@ if (!Date.fromFedicomDateTime) {
 	}
 }
 
+
+
+
+/**
+ * Date.fromSAPtoFedicomDate
+ * Convierte un string en formato fecha SAP (yyyy-mm-dd) a formato Fedicom3
+ */
+if (!Date.fromSAPtoFedicomDate) {
+	Date.fromSAPtoFedicomDate = function (sapDate) {
+		if (!sapDate) return null;
+
+		var dateParts = sapDate.split(/\-/g);
+		if (dateParts.length != 3) return null;
+
+		return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
+
+	}
+}
+
+
+
+/**
+ * Date.toFedicomDate(date)
+ * Devuelve una representación del objeto Date en formato SAP (yyyymmdd).
+ * Si no se especifica la fecha de entrada, se asume el instante actual.
+ */
+if (!Date.toSapDate) {
+	Date.toSapDate = function (date) {
+		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		return dateFormat(date, "sapDate")
+	}
+}
