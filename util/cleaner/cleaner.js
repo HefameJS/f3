@@ -86,32 +86,42 @@ module.exports = function (json, definicionCampos) {
             }
             // CAMPOS TIPO DATETIME
             else if (definicionDeCampo.datetime) {
-                var date = Date.fromFedicomDateTime(valorDeCampo);
-                if (!date) {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-DateTime (dd/mm/yyyy HH:MM:SS).');
+                if (valorDeCampo === '' || valorDeCampo === null) {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por estar vacío.');
                     delete json[campo];
                 } else {
-                    var normalizedDate = Date.toFedicomDateTime(date);
-                    if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
-                        if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha/hora válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
-                        json[campo] = normalizedDate;
-                    }
+                    var date = Date.fromFedicomDateTime(valorDeCampo);
+                    if (!date) {
+                        if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-DateTime (dd/mm/yyyy HH:MM:SS).');
+                        delete json[campo];
+                    } else {
+                        var normalizedDate = Date.toFedicomDateTime(date);
+                        if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
+                            if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha/hora válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
+                            json[campo] = normalizedDate;
+                        }
 
+                    }
                 }
             }
             // CAMPOS TIPO DATE
             else if (definicionDeCampo.date) {
-                var date = Date.fromFedicomDate(valorDeCampo);
-                if (!date) {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-Date (dd/mm/yyyy).');
+                if (valorDeCampo === '' || valorDeCampo === null) {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por estar vacío.');
                     delete json[campo];
                 } else {
-                    var normalizedDate = Date.toFedicomDate(date);
-                    if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
-                        if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
-                        json[campo] = normalizedDate;
-                    }
+                    var date = Date.fromFedicomDate(valorDeCampo);
+                    if (!date) {
+                        if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no estar en formato Fedicom3-Date (dd/mm/yyyy).');
+                        delete json[campo];
+                    } else {
+                        var normalizedDate = Date.toFedicomDate(date);
+                        if (normalizedDate !== valorDeCampo.trim().replace(/\-/g, '/')) {
+                            if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ha modificado para convertirlo en una fecha válida [' + valorDeCampo + ' -> ' + normalizedDate + '].');
+                            json[campo] = normalizedDate;
+                        }
 
+                    }
                 }
             }
             // CAMPOS TIPO BOOLEAN
