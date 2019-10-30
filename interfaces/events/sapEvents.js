@@ -15,6 +15,18 @@ function identifyAuthenticatingUser(req) {
 	return undefined;
 }
 
+function saneaPedidosAsociadosSap(pedidosAsociados) {
+	if (!pedidosAsociados) return undefined;
+	if (!pedidosAsociados.forEach) return [pedidosAsociados];
+	var result = [];
+	pedidosAsociados.forEach( (nPed) => {
+		if (nPed) result.push(nPed);
+	});
+	if (result.length > 0) return result;
+	return undefined;
+}
+
+
 module.exports.emitSapRequest = function (txId, url, req) {
 	var data = {
       $setOnInsert: {
@@ -166,9 +178,10 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 
 	var numerosPedidoSAP = undefined;
 	if (req.body && req.body.sap_pedidosasociados) {
-		if (req.body.sap_pedidosasociados.push) numerosPedidoSAP = req.body.sap_pedidosasociados;
-		else numerosPedidoSAP = [req.body.sap_pedidosasociados];
+		numerosPedidoSAP = saneaPedidosAsociadosSap(req.body.sap_pedidosasociados);
 	}
+
+	var updatedTxStatus = numerosPedidoSAP ? txStatus.OK : txStatus.SIN_NUMERO_PEDIDO_SAP;
 
 	var updateData = {
 		$setOnInsert: {
@@ -177,10 +190,10 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: txStatus.OK
+			status: updatedTxStatus
 		},
 		$set: {
-			numerosPedidoSAP: numerosPedidoSAP
+			numerosPedidoSAP: numerosPedidoSAP || []
 		},
 		$push:{
 			sapConfirms: {
@@ -197,5 +210,5 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 	Imongo.commit(updateData);
 
 	// L.yell(req.txId, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, [confirmTxBody]);
-	L.yell(originalTx._id, txTypes.CONFIRMACION_PEDIDO, txStatus.OK, numerosPedidoSAP);
+	L.yell(originalTx._id, txTypes.CONFIRMACION_PEDIDO, updatedTxStatus, numerosPedidoSAP);
 }
