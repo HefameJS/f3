@@ -79,8 +79,6 @@ class Pedido {
 			domain: req.token.aud
 		}
 
-		
-
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
@@ -88,6 +86,9 @@ class Pedido {
 
 		// INCLUYE LA URL DE CONFIRMACION PARA SAP
 		this.includeConfirmationUrl();
+
+		// ARREGLO DEL ALMACEN
+		this.conversionNumeroAlmacen();
 	}
 
 	simulaFaltas() {
@@ -111,10 +112,52 @@ class Pedido {
 		this.sap_url_confirmacion = 'https://' + os.hostname() + '.hefame.es:' + config.https.port + '/confirmaPedido';
 	}
 
+	conversionNumeroAlmacen() {
+		console.log(this.codigoAlmacenServicio);
+		if (this.codigoAlmacenServicio) {
+			this.codigoAlmacenServicio = this.codigoAlmacenServicio.trim();
+			if (!this.codigoAlmacenServicio.startsWith('RG')) {
+				var codigoFedicom2 = parseInt(this.codigoAlmacenServicio);
+				switch (codigoFedicom2) {
+					case 2: this.codigoAlmacenServicio = 'RG01'; break; // Santomera
+					case 5: this.codigoAlmacenServicio = 'RG15'; break; // Barcelona viejo
+					case 9: this.codigoAlmacenServicio = 'RG19'; break; // Málaga viejo
+					case 13: this.codigoAlmacenServicio = 'RG04'; break; // Madrid viejo
+					case 3: /* Cartagena */
+					case 4: /* Madrid nuevo */
+					case 6: /* Alicante */
+					case 7: /* Almería */
+					case 8: /* Albacete */
+					case 10: /* Valencia */
+					case 15: /* Barcelona */
+					case 16: /* Tortosa */
+					case 17: /* Melilla */
+					case 18: /* Granada */
+					case 19: /* Malaga nuevo */
+						this.codigoAlmacenServicio = 'RG' + (codigoFedicom2 > 9 ? codigoFedicom2 : '0' + codigoFedicom2);
+						break;
+					default: 
+						delete this.codigoAlmacenServicio; 
+						this.addIncidencia('PED-WARN-999', 'No se reconoce el código de almacén indicado.');
+						break;
+				}
+			}
+		}
+		console.log(this.codigoAlmacenServicio);
+	}
+
 	clean() {
 		cleanerPedido(this);
 	}
 
+	addIncidencia(code, descripcion) {
+		var incidencia = new FedicomError(code, descripcion);
+		if (this.incidencias && this.incidencias.push) {
+			this.incidencias.push( incidencia.getErrors()[0] )
+		} else {
+			this.incidencias = incidencia.getErrors();
+		}
+	}
 
 }
 
