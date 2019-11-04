@@ -12,6 +12,7 @@ const Pedido = require(BASE + 'model/pedido/pedido');
 const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
+const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
 
 
 
@@ -83,7 +84,21 @@ exports.savePedido = function (req, res) {
 					return;
 				}
 
-				var status = sapBody.sap_pedidoprocesado ? txStatus.OK : txStatus.ESPERANDO_NUMERO_PEDIDO;
+				
+				var status = txStatus.ESPERANDO_NUMERO_PEDIDO;
+				var numerosPedidoSAP = undefined;
+
+				// Si es un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados
+				if (sapBody.sap_pedidoprocesado) {
+					if (sapBody.sap_pedidosasociados) {
+						numerosPedidoSAP = saneaPedidosAsociadosSap(req.body.sap_pedidosasociados);
+						if (numerosPedidoSAP) status = txStatus.OK;
+						else status = txStatus.SIN_NUMERO_PEDIDO_SAP;
+					} else {
+						status = txStatus.SIN_NUMERO_PEDIDO_SAP;
+					}
+					
+				}
 				var response = sanitizeSapResponse(sapBody, pedido);
 
 				if (Array.isArray(response)) {
@@ -91,7 +106,7 @@ exports.savePedido = function (req, res) {
 					Events.pedidos.emitResponseCrearPedido(res, response, txStatus.RECHAZADO_SAP);
 				} else {
 					res.status(201).json(response);
-					Events.pedidos.emitResponseCrearPedido(res, response, status); // OK!
+					Events.pedidos.emitResponseCrearPedido(res, response, status, numerosPedidoSAP); // OK!
 				}
 			});
 		}

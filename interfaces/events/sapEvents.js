@@ -6,7 +6,7 @@ const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
 const txStatus = require(BASE + 'model/static/txStatus');
-
+const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
 
 function identifyAuthenticatingUser(req) {
 	if (req && req.token && req.token.sub) {
@@ -15,16 +15,7 @@ function identifyAuthenticatingUser(req) {
 	return undefined;
 }
 
-function saneaPedidosAsociadosSap(pedidosAsociados) {
-	if (!pedidosAsociados) return undefined;
-	if (!pedidosAsociados.forEach) return [pedidosAsociados];
-	var result = [];
-	pedidosAsociados.forEach( (nPed) => {
-		if (nPed) result.push(nPed);
-	});
-	if (result.length > 0) return result;
-	return undefined;
-}
+
 
 
 module.exports.emitSapRequest = function (txId, url, req) {

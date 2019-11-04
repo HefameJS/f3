@@ -228,7 +228,7 @@ module.exports.emitRequestCrearPedido = function(req, pedido) {
 	Imongo.commit(reqData);
 	L.yell(req.txId, txTypes.CREAR_PEDIDO, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), pedido.crc, req.body]);
 }
-module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
+module.exports.emitResponseCrearPedido = function (res, responseBody, status, numerosPedidoSAP) {
 	var resData = {
 		$setOnInsert: {
 			_id: res.txId,
@@ -244,7 +244,8 @@ module.exports.emitResponseCrearPedido = function (res, responseBody, status) {
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			numerosPedidoSAP: numerosPedidoSAP
 		}
 	}
 
