@@ -50,14 +50,16 @@ class ConfirmacionPedidoSAP {
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
-		this.sap_crc = this.crc
-		var lineas = parseLines( json, req.txId );
+
+		var lineas = parseLines(json, req.txId);
 		this.lineas = lineas;
 
-		// RE-GENERACION DE CRC
+		// El CRC de SAP es el de 8 dígitos, regeneramos el de 24 dígitos
+		this.sap_crc = this.crc
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.codigocliente + this.numeropedidoorigen).digest('hex').substring(0,24).toUpperCase();
+		this.crc = hash.update(this.codigocliente + this.numeropedidoorigen).digest('hex').substring(1,25).toUpperCase();
 		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC');
+		
 
 
 

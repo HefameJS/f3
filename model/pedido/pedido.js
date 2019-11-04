@@ -81,7 +81,7 @@ class Pedido {
 
 		// GENERACION DE CRC
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(0,24).toUpperCase();
+		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(1,25).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 
 		// INCLUYE LA URL DE CONFIRMACION PARA SAP
@@ -113,7 +113,6 @@ class Pedido {
 	}
 
 	conversionNumeroAlmacen() {
-		console.log(this.codigoAlmacenServicio);
 		if (this.codigoAlmacenServicio) {
 			this.codigoAlmacenServicio = this.codigoAlmacenServicio.trim();
 			if (!this.codigoAlmacenServicio.startsWith('RG')) {
@@ -143,7 +142,6 @@ class Pedido {
 				}
 			}
 		}
-		console.log(this.codigoAlmacenServicio);
 	}
 
 	clean() {
