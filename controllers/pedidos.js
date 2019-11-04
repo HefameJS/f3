@@ -90,14 +90,11 @@ exports.savePedido = function (req, res) {
 
 				// Si es un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados
 				if (sapBody.sap_pedidoprocesado) {
-					if (sapBody.sap_pedidosasociados) {
-						numerosPedidoSAP = saneaPedidosAsociadosSap(req.body.sap_pedidosasociados);
-						if (numerosPedidoSAP) status = txStatus.OK;
-						else status = txStatus.SIN_NUMERO_PEDIDO_SAP;
-					} else {
-						status = txStatus.SIN_NUMERO_PEDIDO_SAP;
+					status = txStatus.SIN_NUMERO_PEDIDO_SAP;
+					numerosPedidoSAP = saneaPedidosAsociadosSap(sapBody.sap_pedidosasociados);
+					if (numerosPedidoSAP) {
+						status = txStatus.OK;
 					}
-					
 				}
 				var response = sanitizeSapResponse(sapBody, pedido);
 
