@@ -75,12 +75,12 @@ module.exports.emitSapResponse = function (txId, res, body, error) {
 		}
 	}
 
-	var pedidoAgrupado = (body && body.numeropedido) ? body.numeropedido : undefined;
-
+	var pedidoAgrupado = undefined;
 	var numerosPedidoSAP = undefined;
-	if (body && body.sap_pedidosasociados) {
-		if (body.sap_pedidosasociados.push) numerosPedidoSAP = body.sap_pedidosasociados;
-		else numerosPedidoSAP = [body.sap_pedidosasociados];
+
+	if (body) {
+		pedidoAgrupado = (body.numeropedido) ? body.numeropedido : undefined;
+		numerosPedidoSAP = saneaPedidosAsociadosSap(body.sap_pedidosasociados);
 	}
 
 	var data = {
