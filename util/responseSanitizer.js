@@ -87,7 +87,10 @@ var eliminarCamposInnecesarios = function(message) {
 			});
 
 			if (linea.servicioDemorado) {
-				linea.estadoServicio = 'SR';
+				if (linea.cantidadFalta === 0)
+					linea.estadoServicio = 'SC';
+				else
+					linea.estadoServicio = 'SR';
 			}
 
 		});
