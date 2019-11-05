@@ -113,7 +113,7 @@ class Pedido {
 	}
 
 	conversionNumeroAlmacen() {
-		if (this.codigoAlmacenServicio) {
+		if (this.codigoAlmacenServicio && this.codigoAlmacenServicio.trim) {
 			this.codigoAlmacenServicio = this.codigoAlmacenServicio.trim();
 			if (!this.codigoAlmacenServicio.startsWith('RG')) {
 				var codigoFedicom2 = parseInt(this.codigoAlmacenServicio);
