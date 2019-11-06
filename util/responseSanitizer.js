@@ -87,7 +87,7 @@ var eliminarCamposInnecesarios = function(message) {
 			});
 
 			if (linea.servicioDemorado) {
-				if (linea.cantidadFalta === 0)
+				if (!linea.cantidadFalta)
 					linea.estadoServicio = 'SC';
 				else
 					linea.estadoServicio = 'SR';
