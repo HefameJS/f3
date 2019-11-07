@@ -14,6 +14,8 @@ function parseLines( json, txId ) {
 	var ordenes = [];
 	function rellena ( lineas ) {
 
+		var sap_ignore_all = true;
+
 		json.lineas.forEach( function (linea) {
 			var lineaPedido = new LineaPedido(linea, txId);
 			lineas.push(lineaPedido);
@@ -21,6 +23,10 @@ function parseLines( json, txId ) {
 			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
 			if (lineaPedido.orden) {
 				ordenes.push(parseInt(lineaPedido.orden));
+			}
+
+			if (!lineaPedido.sap_ignore) {
+				sap_ignore_all = false;
 			}
 		});
 
@@ -35,7 +41,7 @@ function parseLines( json, txId ) {
 				nextOrder ++;
 			}
 		});
-		return lineas;
+		return [lineas, sap_ignore_all];
 	}
 	return rellena( lineas );
 }
@@ -64,14 +70,19 @@ class Pedido {
 		}
 
 		// SANEADO OBLIGATORIO DE LINEAS
-		var lineas = parseLines(json, req.txId);
+		var [lineas, sap_ignore_all] = parseLines(json, req.txId);
 
+		// Si todas las lineas serán ignoradas, no hay pedido
+		if (sap_ignore_all) {
+			L.xe(req.txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
+			throw new FedicomError('PED-ERR-999', 'Existen errores en todas las líneas, el pedido no se procesa.');
+		}
 
+		delete json.lineas; // Evitamos re-copiar las líneas al objeto. Mejora el rendimiento
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
 		this.lineas = lineas;
-
 
 		// INFORMACION DE LOGIN INCLUIDA EN EL PEDIDO
 		this.login = {
