@@ -179,15 +179,19 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 
 	var data = {
 		$setOnInsert: {
-			_id: req.txId,
-			createdAt: new Date(),
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: status
+		},
+		$set: {
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_DEVOLUCION,
-			status: status,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,

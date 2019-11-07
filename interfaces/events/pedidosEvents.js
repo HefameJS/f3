@@ -75,14 +75,18 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
-			createdAt: new Date(),
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: status
+		},
+		$set: {
 			authenticatingUser: identifyAuthenticatingUser(req),
 			client: identifyClient(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			modifiedAt: new Date(),
 			type: txTypes.CONSULTAR_PEDIDO,
-			status: status,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
