@@ -64,7 +64,8 @@
 			"minimum_age": 600
 		},
 		"sqlite": {
-			"interval": 5
+			"interval": 5,
+			"maxRetries": 10
 		}
 	}
 }

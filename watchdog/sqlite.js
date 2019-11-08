@@ -2,25 +2,23 @@
 const BASE = global.BASE;
 const config = global.config;
 const L = global.logger;
-const sqlitewatchConfig = config.watchdog.sqlite;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const Isqlite = require(BASE + 'interfaces/isqlite');
-const Events = require(BASE + 'interfaces/events');
-const ObjectID = Imongo.ObjectID;
 
 
 var operationInProgress = false;
 var rowsOnTheFly = 0;
+var diminishingReturn = 0;
+var maxRetries = config.watchdog.sqlite.maxRetries || 10;
 
 var interval = setInterval(function() {
 
 	if (operationInProgress || rowsOnTheFly) return;
 
-
 	operationInProgress = true;
 
-	Isqlite.countTx( function (err, count) {
+	Isqlite.countTx(maxRetries, function (err, count) {
 		if (err) {
 			L.e(['Error al contar el número de entradas en base de datos de respaldo', err], 'sqlitewatch');
 			operationInProgress = false;
@@ -30,37 +28,54 @@ var interval = setInterval(function() {
 		if (count) {
 			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', count], 'sqlitewatch');
 
-			Isqlite.retrieveAll( function (error, rows) {
-				if (error) {
-					L.e(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
-					operationInProgress = false;
-					return;
-				}
+			if (Imongo.connectionStatus().connected) {
+				diminishingReturn = 0;
 
-				rowsOnTheFly = rows.length;
+				Isqlite.retrieveAll(maxRetries, function (error, rows) {
+					if (error) {
+						L.f(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
+						operationInProgress = false;
+						return;
+					}
 
-				rows.forEach( function (row) {
+					rowsOnTheFly = rows.length;
 
-					Imongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
-						if (updated) {
-							Isqlite.removeUid(row.uid, function (err, count) {
+					rows.forEach( function (row) {
+
+						Imongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
+							if (updated) {
+								Isqlite.removeUid(row.uid, function (err, count) {
+									rowsOnTheFly --;
+								});
+							} else {
+								Isqlite.incrementUidRetryCount(row.uid, () => {});
 								rowsOnTheFly --;
-							});
-						} else {
-							rowsOnTheFly --;
-						}
+								// Log de cuando una entrada agota el número de transmisiones
+								if (row.retryCount === maxRetries - 1) {
+									row.retryCount++; 
+									L.f(['Se ha alcanzado el número máximo de retransmisiones para la entrada', row], 'sqlitewatch');
+								} else {
+									L.e(['Ocurrió un error al insertar la entrada en MDB. Se reintentará mas tarde.', row], 'sqlitewatch')
+								}
+							}
+						});
+
 					});
+					operationInProgress = false;
 
 				});
+			} else {
 				operationInProgress = false;
-
-			});
-
+				diminishingReturn = diminishingReturn ? diminishingReturn * 2 : 1;
+				diminishingReturn = Math.min(diminishingReturn, 30)
+				L.w(['Aún no se ha restaurado la conexión con MongoDB', diminishingReturn]);
+			}
 		} else {
 			// L.t('No se encontraron entradas en la base de datos de respaldo', 'sqlitewatch');
 			operationInProgress = false;
+			diminishingReturn = 0;
 		}
 
 	});
 
-}, ( (sqlitewatchConfig.interval || 5) * 1000) );
+}, (((config.watchdog.sqlite.interval || 5) + diminishingReturn) * 1000) );

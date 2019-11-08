@@ -17,7 +17,7 @@ var connect = function() {
 		}
 
 		L.i(['*** Conectado a la base de datos de emergencia SQLite3', config.sqlite.db_path], 'sqlite');
-		db.exec('CREATE TABLE IF NOT EXISTS tx(uid CHARACTER(24) PRIMARY KEY, txid CHARACTER(24), data TEXT)');
+		db.exec('CREATE TABLE IF NOT EXISTS tx(uid CHARACTER(24) PRIMARY KEY, txid CHARACTER(24), data TEXT, retryCount INTEGER)');
 
 });
 }
@@ -28,7 +28,7 @@ var storeTx = function(data) {
 	var uid = (new ObjectID()).toHexString();
 	var key = data['$setOnInsert']._id.toHexString() ;
 
-	db.run('INSERT INTO tx(uid, txid, data) VALUES(?, ?, ?)', [uid, key, JSON.stringify(data)], function(err) {
+	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, key, JSON.stringify(data), 0], function(err) {
 		if(err) {
 			L.xf(data['$setOnInsert']._id, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, data], 'sqlite');
 			return;
@@ -39,8 +39,11 @@ var storeTx = function(data) {
 }
 
 
-var countTx = function (cb) {
-	db.all('SELECT count(*) as count FROM tx', function(err, rows) {
+var countTx = function (maxRetries, cb) {
+
+	if (!maxRetries) maxRetries = Infinity;
+
+	db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [maxRetries], function(err, rows) {
 		if(err) {
 			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", err], 'sqlite');
 			return cb(err, null);
@@ -57,8 +60,8 @@ var countTx = function (cb) {
 }
 
 
-var retrieveAll = function (cb) {
-	db.all('SELECT * FROM tx', function(err, rows) {
+var retrieveAll = function (maxRetries, cb) {
+	db.all('SELECT * FROM tx WHERE retryCount < ?', [maxRetries], function(err, rows) {
 		if(err) {
 			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", err], 'sqlite');
 			return cb(err, null);
@@ -80,7 +83,17 @@ var removeUid = function (uid, cb) {
 			return cb(err, 0);
 		}
 		return cb(null, this.changes);
+	});
+}
 
+var incrementUidRetryCount = function (uid, cb) {
+	db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], function (err) {
+		if (err) {
+			L.f(["*** Fallo al incrementar el número de intentos para la entrada", err], 'sqlite');
+				return cb(err, 0);
+
+		}
+		return cb(null, this.changes);
 	});
 }
 
@@ -89,7 +102,8 @@ module.exports = {
 	storeTx: storeTx,
 	countTx: countTx,
 	retrieveAll: retrieveAll,
-	removeUid: removeUid
+	removeUid: removeUid,
+	incrementUidRetryCount: incrementUidRetryCount
 }
 
 connect();
