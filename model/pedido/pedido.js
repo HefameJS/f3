@@ -78,7 +78,6 @@ class Pedido {
 			throw new FedicomError('PED-ERR-999', 'Existen errores en todas las líneas, el pedido no se procesa.');
 		}
 
-		delete json.lineas; // Evitamos re-copiar las líneas al objeto. Mejora el rendimiento
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
