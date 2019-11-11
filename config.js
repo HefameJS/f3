@@ -206,8 +206,8 @@ config.getMongoUrl = function (servers, username, password, database, replicaSet
 	var servers = servers.join(',');
 
 	var url =  'mongodb://' + username + ':' + password + '@' + servers + '/' + database ;
-	if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID;
-	else url += '?appName=' + global.instanceID;
+	//if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID;
+	//else url += '?appName=' + global.instanceID;
 	return url;
 }
 

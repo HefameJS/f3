@@ -5,6 +5,7 @@ const L = global.logger;
 
 const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
 const Isqlite = require(BASE + 'interfaces/isqlite');
+const Imongo = require(BASE + 'interfaces/imongo');
 
 module.exports.getStats = function (req, res) {
 	var item = req.params.item || req.query.item;
@@ -34,7 +35,12 @@ module.exports.getStats = function (req, res) {
 		res.status(200).json(credentialsCache.stats());
 	}
 	else if(req.params.item === 'mdbStatus') {
-		res.status(200).json(getMongoConnectionStatus());
+
+		Imongo.connectionStatus( (status) => {
+			res.status(200).json({ok: true, data: {connected: status }});
+		});
+
+		
 	}
 	else {
 		res.status(404).json({ok: false, msg: 'Elemento no encontrado'});
@@ -42,9 +48,3 @@ module.exports.getStats = function (req, res) {
 
 }
 
-
-function getMongoConnectionStatus() {
-	var Imongo = require(BASE + 'interfaces/imongo');
-	return {ok: true, data: Imongo.connectionStatus()};
-
-}

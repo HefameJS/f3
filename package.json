@@ -4,9 +4,9 @@
   "description": "Concentrador Fedicom 3",
   "main": "fedicom3.js",
   "scripts": {
-    "test-core": "nodemon core.js",
+    "test-core": "nodemon --stack-size=16000 core.js",
     "core": "nohup node core.js > fedicom3-core.log &",
-    "test-watchdog": "nodemon watchdog.js",
+    "test-watchdog": "nodemon --stack-size=16000 watchdog.js",
     "watchdog": "nohup node watchdog.js > fedicom3-watchdog.log &"
   },
   "keywords": [

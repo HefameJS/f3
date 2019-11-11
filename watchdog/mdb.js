@@ -22,7 +22,7 @@ var interval = setInterval(function() {
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 	retransmissionSearch = true;
-	Imongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size || 10, mdbwatchConfig.minimum_age || 600, function(err, candidatos)  {
+	Imongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size || 10, mdbwatchConfig.minimum_age || 300,  (err, candidatos) => {
 		retransmissionSearch = false;
 
 		if (err) {
@@ -90,10 +90,9 @@ var interval = setInterval(function() {
 					return;
 				}
 			});
-		} /* else {
+		} else {
 			 L.t('No se encontraron candidatos a retransmitir', 'mdbwatch');
-		} */
+		}
 
 	});
-
 }, ( (mdbwatchConfig.interval || 5) * 1000) );

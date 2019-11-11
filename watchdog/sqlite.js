@@ -9,7 +9,6 @@ const Isqlite = require(BASE + 'interfaces/isqlite');
 
 var operationInProgress = false;
 var rowsOnTheFly = 0;
-var diminishingReturn = 0;
 var maxRetries = config.watchdog.sqlite.maxRetries || 10;
 
 var interval = setInterval(function() {
@@ -28,8 +27,12 @@ var interval = setInterval(function() {
 		if (count) {
 			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', count], 'sqlitewatch');
 
-			if (Imongo.connectionStatus().connected) {
-				diminishingReturn = 0;
+			Imongo.connectionStatus( (connected) => {
+				if (!connected) {
+					operationInProgress = false;
+					L.w(['Aún no se ha restaurado la conexión con MongoDB']);
+					return;
+				}
 
 				Isqlite.retrieveAll(maxRetries, function (error, rows) {
 					if (error) {
@@ -64,18 +67,12 @@ var interval = setInterval(function() {
 					operationInProgress = false;
 
 				});
-			} else {
-				operationInProgress = false;
-				diminishingReturn = diminishingReturn ? diminishingReturn * 2 : 1;
-				diminishingReturn = Math.min(diminishingReturn, 30)
-				L.w(['Aún no se ha restaurado la conexión con MongoDB', diminishingReturn]);
-			}
+			});
 		} else {
-			// L.t('No se encontraron entradas en la base de datos de respaldo', 'sqlitewatch');
+			L.t('No se encontraron entradas en la base de datos de respaldo', 'sqlitewatch');
 			operationInProgress = false;
-			diminishingReturn = 0;
 		}
 
 	});
 
-}, (((config.watchdog.sqlite.interval || 5) + diminishingReturn) * 1000) );
+}, ((config.watchdog.sqlite.interval || 5) * 1000) );

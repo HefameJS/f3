@@ -18,58 +18,84 @@ const txTypes = require(BASE + 'model/static/txTypes');
 const txStatus = require(BASE + 'model/static/txStatus');
 
 const WRITE_CONCERN = config.mongodb.writeconcern || 1;
+
 const MONGODB_OPTIONS = {
 	useNewUrlParser: true,
 	autoReconnect: true,
-	auto_reconnect: true,
-	reconnectTries: 300,
-	reconnectInterval: 10000,
-	useUnifiedTopology: true,
-	connectTimeoutMS: 3000,
+	keepAlive: 1000,
+	keepAliveInitialDelay: 1000,
+	connectTimeoutMS: 1500,
+	socketTimeoutMS: 1500,
+	serverSelectionTimeoutMS: 1500,
+	reconnectTries: 99999,
+	reconnectInterval: 5000,
+	ha: false,
+	w: config.mongodb.writeconcern || 1,
+	wtimeout: 1000,
+	j: 1000,
 	replicaSet: config.mongodb.replicaSet,
-	loggerLevel: 'degug',
-	appname: global.instanceID
+	useUnifiedTopology: true,
+	appname: global.instanceID,
+	loggerLevel: 'warn'
 };
 
 
-
-
+var mongoConnection = null; 
 var mongoClient = null;
 var mongoDatabase = null;
 var collections = {
 	tx: null,
-	discard: null
+	discard: null,
+	control: null
 };
 
-MongoClient.connect(mongourl, MONGODB_OPTIONS, function (err, client) {
-	if (err) {
-		L.f(['*** Error en la conexión a de MongoDB ***', mongourl, err], 'mongodb');
-	}
-	else {
-		mongoClient = client;
-		mongoDatabase = mongoClient.db(dbName);
-		L.i(['*** Conexión a la base de datos [' + dbName + ']'], 'mongodb');
+const mongoConnect = () => {
+	mongoConnection = new MongoClient(mongourl, MONGODB_OPTIONS);
+	mongoConnection.connect()
+		.then( (client) => {
+			mongoClient = client;
+			mongoDatabase = mongoClient.db(dbName);
+			L.i(['*** Conexión a la base de datos [' + dbName + ']'], 'mongodb');
 
-		var txCollectionName = config.mongodb.txCollection || 'tx';
-		collections.tx = mongoDatabase.collection(txCollectionName);
-		L.i(['*** Conexión a la colección [' + dbName + '.' + txCollectionName + '] para almacenamiento de transmisiones'], 'mongodb');
+			var txCollectionName = config.mongodb.txCollection || 'tx';
+			collections.tx = mongoDatabase.collection(txCollectionName);
+			L.i(['*** Conexión a la colección [' + dbName + '.' + txCollectionName + '] para almacenamiento de transmisiones'], 'mongodb');
 
-		var discardCollectionName = config.mongodb.discardCollection || 'discard';
-		collections.discard = mongoDatabase.collection(discardCollectionName);
-		L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
-	}
-});
+			var discardCollectionName = config.mongodb.discardCollection || 'discard';
+			collections.discard = mongoDatabase.collection(discardCollectionName);
+			L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
+
+			var controlCollectionName = config.mongodb.controlCollection || 'control';
+			collections.control = mongoDatabase.collection(controlCollectionName);
+			L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
+		})
+		.catch( (error) => {
+			L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb');
+		});
+}
+
+mongoConnect();
+
 
 exports.ObjectID = ObjectID;
 
-exports.connectionStatus = function() {
-	return {
-		connected: mongoClient.isConnected()
+exports.connectionStatus = function(cb) {
+	if (mongoClient && mongoClient.isConnected()) {
+		collections.tx.findOne({}, { _id: 1 }, (err, res) => {
+			if (err) {
+				mongoConnect();
+				return cb(false);
+			}
+			return cb(true);
+		});
+	} else {
+		mongoConnect();
+		return cb(false);
 	}
 }
 
 exports.findTxById= function(myId, id, cb) {
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		try {
 			id = new ObjectID(id);
 		} catch (ex) {
@@ -77,7 +103,7 @@ exports.findTxById= function(myId, id, cb) {
 			cb(ex, null);
 			return;
 		}
-		collections.tx.findOne( {_id: id}, cb );
+		collections.tx.findOne({ _id: id }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -86,16 +112,19 @@ exports.findTxById= function(myId, id, cb) {
 
 exports.findTxByCrc = function(myId, crc, cb) {
 	
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		try {
 			if (crc.crc)	crc = new ObjectID(crc.crc);
 			else crc = new ObjectID(crc);
+
+			collections.tx.findOne({ crc: crc }, cb);
+
 		} catch (ex) {
 			L.xe(myId, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC', ex], 'crc');
 			cb(ex, null);
 			return;
 		}
-		collections.tx.findOne( {crc: crc}, cb );
+
 	} else {
 		L.xe(myId, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -103,9 +132,9 @@ exports.findTxByCrc = function(myId, crc, cb) {
 };
 
 exports.findTxByNumeroDevolucion = function(myId, numeroDevolucion, cb) {
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
-		collections.tx.findOne( {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}, cb );
+		collections.tx.findOne({ type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -113,19 +142,19 @@ exports.findTxByNumeroDevolucion = function(myId, numeroDevolucion, cb) {
 };
 
 exports.findTxByNumeroPedido = function(myId, numeroPedido, cb) {
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
-		collections.tx.findOne( {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}, cb );
+		collections.tx.findOne({ type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
 exports.findConfirmacionPedidoByCRC = function(myId, crc, cb) {
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		crc = crc.substr(0,8).toUpperCase();
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CONFIRMACION_PEDIDO, "clientRequest_body_crc": crc}], 'mongodb');
-		collections.tx.findOne( {type: txTypes.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc}, cb );
+		collections.tx.findOne({ type: txTypes.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la Confirmacion de Pedido'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -134,7 +163,7 @@ exports.findConfirmacionPedidoByCRC = function(myId, crc, cb) {
 
 /*	Obtiene las transmisiones que son candidatas de retransmitir */
 exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		var query1 = {
 			type: txTypes.CREAR_PEDIDO,
 			status: txStatus.NO_SAP
@@ -150,10 +179,10 @@ exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
 
 		limit = limit ? limit : 10;
 
-		// L.d(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
+		L.t(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
 		collections.tx.find(query).limit(limit).toArray(cb);
 	} else {
-		L.e(['**** Error al localizar la transmisión'], 'mongodb');
+		L.e(['**** Error al buscar candidatos a retransmitir. No está conectado a mongodb'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 }
@@ -238,10 +267,10 @@ exports.commitDiscard = function (data) {
 	var key = data['$setOnInsert']._id;
 
 	
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 		collections.discard.updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
 			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD', err], 'mdbCommitDiscard');
+				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', err], 'mdbCommitDiscard');
 			} else {
 				L.xd(key, ['COMMIT DISCARD OK', toLogStructure(data)], 'mdbCommitDiscard');
 			}
@@ -263,8 +292,8 @@ exports.commit = function(data, noMerge) {
 	}
 
 	
-	if (mongoDatabase) {
-	   collections.tx.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
+	if (mongoClient && mongoClient.isConnected()) {
+	   collections.tx.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, (err, res) => {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
 				iSqlite.storeTx(data);
@@ -274,7 +303,7 @@ exports.commit = function(data, noMerge) {
 	   });
 	}
 	else {
-	   L.xf(key, ['ERROR AL HACER COMMIT', toLogStructure(data)], 'mdbCommit');
+		L.xf(key, ['ERROR AL HACER COMMIT', toLogStructure(data)], 'mdbCommit');
 		iSqlite.storeTx(data);
 	}
 
@@ -358,10 +387,11 @@ exports.updateFromSqlite = function(data, cb) {
 	convertToOidsAndDates(data);
 	var key = data['$setOnInsert']._id ;
 
-	if (mongoDatabase) {
+	if (mongoClient && mongoClient.isConnected()) {
 	   collections.tx.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
 			if (err) {
 				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
+				mongoConnect();
 				cb(false);
 			} else {
 				L.xd(key, ['COMMIT desde SQLite OK', toLogStructure(data)], 'txSqliteCommit');
@@ -370,8 +400,10 @@ exports.updateFromSqlite = function(data, cb) {
 	   });
 	}
 	else {
-	   L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
+		L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
+		mongoConnect();
 		cb(false);
+
 	}
 
 };
