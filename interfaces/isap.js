@@ -7,6 +7,46 @@ const Events = require(BASE + 'interfaces/events');
 const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
 const request = require('request');
 
+exports.ping = function (sapSystem, callback) {
+	var sapSystemData = sapSystem ? config.getSapSystem(sapSystem) : config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', false);
+		return;
+	}
+
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos/avalibity');
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'GET',
+		headers: sapSystem.getAuthHeaders(),
+		encoding: 'latin1'
+	};
+
+
+	request(httpCallParams, function (err, res, body) {
+		if (err) {
+			callback(err, false);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, true);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, false);
+		}
+
+	});
+}
+
+
 exports.authenticate = function ( txId, authReq, callback, noEvents) {
 
 	var fromCache = credentialsCache.check(authReq);
