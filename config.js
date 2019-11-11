@@ -223,8 +223,8 @@ config.getMongoLogUrl = function (servers, username, password, database, replica
 	var servers = servers.join(',');
 
 	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
-	if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID + '-log';
-	else url += '?appName=' + global.instanceID + '-log';
+	//if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID + '-log';
+	//else url += '?appName=' + global.instanceID + '-log';
 	return url;
 }
 
