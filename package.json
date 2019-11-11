@@ -27,7 +27,9 @@
     "request": "^2.88.0",
     "saslprep": "^1.0.3",
     "sqlite3": "^4.1.0",
-    "underscore": "^1.9.1"
+    "underscore": "^1.9.1",
+    "xml-js": "^1.6.11",
+    "xml2js": "^0.4.22"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"

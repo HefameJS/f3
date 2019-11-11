@@ -22,6 +22,50 @@ exports.getAlbaran = function (req, res) {
         return;
     }
 
+    //0140095125 - Transfer
+    //0140108230 - Normalico
+    Isap.getAlbaranXML(req.txId, numAlbaran, '0010104999', (err, sapRes, soapBody) => {
+        if (err) {
+            console.log('ERROR', err);
+            res.status(400).send(err);
+            return;
+        }
+
+        var parseString = require('xml2js').parseString;
+        parseString(soapBody, (err, soapResult) => {
+            if (err) {
+                return res.status(500).send({err: err});
+            }
+
+            soapResult = soapResult['env:Envelope']['env:Body'][0]['n0:YTC_ALBARAN_XML_HEFAMEResponse'][0];
+            var status = soapResult['O_STATUS'][0];
+            
+
+            if (status !== '00') {
+                res.status(404).send({ err: 'No hay albaran', status: status });
+            } else {
+                var albaranXML = '';
+                soapResult['TO_EDATA'][0]['item'].forEach( (linea) => {
+                    albaranXML += linea['ELINEA'][0];
+                })
+
+                parseString(albaranXML, (err, albaranJSONpre) => {
+                    if (err) {
+                        return res.status(500).send({ err: err });
+                    }
+
+                    var AlbaranJSON = require(BASE + 'model/albaranJSON');
+                    var albaranJSON = new AlbaranJSON(req.txId, albaranJSONpre)
+                    res.send(albaranJSON);
+                });
+            }
+
+ 
+        });
+
+    });
+
+/*
 
     albaran(req.txId, numAlbaran, function(err, albaran) {
         if (err) {
@@ -32,7 +76,7 @@ exports.getAlbaran = function (req, res) {
 
         res.status(200).json(albaran);
     });
-
+*/
 }
 
 
