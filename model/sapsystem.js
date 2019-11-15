@@ -8,11 +8,12 @@ class SapSystem {
     this.https = json.https;
     this.username = json.username;
     this.password = json.password;
+    this.prefix = json.prefix || '';
   }
 
   getURI(path) {
     var uri = this.https ? 'https://' : 'http://';
-    uri += this.host + ':' + this.port
+    uri += this.host + ':' + this.port + this.prefix;
     if (path) uri += path;
     return uri;
   }

@@ -35,20 +35,22 @@
 		"token_validation_skew_clock_seconds": 10
 	},
 	"sap_systems": {
-		"default": "P01",
-		"P01": {
-			"host": "p01.hefame.es",
+		"default": "D01",
+		"D01": {
+			"host": "d01.hefame.es",
 			"port": 11081,
 			"https": true,
 			"username": "fedicom",
-			"password": "secretP01"
+			"password": "secretD01",
+			"prefix": "/devel"
 		},
 		"T01": {
 			"host": "t01.hefame.es",
 			"port": 21081,
 			"https": true,
 			"username": "fedicom",
-			"password": "secretT01"
+			"password": "secretT01",
+			"prefix": "/test"
 		}
 	},
 	"watchdog": {
