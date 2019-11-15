@@ -12,6 +12,7 @@ const DEFINICION_CAMPOS_CABECERA = {
     lineas: { ignore: true },
     login: { ignore: true },
     crc: { ignore: true },
+    sap_system: { ignore: true },
 
     // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
     numeroDevolucion: { remove: true },

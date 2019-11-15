@@ -15,6 +15,7 @@ const DEFINICION_CAMPOS_CABECERA = {
     login: { ignore: true },
     crc: { ignore: true },
     sap_url_confirmacion: { ignore: true },
+    sap_system: { ignore: true },
 
     // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
     numeroPedido: { remove: true },
