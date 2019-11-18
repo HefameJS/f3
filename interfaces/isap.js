@@ -46,7 +46,6 @@ exports.ping = function (sapSystem, callback) {
 	});
 }
 
-
 exports.authenticate = function ( txId, authReq, callback, noEvents) {
 
 	var fromCache = credentialsCache.check(authReq);
@@ -219,98 +218,6 @@ exports.retransmit = function ( txId, sapRequest, callback) {
 
 }
 
-exports.getCabeceraAlbaran = function (txId, numeroAlbaran, callback) {
-
-	var sapSystemData = config.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback('No se encuentra el sistema destino', null, null, true);
-		return;
-	}
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zsf_get_order_list/proforma/' + numeroAlbaran);
-
-	var httpCallParams = {
-		followAllRedirects: true,
-		json: true,
-		url: url,
-		method: 'GET',
-		headers: {
-			'Accept-Encoding': 'application/json',
-			'Content-Type': 'application/json',
-			'x-hash': 'MD5',
-			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
-			'x-salt': '123',
-			'x-user': 'salesforce'
-		},
-		encoding: 'latin1'
-	};
-
-	request(httpCallParams, function (err, res, body) {
-
-		if (err) {
-			callback(err, res, body);
-			return;
-		}
-
-		var statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
-			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
-		}
-
-	});
-}
-
-exports.getPosicionesAlbaran = function (txId, numeroPedido, callback) {
-
-	var sapSystemData = config.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback('No se encuentra el sistema destino', null, null, true);
-		return;
-	}
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zsf_get_order_list/' + numeroPedido + '/detail');
-
-	var httpCallParams = {
-		followAllRedirects: true,
-		json: true,
-		url: url,
-		method: 'GET',
-		headers: {
-			'Accept-Encoding': 'application/json',
-			'Content-Type': 'application/json',
-			'x-hash': 'MD5',
-			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
-			'x-salt': '123',
-			'x-user': 'salesforce'
-		},
-		encoding: 'latin1'
-	};
-
-	request(httpCallParams, function (err, res, body) {
-
-		if (err) {
-			callback(err, res, body);
-			return;
-		}
-
-		var statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
-			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
-		}
-
-	});
-}
-
 exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) {
 
 	var sapSystemData = config.getDefaultSapSystem();
@@ -335,11 +242,8 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
    		</soap:Body> \
 	</soap:Envelope>';
 
-	console.log(body);
-
 	var httpCallParams = {
 		followAllRedirects: true,
-		
 		url: url,
 		method: 'POST',
 		headers: {
@@ -349,6 +253,56 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
 		encoding: 'latin1',
 		body: body
 	};
+
+	L.xd(txId, ['Enviando a SAP consulta de albaránXML', httpCallParams]);
+
+	request(httpCallParams, function (err, res, body) {
+
+		if (err) {
+			callback(err, res, body);
+			return;
+		}
+
+		var statusCodeType = Math.floor(res.statusCode / 100);
+		if (statusCodeType === 2) {
+			callback(null, res, body);
+		} else {
+			callback({
+				errno: res.statusCode,
+				code: res.statusMessage
+			}, res, body);
+		}
+
+	});
+}
+
+exports.getAlbaranPDF = function (txId, numeroAlbaran, callback) {
+
+	var sapSystemData = config.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback('No se encuentra el sistema destino', null, null, true);
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsf_get_document/proforma/' + numeroAlbaran);
+
+	var httpCallParams = {
+		followAllRedirects: true,
+		json: true,
+		url: url,
+		method: 'GET',
+		headers: {
+			'Accept-Encoding': 'application/json',
+			'Content-Type': 'application/json',
+			'x-hash': 'MD5',
+			'x-key': '57980a6cef7a82dc8bed7dd617afac38',
+			'x-salt': '123',
+			'x-user': 'salesforce'
+		},
+		encoding: 'latin1'
+	};
+
+	L.xd(txId, ['Enviando a SAP consulta de albarán PDF', httpCallParams]);
 
 	request(httpCallParams, function (err, res, body) {
 

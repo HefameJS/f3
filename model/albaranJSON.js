@@ -46,7 +46,7 @@ class AlbaranJSON {
                 this.impuestos.push(new Impuesto(impuesto));
         });
 
-        this.totalAlbaran = new TotalAlbaran(totalAlbaran, this.impuestos);
+        this.totales = new TotalAlbaran(totalAlbaran, this.impuestos);
   
     }
 }
@@ -68,37 +68,41 @@ class LineaAlbaran {
         this.orden = parseInt(lineaXML['NumLinea'][0]);
         this.codigoArticulo = lineaXML['Articulo'][0];
         this.descripcionArticulo = lineaXML['Descripcion'][0];
-        this.pedido = undefined;
-        this.modelo = undefined;
-        this.lotes = undefined; // Lotes = [{lote, fechaCaducidad}]
-        this.cubeta = undefined; // Cubeta = [{codigo, unidades}]
+        //this.pedido = undefined;
+        //this.modelo = undefined;
+        //this.lotes = undefined; // Lotes = [{lote, fechaCaducidad}]
+        //this.cubeta = undefined; // Cubeta = [{codigo, unidades}]
         this.cantidadPedida = parseInt(lineaXML['CantidadPed'][0]);
         this.cantidadServida = parseInt(lineaXML['CantidadServ'][0]);
         this.cantidadBonificada = parseInt(lineaXML['CantidadBon'][0]);
         if (lineaXML['PVP'][0]) this.precioPvp = parseFloat(lineaXML['PVP'][0].replace(/\,/,'.'));
-        this.precioPvf = undefined;
-        this.precioPvl = undefined;
+        //this.precioPvf = undefined;
+        //this.precioPvl = undefined;
         if (lineaXML['NETO'][0]) this.precioNeto = parseFloat(lineaXML['NETO'][0].replace(/\,/, '.'));
-        if (lineaXML['PVA'][0])this.precioAlbaran = parseFloat(lineaXML['PVA'][0].replace(/\,/, '.'));
+        if (lineaXML['PVA'][0]) this.precioAlbaran = parseFloat(lineaXML['PVA'][0].replace(/\,/, '.'));
 
         if (lineaXML['IVALinea'][0] !== '00') {
-            this.impuesto = {
-                tipo: Impuesto_getTipo(lineaXML['IVALinea'][0]),
-                base: undefined,
-                porcentaje: parseFloat(lineaXML['IVALinea'][0]),
-                importe: undefined,
-                porcentajeRecargo: undefined,
-                importeRecargo: undefined
-            };
+            this.impuesto = new ImpuestoLinea(parseInt(lineaXML['IVALinea'][0]), this.precioNeto);
         }
-        if (lineaXML['Descuento'][0]) {
+
+        if (this.precioNeto && this.precioAlbaran && this.precioNeto < this.precioAlbaran) {
             this.descuento = {
                 tipo: undefined,
                 descripcion: undefined,
-                porcentaje: parseFloat(lineaXML['Descuento'][0].replace(/\,/, '.')),
-                importe: undefined
+                porcentaje: Math.floor((100 - ((this.precioNeto * 100) / this.precioAlbaran)) * 100) / 100,
+                importe: Math.ceil( (this.precioAlbaran - this.precioNeto) * 100) / 100
             };
         }
+
+        if (this.precioNeto && this.precioAlbaran && this.precioNeto > this.precioAlbaran) {
+            this.cargo = {
+                tipo: undefined,
+                descripcion: undefined,
+                porcentaje: Math.floor((((this.precioNeto * 100) / this.precioAlbaran) - 100) * 100) / 100,
+                importe: Math.ceil((this.precioNeto - this.precioAlbaran) * 100) / 100
+            };
+        }
+        
         this.cargo = undefined;
         if (lineaXML['Observaciones'][0]) this.observaciones = lineaXML['Observaciones'][0]
         //this.incidencias: undefined
@@ -122,12 +126,14 @@ class TotalAlbaran {
         this.precioAlbaran = parseFloat(totalAlbaran['TotPVA'][0].replace(/,/, '.'));;
         this.impuestos = impuestos;
 
+        /*
         this.descuentos = [];
         if (totalAlbaran['D.ESP'][0]) this.descuentos.push(new Descuento('ESP', totalAlbaran['D.ESP'][0]));
         if (totalAlbaran['D.GEN'][0]) this.descuentos.push(new Descuento('GEN', totalAlbaran['D.GEN'][0]));
         if (totalAlbaran['D.PAR'][0]) this.descuentos.push(new Descuento('PAR', totalAlbaran['D.PAR'][0]));
 
         this.cargos = [];
+        */
     }
 
 }
@@ -150,7 +156,18 @@ class Impuesto {
         this.porcentaje = parseFloat(impuesto['IVAPorcentaje'][0].replace(/\,/, '.'));
         this.importe = Math.ceil( this.base * this.porcentaje ) / 100;
         this.porcentajeRecargo = parseFloat(impuesto['PorcentajeRec'][0].replace(/\,/, '.'));
-        this.importeRecargo = undefined;
+        this.importeRecargo = Math.ceil(this.base * this.porcentajeRecargo) / 100;
+    }
+}
+
+class ImpuestoLinea {
+    constructor(porcentaje, neto) {
+        this.tipo = Impuesto_getTipo(porcentaje);
+        this.base = neto;
+        this.porcentaje = parseFloat(porcentaje);
+        this.importe = Math.ceil(this.base * this.porcentaje) / 100;
+        this.porcentajeRecargo = Impuesto_getPorcentajeRecargo(porcentaje),
+        this.importeRecargo = Math.ceil(this.base * this.porcentajeRecargo) / 100;
     }
 }
 
@@ -161,6 +178,15 @@ function Impuesto_getTipo(porcentaje) {
         case 10: return 'IVA - REDUCIDO';
         case 21: return 'IVA - GENERAL';
         default: return 'DESCONOCIDO';
+    }
+}
+
+function Impuesto_getPorcentajeRecargo(porcentaje) {
+    switch (parseInt(porcentaje)) {
+        case 4: return 0.5;
+        case 10: return 1.75;
+        case 21: return 5.2;
+        default: return 0;
     }
 }
 
