@@ -10,7 +10,7 @@ const Events = require(BASE + 'interfaces/events');
 const ObjectID = Imongo.ObjectID;
 
 const txStatus = require(BASE + 'model/static/txStatus');
-const retransmit = require(BASE + 'watchdog/retransmit');
+const autoRetransmit = require(BASE + 'watchdog/autoRetransmit');
 
 
 var retransmissionsInProgress = 0;
@@ -46,7 +46,7 @@ var interval = setInterval(function() {
 					if (tx.status === txStatus.NO_SAP) {
 						L.xi(tx._id, 'Retransmitiendo pedido por encontrarse en estado NO_SAP', 'mdbwatch');
 						retransmissionsInProgress++;
-						retransmit(myId, tx._id, false, (err, newStatus, newBody) => {
+						autoRetransmit(myId, tx._id, false, (err, newStatus, newBody) => {
 							retransmissionsInProgress--;
 						});
 						return;

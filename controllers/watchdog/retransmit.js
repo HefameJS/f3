@@ -12,6 +12,7 @@ const txStatus = require(BASE + 'model/static/txStatus');
 const txTypes = require(BASE + 'model/static/txTypes');
 const Pedido = require(BASE + 'model/pedido/pedido');
 const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
+const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
 
 
 
@@ -56,6 +57,7 @@ exports.retransmit = function (req, res) {
 				case txStatus.FALLO_AUTENTICACION:
 				case txStatus.PETICION_INCORRECTA:
 				case txStatus.RECHAZADO_SAP:
+				case txStatus.ESPERA_AGOTADA:
 					if (force) break;
 					L.xw(req.txId, ['No se retransmite la petición porque no está en error y no se está forzando', dbTx.status]);
 					var fedicomError = new FedicomError('WD-HTTP-409', 'No se retransmite la petición porque no está en error y no se está forzando', 409);
@@ -106,6 +108,9 @@ exports.retransmit = function (req, res) {
 					return;
 				}
 
+				var status = sapBody.sap_pedidoprocesado ? txStatus.OK : txStatus.ESPERANDO_NUMERO_PEDIDO;
+				var numerosPedidoSAP = saneaPedidosAsociadosSap(sapBody.sap_pedidosasociados);
+
 
 				var response = sanitizeSapResponse(sapBody, pedido);
 
@@ -114,7 +119,7 @@ exports.retransmit = function (req, res) {
 					Events.retransmit.emitRetransmit(req, res, response, dbTx, txStatus.RECHAZADO_SAP);
 				} else {
 					res.status(201).json(response);
-					Events.retransmit.emitRetransmit(req, res, response, dbTx, txStatus.ESPERANDO_NUMERO_PEDIDO);
+					Events.retransmit.emitRetransmit(req, res, response, dbTx, status, numerosPedidoSAP);
 				}
 			});
 		} else {

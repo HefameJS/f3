@@ -6,6 +6,7 @@ const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
 const txStatus = require(BASE + 'model/static/txStatus');
+const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
 
 function identifyAuthenticatingUser(req) {
 	if (req && req.token && req.token.sub) {
@@ -37,7 +38,7 @@ function merge(src1, src2) {
 	return newObj;
 }
 
-module.exports.emitRetransmit = function (req, res, responseBody, originalTx, status) {
+module.exports.emitRetransmit = function (req, res, responseBody, originalTx, status, numerosPedidoSAP) {
 
 	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
 	var forceFlag = req.query.force === 'yes' ? true : false;
@@ -47,13 +48,17 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			type: txTypes.RETRANSMISION_PEDIDO,
+		},
+		$max: {
 			status: retransStatus,
+			modifiedAt: new Date()
+		},
+		$set: {
+			type: txTypes.RETRANSMISION_PEDIDO,
 			forced: forceFlag,
 			originalTx: originalTxId,
 			iid: global.instanceID,
-			authenticatingUser: identifyAuthenticatingUser(originalTx.clientRequest || null),
-			client: identifyClient(originalTx.clientRequest || null),
+			authenticatingUser: 'WatchDog-Api',
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -74,10 +79,15 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 	}
 
 	var dataUpdate = null;
-
-
+	
 	// Hacemos un UPDATE del estado original !
 	if ( originalTxId && (originalTx.status !== txStatus.OK && originalTx.status !== txStatus.ESPERANDO_NUMERO_PEDIDO) && originalTx.status !== retransStatus) {
+
+		
+
+		// Si era un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados
+		
+		
 		dataUpdate = {
 			$setOnInsert: {
 				_id: originalTxId,
@@ -85,7 +95,10 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 			},
 			$set: {
 				clientResponse: data['$set'].clientResponse,
-				status: data['$set'].status,
+				numerosPedidoSAP: numerosPedidoSAP
+			},
+			$max: {
+				status: retransStatus,
 				modifiedAt: new Date()
 			},
 			$push: {
@@ -106,19 +119,22 @@ module.exports.emitRetransmit = function (req, res, responseBody, originalTx, st
 				_id: originalTxId,
 				createdAt: new Date()
 			},
+			$set: {
+				numerosPedidoSAP: numerosPedidoSAP
+			},
 			$push: {
 				retransmissions: {
 					_id: data['$setOnInsert']._id,
 					createdAt: data['$setOnInsert'].createdAt,
 					dataChange: false,
-					force: forceFlag,
+					forced: forceFlag,
 					rtStatus: retransStatus
 				}
 			}
 		};
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento Retransmit', data['$set'], dataUpdate['$setOnInsert'], dataUpdate['$set'], dataUpdate['$push']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento Retransmit', data['$setOnInsert'], data['$set'], dataUpdate['$setOnInsert'], dataUpdate['$max'], dataUpdate['$set'], dataUpdate['$push']], 'txCommit');
 
 	if (originalTxId) Imongo.commit(dataUpdate);
 	Imongo.commit(data);
@@ -144,21 +160,30 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 			$setOnInsert: {
 				_id: retransmissionId,
 				createdAt: new Date(),
+			},
+			$max: {
+				status: newStatus,
+				modifiedAt: new Date()
+			},
+			$set:{
 				type: txTypes.RETRANSMISION_PEDIDO,
 				forced: force,
 				originalTx: originalTxId,
 				iid: global.instanceID,
 				authenticatingUser: 'WatchDog'
-			},
-			$max: {
-				status: newStatus,
-				modifiedAt: new Date()
 			}
 		};
 
+
+
+
 	var dataUpdate = null;
-	// Hacemos un UPDATE del estado original !
+	// Hacemos un UPDATE del estado original 
 	if ( originalTxId && (originalTx.status !== txStatus.OK && originalTx.status !== txStatus.ESPERANDO_NUMERO_PEDIDO) && originalTx.status < newStatus && newResponseBody) {
+
+		// Si era un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados
+		var numerosPedidoSAP = saneaPedidosAsociadosSap(newResponseBody.sap_pedidosasociados);
+
 		dataUpdate = {
 			$setOnInsert: {
 				_id: originalTxId,
@@ -169,6 +194,7 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 				status: newStatus
 			},
 			$set: {
+				numerosPedidoSAP: numerosPedidoSAP,
 				clientResponse: {
 					timestamp: new Date(),
 					headers: {
@@ -201,7 +227,7 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 					_id: retransmissionId,
 					createdAt: new Date(),
 					dataChange: false,
-					force: force,
+					forced: force,
 					rtStatus: newStatus
 				}
 			}
@@ -226,7 +252,6 @@ module.exports.emitAutoRetransmit = function (retransmissionId, originalTx, newS
 	L.yell(originalTxId, txTypes.RETRANSMISION_PEDIDO, newStatus, [yellData]);
 
 }
-
 module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus) {
 
 	var originalTxId = (originalTx && originalTx._id) ? originalTx._id : undefined;
@@ -249,7 +274,6 @@ module.exports.emitStatusFix = function (retransmissionId, originalTx, newStatus
 
 	}
 }
-
 module.exports.emitRecoverConfirmacionPedido = function (originalTx, confirmTx) {
 
 	var cBody = confirmTx.clientRequest.body;

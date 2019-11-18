@@ -5,6 +5,7 @@ const config = global.config;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const Isap = require(BASE + 'interfaces/isap');
+
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const controllerHelper = require(BASE + 'util/controllerHelper');
@@ -13,7 +14,7 @@ const txTypes = require(BASE + 'model/static/txTypes');
 const Pedido = require(BASE + 'model/pedido/pedido');
 const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
 
-const retransmit = function (myId, retransmitId, force, cb) {
+const autoRetransmit = function (myId, retransmitId, force, cb) {
 
 		Imongo.findTxById(myId, retransmitId, function(err, dbTx) {
 			if (err) {
@@ -45,7 +46,11 @@ const retransmit = function (myId, retransmitId, force, cb) {
 					case txStatus.FALLO_AUTENTICACION:
 					case txStatus.PETICION_INCORRECTA:
 					case txStatus.RECHAZADO_SAP:
-						if (force) break;
+					case txStatus.ESPERA_AGOTADA:
+						if (force) {
+							L.xd(myId, ['El estado de la transmisión es inválido, pero será retransmitida a SAP porque se está forzando', dbTx.status], 'txRetransmit');
+							break;
+						}
 						L.xw(myId, ['No se retransmite la petición porque no está en error y no se está forzando', dbTx.status], 'txRetransmit');
 						var error = new FedicomError('WD-HTTP-409', 'No se retransmite la petición porque no está en error y no se está forzando', 409);
 						Events.retransmit.emitAutoRetransmit(myId, dbTx, txStatus.RETRANSMISION_SOLO_FORZANDO, error.getErrors(), false);
@@ -81,7 +86,6 @@ const retransmit = function (myId, retransmitId, force, cb) {
 				}
 				L.xd(myId, ['El contenido de la transmisión es un pedido correcto, continuamos con la retransmisión', pedido], 'txRetransmit');
 
-
 				Isap.realizarPedido( myId, pedido, function(sapErr, sapRes, sapBody, abort) {
 					if (sapErr) {
 						if (abort) {
@@ -98,6 +102,7 @@ const retransmit = function (myId, retransmitId, force, cb) {
 						return;
 					}
 
+					var status = sapBody.sap_pedidoprocesado ? txStatus.OK : txStatus.ESPERANDO_NUMERO_PEDIDO;
 					var response = sanitizeSapResponse(sapBody, pedido);
 
 					if (Array.isArray(response)) {
@@ -105,9 +110,9 @@ const retransmit = function (myId, retransmitId, force, cb) {
 						Events.retransmit.emitAutoRetransmit(myId, dbTx, txStatus.RECHAZADO_SAP, response, false);
 						cb(null, txStatus.RECHAZADO_SAP, response);
 					} else {
-						L.xi(myId, ['Pedido retransmitido a SAP', txStatus.ESPERANDO_NUMERO_PEDIDO], 'txRetransmit');
-						Events.retransmit.emitAutoRetransmit(myId, dbTx, txStatus.ESPERANDO_NUMERO_PEDIDO, response, false);
-						cb(null, txStatus.ESPERANDO_NUMERO_PEDIDO, response);
+						L.xi(myId, ['Pedido retransmitido a SAP', status], 'txRetransmit');
+						Events.retransmit.emitAutoRetransmit(myId, dbTx, status, response, false);
+						cb(null, status, response);
 					}
 				});
 			} else {
@@ -118,4 +123,4 @@ const retransmit = function (myId, retransmitId, force, cb) {
 		});
 };
 
-module.exports = retransmit;
+module.exports = autoRetransmit;
