@@ -72,33 +72,45 @@ module.exports = function(app) {
 		.post(controllers.authenticate.doAuth)
 		.get(controllers.authenticate.verifyToken);
 
+
 	app.route('/pedidos')
 		.get(controllers.pedidos.getPedido)
 		.post(controllers.pedidos.savePedido)
 		.put(controllers.pedidos.updatePedido);
-
 	app.route('/pedidos/:numeroPedido')
 		.get(controllers.pedidos.getPedido);
+
 
 	app.route('/devoluciones')
 		.get(controllers.devoluciones.getDevolucion)
 		.post(controllers.devoluciones.saveDevolucion);
-
 	app.route('/devoluciones/:numeroDevolucion')
 		.get(controllers.devoluciones.getDevolucion);
 
+
 	app.route('/albaranes')
 		.get(controllers.albaranes.findAlbaran);
-		
+	// app.route('/albaranes/confirmacion');
 	app.route('/albaranes/:numeroAlbaran')
 		.get(controllers.albaranes.getAlbaran);
 
+
+	//app.route('/facturas')
+	//	.get(controllers.facturas.findFacturas);
+	//app.route('/facturas/:numeroFactura')
+	//	.get(controllers.facturas.getFactura);
+
+
+	/*
+	 *	RUTAS NO STANDARD FEDICOM3
+	 */
 	app.route('/confirmaPedido')
 		.post(controllers.confirmacionPedido.confirmaPedido);
 
 	app.route('/stats').get(controllers.stats.getStats);
 	app.route('/stats/:item').get(controllers.stats.getStats);
 
+	
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function(req, res, next) {
 		L.xw( req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe' );
