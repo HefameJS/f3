@@ -75,7 +75,7 @@ class Pedido {
 		// Si todas las lineas serán ignoradas, no hay pedido
 		if (sap_ignore_all) {
 			L.xe(req.txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
-			throw new FedicomError('PED-ERR-999', 'Existen errores en todas las líneas, el pedido no se procesa.');
+			throw new FedicomError('PED-ERR-999', 'Existen errores en todas las líneas, el pedido no se procesa.', 400);
 		}
 
 
