@@ -1,24 +1,24 @@
 'use strict';
 const BASE = global.BASE;
 // const L = global.logger;
-const config = global.config;
+const C = global.config;
+const K = global.constants;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
-const ERROR_CODE = 'PROTOCOL-999'
-const DEPURACION_ACTIVA = (config.depurar_transmisiones ? true : false);
+const ERROR_CODE = K.CODIGOS_ERROR_FEDICOM.WARN_PROTOCOLO;
+const DEPURACION_ACTIVA = (C.depurar_transmisiones ? true : false);
 
 /**
- * Dado un objeto , hace comprobaciones de quen los campos sean correctos en funcion
+ * Dado un objeto, hace comprobaciones de quen los campos sean correctos en funcion
  * del array de definiciones que se le pase.
  * 
- * En caso de encontrar errores, el campo se elimina y se añade una incidencia en el objeto.
- * NOTA: ¡ Se asume que el campo de incidencias viene vacío de entrada o se machacará !
+ * En caso de encontrar errores, se devuelve un objeto FedicomError con incidencias.
  * 
  * @param {Object} json El objeto a tratar
  * @param {Array} definicionCampos array con la definicion de los campos válidos
  */
-module.exports = function (json, definicionCampos) {
+const preClean = (json, definicionCampos) => {
 
     var incidencias = new FedicomError();
 
@@ -56,7 +56,7 @@ module.exports = function (json, definicionCampos) {
                         delete json[campo];
                     }
                 } else {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora porque se espaba un string.');
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora porque se esperaba un string.');
                     delete json[campo];
                 }
             }
@@ -155,4 +155,9 @@ module.exports = function (json, definicionCampos) {
     }
 
     return incidencias;
+}
+
+
+module.exports = {
+    clean: preClean
 };

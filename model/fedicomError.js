@@ -1,4 +1,8 @@
 'use strict';
+//const BASE = global.BASE;
+//const C = global.config;
+const L = global.logger;
+//const K = global.constants;
 
 class FedicomError {
 
@@ -74,6 +78,20 @@ class FedicomError {
     return this.itemList;
   }
 
+  static fromException(txId, ex, errorCode) {
+    errorCode = errorCode ? errorCode : 'HTTP-ERR-500';
+
+    if (ex.send) { // Es un FedicomError, se devuelve tal cual
+      return ex;
+    } 
+    var errorToLog = '';
+    if (ex.stack && ex.stack.split) {
+      errorToLog = ex.stack.split(/\r?\n/);
+    }
+
+    L.xe(txId, ['Se convirtió una excepción en un FedicomError', errorToLog, ex]);
+    return new FedicomError('HTTP-500', 'Error interno del servidor - ' + txId, 500);
+  }
 }
 
 module.exports = FedicomError;

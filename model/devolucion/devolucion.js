@@ -1,12 +1,14 @@
 'use strict';
 const BASE = global.BASE;
-// const config = global.config;
+//const C = global.config;
 const L = global.logger;
+const K = global.constants;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaDevolucion = require(BASE + 'model/devolucion/lineaDevolucion');
+
+const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
-const cleanerDevolucion = require(BASE + 'util/cleaner/cleanerDevolucion');
 const crypto = require('crypto');
 
 
@@ -39,7 +41,7 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-		var [lineas, crc] = this.parseLines( json, req.txId );
+		var [lineas, crc] = parseLines( json, req.txId );
 		this.lineas = lineas;
 		this.crc = crc;
 
@@ -50,48 +52,147 @@ class Devolucion {
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 	}
 
-	clean() {
-		cleanerDevolucion(this);
-	}
+	limpiarEntrada() {
 
-	parseLines( json, txId ) {
-		var lineas = [];
-		var crc = '';
-		var ordenes = [];
-
-		function rellena ( lineas ) {
-
-			json.lineas.forEach( function (linea, i) {
-				var nuevaLinea = new LineaDevolucion(linea, txId, i);
-				lineas.push(nuevaLinea);
-				var hash = crypto.createHash('sha1');
-				crc = hash.update(crc + nuevaLinea.crc).digest('hex');
-
-				// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
-				if (nuevaLinea.orden) {
-					ordenes.push(parseInt(nuevaLinea.orden));
-				}
-
-			});
-
-			// Rellenamos el orden en las lineas donde no viene.
-			var nextOrder = 1;
-			lineas.forEach( function (linea) {
-				if (!linea.orden) {
-					while (ordenes.includes(nextOrder)) {
-						nextOrder ++;
-					}
-					linea.orden = nextOrder;
-					nextOrder ++;
-				}
-			});
-
-			return [lineas, crc];
+		// LIMPIEZA DE LOS CAMPOS DE CABECERA
+		var incidenciasCabecera = PreCleaner.clean(this, K.PRE_CLEAN.DEVOLUCIONES.CABECERA);
+		if (this.incidencias && this.incidencias.concat) {
+			this.incidencias.concat(incidenciasCabecera.getErrors());
+		} else {
+			this.incidencias = incidenciasCabecera.getErrors();
 		}
-		return rellena( lineas );
+
+		// LIMPIEZA DE LAS LINEAS
+		if (this.lineas && this.lineas.forEach) {
+			this.lineas.forEach((lineaDevolucion) => {
+				var incidenciasLinea = PreCleaner.clean(lineaDevolucion, K.PRE_CLEAN.DEVOLUCIONES.LINEAS);
+				if (incidenciasLinea.hasError()) {
+					if (lineaDevolucion.incidencias && lineaDevolucion.incidencias.concat) {
+						lineaDevolucion.incidencias.concat(incidenciasLinea.getErrors());
+					} else {
+						lineaDevolucion.incidencias = incidenciasLinea.getErrors();
+					}
+				}
+			});
+		}
+
+	}
+
+	obtenerRespuestaCliente(respuestaSAP) {
+		respuestaSAP.forEach(function (devolucion) {
+			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
+			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
+		})
+		return respuestaSAP;
 	}
 
 
+}
+
+const parseLines = (json, txId) => {
+	var lineas = [];
+	var crc = '';
+	var ordenes = [];
+
+	function rellena(lineas) {
+
+		json.lineas.forEach(function (linea, i) {
+			var nuevaLinea = new LineaDevolucion(linea, txId, i);
+			lineas.push(nuevaLinea);
+			var hash = crypto.createHash('sha1');
+			crc = hash.update(crc + nuevaLinea.crc).digest('hex');
+
+			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
+			if (nuevaLinea.orden) {
+				ordenes.push(parseInt(nuevaLinea.orden));
+			}
+
+		});
+
+		// Rellenamos el orden en las lineas donde no viene.
+		var nextOrder = 1;
+		lineas.forEach(function (linea) {
+			if (!linea.orden) {
+				while (ordenes.includes(nextOrder)) {
+					nextOrder++;
+				}
+				linea.orden = nextOrder;
+				nextOrder++;
+			}
+		});
+
+		return [lineas, crc];
+	}
+	return rellena(lineas);
+}
+
+
+/**
+ * Funciones para sanear la respuesta de SAP y obtener la respuesta que se
+ * va a dar realmente al cliente.
+ */
+const SaneadorDevolucionesSAP = {
+	sanearMayusculas: (message) => {
+		K.POST_CLEAN.DEVOLUCIONES.replaceCab.forEach(function (field) {
+			var fieldLowerCase = field.toLowerCase();
+			if (message[fieldLowerCase] !== undefined) {
+				message[field] = message[fieldLowerCase];
+				delete message[fieldLowerCase];
+			}
+		});
+
+		if (message.lineas) {
+			message.lineas.forEach(function (linea) {
+				K.POST_CLEAN.DEVOLUCIONES.replacePos.forEach(function (field) {
+					var fieldLowerCase = field.toLowerCase();
+					if (linea[fieldLowerCase] !== undefined) {
+						linea[field] = linea[fieldLowerCase];
+						delete linea[fieldLowerCase];
+					}
+				});
+			});
+		}
+		return message;
+
+	},
+	eliminarCamposInnecesarios: (message) => {
+		K.POST_CLEAN.DEVOLUCIONES.removeCab.forEach(function (field) {
+			delete message[field];
+		});
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyString.forEach(function (field) {
+			if (message[field] === '') delete message[field];
+		});
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach(function (field) {
+			if (typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+		});
+		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach(function (field) {
+			if (message[field] === 0) delete message[field];
+		});
+		K.POST_CLEAN.DEVOLUCIONES.removeCabIfFalse.forEach(function (field) {
+			if (message[field] === false) delete message[field];
+		});
+
+		if (message.lineas && message.lineas.forEach) {
+			message.lineas.forEach(function (linea) {
+				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach(function (field) {
+					delete linea[field];
+				});
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyString.forEach(function (field) {
+					if (linea[field] === '') delete linea[field];
+				});
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach(function (field) {
+					if (linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
+				});
+				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach(function (field) {
+					if (linea[field] === 0) delete linea[field];
+				});
+				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach(function (field) {
+					if (linea[field] === false) delete linea[field];
+				});
+			});
+		}
+		return message;
+	}
 }
 
 module.exports = Devolucion;

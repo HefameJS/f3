@@ -1,14 +1,14 @@
 'use strict';
 const BASE = global.BASE;
 const L = global.logger;
-const config = global.config;
+const C = global.config;
+
 const Isap = require(BASE + 'interfaces/isap');
 const Imongo = require(BASE + 'interfaces/imongo');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
-const sanearDevolucionSAP = require(BASE + 'util/devolucionesSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 
@@ -68,7 +68,7 @@ exports.saveDevolucion = function (req, res) {
 		} else {
 			L.xd(req.txId, ['No se encontró ninguna transmisión anterior con este CRC', err, dbTx], 'txCRC');
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
-			devolucion.clean();
+			devolucion.limpiarEntrada();
 
 			Isap.realizarDevolucion( req.txId, devolucion, function(sapErr, sapRes, sapBody, abort) {
 				if (sapErr) {
@@ -85,7 +85,7 @@ exports.saveDevolucion = function (req, res) {
 					}
 				}
 
-				var response = sanearDevolucionSAP(sapBody, devolucion);
+				var response = devolucion.obtenerRespuestaCliente(sapBody);
 				res.status(201).json(response);
 				Events.devoluciones.emitResponseDevolucion(res, response, txStatus.OK);
 

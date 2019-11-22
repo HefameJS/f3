@@ -9,7 +9,6 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
-const sanitizeSapResponse = require(BASE + 'util/responseSanitizer');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
@@ -68,7 +67,8 @@ exports.savePedido = function (req, res) {
 
 		} else {
 			Events.pedidos.emitRequestCrearPedido(req, pedido);
-			pedido.clean();
+			pedido.limpiarEntrada();
+			
 			Isap.realizarPedido( req.txId, pedido, function(sapErr, sapRes, sapBody, abort) {
 				if (sapErr) {
 					if (abort) {
@@ -84,27 +84,12 @@ exports.savePedido = function (req, res) {
 					return;
 				}
 
+				var clientResponse = pedido.obtenerRespuestaCliente(sapBody);
+				var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
 				
-				var status = txStatus.ESPERANDO_NUMERO_PEDIDO;
-				var numerosPedidoSAP = undefined;
-
-				// Si es un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados
-				if (sapBody.sap_pedidoprocesado) {
-					status = txStatus.SIN_NUMERO_PEDIDO_SAP;
-					numerosPedidoSAP = saneaPedidosAsociadosSap(sapBody.sap_pedidosasociados);
-					if (numerosPedidoSAP) {
-						status = txStatus.OK;
-					}
-				}
-				var response = sanitizeSapResponse(sapBody, pedido);
-
-				if (Array.isArray(response)) {
-					res.status(409).json(response);
-					Events.pedidos.emitResponseCrearPedido(res, response, txStatus.RECHAZADO_SAP);
-				} else {
-					res.status(201).json(response);
-					Events.pedidos.emitResponseCrearPedido(res, response, status, numerosPedidoSAP); // OK!
-				}
+				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
+				res.status(responseHttpStatusCode).json(clientResponse);
+				Events.pedidos.emitResponseCrearPedido(res, clientResponse, estadoTransmision);
 			});
 		}
 	});
