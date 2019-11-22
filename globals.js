@@ -1,5 +1,6 @@
 
 global.BASE = __dirname + '/';
+global.constants = require(BASE + 'model/K');
 
 global.CORE_MASTER_TITLE = 'f3-core-master';
 global.CORE_WORKER_TITLE = 'f3-core-worker';
