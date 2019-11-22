@@ -76,10 +76,7 @@ const mongoConnect = () => {
 
 mongoConnect();
 
-
-exports.ObjectID = ObjectID;
-
-exports.connectionStatus = function(cb) {
+const connectionStatus = (cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		collections.tx.findOne({}, { _id: 1 }, (err, res) => {
 			if (err) {
@@ -93,8 +90,7 @@ exports.connectionStatus = function(cb) {
 		return cb(false);
 	}
 }
-
-exports.findTxById= function(myId, id, cb) {
+const findTxById = (myId, id, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		try {
 			id = new ObjectID(id);
@@ -109,8 +105,7 @@ exports.findTxById= function(myId, id, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-
-exports.findTxByCrc = function(myId, crc, cb) {
+const findTxByCrc = (myId, crc, cb) => {
 	
 	if (mongoClient && mongoClient.isConnected()) {
 		try {
@@ -130,8 +125,7 @@ exports.findTxByCrc = function(myId, crc, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-
-exports.findTxByNumeroDevolucion = function(myId, numeroDevolucion, cb) {
+const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
 		collections.tx.findOne({ type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
@@ -140,8 +134,7 @@ exports.findTxByNumeroDevolucion = function(myId, numeroDevolucion, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-
-exports.findTxByNumeroPedido = function(myId, numeroPedido, cb) {
+const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
 		collections.tx.findOne({ type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido }, cb);
@@ -150,19 +143,17 @@ exports.findTxByNumeroPedido = function(myId, numeroPedido, cb) {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
-exports.findConfirmacionPedidoByCRC = function(myId, crc, cb) {
+const findConfirmacionPedidoByCRC = (crc, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		crc = crc.substr(0,8).toUpperCase();
-		L.xd(myId, ['Consulta MDB', {type: txTypes.CONFIRMACION_PEDIDO, "clientRequest_body_crc": crc}], 'mongodb');
 		collections.tx.findOne({ type: txTypes.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc }, cb);
 	} else {
-		L.xe(myId, ['**** Error al localizar la Confirmacion de Pedido'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
 
 /*	Obtiene las transmisiones que son candidatas de retransmitir */
-exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
+const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		var query1 = {
 			type: txTypes.CREAR_PEDIDO,
@@ -185,6 +176,163 @@ exports.findCandidatosRetransmision = function(limit, minimumAge, cb) {
 		L.e(['**** Error al buscar candidatos a retransmitir. No está conectado a mongodb'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
 	}
+}
+
+const commitDiscard = (data) => {
+
+	var key = data['$setOnInsert']._id;
+
+	
+	if (mongoClient && mongoClient.isConnected()) {
+		collections.discard.updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
+			if (err) {
+				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', err], 'mdbCommitDiscard');
+			} else {
+				L.xd(key, ['COMMIT DISCARD OK', L.saneaCommit(data)], 'mdbCommitDiscard');
+			}
+		});
+	}
+	else {
+		L.xf(key, ['ERROR AL HACER COMMIT DISCARD', L.saneaCommit(data)], 'mdbCommitDiscard');
+	}
+
+};
+
+const commit = (data, noMerge) => {
+
+	var key = data['$setOnInsert']._id ;
+
+	var cachedData = commitBuffer.get(key);
+	if (cachedData && !noMerge) {
+		data = mergeDataWithCache(cachedData, data);
+	}
+
+	
+	if (mongoClient && mongoClient.isConnected()) {
+	   collections.tx.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, (err, res) => {
+			if (err) {
+				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
+				iSqlite.storeTx(data);
+			} else {
+				L.xd(key, ['COMMIT OK', L.saneaCommit(data)], 'mdbCommit');
+			}
+	   });
+	}
+	else {
+		L.xf(key, ['ERROR AL HACER COMMIT', L.saneaCommit(data)], 'mdbCommit');
+		iSqlite.storeTx(data);
+	}
+
+	if (cachedData) {
+		commitBuffer.del(key);
+	}
+
+};
+
+const buffer = (data) => {
+
+	var key = data['$setOnInsert']._id ;
+
+	L.xd(key, ['BUFFER OK', L.saneaCommit(data)], 'mdbBuffer');
+
+	var cachedData = commitBuffer.get(key);
+	var mergedData = mergeDataWithCache(cachedData, data);
+	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
+		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
+		exports.commit(value, false);
+	});
+
+}
+
+const updateFromSqlite = (data, cb) => {
+
+	convertToOidsAndDates(data);
+	var key = data['$setOnInsert']._id ;
+
+	if (mongoClient && mongoClient.isConnected()) {
+	   collections.tx.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
+			if (err) {
+				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
+				mongoConnect();
+				cb(false);
+			} else {
+				L.xd(key, ['COMMIT desde SQLite OK', L.saneaCommit(data)], 'txSqliteCommit');
+				cb(true);
+			}
+	   });
+	}
+	else {
+		L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
+		mongoConnect();
+		cb(false);
+
+	}
+
+};
+
+module.exports = {
+	ObjectID,
+	connectionStatus,
+	findTxById,
+	findTxByCrc,
+	findTxByNumeroDevolucion,
+	findTxByNumeroPedido,
+	findConfirmacionPedidoByCRC,
+	findCandidatosRetransmision,
+	commitDiscard,
+	commit,
+	buffer,
+	updateFromSqlite
+}
+
+function convertToOidsAndDates(data) {
+	if (data['$setOnInsert']) {
+		var setOI = data['$setOnInsert'];
+		if (setOI._id) setOI._id = new ObjectID(setOI._id);
+		if (setOI.originalTx) setOI.originalTx = new ObjectID(setOI.originalTx);
+		if (setOI.confirmingId) setOI.originalTx = new ObjectID(setOI.originalTx);
+		if (setOI.createdAt) setOI.createdAt = new Date(setOI.createdAt);
+	}
+
+	if (data['$max']) {
+		var max = data['$max'];
+		if (max.modifiedAt) max.modifiedAt = new Date(max.modifiedAt);
+	}
+
+	if (data['$set']) {
+		var set = data['$set'];
+		if (set.crc) set.crc = new ObjectID(set.crc);
+		if (set.sapRequest && set.sapRequest.timestamp) set.sapRequest.timestamp = new Date(set.sapRequest.timestamp);
+		if (set.sapResponse && set.sapResponse.timestamp) set.sapResponse.timestamp = new Date(set.sapResponse.timestamp);
+		if (set.clientResponse && set.clientResponse.timestamp) set.clientResponse.timestamp = new Date(set.clientResponse.timestamp);
+	}
+
+	if (data['$push']) {
+		var push = data['$push'];
+		if (push.retransmissions && push.retransmissions.length) {
+			push.retransmissions.forEach(function (o) {
+				if (o._id) o._id = new ObjectID(o._id);
+				if (o.createdAt) o.createdAt = new Date(o.createdAt);
+				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
+			})
+		}
+		if (push.sapConfirms && push.sapConfirms.length) {
+			push.sapConfirms.forEach(function (o) {
+				if (o.txId) o.txId = new ObjectID(o.txId);
+				if (o.timestamp) o.timestamp = new Date(o.timestamp);
+			})
+		}
+		if (push.duplicates && push.duplicates.length) {
+			push.duplicates.forEach(function (o) {
+				if (o._id) o._id = new ObjectID(o._id);
+				if (o.createdAt) o.createdAt = new Date(o.createdAt);
+				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);
+				if (o.clientResponse && o.clientResponse.timestamp) o.clientResponse.timestamp = new Date(o.clientResponse.timestamp);
+			})
+		}
+	}
+
+	// TODO: Hay que convertir a OID todos los campos necesarios, ya que se guardan como string en Sqlite
 }
 
 function mergeDataWithCache(oldData, newData) {
@@ -224,13 +372,13 @@ function mergeDataWithCache(oldData, newData) {
 			if (oldData['$push']) {
 				for (arrayName in newData['$push']) {
 					if (oldData['$push'][arrayName]) {
-						if (!oldData['$push'][arrayName]['$each'] || !oldData['$push'][arrayName]['$each'].push ) {
+						if (!oldData['$push'][arrayName]['$each'] || !oldData['$push'][arrayName]['$each'].push) {
 							oldData['$push'][arrayName] = {
-								'$each': [ oldData['$push'][arrayName] ]
+								'$each': [oldData['$push'][arrayName]]
 							};
 						}
 						if (newData['$push'][arrayName]['$each'] && newData['$push'][arrayName]['$each'].forEach) {
-							newData['$push'][arrayName]['$each'].forEach( function (element) {
+							newData['$push'][arrayName]['$each'].forEach(function (element) {
 								oldData['$push'][arrayName]['$each'].push(element);
 							});
 						} else {
@@ -253,157 +401,3 @@ function mergeDataWithCache(oldData, newData) {
 	}
 }
 
-function toLogStructure(data) {
-	return {
-		setOnInsert: data['$setOnInsert'],
-		max: data['$max'],
-		set: data['$set'],
-		push: data['$push']
-	}
-}
-
-exports.commitDiscard = function (data) {
-
-	var key = data['$setOnInsert']._id;
-
-	
-	if (mongoClient && mongoClient.isConnected()) {
-		collections.discard.updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
-			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', err], 'mdbCommitDiscard');
-			} else {
-				L.xd(key, ['COMMIT DISCARD OK', toLogStructure(data)], 'mdbCommitDiscard');
-			}
-		});
-	}
-	else {
-		L.xf(key, ['ERROR AL HACER COMMIT DISCARD', toLogStructure(data)], 'mdbCommitDiscard');
-	}
-
-};
-
-exports.commit = function(data, noMerge) {
-
-	var key = data['$setOnInsert']._id ;
-
-	var cachedData = commitBuffer.get(key);
-	if (cachedData && !noMerge) {
-		data = mergeDataWithCache(cachedData, data);
-	}
-
-	
-	if (mongoClient && mongoClient.isConnected()) {
-	   collections.tx.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, (err, res) => {
-			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
-				iSqlite.storeTx(data);
-			} else {
-				L.xd(key, ['COMMIT OK', toLogStructure(data)], 'mdbCommit');
-			}
-	   });
-	}
-	else {
-		L.xf(key, ['ERROR AL HACER COMMIT', toLogStructure(data)], 'mdbCommit');
-		iSqlite.storeTx(data);
-	}
-
-	if (cachedData) {
-		commitBuffer.del(key);
-	}
-
-};
-
-
-
-exports.buffer = function(data) {
-
-	var key = data['$setOnInsert']._id ;
-
-	L.xd(key, ['BUFFER OK', toLogStructure(data)], 'mdbBuffer');
-
-	var cachedData = commitBuffer.get(key);
-	var mergedData = mergeDataWithCache(cachedData, data);
-	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
-		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
-		exports.commit(value, false);
-	});
-
-}
-
-
-function convertToOidsAndDates(data) {
-	if (data['$setOnInsert']) {
-		var setOI = data['$setOnInsert'];
-		if (setOI._id) setOI._id = new ObjectID(setOI._id);
-		if (setOI.originalTx) setOI.originalTx = new ObjectID(setOI.originalTx);
-		if (setOI.confirmingId) setOI.originalTx = new ObjectID(setOI.originalTx);
-		if (setOI.createdAt) setOI.createdAt = new Date(setOI.createdAt);
-	}
-
-	if (data['$max']) {
-		var max = data['$max'];
-		if (max.modifiedAt) max.modifiedAt = new Date(max.modifiedAt);
-	}
-
-	if (data['$set']) {
-		var set = data['$set'];
-		if (set.crc) set.crc = new ObjectID(set.crc);
-		if (set.sapRequest && set.sapRequest.timestamp) set.sapRequest.timestamp = new Date(set.sapRequest.timestamp);
-		if (set.sapResponse && set.sapResponse.timestamp) set.sapResponse.timestamp = new Date(set.sapResponse.timestamp);
-		if (set.clientResponse && set.clientResponse.timestamp) set.clientResponse.timestamp = new Date(set.clientResponse.timestamp);
-	}
-
-	if (data['$push']) {
-		var push = data['$push'];
-		if (push.retransmissions && push.retransmissions.length) {
-			push.retransmissions.forEach( function (o) {
-				if (o._id) o._id = new ObjectID(o._id);
-				if (o.createdAt) o.createdAt = new Date(o.createdAt);
-				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
-			})
-		}
-		if (push.sapConfirms && push.sapConfirms.length) {
-			push.sapConfirms.forEach( function (o) {
-				if (o.txId) o.txId = new ObjectID(o.txId);
-				if (o.timestamp) o.timestamp = new Date(o.timestamp);
-			})
-		}
-		if (push.duplicates && push.duplicates.length) {
-			push.duplicates.forEach( function (o) {
-				if (o._id) o._id = new ObjectID(o._id);
-				if (o.createdAt) o.createdAt = new Date(o.createdAt);
-				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);
-				if (o.clientResponse && o.clientResponse.timestamp) o.clientResponse.timestamp = new Date(o.clientResponse.timestamp);
-			})
-		}
-	}
-
-	// TODO: Hay que convertir a OID todos los campos necesarios, ya que se guardan como string en Sqlite
-}
-
-
-exports.updateFromSqlite = function(data, cb) {
-
-	convertToOidsAndDates(data);
-	var key = data['$setOnInsert']._id ;
-
-	if (mongoClient && mongoClient.isConnected()) {
-	   collections.tx.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
-			if (err) {
-				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
-				mongoConnect();
-				cb(false);
-			} else {
-				L.xd(key, ['COMMIT desde SQLite OK', toLogStructure(data)], 'txSqliteCommit');
-				cb(true);
-			}
-	   });
-	}
-	else {
-		L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
-		mongoConnect();
-		cb(false);
-
-	}
-
-};

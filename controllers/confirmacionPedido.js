@@ -1,7 +1,8 @@
 'use strict';
 const BASE = global.BASE;
-const config = global.config;
+//const C = global.config;
 const L = global.logger;
+const K = global.constants;
 
 const Events = require(BASE + 'interfaces/events');
 const Imongo = require(BASE + 'interfaces/imongo');
@@ -25,7 +26,7 @@ exports.confirmaPedido = function (req, res) {
 		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
 	} catch (ex) {
 		var responseBody = controllerHelper.sendException(ex, req, res);
-		Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+		Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
@@ -33,14 +34,14 @@ exports.confirmaPedido = function (req, res) {
 		if (err) {
 			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', err]);
 			var responseBody = controllerHelper.sendException(err, req, res);
-			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, txStatus.ERROR_INTERNO);
+			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
 		if (!dbTx) {
 			var error = new FedicomError('SAP-ERR-400', 'No existe el pedido que se está confirmando', 400);
 			var responseBody = error.send(res);
-			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, txStatus.NO_EXISTE_PEDIDO);
+			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 

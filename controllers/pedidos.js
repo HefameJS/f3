@@ -11,7 +11,6 @@ const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
-const saneaPedidosAsociadosSap = require(BASE + 'util/saneaPedidosAsociados');
 
 
 

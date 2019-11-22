@@ -1,84 +1,14 @@
 'use strict';
 // const BASE = global.BASE;
-const config = global.config;
+const C = global.config;
+var L = {};
+//const K = global.constants;
 
 
-module.exports = {
-	t: function (data, category) { writeServer(data, 1000, category); },
-	xt: function (id, data, category) { writeTx(id, data, 1000, category); },
-
-	d: function (data, category) { writeServer(data, 3000, category); },
-	xd: function (id, data, category) { writeTx(id, data, 3000, category); },
-
-	i: function (data, category) { writeServer(data, 5000, category); },
-	xi: function (id, data, category) { writeTx(id, data, 5000, category); },
-
-	w: function (data, category) { writeServer(data, 7000, category); },
-	xw: function (id, data, category) { writeTx(id, data, 7000, category); },
-
-	e: function (data, category) { writeServer(data, 9000, category); },
-	xe: function (id, data, category) { writeTx(id, data, 9000, category); },
-
-	f: function (data, category) { writeServer(data, 10000, category); },
-	xf: function (id, data, category) { writeTx(id, data, 10000, category); },
-
-	yell: function (txId, txType, txStat, data) {
-		if (!Array.isArray(data)) data = [data];
-
-		var event = {
-			tx: txId,
-			yell: true,
-			txType: txType,
-			txStatus: txStat,
-			data: data,
-			timestamp: new Date()
-		};
-		writeMongo(event);
-	},
-
-};
-// YO SOY L !
-const L = module.exports;
-
-if (process.title === global.WATCHDOG_TITLE) {
-	module.exports = {
-		t: function (data, category) { writeServer(data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
-		xt: function (id, data, category) { writeTx(id, data, 1000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		d: function (data, category) { writeServer(data, 3000, category ? 'watchdog-' + category : 'watchdog'); },
-		xd: function (id, data, category) { writeTx(id, data, 3000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		i: function (data, category) { writeServer(data, 5000, category ? 'watchdog-' + category : 'watchdog'); },
-		xi: function (id, data, category) { writeTx(id, data, 5000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		w: function (data, category) { writeServer(data, 7000, category ? 'watchdog-' + category : 'watchdog'); },
-		xw: function (id, data, category) { writeTx(id, data, 7000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		e: function (data, category) { writeServer(data, 9000, category ? 'watchdog-' + category : 'watchdog'); },
-		xe: function (id, data, category) { writeTx(id, data, 9000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		f: function (data, category) { writeServer(data, 10000, category ? 'watchdog-' + category : 'watchdog'); },
-		xf: function (id, data, category) { writeTx(id, data, 10000, category ? 'watchdog-' + category : 'watchdog'); },
-
-		yell: function (txId, txType, txStat, data) {
-			if (!Array.isArray(data)) data = [data];
-
-			var event = {
-				tx: txId,
-				yell: true,
-				txType: txType,
-				txStatus: txStat,
-				data: data,
-				timestamp: new Date()
-			};
-			writeMongo(event);
-		},
-	};
-}
 
 const cluster = require('cluster');
-const mongourl = config.getMongoLogUrl();
-const dbName = config.mongodb.database;
+const mongourl = C.getMongoLogUrl();
+const dbName = C.mongodb.database;
 const MongoClient = require('mongodb').MongoClient;
 const WRITE_CONCERN = 0;
 
@@ -126,12 +56,11 @@ const mongoConnect = () => {
 			L.f(['*** Error en la conexión a de MongoDB para LOGS ***', mongourl, error], 'mongodb');
 		});
 }
-
-
 mongoConnect();
 
 
-function writeMongo(event) {
+
+const writeMongo = (event) => {
 	if (collections.log) {
 		collections.log.insertOne(event, { w: WRITE_CONCERN });
 	}
@@ -145,7 +74,7 @@ function writeMongo(event) {
 
 }
 
-function writeServer(data, level, category) {
+const writeServer = (data, level, category) => {
 	if (!Array.isArray(data)) data = [data];
 
 	var event = {
@@ -157,7 +86,7 @@ function writeServer(data, level, category) {
 	writeMongo(event);
 };
 
-function writeTx(id, data, level, category) {
+const writeTx = (id, data, level, category) => {
 	if (!Array.isArray(data)) data = [data];
 
 	var event = {
@@ -169,3 +98,68 @@ function writeTx(id, data, level, category) {
 	};
 	writeMongo(event);
 };
+
+const saneaEstructuraDeCommit = (data) => {
+	return {
+		setOnInsert: data['$setOnInsert'],
+		max: data['$max'],
+		set: data['$set'],
+		push: data['$push']
+	}
+}
+
+const yell = (txId, txType, txStat, data) => {
+	if (!Array.isArray(data)) data = [data];
+
+	var event = {
+		tx: txId,
+		yell: true,
+		txType: txType,
+		txStatus: txStat,
+		data: data,
+		timestamp: new Date()
+	};
+	writeMongo(event);
+}
+
+
+
+L = {
+	t: (data, category) => writeServer(data, 1000, category),
+	d: (data, category) => writeServer(data, 3000, category),
+	i: (data, category) => writeServer(data, 5000, category),
+	w: (data, category) => writeServer(data, 7000, category),
+	e: (data, category) => writeServer(data, 9000, category),
+	f: (data, category) => writeServer(data, 10000, category),
+	xt: (id, data, category) => writeTx(id, data, 1000, category),
+	xd: (id, data, category) => writeTx(id, data, 3000, category),
+	xi: (id, data, category) => writeTx(id, data, 5000, category),
+	xw: (id, data, category) => writeTx(id, data, 7000, category),
+	xe: (id, data, category) => writeTx(id, data, 9000, category),
+	xf: (id, data, category) => writeTx(id, data, 10000, category),
+	yell: yell,
+	saneaCommit: saneaEstructuraDeCommit
+};
+
+if (process.title === global.WATCHDOG_TITLE) {
+	var wdCategory = (category) => category ? 'watchdog-' + category : 'watchdog';
+	L = {
+		t: (data, category) => writeServer(data, 1000, wdCategory(category)),
+		d: (data, category) => writeServer(data, 3000, wdCategory(category)),
+		i: (data, category) => writeServer(data, 5000, wdCategory(category)),
+		w: (data, category) => writeServer(data, 7000, wdCategory(category)),
+		e: (data, category) => writeServer(data, 9000, wdCategory(category)),
+		f: (data, category) => writeServer(data, 10000, wdCategory(category)),
+		xt: (id, data, category) => writeTx(id, data, 1000, wdCategory(category)),
+		xd: (id, data, category) => writeTx(id, data, 3000, wdCategory(category)),
+		xi: (id, data, category) => writeTx(id, data, 5000, wdCategory(category)),
+		xw: (id, data, category) => writeTx(id, data, 7000, wdCategory(category)),
+		xe: (id, data, category) => writeTx(id, data, 9000, wdCategory(category)),
+		xf: (id, data, category) => writeTx(id, data, 10000, wdCategory(category)),
+
+		yell: yell,
+		saneaCommit: saneaEstructuraDeCommit
+	};
+}
+
+module.exports = L;

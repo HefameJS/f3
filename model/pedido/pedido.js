@@ -351,7 +351,7 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 	if (sapBody.sap_pedidoprocesado) {
 		estadoTransmision = K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		if (numerosPedidoSAP) {
-			estadoTransmision = K.TX_STATUS.PEDIDO.OK;
+			estadoTransmision = K.TX_STATUS.OK;
 		}
 	}  
 	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP ];

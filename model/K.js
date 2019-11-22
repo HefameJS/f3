@@ -15,18 +15,45 @@ module.exports = {
         }
     },
     TX_STATUS: {
+        DESCONOCIDO: -1,
+        RECEPCIONADO: 1010,
+        ESPERANDO_INCIDENCIAS: 1020,
+        INCIDENCIAS_RECIBIDAS: 1030,
+        FALLO_AUTENTICACION: 3010,
+        PETICION_INCORRECTA: 3020,
+        OK: 9900,
         PEDIDO: {
             NO_SAP: 3110,
             RECHAZADO_SAP: 3120,
             ESPERANDO_NUMERO_PEDIDO: 8010,
+            ESPERA_AGOTADA: 8100,
             SIN_NUMERO_PEDIDO_SAP: 9140,
-            OK: 9900
+        },
+        CONFIRMACION_PEDIDO: {
+            NO_ASOCIADA_A_PEDIDO: 9004,
         },
         RETRANSMISSION: {
             OK: 19001,
             IMPOSIBLE: 19002,
             SOLO_FORZANDO: 19003,
         }
+    },
+    TX_TYPES: {
+        INVALIDO: 999,
+        AUTENTICACION: 0,
+        PEDIDO: 10,
+        CONSULTA_PEDIDO: 11,
+        PEDIDO_DUPLICADO: 12,
+        CONFIRMACION_PEDIDO: 13,
+        RETRANSMISION_PEDIDO: 14,
+        ARREGLO_ESTADO: 15,
+        DEVOLUCION: 20,
+        CONSULTA_DEVOLUCION: 21,
+        DEVOLUCION_DUPLICADA: 22,
+        BUSCAR_ALBARANES: 30,
+        CONSULTAR_ALBARAN: 31,
+        BUSCAR_FACTURAS: 40,
+        CONSULTAR_FACTURA: 41
     },
     SOFTWARE_ID: {
         HEFAME: '0026'
