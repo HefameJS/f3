@@ -190,8 +190,7 @@ module.exports.emitConfirmacionPedido = function (req, res, confirmTxBody, origi
 			sapConfirms: {
 				txId: req.txId,
 				timestamp: new Date(),
-				sapSystem: identifyAuthenticatingUser(req),
-				body: confirmTxBody
+				sapSystem: identifyAuthenticatingUser(req)
 			}
 		}
 	}
