@@ -1,11 +1,16 @@
 'use strict';
 const BASE = global.BASE;
-const config = global.config;
+const C = global.config;
 const L = global.logger;
+const K = global.constants;
+
 const SapSystem = require(BASE + 'model/sapsystem');
 const Events = require(BASE + 'interfaces/events');
 const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
 const request = require('request');
+
+
+
 
 exports.ping = function (sapSystem, callback) {
 	var sapSystemData = sapSystem ? config.getSapSystem(sapSystem) : config.getDefaultSapSystem();
@@ -102,7 +107,7 @@ exports.authenticate = function ( txId, authReq, callback, noEvents) {
 }
 
 exports.realizarPedido = function ( txId, pedido, callback ) {
-	var sapSystemData = pedido.sap_system ? config.getSapSystem(pedido.sap_system) : config.getDefaultSapSystem();
+	var sapSystemData = pedido.sap_system ? C.getSapSystem(pedido.sap_system) : C.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
 		return;
@@ -144,7 +149,7 @@ exports.realizarPedido = function ( txId, pedido, callback ) {
 }
 
 exports.realizarDevolucion = function ( txId, devolucion, callback ) {
-	var sapSystemData = devolucion.sap_system ? config.getSapSystem(devolucion.sap_system) : config.getDefaultSapSystem();
+	var sapSystemData = devolucion.sap_system ? C.getSapSystem(devolucion.sap_system) : C.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
 		return;
@@ -185,42 +190,63 @@ exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 	});
 }
 
-exports.retransmit = function ( txId, sapRequest, callback) {
+
+exports.retransmitirPedido = function (pedido, callback) {
+	var sapSystemData = pedido.sap_system ? C.getSapSystem(pedido.sap_system) : C.getDefaultSapSystem();
+	if (!sapSystemData) {
+		callback({
+			type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
+			errno: null,
+			code: 'No se encuentra definido el sistema SAP destino'
+		}, null, null);
+
+		return;
+	}
+	var sapSystem = new SapSystem(sapSystemData);
+	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos');
 
 	var httpCallParams = {
 		followAllRedirects: true,
 		json: true,
-		url: sapRequest.url,
-		method: sapRequest.method,
+		url: url,
+		method: 'POST',
 		headers: sapSystem.getAuthHeaders(),
-		body: sapRequest.body,
+		body: pedido,
 		encoding: 'latin1'
 	};
 
-	request(httpCallParams, function(err, res, body) {
-		if (err) {
-			callback(err, res, body);
+	var sapRequest = {
+		timestamp: new Date(),
+		method: httpCallParams.method,
+		headers: httpCallParams.headers,
+		body: httpCallParams.body,
+		url: url
+	}
+
+	request(httpCallParams, function (callError, sapResponse, body) {
+		if (callError) {
+			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(callError, sapResponse, body, sapRequest);
 			return;
 		}
-
-		var statusCodeType = Math.floor(res.statusCode / 100);
+		var statusCodeType = Math.floor(sapResponse.statusCode / 100);
 		if (statusCodeType === 2) {
-			callback(null, res, body);
+			callback(null, sapResponse, body, sapRequest);
 		} else {
 			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: sapResponse.statusCode,
+				code: sapResponse.statusMessage
+			}, sapResponse, body, sapRequest);
 		}
-
 	});
-
 
 }
 
+
 exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) {
 
-	var sapSystemData = config.getDefaultSapSystem();
+	var sapSystemData = C.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
 		return;
@@ -278,7 +304,7 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
 
 exports.getAlbaranPDF = function (txId, numeroAlbaran, callback) {
 
-	var sapSystemData = config.getDefaultSapSystem();
+	var sapSystemData = C.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
 		return;
@@ -326,7 +352,7 @@ exports.getAlbaranPDF = function (txId, numeroAlbaran, callback) {
 
 exports.findAlbaranes = function (txId, query, callback) {
 
-	var sapSystemData = config.getDefaultSapSystem();
+	var sapSystemData = C.getDefaultSapSystem();
 	if (!sapSystemData) {
 		callback('No se encuentra el sistema destino', null, null, true);
 		return;

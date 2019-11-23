@@ -157,6 +157,10 @@ class Pedido {
 		return clon;
 	}
 
+	static extraerPedidosAsociados(sapBody) {
+		return SaneadorPedidosSAP.extraerPedidosAsociados(sapBody);
+	}
+
 }
 
 const parseLines = (json, txId) => {

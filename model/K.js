@@ -32,7 +32,7 @@ module.exports = {
         CONFIRMACION_PEDIDO: {
             NO_ASOCIADA_A_PEDIDO: 9004,
         },
-        RETRANSMISSION: {
+        RETRANSMISION: {
             OK: 19001,
             IMPOSIBLE: 19002,
             SOLO_FORZANDO: 19003,
@@ -47,6 +47,7 @@ module.exports = {
         CONFIRMACION_PEDIDO: 13,
         RETRANSMISION_PEDIDO: 14,
         ARREGLO_ESTADO: 15,
+        RECUPERACION_CONFIRMACION: 16,
         DEVOLUCION: 20,
         CONSULTA_DEVOLUCION: 21,
         DEVOLUCION_DUPLICADA: 22,

@@ -9,7 +9,6 @@ const Imongo = require(BASE + 'interfaces/imongo');
 const FedicomError = require(BASE + 'model/fedicomError');
 const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
 const Tokens = require(BASE + 'util/tokens');
-const controllerHelper = require(BASE + 'util/controllerHelper');
 
 
 
@@ -34,8 +33,9 @@ exports.confirmaPedido = function (req, res) {
 
 	Imongo.findTxByCrc(req.txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
 		if (err) {
-			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', err]);
-			var responseBody = controllerHelper.sendException(err, req, res);
+			var fedicomError = FedicomError.fromException(req.txId, err);
+			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', fedicomError]);
+			var responseBody = fedicomError.send(res);
 			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}

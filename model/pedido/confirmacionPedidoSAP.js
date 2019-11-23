@@ -1,31 +1,20 @@
 'use strict';
 const BASE = global.BASE;
+const L = global.logger;
+const C = global.config;
+const K = global.constants;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
+const Pedido = require(BASE + 'model/pedido/pedido');
 const ConfirmacionLineaPedidoSAP = require(BASE + 'model/pedido/confirmacionLineaPedidoSAP');
+
 const FieldChecker = require(BASE + 'util/fieldChecker');
+
 const crypto = require('crypto');
 
 
 
-const L = global.logger;
-
-
-function parseLines( json, txId ) {
-	var lineas = [];
-
-	function rellena ( lineas ) {
-
-		json.lineas.forEach( function (linea) {
-			var lineaPedido = new ConfirmacionLineaPedidoSAP(linea, txId);
-			lineas.push(lineaPedido);
-		});
-		return lineas;
-
-	}
-	return rellena( lineas );
-}
 
 
 class ConfirmacionPedidoSAP {
@@ -59,14 +48,30 @@ class ConfirmacionPedidoSAP {
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(this.codigocliente + this.numeropedidoorigen).digest('hex').substring(1,25).toUpperCase();
 		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC');
-		
-
-
 
 	}
 
+	static obtenerEstadoDeConfirmacionSap(sapBody) {
+
+		var numerosPedidoSAP = Pedido.extraerPedidosAsociados(sapBody.sap_pedidosasociados);
+		var estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+
+		return [estadoTransmision, numerosPedidoSAP];
+	}
+
+}
 
 
+const parseLines = (json, txId) => {
+	var lineas = [];
+	function rellena(lineas) {
+		json.lineas.forEach(function (linea) {
+			var lineaPedido = new ConfirmacionLineaPedidoSAP(linea, txId);
+			lineas.push(lineaPedido);
+		});
+		return lineas;
+	}
+	return rellena(lineas);
 }
 
 module.exports = ConfirmacionPedidoSAP;

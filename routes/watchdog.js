@@ -61,11 +61,8 @@ module.exports = function(app) {
 
 
   /* RUTAS */
-	app.route('/retransmit')
-		.get(controllers.retransmit.retransmit);
-
-	app.route('/retransmit/:txId')
-		.get(controllers.retransmit.retransmit);
+	app.route('/retransmitir/:txId')
+		.get(controllers.retransmit.retransmitirPedido);
 
 
   /* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
