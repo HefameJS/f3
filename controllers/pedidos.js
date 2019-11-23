@@ -1,7 +1,8 @@
 'use strict';
 const BASE = global.BASE;
-// const config = global.config;
 const L = global.logger;
+//const C = global.config;
+//const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
 const Imongo = require(BASE + 'interfaces/imongo');
@@ -9,7 +10,6 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
-const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 
 
@@ -33,8 +33,10 @@ exports.savePedido = function (req, res) {
 	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
 	try {
   		var pedido = new Pedido(req);
-	} catch (ex) {
-		var responseBody = controllerHelper.sendException(ex, req, res);
+	} catch (fedicomError) {
+		fedicomError = FedicomError.fromException(req.txId, fedicomError);
+		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		var responseBody = fedicomError.send(res);
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}

@@ -9,7 +9,6 @@ const Imongo = require(BASE + 'interfaces/imongo');
 const FedicomError = require(BASE + 'model/fedicomError');
 const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
 const Tokens = require(BASE + 'util/tokens');
-const txStatus = require(BASE + 'model/static/txStatus');
 const controllerHelper = require(BASE + 'util/controllerHelper');
 
 
@@ -20,12 +19,15 @@ exports.confirmaPedido = function (req, res) {
 
 	L.xi(req.txId, ['Procesando confirmación de confirmación de pedido']);
 	req.token = Tokens.verifyJWT(req.token, req.txId);
-	L.xd(req.txId, ['Datos de confirmacion recibidos', req.body]);
+
+	L.xt(req.txId, ['Datos de confirmacion recibidos', req.body]);
 
 	try {
 		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
-	} catch (ex) {
-		var responseBody = controllerHelper.sendException(ex, req, res);
+	} catch (fedicomError) {
+		fedicomError = FedicomError.fromException(req.txId, fedicomError);
+		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		var responseBody = fedicomError.send(res);
 		Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
@@ -50,19 +52,5 @@ exports.confirmaPedido = function (req, res) {
 		Events.sap.emitConfirmacionPedido(req, res, {ok: true}, dbTx);
 
 	} );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

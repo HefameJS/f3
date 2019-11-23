@@ -1,16 +1,15 @@
 'use strict';
 const BASE = global.BASE;
 const L = global.logger;
-const config = global.config;
+//const C = global.config;
+//const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const AuthReq = require(BASE + 'model/auth/authReq');
-const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 const Domain = require(BASE + 'model/auth/domain');
-const Laboratory = require(BASE + 'model/auth/laboratory');
 
 
 
@@ -23,8 +22,10 @@ exports.doAuth = function (req, res) {
 
 	try {
 		var authReq = new AuthReq(req.body, txId);
-	} catch (ex) {
-		var responseBody = controllerHelper.sendException(ex, req, res);
+	} catch (fedicomError) {
+		fedicomError = FedicomError.fromException(req.txId, fedicomError);
+		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		var responseBody = fedicomError.send(res);
 		Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}

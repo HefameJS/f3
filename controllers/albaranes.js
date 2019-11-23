@@ -8,7 +8,7 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Isap = require(BASE + 'interfaces/isap');
 const AlbaranJSON = require(BASE + 'model/albaranJSON');
-const albaran = require(BASE + 'model/albaran')
+// const albaran = require(BASE + 'model/albaran')
 
 
 exports.getAlbaran = function (req, res) {

@@ -1,7 +1,8 @@
 'use strict';
 const BASE = global.BASE;
 const L = global.logger;
-const C = global.config;
+//const C = global.config;
+//const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
 const Imongo = require(BASE + 'interfaces/imongo');
@@ -9,7 +10,6 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
-const controllerHelper = require(BASE + 'util/controllerHelper');
 const txStatus = require(BASE + 'model/static/txStatus');
 
 
@@ -33,8 +33,10 @@ exports.saveDevolucion = function (req, res) {
 	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
 	try {
   		var devolucion = new Devolucion(req);
-	} catch (ex) {
-		var responseBody = controllerHelper.sendException(ex, req, res);
+	} catch (fedicomError) {
+		fedicomError = FedicomError.fromException(req.txId, fedicomError);
+		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		var responseBody = fedicomError.send(res);
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, txStatus.PETICION_INCORRECTA);
 		return;
 	}
