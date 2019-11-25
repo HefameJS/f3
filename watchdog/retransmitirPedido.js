@@ -148,7 +148,7 @@ const retransmitirPedido = function (txId, options, callback) {
             sapResponse = construyeSapResponse(sapError, sapResponse, sapBody);
 
             if (sapError) {
-                if (sapError.type = K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
                     var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
                     L.xe(rtxId, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
