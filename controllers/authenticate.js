@@ -2,13 +2,12 @@
 const BASE = global.BASE;
 const L = global.logger;
 //const C = global.config;
-//const K = global.constants;
+const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const AuthReq = require(BASE + 'model/auth/authReq');
-const txStatus = require(BASE + 'model/static/txStatus');
 const Domain = require(BASE + 'model/auth/domain');
 
 
@@ -26,7 +25,7 @@ exports.doAuth = function (req, res) {
 		fedicomError = FedicomError.fromException(req.txId, fedicomError);
 		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
 		var responseBody = fedicomError.send(res);
-		Events.authentication.emitAuthResponse(res, responseBody, txStatus.PETICION_INCORRECTA);
+		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
@@ -38,12 +37,12 @@ exports.doAuth = function (req, res) {
 				if (abort) {
 					var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
 					var responseBody = fedicomError.send(res);
-					Events.authentication.emitAuthResponse(res, responseBody, txStatus.SISTEMA_SAP_NO_DEFINIDO);
+					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 				} else {
 					var token = authReq.generateJWT(true);
 					var responseBody = {auth_token: token};
 					res.status(201).json(responseBody);
-					Events.authentication.emitAuthResponse(res, responseBody, txStatus.NO_SAP);
+					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.NO_SAP);
 				}
 				return;
 
@@ -55,12 +54,12 @@ exports.doAuth = function (req, res) {
 				var token = authReq.generateJWT();
 				var responseBody = {auth_token: token};
 				res.status(201).json(responseBody);
-				Events.authentication.emitAuthResponse(res, responseBody, txStatus.OK);
+				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
 			} else {
 				// SAP INDICA QUE EL USUARIO NO ES VALIDO
 				var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
 				var responseBody = fedicomError.send(res);
-				Events.authentication.emitAuthResponse(res, responseBody, txStatus.FALLO_AUTENTICACION);
+				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 			}
 		});
 
@@ -68,7 +67,7 @@ exports.doAuth = function (req, res) {
 		var token = authReq.generateJWT();
 		var responseBody = {auth_token: token};
 		res.status(201).json(responseBody);
-		Events.authentication.emitAuthResponse(res, responseBody, txStatus.OK);
+		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
 	}
 }
 

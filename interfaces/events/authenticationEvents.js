@@ -2,12 +2,9 @@
 const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
-const txTypes = require(BASE + 'model/static/txTypes');
-const txStatus = require(BASE + 'model/static/txStatus');
-
 
 function identifyAuthenticatingUser(req) {
 	if (req && req.body && req.body.user) {
@@ -26,12 +23,12 @@ module.exports.emitAuthRequest = function (req) {
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
 			authenticatingUser: identifyAuthenticatingUser(req),
 			iid: global.instanceID,
-			type: txTypes.AUTENTICAR,
+			type: K.TX_TYPES.AUTENTICACION,
 			clientRequest: {
 				ip: req.originIp,
 				protocol: req.protocol,
