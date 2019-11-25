@@ -43,32 +43,19 @@ exports.saveDevolucion = function (req, res) {
 	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
 
 
-	L.xd(req.txId, ['Comprobando si la devolución es un duplicado', devolucion.crc], 'txCRC');
-	Imongo.findTxByCrc(req.txId, devolucion, function (err, dbTx) {
+	Imongo.findCrcDuplicado(devolucion.crc, function (err, dbTx) {
 		if (err) {
-			L.xe(req.txId, ['Error al buscar duplicados. Se asume que la devolución no es duplicado', err], 'txCRC');
+			L.xe(req.txId, ['Ocurrió un error al comprobar si la devolución está duplicada - Se asume que no lo es', err], 'crc');
 		}
 
-		if (dbTx && dbTx.clientResponse)	{
-			L.xw(req.txId, ['Se encontró un duplicado de la transmisión', dbTx], 'txCRC');
-
-			var dupeResponse = dbTx.clientResponse.body;
-
-			if (dbTx.clientResponse.statusCode === 201 && dupeResponse.length > 0) {
-				dupeResponse.forEach( function (dev) {
-					if (!dev.incidencias) {
-						dev.incidencias = [ {codigo: 'DEV-WARN-999', descripcion: 'Devolución duplicada'} ];
-					} else {
-						dev.incidencias.push({codigo: 'DEV-WARN-999', descripcion: 'Devolución duplicada'});
-					}
-				});
-			}
-
-			res.status(dbTx.clientResponse.statusCode).json(dupeResponse);
-			Events.devoluciones.emitDevolucionDuplicada(req, res, dupeResponse, dbTx);
-
+		if (dbTx) {
+			var duplicatedId = dbTx._id;
+			L.xi(req.txId, 'Detectada la transmisión de devolución con ID ' + duplicatedId + ' con identico CRC', 'crc');
+			L.xi(duplicatedId, 'Se ha detectado un duplicado de esta devolución con ID ' + req.txId, 'crc');
+			var errorDuplicado = new FedicomError('DEV-ERR-999', 'Devolución duplicada', 400);
+			var responseBody = errorDuplicado.send(res);
+			Events.devoluciones.emitDevolucionDuplicada(req, res, responseBody, duplicatedId);
 		} else {
-			L.xd(req.txId, ['No se encontró ninguna transmisión anterior con este CRC', err, dbTx], 'txCRC');
 			Events.devoluciones.emitRequestDevolucion(req, devolucion);
 			devolucion.limpiarEntrada();
 

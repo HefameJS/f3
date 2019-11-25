@@ -2,7 +2,7 @@
 const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
@@ -24,18 +24,16 @@ function identifyClient(req) {
 	return undefined;
 }
 
-module.exports.emitDevolucionDuplicada = function (req, res, responseBody, originalTx) {
+module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) => {
 
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			type: txTypes.DEVOLUCION_DUPLICADA,
-			status: txStatus.DUPLICADO,
-			originalTx: originalTx._id,
+			type: K.TX_TYPES.DEVOLUCION_DUPLICADA,
+			status: K.TX_STATUS.OK,
+			originalTx: originalTxId,
 			iid: global.instanceID,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -57,18 +55,21 @@ module.exports.emitDevolucionDuplicada = function (req, res, responseBody, origi
 
 	var dataUpdate = {
 		$setOnInsert: {
-			_id: originalTx._id,
+			_id: originalTxId,
 			createdAt: new Date()
 		},
 		$push: {
-			duplicates: data['$setOnInsert']
+			duplicates: {
+				_id: req.txId,
+				timestamp: new Date()
+			}
 		}
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTx._id]);
+	L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTxId]);
 }
 
 module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, status) {

@@ -125,6 +125,21 @@ const findTxByCrc = (myId, crc, cb) => {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
 };
+const findCrcDuplicado = (crc, cb) => {
+
+	if (mongoClient && mongoClient.isConnected()) {
+		try {
+			crc = new ObjectID(crc);
+			collections.tx.findOne({ crc: crc }, {_id: 1, crc: 1}, cb);
+		} catch (ex) {
+			cb(ex, null);
+			return;
+		}
+
+	} else {
+		cb({ error: "No conectado a MongoDB" }, null);
+	}
+};
 const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
@@ -275,6 +290,7 @@ module.exports = {
 	connectionStatus,
 	findTxById,
 	findTxByCrc,
+	findCrcDuplicado,
 	findTxByNumeroDevolucion,
 	findTxByNumeroPedido,
 	findConfirmacionPedidoByCRC,

@@ -43,29 +43,18 @@ exports.savePedido = function (req, res) {
 	L.xd(req.txId, ['El contenido de la transmisión es un pedido correcto', pedido]);
 
 
-
-	Imongo.findTxByCrc(req.txId, pedido, function (err, dbTx) {
+	Imongo.findCrcDuplicado(pedido.crc, function (err, dbTx) {
 		if (err) {
-			L.xw(req.txId, ['Se asume que el pedido no es duplicado']);
+			L.xe(req.txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', err], 'crc');
 		}
 
-		if (dbTx && dbTx.clientResponse)	{
-			L.xi(req.txId, 'Detectado pedido duplicado');
-
-			var dupeResponse = dbTx.clientResponse.body;
-			if (dbTx.clientResponse.statusCode === 201 && dupeResponse) {
-				if (!dupeResponse.incidencias) {
-					dupeResponse.incidencias = [ {codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'} ];
-				} else {
-					dupeResponse.incidencias.push({codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'});
-				}
-			} else if (dupeResponse && dupeResponse.push) {
-				dupeResponse.push({codigo: 'PED-ERR-008', descripcion: 'Pedido duplicado'});
-			}
-
-			res.status(dbTx.clientResponse.statusCode).json(dupeResponse);
-			Events.pedidos.emitPedidoDuplicado(req, res, dupeResponse, dbTx);
-
+		if (dbTx) {
+			var duplicatedId = dbTx._id;
+			L.xi(req.txId, 'Detectada la transmisión de pedido con ID ' + duplicatedId + ' con identico CRC', 'crc');
+			L.xi(duplicatedId, 'Se ha detectado un duplicado de este pedido con ID ' + req.txId, 'crc');
+			var errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
+			var responseBody = errorDuplicado.send(res);
+			Events.pedidos.emitPedidoDuplicado(req, res, responseBody, duplicatedId);
 		} else {
 			Events.pedidos.emitRequestCrearPedido(req, pedido);
 			pedido.limpiarEntrada();
