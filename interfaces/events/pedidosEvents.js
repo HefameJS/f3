@@ -70,7 +70,7 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.PEDIDO_DUPLICADO, txStatus.DUPLICADO, [originalTxId]);
+	//L.yell(req.txId, txTypes.PEDIDO_DUPLICADO, txStatus.DUPLICADO, [originalTxId]);
 }
 
 module.exports.emitErrorConsultarPedido = function (req, res, responseBody, status) {

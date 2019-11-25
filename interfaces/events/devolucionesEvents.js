@@ -69,7 +69,7 @@ module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTxId]);
+	// L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTxId]);
 }
 
 module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, status) {
