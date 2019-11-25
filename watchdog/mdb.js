@@ -43,7 +43,7 @@ var interval = setInterval(function() {
 						L.xt(txId, ['La transmisión ha sido identificada como recuperable'], 'mdbwatch');
 
 						// CASO TIPICO: No ha entrado a SAP
-						if (tx.status === K.TX_STATUS.PEDIDO.NO_SAP) {
+						if (tx.status === K.TX_STATUS.NO_SAP) {
 							L.xi(txId, 'Retransmitiendo pedido por encontrarse en estado NO_SAP', 'mdbwatch');
 							retransmissionsInProgress++;
 							retransmitirPedido(txId, null, (err, rtxId) => {

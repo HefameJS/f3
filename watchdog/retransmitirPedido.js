@@ -17,7 +17,7 @@ const estadosRetransmitibles = [
     K.TX_STATUS.RECEPCIONADO,
     K.TX_STATUS.ESPERANDO_INCIDENCIAS,
     K.TX_STATUS.INCIDENCIAS_RECIBIDAS,
-    K.TX_STATUS.PEDIDO.NO_SAP
+    K.TX_STATUS.NO_SAP
 ];
 
 const estadosRetransmitiblesForzando = [
@@ -168,7 +168,7 @@ const retransmitirPedido = function (txId, options, callback) {
                         sapRequest: sapRequest,
                         sapResponse: sapResponse,
                         clientResponse: construyeClientResponse(txId, 201, pedido),
-                        status: K.TX_STATUS.PEDIDO.NO_SAP
+                        status: K.TX_STATUS.NO_SAP
                     });
 
                     L.xi(txId, ['La retransmisión con ID ' + rtxId + ' finaliza con éxito']);

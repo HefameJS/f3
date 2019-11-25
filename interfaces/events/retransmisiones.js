@@ -78,7 +78,7 @@ const actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
 	}
 
 	// Si el estado nuevo es NO_SAP, nunca actualizamos
-	if (estadoNuevo === K.TX_STATUS.PEDIDO.NO_SAP) return [false, false];
+	if (estadoNuevo === K.TX_STATUS.NO_SAP) return [false, false];
 
 	// Si el estado original es OK, solo actualizamos si el nuevo estado tambien lo es
 	if (estadoOriginal === K.TX_STATUS.OK) return [estadoNuevo === K.TX_STATUS.OK, false];

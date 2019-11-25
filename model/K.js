@@ -21,9 +21,9 @@ module.exports = {
         INCIDENCIAS_RECIBIDAS: 1030,
         FALLO_AUTENTICACION: 3010,
         PETICION_INCORRECTA: 3020,
+        NO_SAP: 3110,
         OK: 9900,
         PEDIDO: {
-            NO_SAP: 3110,
             RECHAZADO_SAP: 3120,
             ESPERANDO_NUMERO_PEDIDO: 8010,
             ESPERA_AGOTADA: 8100,
@@ -46,8 +46,8 @@ module.exports = {
         PEDIDO_DUPLICADO: 12,
         CONFIRMACION_PEDIDO: 13,
         RETRANSMISION_PEDIDO: 14,
-        ARREGLO_ESTADO: 15,
-        RECUPERACION_CONFIRMACION: 16,
+        ARREGLO_ESTADO: 15, // * Solo para eventos YELL
+        RECUPERACION_CONFIRMACION: 16, // * Solo para eventos YELL
         DEVOLUCION: 20,
         CONSULTA_DEVOLUCION: 21,
         DEVOLUCION_DUPLICADA: 22,
