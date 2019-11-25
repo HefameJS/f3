@@ -1,9 +1,10 @@
 'use strict';
 const BASE = global.BASE;
+//const C = global.config;
 const L = global.logger;
+//const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
-const ObjectID = Imongo.ObjectID;
 const txTypes = require(BASE + 'model/static/txTypes');
 const txStatus = require(BASE + 'model/static/txStatus');
 
