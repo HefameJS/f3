@@ -2,7 +2,7 @@
 const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
@@ -18,7 +18,80 @@ function identifyAuthenticatingUser(req) {
 }
 
 
+module.exports.emitRequestToSap = (txId, callParams) => {
+	var data = {
+		$setOnInsert: {
+			_id: txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: K.TX_STATUS.ESPERANDO_INCIDENCIAS
+		},
+		$set: {
+			crc: (callParams.body && callParams.body.crc) ? new ObjectID(callParams.body.crc) : undefined,
+			sapRequest: {
+				timestamp: new Date(),
+				method: callParams.method,
+				headers: callParams.headers,
+				body: callParams.body,
+				url: callParams.url
+			}
+		}
+	}
 
+	L.xi(txId, ['Emitiendo BUFFER para evento RequestToSap'], 'txBuffer');
+	Imongo.buffer(data);
+}
+
+module.exports.emitResponseFromSap = (txId, callError, sapHttpResponse) => {
+	var sapResponse = {};
+	if (callError) { // Error de RED
+		sapResponse = {
+			timestamp: new Date(),
+			error: {
+				source: 'NET',
+				statusCode: callError.errno || false,
+				message: callError.message || 'Sin descripción del error'
+			}
+		}
+	} else {
+		if (sapHttpResponse.errorSap) { // Error de SAP
+			sapResponse = {
+				timestamp: new Date(),
+				error: {
+					source: 'SAP',
+					statusCode: sapHttpResponse.statusCode,
+					message: sapHttpResponse.statusMessage
+				}
+			}
+		} else { // Respuesta correcta de SAP
+			sapResponse = {
+				timestamp: new Date(),
+				statusCode: sapHttpResponse.statusCode,
+				headers: sapHttpResponse.headers,
+				body: sapHttpResponse.body
+			}
+		}
+	}
+
+	var data = {
+		$setOnInsert: {
+			_id: txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: K.TX_STATUS.INCIDENCIAS_RECIBIDAS
+		},
+		$set: {
+			sapResponse: sapResponse
+		}
+	}
+
+	L.xi(txId, ['Emitiendo BUFFER para evento ResponseFromSap'], 'txBuffer');
+	Imongo.buffer(data);
+}
 
 module.exports.emitSapRequest = function (txId, url, req) {
 	var data = {
@@ -46,6 +119,7 @@ module.exports.emitSapRequest = function (txId, url, req) {
 	L.xi(txId, ['Emitiendo BUFFER para evento SapRequest'], 'txBuffer');
 	Imongo.buffer(data);
 }
+
 module.exports.emitSapResponse = function (txId, res, body, error) {
 	var statusCodeType = ( (res && res.statusCode) ? Math.floor(res.statusCode / 100) : 0);
 	var sapResponse;

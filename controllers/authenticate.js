@@ -23,7 +23,7 @@ exports.doAuth = function (req, res) {
 		var authReq = new AuthReq(req.body, txId);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
 		var responseBody = fedicomError.send(res);
 		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
@@ -31,25 +31,27 @@ exports.doAuth = function (req, res) {
 
 	if (authReq.domain === Domain.domains.fedicom || authReq.domain === Domain.domains.transfer) {
 
-		Isap.authenticate(req.txId, authReq, function (sapErr, sapRes, sapBody, abort) {
-			if (sapErr) {
-				L.xe(txId, ['Ocurrió un error en la llamada a SAP. Se genera token temporal.', sapErr, abort]);
-				if (abort) {
-					var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
+		Isap.authenticate(authReq, function (sapError, sapResponse) {
+			if (sapError) {
+				if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+					L.xe(txId, ['Error al autenticar al usuario', sapError]);
 					var responseBody = fedicomError.send(res);
 					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
-				} else {
+				}
+				else {
+					L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', sapError]);
 					var token = authReq.generateJWT(true);
 					var responseBody = {auth_token: token};
 					res.status(201).json(responseBody);
 					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.NO_SAP);
 				}
 				return;
-
 			}
+
 			// Ojo que sapRes podría ser NULL si hubo acierto en caché
 
-			if (sapBody.username) {
+			if (sapResponse.body.username) {
 				// AUTH OK POR SAP
 				var token = authReq.generateJWT();
 				var responseBody = {auth_token: token};

@@ -9,7 +9,38 @@ const Events = require(BASE + 'interfaces/events');
 const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
 const request = require('request');
 
+// migracion
+const config = C;
 
+/**
+ * Trata de crear el objeto del sistema SAP en base al nombre del mismo.
+ * Si no se especifica el nombre, se usa el sistema SAP por defecto.
+ * En caso de que el sistema SAP no exista, se devuelve null.
+ * Si el sistema SAP es correcto, se devuelve el objeto SapSystem
+ * 
+ * @param {*} sapSystemName 
+ * @param {*} callback 
+ */
+const getSapSystem = (sapSystemName) => {
+	var sapSystemData = sapSystemName ? C.getSapSystem(sapSystemName) : C.getDefaultSapSystem();
+	if (!sapSystemData) {
+		return null;
+	}
+	return new SapSystem(sapSystemData);
+}
+
+const ampliaSapResponse = (sapResponse, sapBody) => {
+	if (!sapResponse) sapResponse = {};
+	sapResponse.body = sapBody;
+	sapResponse.errorSap = Math.floor(sapResponse.statusCode / 100) !== 2;
+	return sapResponse;
+} 
+
+const NO_SAP_SYSTEM_ERROR = {
+	type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
+	errno: null,
+	code: 'No se encuentra definido el sistema SAP destino'
+}
 
 
 exports.ping = function (sapSystem, callback) {
@@ -51,58 +82,59 @@ exports.ping = function (sapSystem, callback) {
 	});
 }
 
-exports.authenticate = function ( txId, authReq, callback, noEvents) {
+exports.authenticate = function (authReq, callback) {
+	var txId = authReq.txId;
 
-	var fromCache = credentialsCache.check(authReq);
-	if (fromCache) {
-		L.xd(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache')
-		callback(null, null, {username: authReq.username}, false);
+	if (!authReq.noCache) {
+		var fromCache = credentialsCache.check(authReq);
+		if (fromCache) {
+			L.xd(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache');
+			callback(null, { body: { username: authReq.username } });
+			return;
+		}
+	}
+
+	var sapSystem = getSapSystem(authReq.sapSystem);
+	if (!sapSystem) {
+		callback(NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-	var sapSystemData = authReq.sap_system ? config.getSapSystem(authReq.sap_system) : config.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback('No se encuentra el sistema destino', null, null, true);
-		return;
-	}
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zverify_fedi_credentials');
+	var httpCallParams = sapSystem.getRequestCallParams({
+		path: '/api/zverify_fedi_credentials',
+		body: authReq
+	});
 
-  var httpCallParams = {
-    followAllRedirects: true,
-    json: true,
-    url: url,
-    method: 'POST',
-    headers: sapSystem.getAuthHeaders(),
-    body: authReq,
-	 encoding: 'latin1'
-  };
+	Events.sap.emitRequestToSap(txId, httpCallParams);
 
-  Events.sap.emitSapRequest(txId, url, httpCallParams);
+	request(httpCallParams, function (callError, sapResponse, sapBody) {
+		sapResponse = ampliaSapResponse(sapResponse, sapBody);
+		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
 
-  request(httpCallParams, function(err, res, body) {
-    Events.sap.emitSapResponse(txId, res, body, err);
-
-    if (err) {
-      callback(err, res, body, false);
-      return;
-    }
-
-    var statusCodeType = Math.floor(res.statusCode / 100);
-
-	 	if (statusCodeType === 2) {
-			// Solo si SAP responde con el nombre del usuario guardamos la entrada en caché
-			if (body.username && body.username.length > 0)
-				credentialsCache.add(authReq);
-			callback(null, res, body, false);
-		} else {
-			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body, false)
+		if (callError) {
+			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(callError, sapResponse);
+			return;
 		}
 
-  });
+		if (sapResponse.sapError) {
+			callback({
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: sapResponse.statusCode,
+				code: sapResponse.statusMessage
+			}, sapResponse)
+			return;
+		}
+
+		// Solo si SAP responde con el nombre del usuario guardamos la entrada en caché
+		if (!authReq.noCache && sapBody.username && sapBody.username.length > 0) {
+			credentialsCache.add(authReq);
+		}
+
+		callback(null, sapResponse);
+		
+
+	});
 
 }
 
@@ -190,7 +222,6 @@ exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 	});
 }
 
-
 exports.retransmitirPedido = function (pedido, callback) {
 	var sapSystemData = pedido.sap_system ? C.getSapSystem(pedido.sap_system) : C.getDefaultSapSystem();
 	if (!sapSystemData) {
@@ -242,7 +273,6 @@ exports.retransmitirPedido = function (pedido, callback) {
 	});
 
 }
-
 
 exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) {
 

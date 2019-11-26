@@ -1,5 +1,10 @@
 'use strict';
+//const BASE = global.BASE;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
+const Crypto = require('crypto');
 
 class SapSystem {
   constructor(json) {
@@ -9,20 +14,20 @@ class SapSystem {
     this.username = json.username;
     this.password = json.password;
     this.prefix = json.prefix || '';
+
+    this.preCalculatedBaseUrl = (this.https ? 'https://' : 'http://') + this.host + ':' + this.port + this.prefix
   }
 
   getURI(path) {
-    var uri = this.https ? 'https://' : 'http://';
-    uri += this.host + ':' + this.port + this.prefix;
-    if (path) uri += path;
-    return uri;
+    if (path) return this.preCalculatedBaseUrl + path;
+    return this.preCalculatedBaseUrl;
   }
 
   getAuthHeaders() {
 
     var salt = Date.fedicomTimestamp();
     var hashAlgo = 'MD5';
-    var hashKey = require('crypto').createHash(hashAlgo).update(salt + this.password).digest('hex');
+    var hashKey = Crypto.createHash(hashAlgo).update(salt + this.password).digest('hex');
 
     return {
       'X-Salt': salt,
@@ -31,6 +36,18 @@ class SapSystem {
       'X-User': this.username
     };
 
+  }
+
+  getRequestCallParams(params) {
+    return {
+      followAllRedirects: true,
+      json: true,
+      url: this.getURI(params.path || ''),
+      method: params.method ? params.method : (params.body ? 'POST' : 'GET'),
+      headers: this.getAuthHeaders(),
+      body: params.body ? params.body : undefined,
+      encoding: 'latin1'
+    };
   }
 
 }
