@@ -117,8 +117,8 @@ const retransmitirPedido = function (txId, options, callback) {
         
 
         if (options.sistemaSAP) {
-            L.xd(rtxId, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedido.sap_system || '<n/a>') + '] => [' + options.sistemaSAP + ']']);
-            pedido.sap_system = options.sistemaSAP;
+            L.xd(rtxId, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedido.sapSystem || '<n/a>') + '] => [' + options.sistemaSAP + ']']);
+            pedido.sapSystem = options.sistemaSAP;
             // Si cambia el sistema SAP, nunca actualizaremos el pedido original
             options.noActualizarOriginal = true;
         }
@@ -143,9 +143,9 @@ const retransmitirPedido = function (txId, options, callback) {
         pedido.limpiarEntrada();
         L.xi(rtxId, ['Retransmitimos a SAP el pedido']);
 
-        Isap.retransmitirPedido(pedido, (sapError, sapResponse, sapBody, sapRequest) => {
+        Isap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
 
-            sapResponse = construyeSapResponse(sapError, sapResponse, sapBody);
+            sapResponse = construyeSapResponse(sapError, sapResponse);
 
             if (sapError) {
                 if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -177,7 +177,7 @@ const retransmitirPedido = function (txId, options, callback) {
             }
 
 
-            var clientResponse = pedido.obtenerRespuestaCliente(sapBody);
+            var clientResponse = pedido.obtenerRespuestaCliente(sapResponse.body);
             var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
             var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
 
@@ -198,7 +198,7 @@ const retransmitirPedido = function (txId, options, callback) {
 
 }
 
-const construyeSapResponse = (callError, httpResponse, body) => {
+const construyeSapResponse = (callError, httpResponse) => {
 
     if (callError) {
         switch (callError.type) {
@@ -220,7 +220,7 @@ const construyeSapResponse = (callError, httpResponse, body) => {
         timestamp: new Date(),
         statusCode: httpResponse.statusCode,
         headers: httpResponse.headers,
-        body: body
+        body: httpResponse.body
     }
 
 }

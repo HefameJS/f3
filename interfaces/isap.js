@@ -218,28 +218,17 @@ exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 }
 
 exports.retransmitirPedido = function (pedido, callback) {
-	var sapSystemData = pedido.sap_system ? C.getSapSystem(pedido.sap_system) : C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback({
-			type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
-			errno: null,
-			code: 'No se encuentra definido el sistema SAP destino'
-		}, null, null);
 
+	var sapSystem = getSapSystem(pedido.sapSystem);
+	if (!sapSystem) {
+		callback(NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos');
-
-	var httpCallParams = {
-		followAllRedirects: true,
-		json: true,
-		url: url,
-		method: 'POST',
-		headers: sapSystem.getAuthHeaders(),
-		body: pedido,
-		encoding: 'latin1'
-	};
+	
+	var httpCallParams = sapSystem.getRequestCallParams({
+		path: '/api/zsd_ent_ped_api/pedidos',
+		body: pedido
+	});
 
 	var sapRequest = {
 		timestamp: new Date(),
@@ -249,22 +238,23 @@ exports.retransmitirPedido = function (pedido, callback) {
 		url: url
 	}
 
-	request(httpCallParams, function (callError, sapResponse, body) {
+	request(httpCallParams, function (callError, sapResponse, sapBody) {
+		sapResponse = ampliaSapResponse(sapResponse, sapBody);
+
 		if (callError) {
 			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, sapResponse, body, sapRequest);
+			callback(callError, sapResponse, sapRequest);
 			return;
 		}
-		var statusCodeType = Math.floor(sapResponse.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, sapResponse, body, sapRequest);
-		} else {
+		
+		if (sapResponse.sapError) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: sapResponse.statusCode,
 				code: sapResponse.statusMessage
-			}, sapResponse, body, sapRequest);
+			}, sapResponse, sapRequest);
 		}
+		callback(null, sapResponse, sapRequest);
 	});
 
 }
