@@ -254,7 +254,7 @@ const buffer = (data) => {
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
 		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
-		exports.commit(value, false);
+		module.exports.commit(value, false);
 	});
 
 }
