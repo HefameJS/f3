@@ -1,5 +1,8 @@
 'use strict';
-const BASE = global.BASE;
+//const BASE = global.BASE;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
 var dateFormat = require('dateformat');
 
