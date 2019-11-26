@@ -43,41 +43,37 @@ const NO_SAP_SYSTEM_ERROR = {
 }
 
 
-exports.ping = function (sapSystem, callback) {
-	var sapSystemData = sapSystem ? config.getSapSystem(sapSystem) : config.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback('No se encuentra el sistema destino', false);
+exports.ping = (sapSystem, callback) => {
+	var sapSystem = getSapSystem(sapSystem);
+	if (!sapSystem) {
+		callback(NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos/avalibity');
-
-	var httpCallParams = {
-		followAllRedirects: true,
-		json: true,
-		url: url,
-		method: 'GET',
-		headers: sapSystem.getAuthHeaders(),
-		encoding: 'latin1'
-	};
+	var httpCallParams = sapSystem.getRequestCallParams({
+		path: '/api/zsd_ent_ped_api/pedidos/avalibity'
+	});
 
 
-	request(httpCallParams, function (err, res, body) {
-		if (err) {
-			callback(err, false);
+	request(httpCallParams, function (callError, sapResponse, sapBody) {
+
+		sapResponse = ampliaSapResponse(sapResponse, sapBody);
+		if (callError) {
+			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(callError, false);
 			return;
 		}
 
-		var statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, true);
-		} else {
+		if (sapResponse.sapError) {
 			callback({
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: res.statusCode,
 				code: res.statusMessage
 			}, false);
+			return;
 		}
+
+		callback(null, true);
 
 	});
 }
@@ -235,7 +231,7 @@ exports.retransmitirPedido = (pedido, callback) => {
 		method: httpCallParams.method,
 		headers: httpCallParams.headers,
 		body: httpCallParams.body,
-		url: url
+		url: httpCallParams.url
 	}
 
 	request(httpCallParams, function (callError, sapResponse, sapBody) {

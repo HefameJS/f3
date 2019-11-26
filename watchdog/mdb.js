@@ -34,7 +34,7 @@ var interval = setInterval(function() {
 		if (candidatos && candidatos.length > 0) {
 			L.i('Se encontraron ' + candidatos.length + ' transmisiones recuperables', 'mdbwatch');
 
-			Isap.ping(null, (err, sapStatus) => {
+			Isap.ping(null, (sapError, sapStatus) => {
 				if (sapStatus) {
 					candidatos.forEach( function(tx) {
 
@@ -104,7 +104,7 @@ var interval = setInterval(function() {
 						}
 					});
 				} else {
-					L.i(['Aún no se ha recuperado la comunicación con SAP', err], 'mdbwatch');
+					L.i(['Aún no se ha recuperado la comunicación con SAP', sapError], 'mdbwatch');
 				}
 			});
 		} else {
