@@ -217,7 +217,7 @@ exports.realizarDevolucion = function ( txId, devolucion, callback ) {
 	});
 }
 
-exports.retransmitirPedido = function (pedido, callback) {
+exports.retransmitirPedido = (pedido, callback) => {
 
 	var sapSystem = getSapSystem(pedido.sapSystem);
 	if (!sapSystem) {
