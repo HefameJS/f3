@@ -64,7 +64,7 @@ exports.savePedido = function (req, res) {
 				if (sapError) {
 					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
 						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-						L.xe(txId, ['Error al autenticar al usuario', sapError]);
+						L.xe(txId, ['Error al grabar el pedido', sapError]);
 						var responseBody = fedicomError.send(res);
 						Events.pedidos.emitFinCrearPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 					}
