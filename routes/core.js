@@ -5,6 +5,8 @@ const L = global.logger;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const Events = require(BASE + 'interfaces/events');
+const ExpressExtensions = require(BASE + 'util/expressExtensions');
+
 var MongoDB = require('mongodb');
 var ObjectID = MongoDB.ObjectID;
 
@@ -46,21 +48,17 @@ module.exports = function(app) {
 		}
 	});
 
+	/**
+	 * Generamos txId y añadimos cabeceras comunes.
+	 * Tambien añadimos funcionalidades a req y res
+	 */
+
 	app.use(function (req, res, next) {
-		var txId = new ObjectID();
-		req.txId = res.txId = txId;
-		res.setHeader('X-TxID', txId);
-		res.setHeader('Software-ID', "0026");
-		res.setHeader('Content-Api-Version', global.protocolVersion);
 
-		if (req.headers && req.headers['x-forwarded-for'])
-			req.originIp = req.headers['x-forwarded-for'];
-		else 
-			req.originIp = req.ip
+		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
-
-		L.i( '** Recibiendo transmisión ' + txId + ' desde ' + req.ip );
-		L.xt( txId, 'Iniciando procesamiento de la transmisión' );
+		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.originIp );
+		L.xt(req.txId, 'Iniciando procesamiento de la transmisión' );
 
 		return next();
 	});
