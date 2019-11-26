@@ -167,6 +167,68 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 	Imongo.commit(resData);
 }
 
+
+module.exports.emitInicioCrearPedido = (req, pedido) => {
+	var reqData = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: K.TX_STATUS.RECEPCIONADO
+		},
+		$set: {
+			crc: new ObjectID(pedido.crc),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
+			iid: global.instanceID,
+			type: K.TX_TYPES.PEDIDO,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.originIp,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			}
+		}
+	};
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
+	Imongo.commit(reqData);
+	L.yell(req.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
+}
+module.exports.emitFinCrearPedido = (res, responseBody, status, extra) => {
+	if (!extra) extra = {};
+
+	var resData = {
+		$setOnInsert: {
+			_id: res.txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: status,
+		},
+		$set: {
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: responseBody
+			},
+			numeroPedidoAgrupado: extra.numeroPedidoAgrupado || undefined,
+			numerosPedidoSAP: extra.numerosPedidoSAP || []
+		}
+	}
+
+	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
+	Imongo.commit(resData);
+	L.yell(res.txId, K.TX_TYPES.PEDIDO, status, [responseBody]);
+}
 module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) {
 
 	var data = {
@@ -175,10 +237,10 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 			createdAt: new Date(),
 			modifiedAt: new Date(),
 			status: status,
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
 			iid: global.instanceID,
-			type: txTypes.CREAR_PEDIDO,
+			type: K.TX_TYPES.PEDIDO,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -200,63 +262,5 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.CREAR_PEDIDO, status, [identifyAuthenticatingUser(req), responseBody]);
-}
-module.exports.emitRequestCrearPedido = function(req, pedido) {
-	var reqData = {
-		$setOnInsert: {
-			_id: req.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: txStatus.RECEPCIONADO
-		},
-		$set: {
-			crc: new ObjectID(pedido.crc),
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
-			iid: global.instanceID,
-			type: txTypes.CREAR_PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-      		ip: req.originIp,
-      		protocol: req.protocol,
-      		method: req.method,
-      		url: req.originalUrl,
-      		route: req.route.path,
-      		headers: req.headers,
-      		body: req.body
-			}
-		}
-	};
-
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestCrearPedido'], 'txCommit');
-	Imongo.commit(reqData);
-	L.yell(req.txId, txTypes.CREAR_PEDIDO, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), pedido.crc, req.body]);
-}
-module.exports.emitResponseCrearPedido = function (res, responseBody, status, numerosPedidoSAP) {
-	var resData = {
-		$setOnInsert: {
-			_id: res.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: status,
-		},
-		$set: {
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: responseBody
-			},
-			numerosPedidoSAP: numerosPedidoSAP
-		}
-	}
-
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
-	Imongo.commit(resData);
-	L.yell(res.txId, txTypes.CREAR_PEDIDO, status, [responseBody]);
+	L.yell(req.txId, txTypes.CREAR_PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }

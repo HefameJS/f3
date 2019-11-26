@@ -75,7 +75,7 @@ module.exports = {
                 login: { ignore: true },
                 crc: { ignore: true },
                 sap_url_confirmacion: { ignore: true },
-                sap_system: { ignore: true },
+                sapSystem: { ignore: true },
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 numeroPedido: { remove: true },
@@ -155,7 +155,7 @@ module.exports = {
                 lineas: { ignore: true },
                 login: { ignore: true },
                 crc: { ignore: true },
-                sap_system: { ignore: true },
+                sapSystem: { ignore: true },
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 numeroDevolucion: { remove: true },
@@ -235,6 +235,7 @@ module.exports = {
     },
     PROTOCOL_VERSION: '3.3.7',
     SERVER_VERSION: '0.8.2'
+    
 
 }
 

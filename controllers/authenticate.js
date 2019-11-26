@@ -20,9 +20,9 @@ exports.doAuth = function (req, res) {
 	Events.authentication.emitAuthRequest(req);
 
 	try {
-		var authReq = new AuthReq(req.body, txId);
+		var authReq = new AuthReq(req.body);
 	} catch (fedicomError) {
-		fedicomError = FedicomError.fromException(req.txId, fedicomError);
+		fedicomError = FedicomError.fromException(txId, fedicomError);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
 		var responseBody = fedicomError.send(res);
 		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
@@ -31,7 +31,7 @@ exports.doAuth = function (req, res) {
 
 	if (authReq.domain === Domain.domains.fedicom || authReq.domain === Domain.domains.transfer) {
 
-		Isap.authenticate(authReq, function (sapError, sapResponse) {
+		Isap.authenticate(txId, authReq, function (sapError, sapResponse) {
 			if (sapError) {
 				if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
 					var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
@@ -41,7 +41,7 @@ exports.doAuth = function (req, res) {
 				}
 				else {
 					L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', sapError]);
-					var token = authReq.generateJWT(true);
+					var token = authReq.generateJWT(txId);
 					var responseBody = {auth_token: token};
 					res.status(201).json(responseBody);
 					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.NO_SAP);
@@ -53,7 +53,7 @@ exports.doAuth = function (req, res) {
 
 			if (sapResponse.body.username) {
 				// AUTH OK POR SAP
-				var token = authReq.generateJWT();
+				var token = authReq.generateJWT(txId);
 				var responseBody = {auth_token: token};
 				res.status(201).json(responseBody);
 				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
@@ -66,7 +66,7 @@ exports.doAuth = function (req, res) {
 		});
 
 	} else { // ES UN TOKEN DE UN DOMINIO NO FEDICOM - POR AHORA LO DEJAMOS PASAR
-		var token = authReq.generateJWT();
+		var token = authReq.generateJWT(txId);
 		var responseBody = {auth_token: token};
 		res.status(201).json(responseBody);
 		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);

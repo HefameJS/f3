@@ -82,8 +82,7 @@ exports.ping = function (sapSystem, callback) {
 	});
 }
 
-exports.authenticate = function (authReq, callback) {
-	var txId = authReq.txId;
+exports.authenticate = (txId, authReq, callback) => {
 
 	if (!authReq.noCache) {
 		var fromCache = credentialsCache.check(authReq);
@@ -107,7 +106,7 @@ exports.authenticate = function (authReq, callback) {
 
 	Events.sap.emitRequestToSap(txId, httpCallParams);
 
-	request(httpCallParams, function (callError, sapResponse, sapBody) {
+	request(httpCallParams, (callError, sapResponse, sapBody) => {
 		sapResponse = ampliaSapResponse(sapResponse, sapBody);
 		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
 
@@ -138,44 +137,40 @@ exports.authenticate = function (authReq, callback) {
 
 }
 
-exports.realizarPedido = function ( txId, pedido, callback ) {
-	var sapSystemData = pedido.sap_system ? C.getSapSystem(pedido.sap_system) : C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback('No se encuentra el sistema destino', null, null, true);
+exports.realizarPedido = (txId, pedido, callback ) => {
+
+	var sapSystem = getSapSystem(pedido.sapSystem);
+	if (!sapSystem) {
+		callback(NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/api/zsd_ent_ped_api/pedidos');
 
-	var httpCallParams = {
-		followAllRedirects: true,
-		json: true,
-		url: url,
-		method: 'POST',
-		headers: sapSystem.getAuthHeaders(),
-		body: pedido,
-		encoding: 'latin1'
-	};
+	var httpCallParams = sapSystem.getRequestCallParams({
+		path: '/api/zsd_ent_ped_api/pedidos',
+		body: pedido
+	});
 
-	Events.sap.emitSapRequest(txId, url, httpCallParams);
+	Events.sap.emitRequestToSap(txId, httpCallParams);
+	request(httpCallParams, (callError, sapResponse, sapBody) => {
+		sapResponse = ampliaSapResponse(sapResponse, sapBody);
+		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
 
-	request(httpCallParams, function(err, res, body) {
-		Events.sap.emitSapResponse(txId, res, body, err);
-
-		if (err) {
-			callback(err, res, body);
+		if (callError) {
+			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(callError, sapResponse);
 			return;
 		}
 
-		var statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
+		if (sapResponse.sapError) {
 			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: sapResponse.statusCode,
+				code: sapResponse.statusMessage
+			}, sapResponse)
+			return;
 		}
+
+		callback(null, sapResponse);
 
 	});
 }

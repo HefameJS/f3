@@ -19,6 +19,7 @@ function identifyAuthenticatingUser(req) {
 
 
 module.exports.emitRequestToSap = (txId, callParams) => {
+
 	var data = {
 		$setOnInsert: {
 			_id: txId,
@@ -29,7 +30,6 @@ module.exports.emitRequestToSap = (txId, callParams) => {
 			status: K.TX_STATUS.ESPERANDO_INCIDENCIAS
 		},
 		$set: {
-			crc: (callParams.body && callParams.body.crc) ? new ObjectID(callParams.body.crc) : undefined,
 			sapRequest: {
 				timestamp: new Date(),
 				method: callParams.method,

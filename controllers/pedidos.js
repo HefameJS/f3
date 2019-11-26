@@ -2,7 +2,7 @@
 const BASE = global.BASE;
 const L = global.logger;
 //const C = global.config;
-//const K = global.constants;
+const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
 const Imongo = require(BASE + 'interfaces/imongo');
@@ -18,68 +18,72 @@ const txStatus = require(BASE + 'model/static/txStatus');
 
 
 exports.savePedido = function (req, res) {
+	var txId = req.txId;
 
-	L.xi(req.txId, ['Procesando transmisión como ENTRADA DE PEDIDO']);
+	L.xi(txId, ['Procesando transmisión como ENTRADA DE PEDIDO']);
 
-	req.token = Tokens.verifyJWT(req.token, req.txId);
+	req.token = Tokens.verifyJWT(req.token, txId);
 	if (req.token.meta.exception) {
-		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
+		L.xe(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
 		var responseBody = req.token.meta.exception.send(res);
-		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
+		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
-	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
+	L.xi(txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
 
-	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
+	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
   		var pedido = new Pedido(req);
 	} catch (fedicomError) {
-		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		fedicomError = FedicomError.fromException(txId, fedicomError);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
 		var responseBody = fedicomError.send(res);
-		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(req.txId, ['El contenido de la transmisión es un pedido correcto', pedido]);
+	L.xd(txId, ['El contenido de la transmisión es un pedido correcto', pedido]);
 
 
 	Imongo.findCrcDuplicado(pedido.crc, function (err, dbTx) {
 		if (err) {
-			L.xe(req.txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', err], 'crc');
+			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', err], 'crc');
 		}
 
 		if (dbTx) {
 			var duplicatedId = dbTx._id;
-			L.xi(req.txId, 'Detectada la transmisión de pedido con ID ' + duplicatedId + ' con identico CRC', 'crc');
-			L.xi(duplicatedId, 'Se ha detectado un duplicado de este pedido con ID ' + req.txId, 'crc');
+			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + duplicatedId + ' con identico CRC', 'crc');
+			L.xi(duplicatedId, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
 			var errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
 			var responseBody = errorDuplicado.send(res);
 			Events.pedidos.emitPedidoDuplicado(req, res, responseBody, duplicatedId);
 		} else {
-			Events.pedidos.emitRequestCrearPedido(req, pedido);
+			Events.pedidos.emitInicioCrearPedido(req, pedido);
 			pedido.limpiarEntrada();
 			
-			Isap.realizarPedido( req.txId, pedido, function(sapErr, sapRes, sapBody, abort) {
-				if (sapErr) {
-					if (abort) {
-						var fedicomError = new FedicomError('HTTP-400', sapErr, 400);
+			Isap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
+				if (sapError) {
+					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+						L.xe(txId, ['Error al autenticar al usuario', sapError]);
 						var responseBody = fedicomError.send(res);
-						Events.pedidos.emitResponseCrearPedido(res, responseBody, txStatus.SISTEMA_SAP_NO_DEFINIDO);
-					} else {
-						L.xe(req.txId, ['Incidencia en la comunicación con SAP', sapErr]);
+						Events.pedidos.emitFinCrearPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+					}
+					else {
+						L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
 						pedido.simulaFaltas();
 						res.status(201).json(pedido);
-						Events.pedidos.emitResponseCrearPedido(res, pedido, txStatus.NO_SAP);
+						Events.authentication.emitFinCrearPedido(res, pedido, K.TX_STATUS.NO_SAP);
 					}
 					return;
 				}
 
-				var clientResponse = pedido.obtenerRespuestaCliente(sapBody);
+
+				var clientResponse = pedido.obtenerRespuestaCliente(sapResponse.body);
 				var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
 				
 				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
 				res.status(responseHttpStatusCode).json(clientResponse);
-				Events.pedidos.emitResponseCrearPedido(res, clientResponse, estadoTransmision);
+				Events.pedidos.emitFinCrearPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
 			});
 		}
 	});

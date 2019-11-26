@@ -11,9 +11,8 @@ const Domain = require(BASE + 'model/auth/domain');
 
 
 class AuthReq {
-	constructor(json, txId) {
+	constructor(json) {
 		this.domain = Domain.verify(json.domain);
-		this.txId = txId
 
 		if (this.domain === Domain.domains.apikey) {
 			if (json.user && json.apikey) {
@@ -46,8 +45,8 @@ class AuthReq {
 		Object.assign(this, json);
     }
 
-    generateJWT(includePassword) {
-      return Tokens.generateJWT(this, this.txId, includePassword);
+	generateJWT(txId) {
+      return Tokens.generateJWT(this, txId, false);
     }
 
 }
