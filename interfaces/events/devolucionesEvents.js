@@ -71,18 +71,17 @@ module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) 
 	Imongo.commit(data);
 	// L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTxId]);
 }
-
-module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, status) {
+module.exports.emitErrorCrearDevolucion = (req, res, responseBody, status) => {
 
 	var data = {
 		$setOnInsert: {
 			_id: req.txId,
 			createdAt: new Date(),
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			modifiedAt: new Date(),
-			type: txTypes.CREAR_DEVOLUCION,
+			type: K.TX_TYPES.DEVOLUCION,
 			status: status,
 			clientRequest: {
 				authentication: req.token,
@@ -105,9 +104,9 @@ module.exports.emitErrorCrearDevolucion = function (req, res, responseBody, stat
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, status, [identifyAuthenticatingUser(req), responseBody]);
+	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
-module.exports.emitRequestDevolucion = function(req, devolucion) {
+module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
 	var reqData = {
 		$setOnInsert: {
 			_id: req.txId,
@@ -115,41 +114,32 @@ module.exports.emitRequestDevolucion = function(req, devolucion) {
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
 			crc: new ObjectID(devolucion.crc),
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
 			iid: global.instanceID,
-			type: txTypes.CREAR_DEVOLUCION,
+			type: K.TX_TYPES.DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
-      		ip: req.originIp,
-      		protocol: req.protocol,
-      		method: req.method,
-      		url: req.originalUrl,
-      		route: req.route.path,
-      		headers: req.headers,
-      		body: req.body
+				ip: req.originIp,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
 			}
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestDevolucion'], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
 	Imongo.buffer(reqData);
-	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [identifyAuthenticatingUser(req), devolucion.crc, req.body]);
+	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
-module.exports.emitResponseDevolucion = function (res, responseBody, status) {
-
-	var numerosDevolucion = [];
-	if (responseBody && responseBody.length > 0) {
-		responseBody.forEach( function (devolucion) {
-			if (devolucion && devolucion.numeroDevolucion) {
-					numerosDevolucion.push(devolucion.numeroDevolucion);
-			}
-		});
-	}
+module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
 
 	var resData = {
 		$setOnInsert: {
@@ -161,7 +151,7 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 			status: status
 		},
 		$set: {
-			numerosDevolucion: numerosDevolucion,
+			numerosDevolucion: extra.numerosDevolucion || [],
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
@@ -171,9 +161,9 @@ module.exports.emitResponseDevolucion = function (res, responseBody, status) {
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseDevolucion'], 'txCommit');
+	L.xi(res.txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
 	Imongo.commit(resData);
-	L.yell(res.txId, txTypes.CREAR_DEVOLUCION, status, [responseBody]);
+	L.yell(res.txId, K.TX_TYPES.DEVOLUCION, status, [responseBody]);
 }
 
 

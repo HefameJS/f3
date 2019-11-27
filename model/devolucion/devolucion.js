@@ -83,6 +83,8 @@ class Devolucion {
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
+		respuestaSAP.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP) }
+		respuestaSAP.isRechazadoSap = () => true;
 		return respuestaSAP;
 	}
 
@@ -193,6 +195,23 @@ const SaneadorDevolucionesSAP = {
 		}
 		return message;
 	}
+}
+
+
+const obtenerEstadoDeRespuestaSap = (sapBody) => {
+
+	var estadoTransmision = K.TX_STATUS.OK;
+
+	var numerosDevolucion = [];
+	if (sapBody && sapBody.length > 0) {
+		sapBody.forEach(function (devolucion) {
+			if (devolucion && devolucion.numeroDevolucion) {
+				numerosDevolucion.push(devolucion.numeroDevolucion);
+			}
+		});
+	}
+
+	return [estadoTransmision, numerosDevolucion];
 }
 
 module.exports = Devolucion;
