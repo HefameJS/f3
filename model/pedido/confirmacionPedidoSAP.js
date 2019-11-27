@@ -51,11 +51,15 @@ class ConfirmacionPedidoSAP {
 
 	}
 
-	static obtenerEstadoDeConfirmacionSap(sapBody) {
+	obtenerEstado() {
+		var numerosPedidoSAP = Pedido.extraerPedidosAsociados(this.sap_pedidosasociados);
+		var estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+		return [estadoTransmision, numerosPedidoSAP];
+	}
 
+	static obtenerEstadoDeConfirmacionSap(sapBody) {
 		var numerosPedidoSAP = Pedido.extraerPedidosAsociados(sapBody.sap_pedidosasociados);
 		var estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
-
 		return [estadoTransmision, numerosPedidoSAP];
 	}
 

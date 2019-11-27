@@ -14,42 +14,45 @@ const Tokens = require(BASE + 'util/tokens');
 
 
 
-exports.confirmaPedido = function (req, res) {
+exports.confirmaPedido = (req, res) => {
+	var txId = req.txId;
 
-	L.xi(req.txId, ['Procesando confirmación de confirmación de pedido']);
-	req.token = Tokens.verifyJWT(req.token, req.txId);
+	L.xi(txId, ['Procesando confirmación de confirmación de pedido']);
+	req.token = Tokens.verifyJWT(req.token, txId);
 
 	L.xt(req.txId, ['Datos de confirmacion recibidos', req.body]);
-
 	try {
 		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
 	} catch (fedicomError) {
-		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
-		var responseBody = fedicomError.send(res);
-		Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		fedicomError = FedicomError.fromException(txId, fedicomError);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
+		fedicomError.send(res);
+		Events.sap.emitErrorConfirmacionPedido(req, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
-	Imongo.findTxByCrc(req.txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
+	Imongo.findTxByCrc(txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
 		if (err) {
-			var fedicomError = FedicomError.fromException(req.txId, err);
+			var fedicomError = FedicomError.fromException(txId, err);
 			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', fedicomError]);
-			var responseBody = fedicomError.send(res);
-			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			fedicomError.send(res);
+			Events.sap.emitErrorConfirmacionPedido(req, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
 		if (!dbTx) {
 			var error = new FedicomError('SAP-ERR-400', 'No existe el pedido que se está confirmando', 400);
-			var responseBody = error.send(res);
-			Events.sap.emitErrorConfirmacionPedido(req, res, responseBody, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			error.send(res);
+			Events.sap.emitErrorConfirmacionPedido(req, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
-		L.xi(req.txId, ['Se selecciona la transmisión con ID para confirmar', dbTx._id], 'confirm');
+		var [estadoTransmision, numerosPedidoSAP] = confirmacionPedidoSAP.obtenerEstado();
+
+		var originalTxId = dbTx._id;
+		L.xi(req.txId, ['Se selecciona la transmisión con ID para confirmar', originalTxId], 'confirm');
 		res.status(200).json({ok: true});
-		Events.sap.emitConfirmacionPedido(req, res, {ok: true}, dbTx);
+		Events.sap.emitConfirmacionPedido(req, originalTxId, estadoTransmision, { numerosPedidoSAP });
 
 	} );
 
