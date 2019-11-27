@@ -86,7 +86,7 @@ var interval = setInterval(function() {
 
 								// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
 								L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id ], 'mdbwatch');
-								Events.retransmisiones.emitRecoverConfirmacionPedido(tx, confirmacionPedido);
+								Events.retransmisiones.emitRecoverConfirmacionPedido(txId, confirmacionPedido);
 								retransmissionsInProgress--;
 								return;
 

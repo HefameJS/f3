@@ -121,17 +121,16 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 }
 
 
-module.exports.emitRecoverConfirmacionPedido = (originalTx, confirmTx) => {
+module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 
 	var confirmacionSap = confirmTx.clientRequest.body;
-	var txId = originalTx._id;
 	var confirmId = confirmTx._id;
 
 	var [estadoTransmision, numerosPedidoSAP] = ConfirmacionPedidoSAP.obtenerEstadoDeConfirmacionSap(confirmacionSap);
 
 	var updateData = {
 		$setOnInsert: {
-			_id: txId,
+			_id: originalTxId,
 			createdAt: new Date()
 		},
 		$max: {
@@ -150,9 +149,9 @@ module.exports.emitRecoverConfirmacionPedido = (originalTx, confirmTx) => {
 		}
 	}
 
-	L.xi(txId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido', L.saneaCommit(updateData)], 'txCommit');
+	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido', L.saneaCommit(updateData)], 'txCommit');
 	Imongo.commit(updateData);
-	L.yell(txId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
+	L.yell(originalTxId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
 	/**
 	 * Dejamos constancia en la propia transmisión de confirmación de que se ha actualizado
@@ -167,10 +166,10 @@ module.exports.emitRecoverConfirmacionPedido = (originalTx, confirmTx) => {
 		$set: {
 			modifiedAt: new Date(),
 			status: K.TX_STATUS.OK,
-			confirmingId: txId,
+			confirmingId: originalTxId,
 		}
 	}
-	L.xi(confirmId, ['Se ha asociado esta confirmación con la transmisión del pedido con ID ' + txId, L.saneaCommit(commitConfirmacionSap)], 'txCommit');
+	L.xi(confirmId, ['Se ha asociado esta confirmación con la transmisión del pedido con ID ' + originalTxId, L.saneaCommit(commitConfirmacionSap)], 'txCommit');
 	Imongo.commit(commitConfirmacionSap);
 
 }
