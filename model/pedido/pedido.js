@@ -224,7 +224,7 @@ const converAlmacen = (codigoAlmacen) => {
 			case 19: /* Malaga nuevo */
 				return ['RG' + (codigoFedicom2 > 9 ? codigoFedicom2 : '0' + codigoFedicom2), null];
 			default:
-				return [null, new FedicomError(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado.')]
+				return [null, new FedicomError(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado – Se le asigna su almacén habitual')]
 		}
 	}
 }
