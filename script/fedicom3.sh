@@ -86,8 +86,8 @@ start() {
 }
 
 stop() {
-    kill $(cat $COREPID) >/dev/null 2>/dev/null
-    kill $(cat $WDPID) >/dev/null 2>/dev/null
+    kill $(cat $COREPID 2>/dev/null) 2>/dev/null
+    kill $(cat $WDPID 2>/dev/null) 2>/dev/null
 }
 
 status() {
