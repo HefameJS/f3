@@ -35,7 +35,7 @@ exports.saveDevolucion = function (req, res) {
   		var devolucion = new Devolucion(req);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
+		L.xe(req.txId, ['Ocurrió un error al analizar la petición', fedicomError])
 		var responseBody = fedicomError.send(res);
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
