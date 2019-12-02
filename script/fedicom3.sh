@@ -19,11 +19,12 @@ fi
 
 SRCDIR=$HOME/fedicom3-core
 DBDIR=$HOME/db
-PIDDIR=/var/run/fedicom3
+PIDDIR=$HOME/pid
 COREPID=$PIDDIR/f3-core-master.pid
 WDPID=$PIDDIR/f3-watchdog.pid
 WORKERNAME=f3-core-worker
 
+mkdir -p $PIDDIR 2>/dev/null
 
 UPDATE_GIT=no
 UPDATE_NPM=no
@@ -85,8 +86,8 @@ start() {
 }
 
 stop() {
-    kill $(cat $COREPID) 2>/dev/null
-    kill $(cat $WDPID) 2>/dev/null
+    kill $(cat $COREPID) >/dev/null 2>/dev/null
+    kill $(cat $WDPID) >/dev/null 2>/dev/null
 }
 
 status() {
