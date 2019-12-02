@@ -57,7 +57,19 @@ module.exports = {
         CONSULTAR_FACTURA: 41
     },
     SOFTWARE_ID: {
-        HEFAME: '0026'
+        FARMABRAIN: '0010',
+        UNYCOPWIN: '0012',
+        HEFAME: '0026',
+        FARMALOG: '0028',
+        NOVOPHAR: '0036',
+        CONSOFT: '0038',
+        PULSO: '0048',
+        TEDIFARMA: '0059',
+        TEDIFARMA_2: '0061',
+        SAP_P01: '9993',
+        SAP_T01: '9992',
+        SAP_D01: '9991',
+        FEDICOM3_APP: '9999'
     },
     CODIGOS_ERROR_FEDICOM: {
         WARN_PROTOCOLO: 'PROTOCOL-WARN-999',
