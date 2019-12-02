@@ -226,6 +226,8 @@ const converAlmacen = (codigoAlmacen) => {
 			default:
 				return [null, new FedicomError(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado – Se le asigna su almacén habitual')]
 		}
+	} else {
+		return [codigoAlmacen, null];
 	}
 }
 
