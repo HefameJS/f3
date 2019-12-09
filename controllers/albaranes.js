@@ -74,7 +74,7 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
         if (err) {
             L.xe(req.txId, ['Ocurrió un error al solicitar el albarán XML', err]);
             var fedicomError = new FedicomError('ALB-ERR-999', 'Ocurrió un error al buscar el albarán', 500);
-            fedicomError.send(err);
+            fedicomError.send(res);
             return;
         }
 
