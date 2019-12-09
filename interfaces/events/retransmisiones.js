@@ -47,10 +47,12 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 				updateQuery['$set'][campo] = rtxResult[campo];
 				retransmissionData.oldValues[campo] = dbTx[campo];
 			}
+
+			if (advertencia) {
+				L.xw(originalTxId, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
+			}
 		}
-		if (advertencia) {
-			L.xw(originalTxId, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
-		}
+
 	}
 
 	Imongo.commit(updateQuery);
