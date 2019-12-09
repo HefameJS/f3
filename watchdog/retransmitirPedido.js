@@ -208,9 +208,9 @@ const construyeSapResponse = (callError, httpResponse) => {
                 return {
                     timestamp: new Date(),
                     error: {
-                        source: K.ISAP.errorToString(error.type),
-                        statusCode: (error.errno || error.errno === 0) ? error.errno : null,
-                        message: error.code
+                        source: K.ISAP.errorToString(callError.type),
+                        statusCode: (callError.errno || callError.errno === 0) ? callError.errno : null,
+                        message: callError.code
                     }
                 };
         }
