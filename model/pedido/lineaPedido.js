@@ -41,19 +41,6 @@ class LineaPedido {
 
 	}
 
-	simulaFaltas() {
-		if (this.sap_ignore) return;
-		this.cantidadFalta = this.cantidad;
-		this.cantidadBonificacionFalta = this.cantidadBonificacion;
-
-		var fedicomError = {codigo: 'LIN-PED-WARN-999', descripcion: 'Incidencias no disponibles'};
-		if (this.incidencias && this.incidencias.push) {
-			this.incidencias.push( fedicomError );
-		} else {
-			this.incidencias = [fedicomError];
-		}
-	}
-
 }
 
 

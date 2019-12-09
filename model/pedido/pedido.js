@@ -84,10 +84,7 @@ class Pedido {
 	}
 
 	simulaFaltas() {
-		this.lineas.forEach( function (linea) {
-			linea.simulaFaltas();
-		});
-		var fedicomError = {codigo: 'PED-WARN-999', descripcion: 'Pedido recibido - Incidencias no disponibles'};
+		var fedicomError = { codigo: 'PED-WARN-001', descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información'};
 		if (this.incidencias && this.incidencias.push) {
 			this.incidencias.push( fedicomError );
 		} else {
@@ -95,8 +92,10 @@ class Pedido {
 		}
 		this.fechaPedido = Date.toFedicomDateTime();
 		this.numeroPedido = this.crc;
+		delete this.sap_url_confirmacion;
 		delete this.crc;
 		delete this.login;
+		delete this.sapSystem;
 	}
 
 	limpiarEntrada() {

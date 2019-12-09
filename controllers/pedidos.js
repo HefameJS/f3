@@ -71,7 +71,7 @@ exports.savePedido = function (req, res) {
 					else {
 						L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
 						pedido.simulaFaltas();
-						res.status(201).json(pedido);
+						res.status(202).json(pedido);
 						Events.pedidos.emitFinCrearPedido(res, pedido, K.TX_STATUS.NO_SAP);
 					}
 					return;
