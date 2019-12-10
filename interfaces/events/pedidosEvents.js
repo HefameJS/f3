@@ -71,7 +71,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: K.TX_TYPES.CONSULTAR_PEDIDO,
+			type: K.TX_TYPES.CONSULTA_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -108,7 +108,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: K.TX_TYPES.CONSULTAR_PEDIDO,
+			type: K.TX_TYPES.CONSULTA_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.originIp,
@@ -244,5 +244,5 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);
-	L.yell(req.txId, K.TX_TYPES.CREAR_PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
+	L.yell(req.txId, K.TX_TYPES.PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }

@@ -141,8 +141,8 @@ const findCrcDuplicado = (crc, cb) => {
 };
 const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
-		collections.tx.findOne({ type: K.TX_TYPES.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
+		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
+		collections.tx.findOne({ type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -150,8 +150,8 @@ const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 };
 const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', {type: K.TX_TYPES.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
-		collections.tx.findOne({ type: K.TX_TYPES.CREAR_PEDIDO, numerosPedido: numeroPedido }, cb);
+		L.xd(myId, ['Consulta MDB', {type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
+		collections.tx.findOne({ type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -170,17 +170,17 @@ const findConfirmacionPedidoByCRC = (crc, cb) => {
 const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		var query1 = {
-			type: K.TX_TYPES.CREAR_PEDIDO,
 			status: K.TX_STATUS.NO_SAP
 		};
 		var query2 = {
-			type: K.TX_TYPES.CREAR_PEDIDO,
 			status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO]},
 			modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * minimumAge) ) }
 		};
 		var query = {
+			type: K.TX_TYPES.PEDIDO,
 			'$or': [query1, query2]
 		};
+		console.log(query);
 
 		limit = limit ? limit : 10;
 

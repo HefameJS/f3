@@ -120,7 +120,7 @@ module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
 	Imongo.buffer(reqData);
-	L.yell(req.txId, K.TX_TYPES.CREAR_DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
+	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
 module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
 
@@ -166,7 +166,7 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
+			type: K.TX_TYPES.CONSULTA_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -203,7 +203,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
+			type: K.TX_TYPES.CONSULTA_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.originIp,
