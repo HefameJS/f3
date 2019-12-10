@@ -180,7 +180,6 @@ const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 			type: K.TX_TYPES.PEDIDO,
 			'$or': [query1, query2]
 		};
-		console.log(query);
 
 		limit = limit ? limit : 10;
 
