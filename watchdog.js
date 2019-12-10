@@ -1,27 +1,24 @@
 'use strict';
-require('./globals'); 
+require('./globals');
 const BASE = global.BASE;
+const C = global.config;
+const L = global.logger;
+const K = global.constants;
 
-process.title = global.WATCHDOG_TITLE;
+
+process.title = K.PROCESS_TITLES.WATCHDOG;
 
 
-require(BASE + 'util/nativeExtensions');
-//console.log('\033c');
-
-const errCode = require(BASE + 'model/static/exitCodes');
-
-global.instanceID = require('os').hostname() + '-' + process.pid + '-' + Date.fedicomTimestamp() + '-' + global.serverVersion + '-wd';
+global.instanceID += '-wd';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
-const config = global.config;
-const L = global.logger;
 
 
-L.i('**** ARRANCANDO WATCHDOG FEDICOM 3 - ' + global.serverVersion + ' ****');
-L.i('*** Implementando protololo Fedicom v' + global.protocolVersion + ' ****');
+L.i('**** ARRANCANDO WATCHDOG FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
+L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID );
 
-var pidFile = (config.pid || '.') + '/' + process.title + '.pid';
+var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
 require('fs').writeFile(pidFile, process.pid, function(err) {
 	 if(err) {
 		  L.e(["Error al escribir el fichero del PID",err]);
@@ -31,7 +28,7 @@ require('fs').writeFile(pidFile, process.pid, function(err) {
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
-var httpsConf = global.config.watchdog.https;
+var httpsConf = C.watchdog.https;
 
 try {
 	httpsConf.ssl = {
@@ -42,7 +39,7 @@ try {
 } catch (ex) {
 	L.f("Ocurrió un error al cargar el material criptográfico para HTTPS");
 	L.f(ex);
-	process.exit(errCode.E_KEY_OR_CERT_NOT_FOUND);
+	process.exit(K.EXIT_CODES.E_KEY_OR_CERT_NOT_FOUND);
 }
 
 var app = require('express')();
@@ -63,12 +60,12 @@ try {
 	}).on('error', function(err) {
 		L.e("Ocurrió un error al arrancar el servicio HTTPS");
 	   L.e(err);
-		process.exit(errCode.E_HTTP_SERVER_ERROR);
+		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 	});
 } catch (ex) {
 	L.f("Ocurrió un error al arrancar el servicio HTTPS");
 	L.f(ex);
-	process.exit(errCode.E_HTTPS_SERVER_ERROR);
+	process.exit(K.EXIT_CODES.E_HTTPS_SERVER_ERROR);
 }
 
 

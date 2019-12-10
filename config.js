@@ -1,26 +1,26 @@
 'use strict';
 const BASE = global.BASE;
-const L = global.logger;
-
-const err = require(BASE + 'model/static/exitCodes');
+//const C = global.config;
+//const L = global.logger;
+const K = global.constants;
 
 var configVerificator = {
 	sapSystems: function(config) {
 		if (!config.sap_systems) {
 			console.error("No se ha definido el nodo de sistemas SAP (sap_systems)");
-			process.exit(err.E_NO_SAP_SYSTEMS);
+			process.exit(K.EXIT_CODES.E_NO_SAP_SYSTEMS);
 		}
 
 		if (!config.sap_systems.default) {
 			console.error("No se ha definido el sistema SAP por defecto (sap_systems.default)");
-			process.exit(err.E_NO_DEFAULT_SAP_SYSTEM);
+			process.exit(K.EXIT_CODES.E_NO_DEFAULT_SAP_SYSTEM);
 		}
 
 		var defaultSapSys = config.sap_systems.default;
 
 		if (!config.sap_systems[defaultSapSys]) {
 			console.error("No se ha definido el sistema SAP por defecto [" + defaultSapSys + "]");
-			process.exit(err.E_DEFAULT_SAP_SYSTEM_NO_EXISTS);
+			process.exit(K.EXIT_CODES.E_DEFAULT_SAP_SYSTEM_NO_EXISTS);
 		}
 
 		for (var sapSystem in config.sap_systems) {
@@ -28,7 +28,7 @@ var configVerificator = {
 			if (!this.sapSystem(config.sap_systems[sapSystem])) {
 				console.error("El sistema SAP definido como [" + sapSystem + "] es inválido");
 				console.error(config.sap_systems[sapSystem]);
-				process.exit(err.E_INVALID_SAP_SYSTEM);
+				process.exit(K.EXIT_CODES.E_INVALID_SAP_SYSTEM);
 			}
 
 		}
@@ -39,120 +39,120 @@ var configVerificator = {
 	http: function(config) {
 		if (!config.http) {
 			console.error("No se ha definido el nodo HTTP (http)");
-			process.exit(err.E_NO_HTTP_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_HTTP_CONFIG);
 		}
 		if (!config.http.port) {
 			console.error("No se ha definido el puerto para HTTP (http.port)");
-			process.exit(err.E_NO_HTTP_PORT);
+			process.exit(K.EXIT_CODES.E_NO_HTTP_PORT);
 		}
 	},
 	https: function(config) {
 		if (!config.https) {
 			console.error("No se ha definido el nodo HTTPS (https)");
-			process.exit(err.E_NO_HTTPS_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_HTTPS_CONFIG);
 		}
 		if (!config.https.port) {
 			console.error("No se ha definido el puerto para HTTPS (https.port)");
-			process.exit(err.E_NO_HTTPS_PORT);
+			process.exit(K.EXIT_CODES.E_NO_HTTPS_PORT);
 		}
 		if (!config.https.cert) {
 			console.error("No se ha definido el certificado para HTTPS (https.cert)");
-			process.exit(err.E_NO_HTTPS_CERT);
+			process.exit(K.EXIT_CODES.E_NO_HTTPS_CERT);
 		}
 		if (!config.https.key) {
 			console.error("No se ha definido la clave privada para HTTPS (https.key)");
-			process.exit(err.E_NO_HTTPS_KEY);
+			process.exit(K.EXIT_CODES.E_NO_HTTPS_KEY);
 		}
 		if (!config.https.passphrase && config.https.passphrase !== '') {
 			console.error("No se ha definido la passphrase para HTTPS (https.passphrase)");
-			process.exit(err.E_NO_HTTPS_PASSPHRASE);
+			process.exit(K.EXIT_CODES.E_NO_HTTPS_PASSPHRASE);
 		}
 	},
 	jwt: function(config) {
 		if (!config.jwt) {
 			console.error("No se ha definido el nodo JTW (jwt)");
-			process.exit(err.E_NO_JWT_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_JWT_CONFIG);
 		}
 		if (!config.jwt.token_signing_key) {
 			console.error("No se ha definido la clave de firma de tokens (jwt.token_signing_key)");
-			process.exit(err.E_JWT_NO_SIGN_KEY);
+			process.exit(K.EXIT_CODES.E_JWT_NO_SIGN_KEY);
 		}
 		if (!config.jwt.password_encryption_key) {
 			console.error("No se ha definido la clave de cifrado de contraseñas (jwt.password_encryption_key)");
-			process.exit(err.E_JWT_NO_ENC_KEY);
+			process.exit(K.EXIT_CODES.E_JWT_NO_ENC_KEY);
 		}
 	},
 	mongodb: function(config) {
 		if (!config.mongodb) {
 			console.error("No se ha definido el nodo para MongoDB (mongodb)");
-			process.exit(err.E_NO_MDB_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_MDB_CONFIG);
 		}
 		if (!config.mongodb.hosts) {
 			console.error("No se ha definido la lista de hosts de MongoDB (mongodb.hosts)");
-			process.exit(err.E_MDB_NO_HOSTS);
+			process.exit(K.EXIT_CODES.E_MDB_NO_HOSTS);
 		}
 		if (!config.mongodb.username) {
 			console.error("No se ha definido el usuario para MongoDB (mongodb.username)");
-			process.exit(err.E_MDB_NO_USER);
+			process.exit(K.EXIT_CODES.E_MDB_NO_USER);
 		}
 		if (!config.mongodb.pwd) {
 			console.error("No se ha definido la clave para el usuario de MongoDB (mongodb.pwd)");
-			process.exit(err.E_MDB_NO_PASS);
+			process.exit(K.EXIT_CODES.E_MDB_NO_PASS);
 		}
 		if (!config.mongodb.database) {
 			console.error("No se ha definido el nombre de la base de datos de MongoDB (mongodb.database)");
-			process.exit(err.E_MDB_NO_DATABASE);
+			process.exit(K.EXIT_CODES.E_MDB_NO_DATABASE);
 		}
 		if (!config.mongodb.txCollection) {
 			console.error("No se ha definido el nombre de la coleccion de transmisiones de MongoDB (mongodb.txCollection)");
-			process.exit(err.E_MDB_NO_TXCOL);
+			process.exit(K.EXIT_CODES.E_MDB_NO_TXCOL);
 		}
 		if (!config.mongodb.discardCollection) {
 			console.error("No se ha definido el nombre de la coleccion de transmisiones descartadas de MongoDB (mongodb.discardCollection)");
-			process.exit(err.E_MDB_NO_DISCARDCOL);
+			process.exit(K.EXIT_CODES.E_MDB_NO_DISCARDCOL);
 		}
 		if (!config.mongodb.logCollection) {
 			console.error("No se ha definido el nombre de la coleccion de log de MongoDB (mongodb.logCollection)");
-			process.exit(err.E_MDB_NO_LOGCOL);
+			process.exit(K.EXIT_CODES.E_MDB_NO_LOGCOL);
 		}
 	},
 	sqlite: function(config) {
 		if (!config.sqlite) {
 			console.error("No se ha definido el nodo para SQLite (sqlite)");
-			process.exit(err.E_NO_SQLITE_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_SQLITE_CONFIG);
 		}
 		if (!config.sqlite.db_path) {
 			console.error("No se ha definido el path para la base de datos de SQLite (sqlite.db_path)");
-			process.exit(err.E_SQLITE_NO_PATH);
+			process.exit(K.EXIT_CODES.E_SQLITE_NO_PATH);
 		}
 	},
 	watchdog: function(config) {
 		if (!config.watchdog) {
 			console.error("No se encuentra definido el nodo WATCHDOG (watchdog)")
-			process.exit(err.E_NO_WATCHDOG_CONFIG);
+			process.exit(K.EXIT_CODES.E_NO_WATCHDOG_CONFIG);
 		}
 		this.watchdog_http(config);
 	},
 	watchdog_http: function (config) {
 		if (!config.watchdog.https) {
 			console.error("No se ha definido el nodo WATCHDOG - HTTPS (watchdog.https)");
-			process.exit(err.E_WATCHDOG_NO_HTTPS);
+			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS);
 		}
 		if (!config.watchdog.https.port) {
 			console.error("No se ha definido el puerto para WATCHDOG - HTTPS (watchdog.https.port)");
-			process.exit(err.E_WATCHDOG_NO_HTTPS_PORT);
+			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PORT);
 		}
 		if (!config.watchdog.https.cert) {
 			console.error("No se ha definido el certificado para WATCHDOG - HTTPS (watchdog.https.cert)");
-			process.exit(err.E_WATCHDOG_NO_HTTPS_CERT);
+			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_CERT);
 		}
 		if (!config.watchdog.https.key) {
 			console.error("No se ha definido la clave privada para WATCHDOG - HTTPS (watchdog.https.key)");
-			process.exit(err.E_WATCHDOG_NO_HTTPS_KEY);
+			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_KEY);
 		}
 		if (!config.watchdog.https.passphrase && config.watchdog.https.passphrase !== '') {
 			console.error("No se ha definido la passphrase para WATCHDOG - HTTPS (watchdog.https.passphrase)");
-			process.exit(err.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
+			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
 		}
 	}
 
@@ -173,14 +173,14 @@ try {
 	configVerificator.sqlite(config);
 
 	// Configuracion para la instancia de watchdog
-	if (process.title === global.WATCHDOG_TITLE) {
+	if (process.title === K.PROCESS_TITLES.WATCHDOG) {
 		configVerificator.watchdog(config);
 	}
 
 } catch (exception) {
 	console.error("**** NO SE ENCUENTRA EL FICHERO DE CONFIGURACIÓN O NO ES VÁLIDO");
 	console.error(exception);
-	process.exit(err.E_NO_CONFIG);
+	process.exit(K.EXIT_CODES.E_NO_CONFIG);
 }
 
 
@@ -206,8 +206,6 @@ config.getMongoUrl = function (servers, username, password, database, replicaSet
 	var servers = servers.join(',');
 
 	var url =  'mongodb://' + username + ':' + password + '@' + servers + '/' + database ;
-	//if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID;
-	//else url += '?appName=' + global.instanceID;
 	return url;
 }
 
@@ -223,8 +221,6 @@ config.getMongoLogUrl = function (servers, username, password, database, replica
 	var servers = servers.join(',');
 
 	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
-	//if (replicaSet) url += '?replicaSet=' + replicaSet + '&appName=' + global.instanceID + '-log';
-	//else url += '?appName=' + global.instanceID + '-log';
 	return url;
 }
 

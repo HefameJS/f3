@@ -2,7 +2,7 @@
 // const BASE = global.BASE;
 const C = global.config;
 var L = {};
-//const K = global.constants;
+const K = global.constants;
 
 
 
@@ -28,7 +28,7 @@ const MONGODB_OPTIONS = {
 	j: 1000,
 	replicaSet: config.mongodb.replicaSet,
 	useUnifiedTopology: true,
-	appname: global.instanceID + 'log',
+	appname: global.instanceID + '-log',
 	loggerLevel: 'warn'
 };
 
@@ -141,7 +141,7 @@ L = {
 	saneaCommit: saneaEstructuraDeCommit
 };
 
-if (process.title === global.WATCHDOG_TITLE) {
+if (process.title === K.PROCESS_TITLES.WATCHDOG) {
 	var wdCategory = (category) => category ? 'watchdog-' + category : 'watchdog';
 	L = {
 		t: (data, category) => writeServer(data, 1000, wdCategory(category)),
