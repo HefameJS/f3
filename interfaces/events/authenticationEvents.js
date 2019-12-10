@@ -6,14 +6,6 @@ const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 
-function identifyAuthenticatingUser(req) {
-	if (req && req.body && req.body.user) {
-		return req.body.user;
-	}
-	return undefined;
-}
-
-
 module.exports.emitAuthRequest = function (req) {
 
 	var reqData = {
@@ -26,7 +18,7 @@ module.exports.emitAuthRequest = function (req) {
 			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
-			authenticatingUser: identifyAuthenticatingUser(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
 			type: K.TX_TYPES.AUTENTICACION,
 			clientRequest: {
@@ -43,8 +35,6 @@ module.exports.emitAuthRequest = function (req) {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest'], 'txCommit');
 	Imongo.buffer(reqData);
-
-	//L.yell(req.txId, txTypes.AUTENTICAR, txStatus.RECEPCIONADO, [reqData['$setOnInsert'].authenticatingUser]);
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
@@ -68,6 +58,4 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse'], 'txCommit');
 	Imongo.commit(resData);
-
-	//L.yell(res.txId, txTypes.AUTENTICAR, status, []);
 }

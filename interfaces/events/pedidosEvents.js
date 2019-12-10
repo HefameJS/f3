@@ -7,21 +7,6 @@ const K = global.constants;
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
 
-function identifyAuthenticatingUser(req) {
-	if (req && req.token && req.token.sub) {
-		return req.token.sub;
-	}
-	return undefined;
-}
-
-function identifyClient(req) {
-	if (req && req.body && req.body.codigoCliente) {
-		return req.body.codigoCliente;
-	}
-	return undefined;
-}
-
-
 
 module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 
@@ -82,8 +67,8 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			status: status
 		},
 		$set: {
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
 			type: K.TX_TYPES.CONSULTAR_PEDIDO,
@@ -120,7 +105,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
-			authenticatingUser: identifyAuthenticatingUser(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
 			type: K.TX_TYPES.CONSULTAR_PEDIDO,

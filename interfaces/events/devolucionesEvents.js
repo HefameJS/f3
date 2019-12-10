@@ -8,20 +8,6 @@ const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
 
 
-function identifyAuthenticatingUser(req) {
-	if (req && req.token && req.token.sub) {
-		return req.token.sub;
-	}
-	return undefined;
-}
-
-function identifyClient(req) {
-	if (req && req.body && req.body.codigoCliente) {
-		return req.body.codigoCliente;
-	}
-	return undefined;
-}
-
 module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) => {
 
 	var data = {
@@ -176,8 +162,8 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 			status: status
 		},
 		$set: {
-			authenticatingUser: identifyAuthenticatingUser(req),
-			client: identifyClient(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
 			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
@@ -214,7 +200,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
-			authenticatingUser: identifyAuthenticatingUser(req),
+			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
 			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
