@@ -10,10 +10,6 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
-const txStatus = require(BASE + 'model/static/txStatus');
-
-
-
 
 
 
@@ -101,7 +97,7 @@ exports.getPedido = function (req, res) {
 	if (req.token.meta.exception) {
 		// Fallo en el login
 		var responseBody = req.token.meta.exception.send(res);
-		Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, txStatus.FALLO_AUTENTICACION);
+		Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
 
@@ -112,7 +108,7 @@ exports.getPedido = function (req, res) {
 			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			var responseBody = error.send(res);
-			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, txStatus.PETICION_INCORRECTA);
+			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 			return;
 		}
 
@@ -124,11 +120,11 @@ exports.getPedido = function (req, res) {
 			// TODO: Autorizacion
 			var originalBody = dbTx.clientResponse.body;
 			res.status(200).json(originalBody);
-			Events.pedidos.emitResponseConsultarPedido(res, originalBody, txStatus.OK);
+			Events.pedidos.emitResponseConsultarPedido(res, originalBody, K.TX_STATUS.OK);
 		} else {
 			var error = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
 			var responseBody = error.send(res);
-			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, txStatus.NO_EXISTE_PEDIDO);
+			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 

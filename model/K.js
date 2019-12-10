@@ -32,6 +32,9 @@ module.exports = {
         CONFIRMACION_PEDIDO: {
             NO_ASOCIADA_A_PEDIDO: 9004,
         },
+        CONSULTA: {
+            NO_EXISTE: 9005
+        },
         RETRANSMISION: {
             OK: 19001,
             IMPOSIBLE: 19002,
