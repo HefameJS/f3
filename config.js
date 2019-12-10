@@ -1,11 +1,11 @@
 'use strict';
 const BASE = global.BASE;
-//const C = global.config;
+var C = {};
 //const L = global.logger;
 const K = global.constants;
 
 var configVerificator = {
-	sapSystems: function(config) {
+	sapSystems: function (config) {
 		if (!config.sap_systems) {
 			console.error("No se ha definido el nodo de sistemas SAP (sap_systems)");
 			process.exit(K.EXIT_CODES.E_NO_SAP_SYSTEMS);
@@ -33,10 +33,10 @@ var configVerificator = {
 
 		}
 	},
-	sapSystem: function(sapSys) {
+	sapSystem: function (sapSys) {
 		return (sapSys.host && sapSys.port && sapSys.https !== undefined && sapSys.username && sapSys.password);
 	},
-	http: function(config) {
+	http: function (config) {
 		if (!config.http) {
 			console.error("No se ha definido el nodo HTTP (http)");
 			process.exit(K.EXIT_CODES.E_NO_HTTP_CONFIG);
@@ -46,7 +46,7 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_NO_HTTP_PORT);
 		}
 	},
-	https: function(config) {
+	https: function (config) {
 		if (!config.https) {
 			console.error("No se ha definido el nodo HTTPS (https)");
 			process.exit(K.EXIT_CODES.E_NO_HTTPS_CONFIG);
@@ -68,7 +68,7 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_NO_HTTPS_PASSPHRASE);
 		}
 	},
-	jwt: function(config) {
+	jwt: function (config) {
 		if (!config.jwt) {
 			console.error("No se ha definido el nodo JTW (jwt)");
 			process.exit(K.EXIT_CODES.E_NO_JWT_CONFIG);
@@ -82,7 +82,7 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_JWT_NO_ENC_KEY);
 		}
 	},
-	mongodb: function(config) {
+	mongodb: function (config) {
 		if (!config.mongodb) {
 			console.error("No se ha definido el nodo para MongoDB (mongodb)");
 			process.exit(K.EXIT_CODES.E_NO_MDB_CONFIG);
@@ -116,7 +116,7 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_MDB_NO_LOGCOL);
 		}
 	},
-	sqlite: function(config) {
+	sqlite: function (config) {
 		if (!config.sqlite) {
 			console.error("No se ha definido el nodo para SQLite (sqlite)");
 			process.exit(K.EXIT_CODES.E_NO_SQLITE_CONFIG);
@@ -126,7 +126,21 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_SQLITE_NO_PATH);
 		}
 	},
-	watchdog: function(config) {
+	ldap: function (config) {
+		if (!config.ldap) {
+			console.error("No se ha definido el nodo para LDAP (ldap)");
+			process.exit(K.EXIT_CODES.E_NO_LDAP_CONFIG);
+		}
+		if (!config.ldap.url) {
+			console.error("No se ha definido la url del servidor LDAP (ldap.url)");
+			process.exit(K.EXIT_CODES.E_NO_LDAP_URL);
+		}
+		if (!config.ldap.cacert) {
+			console.error("No se ha definido el certificado de CA para el servidor LDAP (ldap.cacert)");
+			process.exit(K.EXIT_CODES.E_NO_LDAP_CA);
+		}
+	},
+	watchdog: function (config) {
 		if (!config.watchdog) {
 			console.error("No se encuentra definido el nodo WATCHDOG (watchdog)")
 			process.exit(K.EXIT_CODES.E_NO_WATCHDOG_CONFIG);
@@ -155,27 +169,32 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
 		}
 	}
-
 };
-var config = {};
 
-var filepath = process.env.F3_CONFIG_FILE || './config.json';
+
+var filepath = process.env.F3_CONFIG_FILE || BASE + 'config.json';
 try {
-	config = require(filepath);
+	C = require(filepath);
 
 	// Verificando la configuración mínima.
 	// Los siguientes métodos detienen la ejecución en caso de fallo
-	configVerificator.sapSystems(config);
-	configVerificator.http(config);
-	configVerificator.https(config);
-	configVerificator.jwt(config);
-	configVerificator.mongodb(config);
-	configVerificator.sqlite(config);
+	configVerificator.sapSystems(C);
+	configVerificator.http(C);
+	configVerificator.https(C);
+	configVerificator.jwt(C);
+	configVerificator.mongodb(C);
+	configVerificator.sqlite(C);
+	configVerificator.ldap(C);
 
 	// Configuracion para la instancia de watchdog
 	if (process.title === K.PROCESS_TITLES.WATCHDOG) {
-		configVerificator.watchdog(config);
+		configVerificator.watchdog(C);
 	}
+
+
+	C.ldap.tlsOptions = {
+		ca: [require('fs').readFileSync(BASE + C.ldap.cacert)]
+	};
 
 } catch (exception) {
 	console.error("**** NO SE ENCUENTRA EL FICHERO DE CONFIGURACIÓN O NO ES VÁLIDO");
@@ -184,34 +203,19 @@ try {
 }
 
 
-config.getDefaultSapSystem = function () {
-	return this.sap_systems[this.sap_systems.default];
+C.getDefaultSapSystem = () => {
+	return C.sap_systems[C.sap_systems.default];
 }
 
-config.getSapSystem = function (sapsid) {
-  if (sapsid && this.sap_systems[sapsid]) {
-    return this.sap_systems[sapsid];
-  }
-  global.logger.e("No se encuentra el sistema SAP [" + sapsid + "]");
-  return null;
+C.getSapSystem = (sapsid) => {
+	if (sapsid && C.sap_systems[sapsid]) {
+		return C.sap_systems[sapsid];
+	}
+	global.logger.e("No se encuentra el sistema SAP [" + sapsid + "]");
+	return null;
 }
-config.getMongoUrl = function (servers, username, password, database, replicaSet) {
-	var mc = config.mongodb;
-	servers = servers ? servers : mc.hosts;
-	username = username ? username : mc.username;
-	password = password ? password : mc.pwd;
-	database = database ? database : mc.database;
-	replicaSet = replicaSet ? replicaSet : mc.replicaset;
-
-	var servers = servers.join(',');
-
-	var url =  'mongodb://' + username + ':' + password + '@' + servers + '/' + database ;
-	return url;
-}
-
-
-config.getMongoLogUrl = function (servers, username, password, database, replicaSet) {
-	var mc = config.mongodb;
+C.getMongoUrl = (servers, username, password, database, replicaSet) => {
+	var mc = C.mongodb;
 	servers = servers ? servers : mc.hosts;
 	username = username ? username : mc.username;
 	password = password ? password : mc.pwd;
@@ -225,4 +229,19 @@ config.getMongoLogUrl = function (servers, username, password, database, replica
 }
 
 
-module.exports = config;
+C.getMongoLogUrl = (servers, username, password, database, replicaSet) => {
+	var mc = C.mongodb;
+	servers = servers ? servers : mc.hosts;
+	username = username ? username : mc.username;
+	password = password ? password : mc.pwd;
+	database = database ? database : mc.database;
+	replicaSet = replicaSet ? replicaSet : mc.replicaset;
+
+	var servers = servers.join(',');
+
+	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
+	return url;
+}
+
+
+module.exports = C;

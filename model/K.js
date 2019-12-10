@@ -285,12 +285,36 @@ module.exports = {
         E_NO_HTTPS_PASSPHRASE: 31,
         E_KEY_OR_CERT_NOT_FOUND: 50,
         E_HTTP_SERVER_ERROR: 51,
-        E_HTTPS_SERVER_ERROR: 52
+        E_HTTPS_SERVER_ERROR: 52,
+        E_NO_LDAP_CONFIG: 53,
+        E_NO_LDAP_URL: 53,
+        E_NO_LDAP_CA: 53,
     },
     PROCESS_TITLES: {
         CORE_MASTER: 'f3-core-master',
         CORE_WORKER: 'f3-core-worker',
         WATCHDOG: 'f3-watchdog'
+    },
+    DOMINIOS: {
+        verificar: (dominio) => {
+            var DOMINIOS = module.exports.DOMINIOS;
+
+            if (dominio) {
+                for (var domainIdx in DOMINIOS) {
+                    if (DOMINIOS[domainIdx].toUpperCase) {
+                        if (DOMINIOS[domainIdx].toUpperCase() === dominio.toUpperCase())
+                            return DOMINIOS[domainIdx];
+                    }
+                }
+            }
+            return DOMINIOS.FEDICOM;
+        },
+        FEDICOM: 'FEDICOM',
+        TRANSFER: 'transfer_laboratorio',
+        HEFAME: 'HEFAME',
+        EMPLEADO: 'empleado',
+        FMASONLINE: 'F+Online',
+        APIKEY: 'APIKEY' // DEPRECAR
     }
     
 

@@ -16,6 +16,7 @@
   "author": "Alejandro Abad <alejandro.abad@hefame.es>",
   "license": "ISC",
   "dependencies": {
+    "activedirectory": "^0.7.2",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
     "dateformat": "^3.0.3",

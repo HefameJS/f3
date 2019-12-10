@@ -5,10 +5,12 @@ const L = global.logger;
 const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
+const Ildap = require(BASE + 'interfaces/ildap');
 const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const AuthReq = require(BASE + 'model/auth/authReq');
-const Domain = require(BASE + 'model/auth/domain');
+const Tokens = require(BASE + 'util/tokens');
+
 
 
 
@@ -28,9 +30,10 @@ exports.doAuth = function (req, res) {
 		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-
-	if (authReq.domain === Domain.domains.fedicom || authReq.domain === Domain.domains.transfer) {
-
+	
+	// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
+	if (authReq.domain === K.DOMINIOS.FEDICOM || authReq.domain === K.DOMINIOS.TRANSFER) {
+		L.xi(txId, ['Se procede a comprobar en SAP las credenciales de la petición']);
 		Isap.authenticate(txId, authReq, function (sapError, sapResponse) {
 			if (sapError) {
 				if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -53,8 +56,10 @@ exports.doAuth = function (req, res) {
 
 			if (sapResponse.body.username) {
 				// AUTH OK POR SAP
+
 				var token = authReq.generateJWT(txId);
 				var responseBody = {auth_token: token};
+				if (authReq.debug) responseBody.data = Tokens.verifyJWT(token);
 				res.status(201).json(responseBody);
 				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
 			} else {
@@ -64,13 +69,45 @@ exports.doAuth = function (req, res) {
 				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 			}
 		});
+	}
+	// Las peticiones al dominio HEFAME se verifica contra el LDAP
+	else if (authReq.domain === K.DOMINIOS.HEFAME) {
+		L.xi(txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
+		Ildap.authenticate(txId, authReq, function (ldapError, authenticated) {
+			if (ldapError || !authenticated) {
+				L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', ldapError]);
+				var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
+				var responseBody = fedicomError.send(res);
+				Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+				return;
+			}
 
-	} else { // ES UN TOKEN DE UN DOMINIO NO FEDICOM - POR AHORA LO DEJAMOS PASAR
+			// AUTH OK POR LDAP
+			var token = authReq.generateJWT(txId);
+			var responseBody = { auth_token: token };
+			if (authReq.debug) responseBody.data = Tokens.verifyJWT(token);
+			res.status(201).json(responseBody);
+			Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
+
+		});
+	}
+	// Si es una autenticación con token de APIKEY, por el momento la dejamos pasar.
+	else if (authReq.domain === K.DOMINIOS.APIKEY) {
+		L.xi(txId, ['Los tokens del dominio APIKEY se dejan pasar por el momento']);
 		var token = authReq.generateJWT(txId);
 		var responseBody = {auth_token: token};
+		if (authReq.debug) responseBody.data = Tokens.verifyJWT(token);
 		res.status(201).json(responseBody);
 		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.OK);
 	}
+	// Cualquier otro dominio no es válido para crear tokens !
+	else {
+		L.xi(txId, ['No se permite la expedición de tokens para el dominio', authReq.domain]);
+		var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
+		var responseBody = fedicomError.send(res);
+		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+	}
+
 }
 
 /**
@@ -79,7 +116,6 @@ Para depuración exclusivamente.
 */
 exports.verifyToken = function (req, res) {
 	if (req.token) {
-		const Tokens = require(BASE + 'util/tokens');
 		var tokenData = Tokens.verifyJWT(req.token);
 		res.status(200).send({token: req.token, token_data: tokenData});
 	} else {

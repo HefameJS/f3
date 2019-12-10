@@ -69,5 +69,9 @@
 			"interval": 5,
 			"maxRetries": 10
 		}
+	},
+	"ldap": {
+		"url": "ldap://ad.domain.com",
+		"cacert": "ssl/ad_ca_cert.crt"
 	}
 }

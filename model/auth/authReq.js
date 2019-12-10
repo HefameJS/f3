@@ -2,37 +2,36 @@
 const BASE = global.BASE;
 //const C = global.config;
 //const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 const Tokens = require(BASE + 'util/tokens');
 const FedicomError = require(BASE + 'model/fedicomError');
-const Domain = require(BASE + 'model/auth/domain');
 
 
 
 class AuthReq {
 	constructor(json) {
-		this.domain = Domain.verify(json.domain);
+		this.domain = K.DOMINIOS.verificar(json.domain);
 
-		if (this.domain === Domain.domains.apikey) {
+		if (this.domain === K.DOMINIOS.APIKEY) { // Este caso se eliminará cuando se implemente la autenticación LDAP
 			if (json.user && json.apikey) {
 				this.username = json.user.trim();
 				this.password = json.apikey.trim();
 			} else {
 				var error = new FedicomError();
 				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
-				if (!json.apikey)		error.add('AUTH-Z04', 'El parámetro "apikey" es obligatorio', 400);
+				if (!json.apikey)	error.add('AUTH-Z04', 'El parámetro "apikey" es obligatorio', 400);
 				throw error;
 			}
-		} else { // ASUMIMOS QUE ES UNA AUTENTICACION FEDICOM O TRANSFER
+		} else {
 			if (json.user && json.password) {
 				this.username = json.user.trim();
 				this.password = json.password.trim();
 
 				// Comprobación de si es TRANSFER o no
-				if (this.username.startsWith('TR') || this.username.startsWith('TG') || this.username.startsWith('TP')) {
-					this.domain = Domain.domains.transfer;
-				}
+				if (this.username.search(/T[RGP]([0-9]){8}/) === 0)
+					this.domain = K.DOMINIOS.TRANSFER;
+
 			} else {
 				var error = new FedicomError();
 				if (!json.user)		error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
