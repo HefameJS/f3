@@ -72,6 +72,7 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
 
     Isap.getAlbaranXML(req.txId, numAlbaranSaneado, clienteSap, (err, sapRes, soapBody) => {
         if (err) {
+            console.log(err);
             L.xe(req.txId, ['Ocurrió un error al solicitar el albarán XML', err]);
             var fedicomError = new FedicomError('ALB-ERR-999', 'Ocurrió un error al buscar el albarán', 500);
             fedicomError.send(res);
@@ -165,6 +166,19 @@ exports.findAlbaran = function (req, res) {
 
     L.xi(req.txId, ['Procesando transmisión como BÚSQUEDA DE ALBARAN']);
 
+    req.token = Tokens.verifyJWT(req.token, req.txId);
+    if (req.token.meta.exception) {
+        L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
+        req.token.meta.exception.send(res);
+        return;
+    }
+
+    var usuarioFedicom = req.token.sub;
+    if (usuarioFedicom && usuarioFedicom.endsWith('@hefame')) {
+        usuarioFedicom = usuarioFedicom.substring(0, usuarioFedicom.length - 7).padStart(10, '0')
+    }
+
+
     if (!req.query.codigoCliente) {
         var error = new FedicomError('ALB-ERR-002', 'El "codigoCliente" es inválido.', 400);
         error.send(res);
@@ -172,6 +186,18 @@ exports.findAlbaran = function (req, res) {
     }
 
     var codigoCliente = req.query.codigoCliente.padStart(10, '0');
+
+    // Comprobación de autorizacion.
+    // Comprobamos que los 5 últimos digitos del usuario del token coincidan con los 5 últimos del codigo de cliente
+    var authzCodigoCliente = codigoCliente.slice(-5);
+    var authzUsuarioFedicom = usuarioFedicom.slice(-5);
+
+    if (authzCodigoCliente !== authzUsuarioFedicom) {
+        var error = new FedicomError('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+        error.send(res);
+        return;
+    }
+
 
     // En el caso (absurdo) de que se busque por un numeroAlbaran concreto,
     // hacemos la búsqueda de ese albaran concreto
