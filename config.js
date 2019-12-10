@@ -193,7 +193,7 @@ try {
 
 
 	C.ldap.tlsOptions = {
-		ca: [require('fs').readFileSync(BASE + C.ldap.cacert)]
+		ca: [require('fs').readFileSync(C.ldap.cacert)]
 	};
 
 } catch (exception) {
