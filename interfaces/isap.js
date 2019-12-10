@@ -279,7 +279,7 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
 		url: url,
 		method: 'POST',
 		headers: {
-			"Authorization": "Basic " + Buffer.from("RFC_SD:UNYCOP").toString("base64"),
+			"Authorization": "Basic " + Buffer.from("RFC_ALBARXML:Hefame19").toString("base64"),
 			"Content-Type": "application/soap+xml"
 		},
 		encoding: 'latin1',
