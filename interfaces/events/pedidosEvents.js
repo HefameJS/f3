@@ -6,8 +6,6 @@ const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
-const txTypes = require(BASE + 'model/static/txTypes');
-const txStatus = require(BASE + 'model/static/txStatus');
 
 function identifyAuthenticatingUser(req) {
 	if (req && req.token && req.token.sub) {
@@ -70,7 +68,6 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
-	//L.yell(req.txId, txTypes.PEDIDO_DUPLICADO, txStatus.DUPLICADO, [originalTxId]);
 }
 
 module.exports.emitErrorConsultarPedido = function (req, res, responseBody, status) {
@@ -89,7 +86,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 			client: identifyClient(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: txTypes.CONSULTAR_PEDIDO,
+			type: K.TX_TYPES.CONSULTAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -120,13 +117,13 @@ module.exports.emitRequestConsultarPedido = function(req) {
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
 			authenticatingUser: identifyAuthenticatingUser(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: txTypes.CONSULTAR_PEDIDO,
+			type: K.TX_TYPES.CONSULTAR_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.originIp,
@@ -262,5 +259,5 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);
-	L.yell(req.txId, txTypes.CREAR_PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
+	L.yell(req.txId, K.TX_TYPES.CREAR_PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }

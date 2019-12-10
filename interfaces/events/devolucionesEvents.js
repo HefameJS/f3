@@ -6,8 +6,6 @@ const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
-const txTypes = require(BASE + 'model/static/txTypes');
-const txStatus = require(BASE + 'model/static/txStatus');
 
 
 function identifyAuthenticatingUser(req) {
@@ -69,7 +67,6 @@ module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
 	Imongo.commit(dataUpdate);
 	Imongo.commit(data);
-	// L.yell(req.txId, txTypes.DEVOLUCION_DUPLICADA, txStatus.DUPLICADO, [originalTxId]);
 }
 module.exports.emitErrorCrearDevolucion = (req, res, responseBody, status) => {
 
@@ -137,7 +134,7 @@ module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
 	Imongo.buffer(reqData);
-	L.yell(req.txId, txTypes.CREAR_DEVOLUCION, txStatus.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
+	L.yell(req.txId, K.TX_TYPES.CREAR_DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
 module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
 
@@ -183,7 +180,7 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 			client: identifyClient(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			type: txTypes.CONSULTAR_DEVOLUCION,
+			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -214,13 +211,13 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: txStatus.RECEPCIONADO
+			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
 			authenticatingUser: identifyAuthenticatingUser(req),
 			iid: global.instanceID,
 			pedidoConsultado: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			type: txTypes.CONSULTAR_DEVOLUCION,
+			type: K.TX_TYPES.CONSULTAR_DEVOLUCION,
 			clientRequest: {
 				authentication: req.token,
       		ip: req.originIp,

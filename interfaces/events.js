@@ -5,10 +5,6 @@ const L = global.logger;
 //const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
-const txTypes = require(BASE + 'model/static/txTypes');
-const txStatus = require(BASE + 'model/static/txStatus');
-
-
 
 
 module.exports.devoluciones = require('./events/devolucionesEvents');
@@ -29,8 +25,8 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 		},
 		$set: {
 			modifiedAt: new Date(),
-			type: txTypes.INVALIDO,
-			status: txStatus.DESCARTADO,
+			type: K.TX_TYPES.INVALIDO,
+			status: K.TX_STATUS.DESCONOCIDO,
 			clientRequest: {
 				ip: req.originIp,
 				protocol: req.protocol,
@@ -49,5 +45,4 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 	}
 	L.xi(req.txId, ['Emitiendo COMMIT DISCARD para evento Discard', data['$set']], 'txCommit');
 	Imongo.commitDiscard(data);
-	//ññL.yell(req.txId, txTypes.INVALIDO, txStatus.DESCARTADO, [data['$set'].clientRequest]);
 }

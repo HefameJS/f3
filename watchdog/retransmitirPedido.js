@@ -10,7 +10,6 @@ const emitRetransmision = require(BASE + 'interfaces/events').retransmisiones.em
 const ObjectID = Imongo.ObjectID;
 
 const FedicomError = require(BASE + 'model/fedicomError');
-const txTypes = require(BASE + 'model/static/txTypes');
 const Pedido = require(BASE + 'model/pedido/pedido');
 
 const estadosRetransmitibles = [
@@ -67,7 +66,7 @@ const retransmitirPedido = function (txId, options, callback) {
         L.xi(txId, ['Se lanza la retransmisión con ID ' + rtxId + ' para esta transmisión']);
 
         // La transmisión a retransmitir no es un pedido
-        if (dbTx.type !== txTypes.CREAR_PEDIDO) {
+        if (dbTx.type !== K.TX_TYPES.CREAR_PEDIDO) {
             var errorMessage = 'La transmisión indicada no es un pedido';
             L.xe(rtxId, [errorMessage, dbTx.type]);
             L.xw(txId, ['La retransmisión con ID ' + rtxId + ' finaliza con errores', errorMessage]);

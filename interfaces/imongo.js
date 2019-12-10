@@ -2,6 +2,7 @@
 const BASE = global.BASE;
 const config = global.config;
 const L = global.logger;
+const K = global.constants;
 
 
 const mongourl = config.getMongoUrl();
@@ -14,8 +15,6 @@ const iSqlite = require(BASE + 'interfaces/isqlite');
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const txTypes = require(BASE + 'model/static/txTypes');
-const txStatus = require(BASE + 'model/static/txStatus');
 
 const WRITE_CONCERN = config.mongodb.writeconcern || 1;
 
@@ -142,8 +141,8 @@ const findCrcDuplicado = (crc, cb) => {
 };
 const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
-		collections.tx.findOne({ type: txTypes.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
+		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
+		collections.tx.findOne({ type: K.TX_TYPES.CREAR_DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -151,8 +150,8 @@ const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 };
 const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', {type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
-		collections.tx.findOne({ type: txTypes.CREAR_PEDIDO, numerosPedido: numeroPedido }, cb);
+		L.xd(myId, ['Consulta MDB', {type: K.TX_TYPES.CREAR_PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
+		collections.tx.findOne({ type: K.TX_TYPES.CREAR_PEDIDO, numerosPedido: numeroPedido }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
 		cb({error: "No conectado a MongoDB"}, null);
@@ -161,7 +160,7 @@ const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 const findConfirmacionPedidoByCRC = (crc, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		crc = crc.substr(0,8).toUpperCase();
-		collections.tx.findOne({ type: txTypes.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc }, cb);
+		collections.tx.findOne({ type: K.TX_TYPES.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc }, cb);
 	} else {
 		cb({error: "No conectado a MongoDB"}, null);
 	}
@@ -171,12 +170,12 @@ const findConfirmacionPedidoByCRC = (crc, cb) => {
 const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		var query1 = {
-			type: txTypes.CREAR_PEDIDO,
-			status: txStatus.NO_SAP
+			type: K.TX_TYPES.CREAR_PEDIDO,
+			status: K.TX_STATUS.NO_SAP
 		};
 		var query2 = {
-			type: txTypes.CREAR_PEDIDO,
-			status: {'$in': [txStatus.RECEPCIONADO, txStatus.ESPERANDO_INCIDENCIAS, txStatus.INCIDENCIAS_RECIBIDAS, txStatus.ESPERANDO_NUMERO_PEDIDO]},
+			type: K.TX_TYPES.CREAR_PEDIDO,
+			status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO]},
 			modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * minimumAge) ) }
 		};
 		var query = {

@@ -1,7 +1,7 @@
 'use strict';
 const BASE = global.BASE;
-const L = global.logger;
 //const C = global.config;
+const L = global.logger;
 const K = global.constants;
 
 const Isap = require(BASE + 'interfaces/isap');
@@ -108,7 +108,7 @@ exports.getPedido = function (req, res) {
 			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			var responseBody = error.send(res);
-			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 

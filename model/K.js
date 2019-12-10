@@ -33,6 +33,7 @@ module.exports = {
             NO_ASOCIADA_A_PEDIDO: 9004,
         },
         CONSULTA: {
+            ERROR_DB: 9000,
             NO_EXISTE: 9005
         },
         RETRANSMISION: {
