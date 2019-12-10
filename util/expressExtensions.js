@@ -11,6 +11,9 @@ const identificarUsuarioAutenticado = (req) => {
 	if (req.token && req.token.sub) {
 		return req.token.sub;
 	}
+	if (req.body && req.body.user) {
+		return req.body.user
+	}
 	return undefined;
 }
 
