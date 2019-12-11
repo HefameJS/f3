@@ -24,6 +24,12 @@ const identificarClienteSap = (req) => {
 	return undefined;
 }
 
+const limpiarIp = (ip) => {
+	if (ip.startsWith('::ffff:'))
+		return ip.slice(7, ip.length);
+	return ip;
+}
+
 const extendReqAndRes = (req, res) => {
 
 	var txId = new ObjectID();
@@ -40,11 +46,16 @@ const extendReqAndRes = (req, res) => {
 	else
 		req.originIp = req.ip
 
+	req.originIp = limpiarIp(req.originIp);
+
 	req.identificarClienteSap = () => identificarClienteSap(req);
 	req.identificarUsuarioAutenticado = () => identificarUsuarioAutenticado(req);
 
 	return [req, res];
 }
+
+
+
 
 
 module.exports = {

@@ -7,9 +7,6 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const Events = require(BASE + 'interfaces/events');
 const ExpressExtensions = require(BASE + 'util/expressExtensions');
 
-var MongoDB = require('mongodb');
-var ObjectID = MongoDB.ObjectID;
-
 
 
 module.exports = function(app) {
@@ -29,15 +26,10 @@ module.exports = function(app) {
 	 */
 	app.use(function (error, req, res, next) {
 		if (error) {
-			var txId = new ObjectID();
-			req.txId = res.txId = txId;
 
-			if (req.headers && req.headers['x-forwarded-for'])
-				req.originIp = req.headers['x-forwarded-for'];
-			else
-				req.originIp = req.ip
+			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
-			L.e( '** Recibiendo transmisión erronea ' + txId + ' desde ' + req.ip );
+			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.originIp );
 			L.xe( txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error] );
 
 			var fedicomError = new FedicomError(error);
