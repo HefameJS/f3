@@ -25,6 +25,12 @@ exports.savePedido = function (req, res) {
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
+	if (req.token.aud === K.DOMINIOS.HEFAME) {
+		var error = new FedicomError('AUTH-005', 'No tienes permisos para realizar esta acción', 403);
+		var responseBody = error.send(res);
+		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+		return;
+	}
 	L.xi(txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
 
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
@@ -100,6 +106,7 @@ exports.getPedido = function (req, res) {
 		Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
+
 
 
 	Events.pedidos.emitRequestConsultarPedido(req);
