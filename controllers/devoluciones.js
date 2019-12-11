@@ -26,7 +26,7 @@ exports.saveDevolucion = function (req, res) {
 	if (req.token.aud === K.DOMINIOS.HEFAME) {
 		var error = new FedicomError('AUTH-005', 'No tienes permisos para realizar esta acción', 403);
 		var responseBody = error.send(res);
-		Events.pedidos.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+		Events.pedidos.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
 		return;
 	}
 	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
