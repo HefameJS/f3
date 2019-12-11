@@ -77,10 +77,6 @@ var configVerificator = {
 			console.error("No se ha definido la clave de firma de tokens (jwt.token_signing_key)");
 			process.exit(K.EXIT_CODES.E_JWT_NO_SIGN_KEY);
 		}
-		if (!config.jwt.password_encryption_key) {
-			console.error("No se ha definido la clave de cifrado de contraseñas (jwt.password_encryption_key)");
-			process.exit(K.EXIT_CODES.E_JWT_NO_ENC_KEY);
-		}
 	},
 	mongodb: function (config) {
 		if (!config.mongodb) {

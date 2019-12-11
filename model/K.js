@@ -263,7 +263,6 @@ module.exports = {
         E_NO_HTTPS_PORT: 9,
         E_NO_JWT_CONFIG: 10,
         E_JWT_NO_SIGN_KEY: 11,
-        E_JWT_NO_ENC_KEY: 12,
         E_NO_MDB_CONFIG: 13,
         E_MDB_NO_HOSTS: 14,
         E_MDB_NO_USER: 15,

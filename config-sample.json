@@ -30,7 +30,6 @@
 	},
 	"jwt": {
 		"token_signing_key": "SecretOne",
-		"password_encryption_key": "SecretTwo",
 		"token_lifetime_minutes": 30,
 		"token_validation_skew_clock_seconds": 10
 	},

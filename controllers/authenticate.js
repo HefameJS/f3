@@ -73,8 +73,8 @@ exports.doAuth = function (req, res) {
 	// Las peticiones al dominio HEFAME se verifica contra el LDAP
 	else if (authReq.domain === K.DOMINIOS.HEFAME) {
 		L.xi(txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
-		Ildap.authenticate(txId, authReq, function (ldapError, authenticated) {
-			if (ldapError || !authenticated) {
+		Ildap.authenticate(txId, authReq, function (ldapError, groups) {
+			if (ldapError || !groups) {
 				L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', ldapError]);
 				var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
 				var responseBody = fedicomError.send(res);
@@ -83,7 +83,7 @@ exports.doAuth = function (req, res) {
 			}
 
 			// AUTH OK POR LDAP
-			var token = authReq.generateJWT(txId);
+			var token = authReq.generateJWT(txId, groups);
 			var responseBody = { auth_token: token };
 			if (authReq.debug) responseBody.data = Tokens.verifyJWT(token);
 			res.status(201).json(responseBody);

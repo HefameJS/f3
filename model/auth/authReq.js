@@ -44,8 +44,8 @@ class AuthReq {
 		Object.assign(this, json);
     }
 
-	generateJWT(txId) {
-      return Tokens.generateJWT(this, txId, false);
+	generateJWT(txId, perms) {
+		return Tokens.generateJWT(txId, this, perms);
     }
 
 }

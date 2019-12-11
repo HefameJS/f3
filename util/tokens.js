@@ -1,49 +1,31 @@
 'use strict';
 const BASE = global.BASE;
+const C = global.config;
+const L = global.logger;
+//const K = global.constants;
 
-const config = global.config;
 const FedicomError = require(BASE + 'model/fedicomError');
 
-const L = global.logger;
 
 
-module.exports.encrypt = function (text) {
-  var crypto = require('crypto');
-  var cipher = crypto.createCipher('aes-256-ctr', config.jwt.password_encryption_key);
-  var crypted = cipher.update(text, 'utf8', 'hex');
-  crypted += cipher.final('hex');
-  return crypted;
-}
-module.exports.decrypt = function(text) {
-  var crypto = require('crypto');
-  var decipher = crypto.createDecipher('aes-256-ctr', config.jwt.password_encryption_key);
-  var dec = decipher.update(text, 'hex', 'utf8');
-  dec += decipher.final('utf8');
-  return dec;
-}
-
-
-module.exports.generateJWT = function(authReq, jti,  includePassword) {
+module.exports.generateJWT = (txId, authReq, perms) => {
 	var jwt = require('jsonwebtoken');
 	var jwtData = {
 		sub: authReq.username,
 		aud: authReq.domain,
-		exp: Math.ceil(Date.fedicomTimestamp() / 1000) + 10,// + (60 * (config.jwt.token_lifetime_minutes || 30)),
-		//iat: Date.fedicomTimestamp(),
-		jti: jti
+		exp: Math.ceil(Date.fedicomTimestamp() / 1000) + (60 * (C.jwt.token_lifetime_minutes || 30)),
+		jti: txId
 	};
 
-	if (includePassword) {
-		jwtData.cyp = module.exports.encrypt(authReq.password);
-	}
+	if (perms && perms.forEach) jwtData.perms = perms
 
-	var token = jwt.sign(jwtData, config.jwt.token_signing_key);
-	L.xi(jti, ['Generado JWT', token, jwtData], 'jwt');
+	var token = jwt.sign(jwtData, C.jwt.token_signing_key);
+	L.xi(txId, ['Generado JWT', token, jwtData], 'jwt');
 	return token;
 }
 
 
-module.exports.verifyJWT = function(token, txId) {
+module.exports.verifyJWT = (token, txId) => {
 
 	L.xd(txId, ['Analizando token', token], 'txToken');
 
@@ -60,12 +42,12 @@ module.exports.verifyJWT = function(token, txId) {
 
 	var jwt = require('jsonwebtoken');
 	try {
-		var decoded = jwt.verify(token, config.jwt.token_signing_key);
+		var decoded = jwt.verify(token, C.jwt.token_signing_key);
 		var meta = {};
 
 		if (decoded.exp) {
 			var diff = (Date.fedicomTimestamp() / 1000) - decoded.exp;
-			if (diff > ( (config.jwt.token_validation_skew_clock_seconds || 10)) ) {
+			if (diff > ((C.jwt.token_validation_skew_clock_seconds || 10))) {
 				L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
 				// TOKEN CADUCADO
 				meta = {
@@ -75,24 +57,15 @@ module.exports.verifyJWT = function(token, txId) {
 				}
 			} else {
 				// TOKEN OK
-				if (decoded.cyp) {
-					L.xd(txId, ['El token es correcto, pero no se verificó en SAP'], 'txToken');
-					meta = {
-						ok: true,
-						verified: false,
-						pwd:  module.exports.decrypt(decoded.cyp)
-					}
-				} else {
-					meta = {
-						ok: true,
-						verified: true
-					}
+				meta = {
+					ok: true,
+					verified: true
 				}
-      	}
+			}
 		} else {
 			// ¿No contiene campo 'exp'? ESTO ES UN FAKE
-			L.xd(txId, ['El token no contiene el campo EXP, esto es un ataque.'], 'txToken');
-	      meta = {
+			L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
+			meta = {
 				ok: false,
 				error: 'Token incompleto',
 				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
@@ -101,7 +74,7 @@ module.exports.verifyJWT = function(token, txId) {
 		decoded.meta = meta;
 		return decoded;
 
-	} catch(err) {
+	} catch (err) {
 
 		L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
 		return {
