@@ -39,7 +39,6 @@ if (cluster.isMaster) {
 
 	process.title = K.PROCESS_TITLES.CORE_WORKER + '-' + cluster.worker.id;
 	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
-	console.log({ instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id });
 
 	const fs = require('fs');
 	const http = require('http');
