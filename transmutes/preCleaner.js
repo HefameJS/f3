@@ -63,25 +63,49 @@ const preClean = (json, definicionCampos) => {
             // CAMPOS TIPO INTEGER
             else if (definicionDeCampo.integer) {
                 if (valorDeCampo === '') {
-                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se establece a 0 por venir vacío.');
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se elimina por venir vacío.');
                     delete json[campo];
                     continue;
                 }
-                var valorEnteroDeCampo = parseInt(valorDeCampo);
-                if (valorEnteroDeCampo === Number.NaN) {
+                var valorDecimalDeCampo = parseInt(valorDeCampo);
+                if (valorDecimalDeCampo === Number.NaN) {
                     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no ser un entero válido.');
                     delete json[campo];
                 }
-                else if (definicionDeCampo.integer.max && valorEnteroDeCampo > definicionDeCampo.integer.max) {
+                else if (definicionDeCampo.integer.max && valorDecimalDeCampo > definicionDeCampo.integer.max) {
                     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por ser superior a ' + definicionDeCampo.integer.max + '.');
                     delete json[campo];
                 }
-                else if (definicionDeCampo.integer.min && valorEnteroDeCampo < definicionDeCampo.integer.min) {
+                else if (definicionDeCampo.integer.min && valorDecimalDeCampo < definicionDeCampo.integer.min) {
                     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por ser inferior a ' + definicionDeCampo.integer.min + '.');
                     delete json[campo];
                 } else if (typeof valorDeCampo !== 'number') {
                     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se convierte de ' + typeof valorDeCampo + ' a integer.');
-                    json[campo] = valorEnteroDeCampo;
+                    json[campo] = valorDecimalDeCampo;
+                }
+            }
+            // CAMPOS TIPO DECIMAL
+            else if (definicionDeCampo.decimal) {
+                if (valorDeCampo === '') {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se elimina por venir vacío.');
+                    delete json[campo];
+                    continue;
+                }
+                var valorDecimalDeCampo = parseFloat(valorDeCampo);
+                if (valorDecimalDeCampo === Number.NaN) {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por no ser un número decimal válido.');
+                    delete json[campo];
+                }
+                else if (definicionDeCampo.decimal.max && valorDecimalDeCampo > definicionDeCampo.decimal.max) {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por ser superior a ' + definicionDeCampo.decimal.max + '.');
+                    delete json[campo];
+                }
+                else if (definicionDeCampo.decimal.min && valorDecimalDeCampo < definicionDeCampo.decimal.min) {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se ignora por ser inferior a ' + definicionDeCampo.decimal.min + '.');
+                    delete json[campo];
+                } else if (typeof valorDeCampo !== 'number') {
+                    if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, 'El campo \'' + campo + '\' se convierte de ' + typeof valorDeCampo + ' a decimal.');
+                    json[campo] = valorDecimalDeCampo;
                 }
             }
             // CAMPOS TIPO DATETIME
