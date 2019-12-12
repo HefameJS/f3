@@ -132,7 +132,6 @@ module.exports = {
                 cantidadFalta: { remove: true },
                 cantidadBonificacionFalta: { remove: true },
                 precio: { remove: true },
-                descuentoPorcentaje: { remove: true },
                 descuentoImporte: { remove: true },
                 cargoPorcentaje: { remove: true },
                 cargoImporte: { remove: true },
@@ -150,6 +149,7 @@ module.exports = {
                 orden: { integer: {} },
                 cantidad: { integer: {} },
                 cantidadBonificacion: { integer: { min: 1 } },
+                descuentoPorcentaje: { decimal: { min: 0.01, max: 99.99 } },
 
                 // Campos que de aparecer deben estar en formato DateTime
                 fechaLimiteServicio: { datetime: {} },
