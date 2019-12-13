@@ -29,8 +29,8 @@ module.exports = function(app) {
 
 			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
-			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.originIp );
-			L.xe( txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error] );
+			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp );
+			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error] );
 
 			var fedicomError = new FedicomError(error);
 			var responseBody = fedicomError.send(res);
