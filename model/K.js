@@ -251,7 +251,7 @@ module.exports = {
         }
     },
     PROTOCOL_VERSION: '3.3.8',
-    SERVER_VERSION: '0.8.3',
+    SERVER_VERSION: '0.8.4',
     EXIT_CODES: {
         E_NO_CONFIG: 1,
         E_NO_SAP_SYSTEMS: 2,
