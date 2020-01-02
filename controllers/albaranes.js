@@ -41,14 +41,14 @@ exports.getAlbaran = function (req, res) {
 
     var formatoAlbaran = 'JSON';
 
-    if (req.headers['content-type']) {
-        switch (req.headers['content-type'].toLowerCase()){
+    if (req.headers['accept']) {
+        switch (req.headers['accept'].toLowerCase()){
             case 'application/pdf': formatoAlbaran = 'PDF'; break;
             default: formatoAlbaran = 'JSON'; break;
         }
     }
 
-    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['content-type']]);
+    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept'], req.headers]);
 
     switch (formatoAlbaran) {
         case 'JSON':
@@ -56,7 +56,7 @@ exports.getAlbaran = function (req, res) {
         case 'PDF':
             return getAlbaranPDF(req, res, numAlbaranSaneado);
         default:
-            var fedicomError = new FedicomError('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Content-Type"', 400);
+            var fedicomError = new FedicomError('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
             fedicomError.send(res);
             return;
     }
