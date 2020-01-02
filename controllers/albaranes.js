@@ -48,6 +48,8 @@ exports.getAlbaran = function (req, res) {
         }
     }
 
+    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['content-type']]);
+
     switch (formatoAlbaran) {
         case 'JSON':
             return getAlbaranJSON(req, res, numAlbaranSaneado, clienteSap);
