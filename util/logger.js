@@ -7,6 +7,8 @@ const K = global.constants;
 
 
 const cluster = require('cluster');
+
+
 const mongourl = C.getMongoLogUrl();
 const dbName = C.mongodb.database;
 const MongoClient = require('mongodb').MongoClient;
@@ -61,9 +63,11 @@ mongoConnect();
 
 
 const writeMongo = (event) => {
+	
 	if (collections.log) {
 		collections.log.insertOne(event, { w: WRITE_CONCERN });
 	}
+
 
 	var workerId = cluster.isMaster ? 'master' : 'th#' + cluster.worker.id;
 	if (!event.tx) { // Logs a nivel del global los mandamos a consola
@@ -78,7 +82,7 @@ const writeServer = (data, level, category) => {
 	if (!Array.isArray(data)) data = [data];
 
 	var event = {
-		category: category || 'server' ,
+		category: category || 'server',
 		level: level || 5000,
 		data: data,
 		timestamp: new Date()
@@ -91,7 +95,7 @@ const writeTx = (id, data, level, category) => {
 
 	var event = {
 		tx: id,
-		category: category || 'tx' ,
+		category: category || 'tx',
 		level: level || 5000,
 		data: data,
 		timestamp: new Date()
@@ -108,6 +112,7 @@ const saneaEstructuraDeCommit = (data) => {
 	}
 }
 
+
 const yell = (txId, txType, txStat, data) => {
 	if (!Array.isArray(data)) data = [data];
 
@@ -122,44 +127,35 @@ const yell = (txId, txType, txStat, data) => {
 	writeMongo(event);
 }
 
-
+var generaCategoriaLog = (categoria) => {
+	return categoria;
+}
+switch (process.title) {
+	case K.PROCESS_TITLES.WATCHDOG:
+		generaCategoriaLog = (categoria) => categoria ? 'wd-' + categoria : 'watchdog';
+		break;
+	case K.PROCESS_TITLES.MONITOR:
+		generaCategoriaLog = (categoria) => categoria ? 'mon-' + categoria : 'monitor';
+		break;
+}
 
 L = {
-	t: (data, category) => writeServer(data, 1000, category),
-	d: (data, category) => writeServer(data, 3000, category),
-	i: (data, category) => writeServer(data, 5000, category),
-	w: (data, category) => writeServer(data, 7000, category),
-	e: (data, category) => writeServer(data, 9000, category),
-	f: (data, category) => writeServer(data, 10000, category),
-	xt: (id, data, category) => writeTx(id, data, 1000, category),
-	xd: (id, data, category) => writeTx(id, data, 3000, category),
-	xi: (id, data, category) => writeTx(id, data, 5000, category),
-	xw: (id, data, category) => writeTx(id, data, 7000, category),
-	xe: (id, data, category) => writeTx(id, data, 9000, category),
-	xf: (id, data, category) => writeTx(id, data, 10000, category),
+	t: (data, category) => writeServer(data, 1000, generaCategoriaLog(category)),
+	d: (data, category) => writeServer(data, 3000, generaCategoriaLog(category)),
+	i: (data, category) => writeServer(data, 5000, generaCategoriaLog(category)),
+	w: (data, category) => writeServer(data, 7000, generaCategoriaLog(category)),
+	e: (data, category) => writeServer(data, 9000, generaCategoriaLog(category)),
+	f: (data, category) => writeServer(data, 10000, generaCategoriaLog(category)),
+	xt: (id, data, category) => writeTx(id, data, 1000, generaCategoriaLog(category)),
+	xd: (id, data, category) => writeTx(id, data, 3000, generaCategoriaLog(category)),
+	xi: (id, data, category) => writeTx(id, data, 5000, generaCategoriaLog(category)),
+	xw: (id, data, category) => writeTx(id, data, 7000, generaCategoriaLog(category)),
+	xe: (id, data, category) => writeTx(id, data, 9000, generaCategoriaLog(category)),
+	xf: (id, data, category) => writeTx(id, data, 10000, generaCategoriaLog(category)),
 	yell: yell,
 	saneaCommit: saneaEstructuraDeCommit
 };
 
-if (process.title === K.PROCESS_TITLES.WATCHDOG) {
-	var wdCategory = (category) => category ? 'watchdog-' + category : 'watchdog';
-	L = {
-		t: (data, category) => writeServer(data, 1000, wdCategory(category)),
-		d: (data, category) => writeServer(data, 3000, wdCategory(category)),
-		i: (data, category) => writeServer(data, 5000, wdCategory(category)),
-		w: (data, category) => writeServer(data, 7000, wdCategory(category)),
-		e: (data, category) => writeServer(data, 9000, wdCategory(category)),
-		f: (data, category) => writeServer(data, 10000, wdCategory(category)),
-		xt: (id, data, category) => writeTx(id, data, 1000, wdCategory(category)),
-		xd: (id, data, category) => writeTx(id, data, 3000, wdCategory(category)),
-		xi: (id, data, category) => writeTx(id, data, 5000, wdCategory(category)),
-		xw: (id, data, category) => writeTx(id, data, 7000, wdCategory(category)),
-		xe: (id, data, category) => writeTx(id, data, 9000, wdCategory(category)),
-		xf: (id, data, category) => writeTx(id, data, 10000, wdCategory(category)),
 
-		yell: yell,
-		saneaCommit: saneaEstructuraDeCommit
-	};
-}
 
 module.exports = L;

@@ -72,5 +72,13 @@
 	"ldap": {
 		"url": "ldap://ad.domain.com",
 		"cacert": "ssl/ad_ca_cert.crt"
+	},
+	"monitor": {
+		"https": {
+			"port": 8443,
+			"cert": "ssl/server.crt",
+			"key": "ssl/server.key",
+			"passphrase": ""
+		}
 	}
 }

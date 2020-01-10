@@ -1,12 +1,12 @@
 'use strict';
 const BASE = global.BASE;
-const config = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 
-const mongourl = config.getMongoUrl();
-const dbName = config.mongodb.database;
+const mongourl = C.getMongoUrl();
+const dbName = C.mongodb.database;
 
 var memCache = require('memory-cache');
 const commitBuffer = new memCache.Cache();
@@ -16,7 +16,7 @@ const iSqlite = require(BASE + 'interfaces/isqlite');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
-const WRITE_CONCERN = config.mongodb.writeconcern || 1;
+const WRITE_CONCERN = C.mongodb.writeconcern || 1;
 
 const MONGODB_OPTIONS = {
 	useNewUrlParser: true,
@@ -29,17 +29,17 @@ const MONGODB_OPTIONS = {
 	reconnectTries: 99999,
 	reconnectInterval: 5000,
 	ha: false,
-	w: config.mongodb.writeconcern || 1,
+	w: C.mongodb.writeconcern || 1,
 	wtimeout: 1000,
 	j: 1000,
-	replicaSet: config.mongodb.replicaSet,
+	replicaSet: C.mongodb.replicaSet,
 	useUnifiedTopology: true,
 	appname: global.instanceID,
 	loggerLevel: 'warn'
 };
 
 
-var mongoConnection = null; 
+var mongoConnection = null;
 var mongoClient = null;
 var mongoDatabase = null;
 var collections = {
@@ -51,29 +51,86 @@ var collections = {
 const mongoConnect = () => {
 	mongoConnection = new MongoClient(mongourl, MONGODB_OPTIONS);
 	mongoConnection.connect()
-		.then( (client) => {
+		.then((client) => {
 			mongoClient = client;
 			mongoDatabase = mongoClient.db(dbName);
 			L.i(['*** Conexión a la base de datos [' + dbName + ']'], 'mongodb');
 
-			var txCollectionName = config.mongodb.txCollection || 'tx';
+			var txCollectionName = C.mongodb.txCollection || 'tx';
 			collections.tx = mongoDatabase.collection(txCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + txCollectionName + '] para almacenamiento de transmisiones'], 'mongodb');
 
-			var discardCollectionName = config.mongodb.discardCollection || 'discard';
+			var discardCollectionName = C.mongodb.discardCollection || 'discard';
 			collections.discard = mongoDatabase.collection(discardCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
 
-			var controlCollectionName = config.mongodb.controlCollection || 'control';
+			var controlCollectionName = C.mongodb.controlCollection || 'control';
 			collections.control = mongoDatabase.collection(controlCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
+
+			if (process.title === K.PROCESS_TITLES.MONITOR) {
+				var querysCollectionName = C.mongodb.querysCollection || 'querys';
+				collections.querys = mongoDatabase.collection(querysCollectionName);
+				L.i(['*** Conexión a la colección [' + dbName + '.' + querysCollectionName + '] para querys'], 'mongodb');
+			}
 		})
-		.catch( (error) => {
-			L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb');
-		});
+		.catch(error => L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb'));
 }
 
 mongoConnect();
+
+/**
+ * 
+ * @param {Parámetros de la consulta} query 
+ * @param {*} callback 
+ */
+const consultaTX = (query, callback) => {
+
+	let filter = query.filter || {};
+	let projection = query.projection || null;
+	let sort = query.sort || null;
+	let skip = query.skip || 0;
+	let limit = query.limit || 100;
+	limit = Math.min(limit, 100);
+
+
+	try {
+		if (filter._id) filter._id = new ObjectID(filter._id);
+		if (filter.crc) filter.crc = new ObjectID(filter.crc);
+	} catch (e) { console.log(e) }
+
+
+	if (mongoClient) {
+		let cursor = collections.tx.find(filter);
+		if (projection) cursor.project(projection);
+		if (sort) cursor.sort(sort);
+		if (skip) cursor.skip(skip);
+		if (limit) cursor.limit(limit);
+
+		cursor.count(false, (err, count) => {
+			if (err) return callback(err, null);
+
+			cursor.toArray((err, result) => {
+				if (err) return callback(err, null);
+
+				return callback(null, {
+					data: result,
+					size: result.length,
+					limit: limit,
+					skip: skip,
+					total: count
+				});
+
+			});
+		});
+
+
+	} else {
+		callback({ error: "No conectado a MongoDB" }, null);
+	}
+
+
+}
 
 const connectionStatus = (cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
@@ -101,14 +158,14 @@ const findTxById = (myId, id, cb) => {
 		collections.tx.findOne({ _id: id }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
 const findTxByCrc = (myId, crc, cb) => {
-	
+
 	if (mongoClient && mongoClient.isConnected()) {
 		try {
-			if (crc.crc)	crc = new ObjectID(crc.crc);
+			if (crc.crc) crc = new ObjectID(crc.crc);
 			else crc = new ObjectID(crc);
 
 			collections.tx.findOne({ crc: crc }, cb);
@@ -121,7 +178,7 @@ const findTxByCrc = (myId, crc, cb) => {
 
 	} else {
 		L.xe(myId, ['**** ERROR AL BUSCAR LA TRANSACCION POR CRC, NO ESTA CONECTADO A MONGO'], 'crc');
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
 const findCrcDuplicado = (crc, cb) => {
@@ -129,7 +186,7 @@ const findCrcDuplicado = (crc, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		try {
 			crc = new ObjectID(crc);
-			collections.tx.findOne({ crc: crc }, {_id: 1, crc: 1}, cb);
+			collections.tx.findOne({ crc: crc }, { _id: 1, crc: 1 }, cb);
 		} catch (ex) {
 			cb(ex, null);
 			return;
@@ -141,28 +198,28 @@ const findCrcDuplicado = (crc, cb) => {
 };
 const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion}], 'mongodb');
+		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion }], 'mongodb');
 		collections.tx.findOne({ type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
 const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		L.xd(myId, ['Consulta MDB', {type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido}], 'mongodb');
+		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido }], 'mongodb');
 		collections.tx.findOne({ type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido }, cb);
 	} else {
 		L.xe(myId, ['**** Error al localizar la transmisión'], 'mongodb');
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
 const findConfirmacionPedidoByCRC = (crc, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
-		crc = crc.substr(0,8).toUpperCase();
+		crc = crc.substr(0, 8).toUpperCase();
 		collections.tx.findOne({ type: K.TX_TYPES.CONFIRMACION_PEDIDO, "clientRequest.body.crc": crc }, cb);
 	} else {
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
 
@@ -173,8 +230,8 @@ const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 			status: K.TX_STATUS.NO_SAP
 		};
 		var query2 = {
-			status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO]},
-			modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * minimumAge) ) }
+			status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO] },
+			modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * minimumAge)) }
 		};
 		var query = {
 			type: K.TX_TYPES.PEDIDO,
@@ -187,7 +244,7 @@ const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 		collections.tx.find(query).limit(limit).toArray(cb);
 	} else {
 		L.e(['**** Error al buscar candidatos a retransmitir. No está conectado a mongodb'], 'mongodb');
-		cb({error: "No conectado a MongoDB"}, null);
+		cb({ error: "No conectado a MongoDB" }, null);
 	}
 }
 
@@ -195,7 +252,7 @@ const commitDiscard = (data) => {
 
 	var key = data['$setOnInsert']._id;
 
-	
+
 	if (mongoClient && mongoClient.isConnected()) {
 		collections.discard.updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
 			if (err) {
@@ -213,23 +270,23 @@ const commitDiscard = (data) => {
 
 const commit = (data, noMerge) => {
 
-	var key = data['$setOnInsert']._id ;
+	var key = data['$setOnInsert']._id;
 
 	var cachedData = commitBuffer.get(key);
 	if (cachedData && !noMerge) {
 		data = mergeDataWithCache(cachedData, data);
 	}
 
-	
+
 	if (mongoClient && mongoClient.isConnected()) {
-	   collections.tx.updateOne( {_id: key }, data, {upsert: true, w: WRITE_CONCERN}, (err, res) => {
+		collections.tx.updateOne({ _id: key }, data, { upsert: true, w: WRITE_CONCERN }, (err, res) => {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
 				iSqlite.storeTx(data);
 			} else {
 				L.xd(key, ['COMMIT OK', L.saneaCommit(data)], 'mdbCommit');
 			}
-	   });
+		});
 	}
 	else {
 		L.xf(key, ['ERROR AL HACER COMMIT', L.saneaCommit(data)], 'mdbCommit');
@@ -244,13 +301,13 @@ const commit = (data, noMerge) => {
 
 const buffer = (data) => {
 
-	var key = data['$setOnInsert']._id ;
+	var key = data['$setOnInsert']._id;
 
 	L.xd(key, ['BUFFER OK', L.saneaCommit(data)], 'mdbBuffer');
 
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
-	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/ (key, value) {
+	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/(key, value) {
 		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
 		module.exports.commit(value, false);
 	});
@@ -260,10 +317,10 @@ const buffer = (data) => {
 const updateFromSqlite = (data, cb) => {
 
 	convertToOidsAndDates(data);
-	var key = data['$setOnInsert']._id ;
+	var key = data['$setOnInsert']._id;
 
 	if (mongoClient && mongoClient.isConnected()) {
-	   collections.tx.updateOne( {_id: key}, data, {upsert: true, w: WRITE_CONCERN}, function(err, res) {
+		collections.tx.updateOne({ _id: key }, data, { upsert: true, w: WRITE_CONCERN }, function (err, res) {
 			if (err) {
 				L.xe(key, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
 				mongoConnect();
@@ -272,7 +329,7 @@ const updateFromSqlite = (data, cb) => {
 				L.xd(key, ['COMMIT desde SQLite OK', L.saneaCommit(data)], 'txSqliteCommit');
 				cb(true);
 			}
-	   });
+		});
 	}
 	else {
 		L.xe(key, ['** No conectado a MongoDB'], 'txSqliteCommit');
@@ -296,7 +353,9 @@ module.exports = {
 	commitDiscard,
 	commit,
 	buffer,
-	updateFromSqlite
+	updateFromSqlite,
+
+	consultaTX
 }
 
 function convertToOidsAndDates(data) {

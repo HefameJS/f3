@@ -164,6 +164,35 @@ var configVerificator = {
 			console.error("No se ha definido la passphrase para WATCHDOG - HTTPS (watchdog.https.passphrase)");
 			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
 		}
+	},
+	monitor: function (config) {
+		if (!config.monitor) {
+			console.error("No se encuentra definido el nodo MONITOR (monitor)")
+			process.exit(K.EXIT_CODES.E_NO_MONITOR_CONFIG);
+		}
+		this.monitor_https(config);
+	},
+	monitor_https: function (config) {
+		if (!config.monitor.https) {
+			console.error("No se ha definido el nodo MONITOR - HTTPS (monitor.https)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS);
+		}
+		if (!config.monitor.https.port) {
+			console.error("No se ha definido el puerto para MONITOR - HTTPS (monitor.https.port)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_PORT);
+		}
+		if (!config.monitor.https.cert) {
+			console.error("No se ha definido el certificado para MONITOR - HTTPS (monitor.https.cert)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_CERT);
+		}
+		if (!config.monitor.https.key) {
+			console.error("No se ha definido la clave privada para MONITOR - HTTPS (monitor.https.key)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_KEY);
+		}
+		if (!config.monitor.https.passphrase && config.monitor.https.passphrase !== '') {
+			console.error("No se ha definido la passphrase para MONITOR - HTTPS (monitor.https.passphrase)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_PASSPHRASE);
+		}
 	}
 };
 
@@ -210,6 +239,7 @@ C.getSapSystem = (sapsid) => {
 	global.logger.e("No se encuentra el sistema SAP [" + sapsid + "]");
 	return null;
 }
+
 C.getMongoUrl = (servers, username, password, database, replicaSet) => {
 	var mc = C.mongodb;
 	servers = servers ? servers : mc.hosts;
@@ -223,7 +253,6 @@ C.getMongoUrl = (servers, username, password, database, replicaSet) => {
 	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
 	return url;
 }
-
 
 C.getMongoLogUrl = (servers, username, password, database, replicaSet) => {
 	var mc = C.mongodb;

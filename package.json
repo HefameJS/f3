@@ -7,7 +7,9 @@
     "test-core": "nodemon --stack-size=16000 core.js",
     "core": "nohup node core.js > fedicom3-core.log &",
     "test-watchdog": "nodemon --stack-size=16000 watchdog.js",
-    "watchdog": "nohup node watchdog.js > fedicom3-watchdog.log &"
+    "watchdog": "nohup node watchdog.js > fedicom3-watchdog.log &",
+    "test-monitor": "nodemon --stack-size=16000 monitor.js",
+    "monitor": "nohup node monitor.js > fedicom3-monitor.log &"
   },
   "keywords": [
     "fedicom",
@@ -24,14 +26,14 @@
     "express-bearer-token": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
     "memory-cache": "git://github.com/AlejandroAbad/node-cache.git",
-    "mongodb": "^3.3.2",
+    "mongodb": "^3.4.1",
     "os": "^0.1.1",
     "request": "^2.88.0",
     "saslprep": "^1.0.3",
-    "sqlite3": "^4.1.0",
-    "underscore": "^1.9.1",
+    "sqlite3": "^4.1.1",
+    "underscore": "^1.9.2",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.4.22"
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"
