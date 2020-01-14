@@ -251,7 +251,8 @@ module.exports = {
         }
     },
     PROTOCOL_VERSION: '3.3.8',
-    SERVER_VERSION: '0.9.1',
+    SERVER_VERSION: '0.9.2',
+    TX_VERSION: 902,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
 
@@ -329,9 +330,20 @@ module.exports = {
         EMPLEADO: 'empleado',
         FMASONLINE: 'F+Online',
         APIKEY: 'APIKEY' // DEPRECAR
+    },
+    FLAGS: {
+        SQLITE: 'sqlite',
+        RETRANSMISION_UPDATE: 'retransUpd',
+        RETRANSMISION_NO_UPDATE: 'retransNoUpd',
+        WATCHDOG: 'watchdog',
+        NO_SAP: 'noSap',
+        ESTUPEFACIENTE: 'estupe',
+        DUPLICADOS: 'dupes',
+        BONIFICADO: 'bonif',
+        TRANSFER:'transfer',
+        FALTATOTAL: 'faltaTotal',
+        FORMATO: 'formato'
     }
-    
-
 }
 
 

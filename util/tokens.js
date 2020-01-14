@@ -2,9 +2,10 @@
 const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 const FedicomError = require(BASE + 'model/fedicomError');
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 
@@ -43,6 +44,12 @@ module.exports.verifyJWT = (token, txId) => {
 	var jwt = require('jsonwebtoken');
 	try {
 		var decoded = jwt.verify(token, C.jwt.token_signing_key);
+
+		// Comprobacion para levantar el flag de transfer
+		if (decoded.sub && decoded.sub.search(/^T[RGP]/) === 0) {
+			Flags.set(txId, K.FLAGS.TRANSFER);
+		}
+
 		var meta = {};
 
 		if (decoded.exp) {

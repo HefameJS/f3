@@ -59,7 +59,7 @@ exports.saveDevolucion = function (req, res) {
 			Events.devoluciones.emitDevolucionDuplicada(req, res, responseBody, duplicatedId);
 		} else {
 			Events.devoluciones.emitInicioCrearDevolucion(req, devolucion);
-			devolucion.limpiarEntrada();
+			devolucion.limpiarEntrada(req.txId);
 			Isap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
 
 				if (sapError) {

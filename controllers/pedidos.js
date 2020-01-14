@@ -60,7 +60,7 @@ exports.savePedido = function (req, res) {
 			Events.pedidos.emitPedidoDuplicado(req, res, responseBody, duplicatedId);
 		} else {
 			Events.pedidos.emitInicioCrearPedido(req, pedido);
-			pedido.limpiarEntrada();
+			pedido.limpiarEntrada(req.txId);
 			
 			Isap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
 				if (sapError) {

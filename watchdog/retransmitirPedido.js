@@ -139,7 +139,7 @@ const retransmitirPedido = function (txId, options, callback) {
         }
 
 
-        pedido.limpiarEntrada();
+        pedido.limpiarEntrada(txId);
         L.xi(rtxId, ['Retransmitimos a SAP el pedido']);
 
         Isap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {

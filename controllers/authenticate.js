@@ -10,7 +10,7 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const AuthReq = require(BASE + 'model/auth/authReq');
 const Tokens = require(BASE + 'util/tokens');
-
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 
@@ -21,8 +21,9 @@ exports.doAuth = function (req, res) {
 	L.xi(txId, 'Procesando petición de autenticación')
 	Events.authentication.emitAuthRequest(req);
 
+
 	try {
-		var authReq = new AuthReq(req.body);
+		var authReq = new AuthReq(txId, req.body);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(txId, fedicomError);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
@@ -47,6 +48,8 @@ exports.doAuth = function (req, res) {
 					var token = authReq.generateJWT(txId);
 					var responseBody = {auth_token: token};
 					res.status(201).json(responseBody);
+
+					Flags.set(txId, K.FLAGS.NO_SAP);
 					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.NO_SAP);
 				}
 				return;

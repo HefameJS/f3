@@ -6,11 +6,12 @@ const K = global.constants;
 
 const Tokens = require(BASE + 'util/tokens');
 const FedicomError = require(BASE + 'model/fedicomError');
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 
 class AuthReq {
-	constructor(json) {
+	constructor(txId, json) {
 		this.domain = K.DOMINIOS.verificar(json.domain);
 
 		if (this.domain === K.DOMINIOS.APIKEY) { // Este caso se eliminará cuando se implemente la autenticación LDAP
@@ -28,9 +29,12 @@ class AuthReq {
 				this.username = json.user.trim();
 				this.password = json.password.trim();
 
+
 				// Comprobación de si es TRANSFER o no
-				if (this.username.search(/T[RGP]([0-9]){8}/) === 0)
+				if (this.username.search(/^T[RGP]/) === 0) {
 					this.domain = K.DOMINIOS.TRANSFER;
+					Flags.set(txId, K.FLAGS.TRANSFER);
+				}
 
 			} else {
 				var error = new FedicomError();

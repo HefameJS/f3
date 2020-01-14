@@ -98,10 +98,10 @@ class Pedido {
 		delete this.sapSystem;
 	}
 
-	limpiarEntrada() {
+	limpiarEntrada(txId) {
 
 		// LIMPIEZA DE LOS CAMPOS DE CABECERA
-		var incidenciasCabecera = PreCleaner.clean(this, K.PRE_CLEAN.PEDIDOS.CABECERA);
+		var incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.PEDIDOS.CABECERA);
 		if (this.incidencias && this.incidencias.concat) {
 			this.incidencias.concat(incidenciasCabecera.getErrors());
 		} else {
@@ -111,7 +111,7 @@ class Pedido {
 		// LIMPIEZA DE LAS LINEAS
 		if (this.lineas && this.lineas.forEach) {
 			this.lineas.forEach((lineaPedido) => {
-				var incidenciasLinea = PreCleaner.clean(lineaPedido, K.PRE_CLEAN.PEDIDOS.LINEAS);
+				var incidenciasLinea = PreCleaner.clean(txId, lineaPedido, K.PRE_CLEAN.PEDIDOS.LINEAS);
 				if (incidenciasLinea.hasError()) {
 					if (lineaPedido.incidencias && lineaPedido.incidencias.concat) {
 						lineaPedido.incidencias.concat(incidenciasLinea.getErrors());

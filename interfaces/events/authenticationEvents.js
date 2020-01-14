@@ -4,8 +4,10 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
+
 const clone = require('clone');
+const Imongo = require(BASE + 'interfaces/imongo');
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 module.exports.emitAuthRequest = function (req) {
 
@@ -56,7 +58,8 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 				status: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			flags: Flags.fin(res.txId)
 		}
 	}
 

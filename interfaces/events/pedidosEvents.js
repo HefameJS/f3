@@ -6,6 +6,7 @@ const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ObjectID = Imongo.ObjectID;
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
@@ -33,7 +34,8 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			flags: Flags.fin(res.txId)
 		}
 	}
 
@@ -41,6 +43,11 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 		$setOnInsert: {
 			_id: originalTxId,
 			createdAt: new Date()
+		},
+		$set: {
+			flags: {
+				dupes: true
+			}
 		},
 		$push: {
 			duplicates: {
@@ -87,7 +94,8 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			flags: Flags.fin(res.txId)
 		}
 	}
 
@@ -141,7 +149,8 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			flags: Flags.fin(res.txId)
 		}
 	}
 
@@ -203,7 +212,8 @@ module.exports.emitFinCrearPedido = (res, responseBody, status, extra) => {
 				body: responseBody
 			},
 			numeroPedidoAgrupado: extra.numeroPedidoAgrupado || undefined,
-			numerosPedidoSAP: extra.numerosPedidoSAP || []
+			numerosPedidoSAP: extra.numerosPedidoSAP || [],
+			flags: Flags.fin(res.txId)
 		}
 	}
 
@@ -238,7 +248,8 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			}
+			},
+			flags: Flags.fin(res.txId)
 		}
 	}
 

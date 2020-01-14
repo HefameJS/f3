@@ -52,10 +52,10 @@ class Devolucion {
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 	}
 
-	limpiarEntrada() {
+	limpiarEntrada(txId) {
 
 		// LIMPIEZA DE LOS CAMPOS DE CABECERA
-		var incidenciasCabecera = PreCleaner.clean(this, K.PRE_CLEAN.DEVOLUCIONES.CABECERA);
+		var incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.DEVOLUCIONES.CABECERA);
 		if (this.incidencias && this.incidencias.concat) {
 			this.incidencias.concat(incidenciasCabecera.getErrors());
 		} else {
@@ -65,7 +65,7 @@ class Devolucion {
 		// LIMPIEZA DE LAS LINEAS
 		if (this.lineas && this.lineas.forEach) {
 			this.lineas.forEach((lineaDevolucion) => {
-				var incidenciasLinea = PreCleaner.clean(lineaDevolucion, K.PRE_CLEAN.DEVOLUCIONES.LINEAS);
+				var incidenciasLinea = PreCleaner.clean(txId, lineaDevolucion, K.PRE_CLEAN.DEVOLUCIONES.LINEAS);
 				if (incidenciasLinea.hasError()) {
 					if (lineaDevolucion.incidencias && lineaDevolucion.incidencias.concat) {
 						lineaDevolucion.incidencias.concat(incidenciasLinea.getErrors());
