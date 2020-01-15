@@ -35,7 +35,6 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 				headers: res.getHeaders(),
 				body: responseBody
 			},
-			flags: Flags.fin(res.txId)
 		}
 	}
 
@@ -56,6 +55,8 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 			}
 		}
 	}
+
+	Flags.finaliza(res.txId, resData);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	Imongo.commit(dataUpdate);
@@ -94,10 +95,11 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			},
-			flags: Flags.fin(res.txId)
+			}
 		}
 	}
+
+	Flags.finaliza(res.txId, resData);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido', data['$set']], 'txCommit');
 	Imongo.commit(data);
@@ -149,10 +151,11 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			},
-			flags: Flags.fin(res.txId)
+			}
 		}
 	}
+
+	Flags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido'], 'txCommit');
 	Imongo.commit(resData);
@@ -212,10 +215,11 @@ module.exports.emitFinCrearPedido = (res, responseBody, status, extra) => {
 				body: responseBody
 			},
 			numeroPedidoAgrupado: extra.numeroPedidoAgrupado || undefined,
-			numerosPedidoSAP: extra.numerosPedidoSAP || [],
-			flags: Flags.fin(res.txId)
+			numerosPedidoSAP: extra.numerosPedidoSAP || []
 		}
 	}
+
+	Flags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
 	Imongo.commit(resData);
@@ -248,10 +252,11 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			},
-			flags: Flags.fin(res.txId)
+			}
 		}
 	}
+	
+	Flags.finaliza(res.txId, resData);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);

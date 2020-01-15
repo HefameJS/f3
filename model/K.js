@@ -342,7 +342,8 @@ module.exports = {
         BONIFICADO: 'bonif',
         TRANSFER:'transfer',
         FALTATOTAL: 'faltaTotal',
-        FORMATO: 'formato'
+        FORMATO: 'formato',
+        DEMORADO: 'demorado'
     }
 }
 

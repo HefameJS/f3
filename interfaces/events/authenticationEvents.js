@@ -58,11 +58,13 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 				status: res.statusCode,
 				headers: res.getHeaders(),
 				body: responseBody
-			},
-			flags: Flags.fin(res.txId)
+			}
 		}
 	}
 
+	Flags.finaliza(res.txId, resData);
+
+	
 	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse'], 'txCommit');
 	Imongo.commit(resData);
 }
