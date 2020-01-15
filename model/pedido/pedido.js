@@ -9,6 +9,7 @@ const LineaPedido = require(BASE + 'model/pedido/lineaPedido');
 
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
+const Flags = require(BASE + 'interfaces/cache/flags')
 
 const clone = require('clone');
 const crypto = require('crypto');
@@ -134,7 +135,7 @@ class Pedido {
 		}
 	}
 
-	obtenerRespuestaCliente( respuestaSAP ) {
+	obtenerRespuestaCliente( txId, respuestaSAP ) {
 		var clon = clone(respuestaSAP);
 
 		// Si la respuesta de SAP es un array, no hay que sanearlo
@@ -153,6 +154,12 @@ class Pedido {
 		clon.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP) }
 		clon.isRechazadoSap = () => false;
 
+		// Establecemos FLAGS
+		estableceFlags(txId, clon);
+		
+
+
+
 		return clon;
 	}
 
@@ -161,6 +168,8 @@ class Pedido {
 	}
 
 }
+
+
 
 const parseLines = (json, txId) => {
 	var lineas = [];
@@ -362,5 +371,71 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP ];
 }
 
+const estableceFlags = (txId, clon) => {
+	if (clon && clon.lineas && clon.lineas.forEach) {
+
+		let totales = {
+			lineas: 0,
+			lineasIncidencias: 0,
+			lineasDemorado: 0,
+			lineasEstupe: 0,
+			cantidad: 0,
+			cantidadBonificacion: 0,
+			cantidadFalta: 0,
+			cantidadBonificacionFalta: 0,
+			cantidadEstupe: 0,
+		}
+
+		clon.lineas.forEach(linea => {
+			let tipificacionMotivosFalta = analizaMotivosFalta(linea.incidencias);
+
+			totales.lineas++;
+			if (linea.incidencias && linea.incidencias.length) totales.lineasIncidencias++;
+			if (linea.servicioDemorado) totales.lineasDemorado++;
+			if (linea.cantidad) totales.cantidad += linea.cantidad;
+			if (linea.cantidadBonificacion) totales.cantidadBonificacion += linea.cantidadBonificacion;
+			if (linea.cantidadFalta) totales.cantidadFalta += linea.cantidadFalta;
+			if (linea.cantidadBonificacionFalta) totales.cantidadBonificacionFalta += linea.cantidadBonificacionFalta;
+			if (linea.valeEstupefaciente || tipificacionMotivosFalta.estupe) {
+				totales.lineasEstupe++;
+				totales.cantidadEstupe += linea.cantidad;
+			}
+
+		});
+
+		if (totales.cantidad === totales.cantidadFalta) Flags.set(txId, K.FLAGS.FALTATOTAL)
+		if (totales.lineasDemorado) Flags.set(txId, K.FLAGS.DEMORADO)
+		if (totales.cantidadBonificacion) Flags.set(txId, K.FLAGS.BONIFICADO)
+		if (totales.lineasEstupe) Flags.set(txId, K.FLAGS.ESTUPEFACIENTE)
+
+		Flags.set(txId, K.FLAGS.TOTALES, totales);
+
+		if (clon.tipoPedido) {
+			let tipoInt = parseInt(clon.tipoPedido)
+			if (tipoInt >= 0 && tipoInt <= 999999) {
+				Flags.set(txId, K.FLAGS.TIPO, tipoInt);
+			}
+		} else {
+			Flags.set(txId, K.FLAGS.TIPO, 0);
+		}
+
+	} else {
+		Flags.set(txId, K.FLAGS.TOTALES, { lineas: 0 });
+	}
+	
+}
+
+const analizaMotivosFalta  = (incidencias) => {
+	if (!incidencias || ! incidencias.forEach ) return {}
+
+	let tipos = {};
+	incidencias.forEach( incidencia => {
+		if (incidencia.descripcion) {
+			let tipoFalta = K.TIPIFICADO_FALTAS[incidencia.descripcion];
+			if (tipoFalta) tipos[tipoFalta] = true;
+		}
+	} )
+	return tipos;
+}
 
 module.exports = Pedido;

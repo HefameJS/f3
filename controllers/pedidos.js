@@ -80,7 +80,7 @@ exports.savePedido = function (req, res) {
 				}
 
 
-				var clientResponse = pedido.obtenerRespuestaCliente(sapResponse.body);
+				var clientResponse = pedido.obtenerRespuestaCliente(txId, sapResponse.body);
 				var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
 				
 				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;

@@ -43,11 +43,6 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 			_id: originalTxId,
 			createdAt: new Date()
 		},
-		$set: {
-			flags: {
-				dupes: true
-			}
-		},
 		$push: {
 			duplicates: {
 				_id: req.txId,
@@ -55,8 +50,9 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 			}
 		}
 	}
-
-	Flags.finaliza(res.txId, resData);
+	
+	Flags.set(req.txId, K.FLAGS.DUPLICADOS);
+	Flags.finaliza(res.txId, dataUpdate);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	Imongo.commit(dataUpdate);
@@ -255,7 +251,7 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 			}
 		}
 	}
-	
+
 	Flags.finaliza(res.txId, resData);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');

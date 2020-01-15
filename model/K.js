@@ -343,7 +343,34 @@ module.exports = {
         TRANSFER:'transfer',
         FALTATOTAL: 'faltaTotal',
         FORMATO: 'formato',
-        DEMORADO: 'demorado'
+        DEMORADO: 'demorado',
+        VERSION: 'v',
+        TOTALES: 's',
+        TIPO: 't'
+    },
+    TIPIFICADO_FALTAS: {
+        "BAJA": "desconocido",
+        "BAJA HEFAME": "desconocido",
+        "DESCONOCIDO": "desconocido",
+        "RECHAZADO CLIENTE": "desconocido",
+        "POR ENCARGO": "noPermitido",
+        "POR OPERADOR/WEB": "noPermitido",
+        "NO PERMITIDO EN TIPO DE PEDIDO": "noPermitido",
+        "ESTUPEFACIENTE": "estupe",
+        "NUMERO VALE INCORRECTO": "estupe",
+        "ENTREGA BLOQUEADA PARA O.T.": "stock",
+        "NO HAY EXISTENCIAS": "stock",
+        "PASADO A OTRO ALMACÉN": "stock",
+        "RETRASO TRATAMIENTO ENTRADAS": "stock",
+        "SERVICIO CENTRALIZADO": "stock",
+        "SIN EXISTENCIAS": "stock",
+        "UBICACIÓN PICKING VACÍA": "stock",
+        "EXCESO UNIDADES POR LINEA": "suministro",
+        "FALTA DE SUMINISTRO": "suministro",
+        "LIMITE EXISTENCIAS": "suministro",
+        "RETRASO SERVICIO": "suministro",
+        "SERVICIO PARCIAL": "suministro",
+        "SIN UNIDADES PTES": "suministro"
     }
 }
 

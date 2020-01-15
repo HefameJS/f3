@@ -10,17 +10,16 @@ const flagsCache = new memCache.Cache();
 flagsCache.countStats(false);
 
 
-const set = (txId, flagName) => {
+const set = (txId, flagName, value = true ) => {
     if (!txId) { L.e('No se ha especificado ID de transmisión'); return; }
     if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
 
     txId = new ObjectID(txId);
     let flags = flagsCache.get(txId) || {};
-    flags[flagName] = true;
+    flags[flagName] = value;
 
     flagsCache.put(txId, flags);
 }
-
 
 const get = (txId) => {
     let flags = flagsCache.get(new ObjectID(txId));
@@ -32,15 +31,13 @@ const finaliza = (txId, mdbQuery) => {
     let flags = get(txId);
     del(txId);
 
-    flags.v = K.TX_VERSION;
+    flags[K.FLAGS.VERSION] = K.TX_VERSION;
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
     
     for (var flag in flags) {
         mdbQuery.$set['flags.' + flag] = flags[flag];
     }
-
-    console.log(mdbQuery);
 }
 
 
