@@ -65,7 +65,7 @@ mongoConnect();
 const writeMongo = (event) => {
 	
 	if (collections.log) {
-		collections.log.insertOne(event, { w: WRITE_CONCERN });
+		collections.log.insertOne(event, { w: WRITE_CONCERN } , (err, res) => {});
 	}
 
 
