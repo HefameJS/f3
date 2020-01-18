@@ -20,14 +20,14 @@ const WRITE_CONCERN = C.mongodb.writeconcern || 1;
 
 const MONGODB_OPTIONS = {
 	useNewUrlParser: true,
-	autoReconnect: true,
+	/*autoReconnect: true,*/
 	keepAlive: 1000,
 	keepAliveInitialDelay: 1000,
 	connectTimeoutMS: 1500,
 	socketTimeoutMS: 1500,
 	serverSelectionTimeoutMS: 1500,
-	reconnectTries: 99999,
-	reconnectInterval: 5000,
+	/*reconnectTries: 99999,*/
+	/*reconnectInterval: 5000,*/
 	ha: false,
 	w: C.mongodb.writeconcern || 1,
 	wtimeout: 1000,
@@ -64,14 +64,16 @@ const mongoConnect = () => {
 			collections.discard = mongoDatabase.collection(discardCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
 
-			var controlCollectionName = C.mongodb.controlCollection || 'control';
-			collections.control = mongoDatabase.collection(controlCollectionName);
-			L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
+			if (process.title === K.PROCESS_TITLES.WATCHDOG) {
+				var controlCollectionName = C.mongodb.controlCollection || 'control';
+				collections.control = mongoDatabase.collection(controlCollectionName);
+				L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
+			}
 
 			if (process.title === K.PROCESS_TITLES.MONITOR) {
-				var querysCollectionName = C.mongodb.querysCollection || 'querys';
+				/*var querysCollectionName = C.mongodb.querysCollection || 'querys';
 				collections.querys = mongoDatabase.collection(querysCollectionName);
-				L.i(['*** Conexión a la colección [' + dbName + '.' + querysCollectionName + '] para querys'], 'mongodb');
+				L.i(['*** Conexión a la colección [' + dbName + '.' + querysCollectionName + '] para querys'], 'mongodb');*/
 			}
 		})
 		.catch(error => L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb'));

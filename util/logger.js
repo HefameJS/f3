@@ -16,14 +16,14 @@ const WRITE_CONCERN = 0;
 
 const MONGODB_OPTIONS = {
 	useNewUrlParser: true,
-	autoReconnect: true,
+	/*autoReconnect: true,*/
 	keepAlive: 1000,
 	keepAliveInitialDelay: 1000,
 	connectTimeoutMS: 1500,
 	socketTimeoutMS: 1500,
 	serverSelectionTimeoutMS: 1500,
-	reconnectTries: 99999,
-	reconnectInterval: 5000,
+	/*reconnectTries: 99999,*/
+	/*reconnectInterval: 5000,*/
 	ha: false,
 	w: WRITE_CONCERN,
 	wtimeout: 1000,
