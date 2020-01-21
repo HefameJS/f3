@@ -16,22 +16,29 @@ const authenticate = (txId, authReq, callback) => {
 
     var ad = new ActiveDirectory(ldapConfig);
 
-    ad.getGroupMembershipForUser(authReq.username, (ldapError, groups) => {
-        if (ldapError || !groups || !groups.forEach) {
-            callback(ldapError, false);
+    ad.authenticate(ldapConfig.username, ldapConfig.password, (authErr, authResult) => {
+        if (authErr) {
+            callback(authErr);
             return;
         }
 
-        var grupos = [];
-        groups.forEach( (group) => {
-            if (group.cn.startsWith('FED3_'))
-                grupos.push( group.cn );
-        });
+        ad.getGroupMembershipForUser(authReq.username, (ldapError, groups) => {
+            if (ldapError || !groups || !groups.forEach) {
+                callback(ldapError);
+                return;
+            }
 
-        callback(null, grupos);
+            var grupos = [];
+            groups.forEach((group) => {
+                if (group.cn.startsWith('FED3_'))
+                    grupos.push(group.cn);
+            });
 
+            callback(null, grupos);
+
+        })
     });
-};
+}
 
 module.exports = {
     authenticate: authenticate
