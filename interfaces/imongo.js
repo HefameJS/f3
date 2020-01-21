@@ -97,9 +97,18 @@ const consultaTX = (query, callback) => {
 
 
 	try {
-		if (filter._id) filter._id = new ObjectID(filter._id);
-		if (filter.crc) filter.crc = new ObjectID(filter.crc);
-	} catch (e) { console.log(e) }
+		console.log(filter._id.$in);
+		if (filter._id) {
+			if (filter._id.$in) filter._id.$in = filter._id.$in.map( id => new ObjectID(id))
+			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
+			else filter._id = new ObjectID(filter._id);
+		}
+		if (filter.crc) {
+			if (filter.crc.$in) filter.crc.$in = filter.crc.$in.map(id => new ObjectID(id))
+			else if (filter.crc.$nin) filter.crc.$nin = filter.crc.$nin.map(id => new ObjectID(id))
+			else filter.crc = new ObjectID(filter.crc);
+		}
+	} catch (e) { console.log(filter, e) }
 
 
 	if (mongoClient) {
