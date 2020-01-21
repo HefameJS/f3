@@ -97,7 +97,6 @@ const consultaTX = (query, callback) => {
 
 
 	try {
-		console.log(filter._id.$in);
 		if (filter._id) {
 			if (filter._id.$in) filter._id.$in = filter._id.$in.map( id => new ObjectID(id))
 			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
@@ -108,7 +107,7 @@ const consultaTX = (query, callback) => {
 			else if (filter.crc.$nin) filter.crc.$nin = filter.crc.$nin.map(id => new ObjectID(id))
 			else filter.crc = new ObjectID(filter.crc);
 		}
-	} catch (e) { console.log(filter, e) }
+	} catch (e) { console.log(e) }
 
 
 	if (mongoClient) {
