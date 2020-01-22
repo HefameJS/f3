@@ -10,6 +10,7 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
+const Flags = require(BASE + 'interfaces/cache/flags')
 
 
 exports.saveDevolucion = function (req, res) {
@@ -73,6 +74,7 @@ exports.saveDevolucion = function (req, res) {
 						L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
 						var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
 						var responseBody = fedicomError.send(res)
+						Flags.set(txId, K.FLAGS.NO_SAP)
 						Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
 					}
 					return;

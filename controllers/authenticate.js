@@ -49,7 +49,7 @@ exports.doAuth = function (req, res) {
 					var responseBody = {auth_token: token};
 					res.status(201).json(responseBody);
 
-					Flags.set(txId, K.FLAGS.NO_SAP);
+					Flags.set(txId, K.FLAGS.NO_SAP)
 					Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.NO_SAP);
 				}
 				return;

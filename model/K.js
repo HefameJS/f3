@@ -337,6 +337,7 @@ module.exports = {
         RETRANSMISION_NO_UPDATE: 'retransNoUpd',
         WATCHDOG: 'watchdog',
         NO_SAP: 'noSap',
+        NO_FALTAS: 'noFaltas',
         ESTUPEFACIENTE: 'estupe',
         DUPLICADOS: 'dupes',
         BONIFICADO: 'bonif',

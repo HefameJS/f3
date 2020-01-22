@@ -12,7 +12,6 @@ flagsCache.countStats(false);
 
 const set = (txId, flagName, value = true ) => {
 
-    console.log('SET FLAG', txId, flagName, value )
     if (!txId) { L.e('No se ha especificado ID de transmisión'); return; }
     if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
 

@@ -10,6 +10,7 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Tokens = require(BASE + 'util/tokens');
 const Pedido = require(BASE + 'model/pedido/pedido');
+const Flags = require(BASE + 'interfaces/cache/flags')
 
 
 
@@ -74,6 +75,8 @@ exports.savePedido = function (req, res) {
 						L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
 						pedido.simulaFaltas();
 						res.status(202).json(pedido);
+						Flags.set(txId, K.FLAGS.NO_SAP);
+						Flags.set(txId, K.FLAGS.NO_FALTAS);
 						Events.pedidos.emitFinCrearPedido(res, pedido, K.TX_STATUS.NO_SAP);
 					}
 					return;
