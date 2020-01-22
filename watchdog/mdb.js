@@ -9,6 +9,7 @@ const mdbwatchConfig = C.watchdog.mdbwatch;
 const Imongo = require(BASE + 'interfaces/imongo');
 const Isap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events');
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 const retransmitirPedido = require(BASE + 'watchdog/retransmitirPedido').retransmitirPedido;
 
@@ -54,6 +55,7 @@ var interval = setInterval(function() {
 						// CASO CONGESTION: SAP da numero de pedido antes que MDB haga commit
 						else if (tx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO && tx.sapConfirms) {
 							L.xi(txId, 'Recuperando estado de pedido ya que existe confirmación del mismo por SAP', 'mdbwatch');
+							Flags.set(txId, K.FLAGS.STATUS_FIX1);
 							return Events.retransmisiones.emitStatusFix(txId, K.TX_STATUS.OK);
 						}
 						// SAP NO DA CONFIRMACION
@@ -79,6 +81,7 @@ var interval = setInterval(function() {
 								// Puede ser retransmitida manualmente mas adelante.
 								if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
 									L.xw(txId, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
+									Flags.set(txId, K.FLAGS.STATUS_FIX2);
 									Events.retransmisiones.emitStatusFix(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
 									retransmissionsInProgress--;
 									return;
@@ -86,6 +89,7 @@ var interval = setInterval(function() {
 
 								// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
 								L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id ], 'mdbwatch');
+								Flags.set(txId, K.FLAGS.STATUS_FIX3);
 								Events.retransmisiones.emitRecoverConfirmacionPedido(txId, confirmacionPedido);
 								retransmissionsInProgress--;
 								return;

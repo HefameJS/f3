@@ -6,6 +6,7 @@ const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
 const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessage, rtxResult) => {
@@ -33,13 +34,17 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 		}
 	}
 
+	
+	
 
 	// ¿DEBEMOS ACTUALIZAR LA TRANSMISION ORIGINAL?
 	if (!options.noActualizarOriginal && rtxResult) {
 
 		var [actualizar, advertencia] = actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
 
+
 		if (actualizar) {
+			
 			updateQuery['$set'] = {modifiedAt: new Date()};
 			retransmissionData.oldValues = {};
 
@@ -49,11 +54,19 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 			}
 
 			if (advertencia) {
+				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE_WARN);
 				L.xw(originalTxId, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
+			} else {
+				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
 			}
+		} else {
+			Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 		}
 
 	}
+
+	Flags.set(originalTxId, K.FLAGS.WATCHDOG);
+	Flags.finaliza(originalTxId, updateQuery);
 
 	Imongo.commit(updateQuery);
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit', L.saneaCommit(updateQuery)], 'txCommit');
@@ -116,6 +129,9 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 			}
 		};
 
+		Flags.set(txId, K.FLAGS.WATCHDOG);
+		Flags.finaliza(txId, dataUpdate);
+
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix', L.saneaCommit(dataUpdate)], 'txCommit');
 		Imongo.commit(dataUpdate);
 		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, newStatus, ['StatusFix']);
@@ -150,6 +166,9 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 			}
 		}
 	}
+
+	Flags.set(originalTxId, K.FLAGS.WATCHDOG);
+	Flags.finaliza(originalTxId, updateData);
 
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido', L.saneaCommit(updateData)], 'txCommit');
 	Imongo.commit(updateData);
