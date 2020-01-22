@@ -136,7 +136,14 @@ class Pedido {
 	}
 
 	obtenerRespuestaCliente( txId, respuestaSAP ) {
+		
 		var clon = clone(respuestaSAP);
+
+		
+		// Si la respuesta lleva el valor del punto de entrega del cliente, generamos flag
+		if (clon && clon.sap_punto_entrega) {
+			Flags.set(txId, K.FLAGS.PUNTO_ENTREGA, clon.sap_punto_entrega);
+		}
 
 		// Si la respuesta de SAP es un array, no hay que sanearlo
 		if (Array.isArray(clon)) {
@@ -372,6 +379,7 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 }
 
 const estableceFlags = (txId, clon) => {
+
 	if (clon && clon.lineas && clon.lineas.forEach) {
 
 		let totales = {

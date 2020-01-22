@@ -222,7 +222,7 @@ module.exports = {
     },
     POST_CLEAN: {
         PEDIDOS: {
-            removeCab: ['login', 'crc', 'sap_pedidosasociados', 'sap_url_confirmacion', 'sap_pedidoprocesado', 'sap_tipopedido', 'sap_motivo_pedido', 'sap_cliente'],
+            removeCab: ['login', 'crc', 'sap_pedidosasociados', 'sap_url_confirmacion', 'sap_pedidoprocesado', 'sap_tipopedido', 'sap_motivo_pedido', 'sap_cliente', 'sap_punto_entrega'],
             removePos: ['posicion_sap', 'valeestupefacientes', 'sap_ignore'],
             replaceCab: ['numeroPedido', 'codigoCliente', 'direccionEnvio', 'numeroPedidoOrigen', 'tipoPedido', 'codigoAlmacenServicio', 'fechaPedido', 'fechaServicio', 'cargoCooperativo', 'empresaFacturadora'],
             replacePos: ['codigoArticulo', 'codigoUbicacion', 'codigoArticuloSustituyente', 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'valeEstupefaciente', 'fechaLimiteServicio', 'servicioDemorado', 'estadoServicio', 'servicioAplazado', 'descripcionArticulo', 'codigoAlmacenServicio'],
@@ -346,7 +346,8 @@ module.exports = {
         DEMORADO: 'demorado',
         VERSION: 'v',
         TOTALES: 's',
-        TIPO: 't'
+        TIPO: 't',
+        PUNTO_ENTREGA: 'pt'
     },
     TIPIFICADO_FALTAS: {
         "BAJA": "desconocido",
