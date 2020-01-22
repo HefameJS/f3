@@ -80,7 +80,7 @@ exports.saveDevolucion = function (req, res) {
 					return;
 				}
 
-				var clientResponse = devolucion.obtenerRespuestaCliente(sapResponse.body);
+				var clientResponse = devolucion.obtenerRespuestaCliente(txId, sapResponse.body);
 				var [estadoTransmision, numerosDevolucion] = clientResponse.estadoTransmision();
 
 				res.status(201).json(clientResponse);

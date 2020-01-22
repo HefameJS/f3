@@ -78,7 +78,7 @@ class Devolucion {
 
 	}
 
-	obtenerRespuestaCliente(respuestaSAP) {
+	obtenerRespuestaCliente(txId, respuestaSAP) {
 		respuestaSAP.forEach(function (devolucion) {
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
