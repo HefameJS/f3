@@ -96,16 +96,27 @@ const consultaTX = (query, callback) => {
 	limit = Math.min(limit, 100);
 
 
+	
+
 	try {
 		if (filter._id) {
 			if (filter._id.$in) filter._id.$in = filter._id.$in.map( id => new ObjectID(id))
 			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
 			else filter._id = new ObjectID(filter._id);
 		}
+	} catch (e) { console.log(e) }
+	try {
 		if (filter.crc) {
 			if (filter.crc.$in) filter.crc.$in = filter.crc.$in.map(id => new ObjectID(id))
 			else if (filter.crc.$nin) filter.crc.$nin = filter.crc.$nin.map(id => new ObjectID(id))
 			else filter.crc = new ObjectID(filter.crc);
+		}
+	} catch (e) { console.log(e) }
+
+	try {
+		if (filter.createdAt) {
+			if (filter.createdAt.$gte) filter.createdAt.$gte = new Date(filter.createdAt.$gte)
+			if (filter.createdAt.$lte) filter.createdAt.$lte = new Date(filter.createdAt.$lte)
 		}
 	} catch (e) { console.log(e) }
 
