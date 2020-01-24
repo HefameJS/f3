@@ -5,7 +5,9 @@
 const K = global.constants;
 
 var MongoDB = require('mongodb');
+const clone = require('clone');
 var ObjectID = MongoDB.ObjectID;
+
 
 const identificarUsuarioAutenticado = (req) => {
 	if (req.token && req.token.sub) {
@@ -54,10 +56,31 @@ const extendReqAndRes = (req, res) => {
 	return [req, res];
 }
 
+const extendReqForRtx = (req) => {
+	let reqClon = clone(req);
+	reqClon.txId = new ObjectID();
+	reqClon.originIp = 'RTX';
+	let nuevasCabeceras = {};
+	if (reqClon.headers) {
+		['authorization'].forEach( key => {
+			nuevasCabeceras[key] = req.headers[key];
+		})
+	}
+
+	nuevasCabeceras['software-id'] = K.SOFTWARE_ID.RETRANSMISOR
+	reqClon.headers = nuevasCabeceras;
+
+
+	reqClon.identificarClienteSap = () => identificarClienteSap(reqClon);
+	reqClon.identificarUsuarioAutenticado = () => identificarUsuarioAutenticado(reqClon);
+	return reqClon;
+}
+
 
 
 
 
 module.exports = {
-	extendReqAndRes: extendReqAndRes
+	extendReqAndRes: extendReqAndRes,
+	extendReqForRtx
 }

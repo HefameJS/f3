@@ -5,6 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 const Imongo = require(BASE + 'interfaces/imongo');
+const ObjectID = Imongo.ObjectID;
 const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
 const Flags = require(BASE + 'interfaces/cache/flags');
 
@@ -20,10 +21,11 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 		_id: rtxId,
 		timestamp: new Date(),
 		status: rtxStatus,
-		options: options,
-		errorMessage: errorMessage ? errorMessage : undefined,
-		newValues: rtxResult
+		options: options
 	}
+	if (errorMessage) retransmissionData.errorMessage = errorMessage;
+	if (options.ctxId) retransmissionData.cloned = true;
+	if (!options.ctxId && rtxResult) retransmissionData.newValues = rtxResult;
 
 	var updateQuery = {
 		$setOnInsert: {
@@ -34,17 +36,16 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 		}
 	}
 
-	
-	
 
-	// ¿DEBEMOS ACTUALIZAR LA TRANSMISION ORIGINAL?
-	if (!options.noActualizarOriginal && rtxResult) {
-
+	if (options.ctxId) {
+		// La retransmisión ha generado un clon.
+		module.exports.emitFinClonarPedido(originalTxId, options.ctxId, rtxResult)
+		Flags.set(originalTxId, K.FLAGS.CLONADO);
+	}
+	else if (!options.noActualizarOriginal && rtxResult) {
+		// ¿Debemos actualizar la transmisión original?
 		var [actualizar, advertencia] = actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
-
-
 		if (actualizar) {
-			
 			updateQuery['$set'] = {modifiedAt: new Date()};
 			retransmissionData.oldValues = {};
 
@@ -60,12 +61,15 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
 			}
 		} else {
+			Flags.del(originalTxId);
 			Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 		}
 
+	} else {
+		Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 	}
 
-	Flags.set(originalTxId, K.FLAGS.WATCHDOG);
+	
 	Flags.finaliza(originalTxId, updateQuery);
 
 	Imongo.commit(updateQuery);
@@ -114,6 +118,65 @@ const actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
 
 
 
+module.exports.emitInicioClonarPedido = (clonReq, pedido, otxId) => {
+	let ctxId = clonReq.txId;
+
+	var reqData = {
+		$setOnInsert: {
+			_id: ctxId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: K.TX_STATUS.RECEPCIONADO
+		},
+		$set: {
+			
+			crc: new ObjectID(pedido.crc),
+			authenticatingUser: clonReq.identificarUsuarioAutenticado(),
+			client: clonReq.identificarClienteSap(),
+			iid: global.instanceID,
+			type: K.TX_TYPES.PEDIDO,
+			clientRequest: {
+				authentication: clonReq.token,
+				ip: 'RTX',
+				headers: clonReq.headers,
+				body: clonReq.body
+			},
+		}
+	};
+
+	Flags.set(ctxId, K.FLAGS.CLON);
+	Flags.finaliza(ctxId, reqData);
+
+	L.xi(clonReq.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
+	Imongo.commit(reqData);
+	L.yell(clonReq.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [clonReq.identificarUsuarioAutenticado(), pedido.crc, clonReq.body]);
+}
+
+module.exports.emitFinClonarPedido = (oTxId, ctxId, rtxResult) => {
+
+	var resData = {
+		$setOnInsert: {
+			_id: ctxId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+		},
+		$set: {
+			...rtxResult,
+			originalTxId: new ObjectID(oTxId)
+		}
+	}
+
+	Flags.finaliza(ctxId, resData);
+
+	L.xi(ctxId, ['Emitiendo COMMIT para evento FinClonarPedido'], 'txCommit');
+	Imongo.commit(resData);
+	L.yell(ctxId, K.TX_TYPES.PEDIDO, rtxResult.status, [rtxResult]);
+}
+
 
 module.exports.emitStatusFix = (txId, newStatus) => {
 
@@ -129,7 +192,7 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 			}
 		};
 
-		Flags.set(txId, K.FLAGS.WATCHDOG);
+		//Flags.set(txId, K.FLAGS.WATCHDOG);
 		Flags.finaliza(txId, dataUpdate);
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix', L.saneaCommit(dataUpdate)], 'txCommit');
@@ -167,7 +230,7 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 		}
 	}
 
-	Flags.set(originalTxId, K.FLAGS.WATCHDOG);
+	//Flags.set(originalTxId, K.FLAGS.WATCHDOG);
 	Flags.finaliza(originalTxId, updateData);
 
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido', L.saneaCommit(updateData)], 'txCommit');

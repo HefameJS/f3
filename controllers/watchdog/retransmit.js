@@ -18,7 +18,7 @@ exports.retransmitirPedido = function (req, res) {
 		forzarAlmacen: req.query.almacen ? req.query.almacen : undefined,
 		sistemaSAP: req.query.sistemaSAP ? req.query.sistemaSAP : undefined
 	}
-	retransmitirPedido(txId, retransmissionOptions, (err, rtxId) => {
+	retransmitirPedido(txId, retransmissionOptions, (err, rtxId, ctxId) => {
 		res.status(200);
 		if (err) {
 			res.json({
@@ -29,7 +29,7 @@ exports.retransmitirPedido = function (req, res) {
 		}
 		res.json({
 			ok: true,
-			data: { txId, rtxId }
+			data: { otxId: txId, rtxId, ctxId }
 		});
 		return;
 
