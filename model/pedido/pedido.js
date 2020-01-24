@@ -375,7 +375,7 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 			estadoTransmision = K.TX_STATUS.OK;
 		}
 	}  
-	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP ];
+	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP || [] ];
 }
 
 const estableceFlags = (txId, clon) => {
