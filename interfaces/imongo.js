@@ -120,6 +120,7 @@ const consultaTX = (query, callback) => {
 		}
 	} catch (e) { console.log(e) }
 
+	if (filter.$or && filter.$or.length === 0) delete filter.$or;
 
 	if (mongoClient) {
 		let cursor = collections.tx.find(filter);
@@ -339,6 +340,11 @@ const updateFromSqlite = (data, cb) => {
 
 	convertToOidsAndDates(data);
 	var key = data['$setOnInsert']._id;
+
+	if (!data.$set) 		data.$set = {};
+
+	data.$set['flags.' + K.FLAGS.SQLITE] = true;
+	
 
 	if (mongoClient && mongoClient.isConnected()) {
 		collections.tx.updateOne({ _id: key }, data, { upsert: true, w: WRITE_CONCERN }, function (err, res) {
