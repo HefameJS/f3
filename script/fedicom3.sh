@@ -22,6 +22,7 @@ DBDIR=$HOME/db
 PIDDIR=$HOME/pid
 COREPID=$PIDDIR/f3-core-master.pid
 WDPID=$PIDDIR/f3-watchdog.pid
+MONPID=$PIDDIR/f3-monitor.pid
 WORKERNAME=f3-core-worker
 
 mkdir -p $PIDDIR 2>/dev/null
@@ -70,7 +71,7 @@ update() {
     if [ $UPDATE_NPM == 'yes' ]
     then
         cd $SRCDIR
-        npm update
+        npm ci
     fi
 }
 
@@ -79,6 +80,7 @@ start() {
     update
     cd $SRCDIR
     npm run core >/dev/null 2>/dev/null
+    npm run monitor >/dev/null 2>/dev/null
     if [ "$START_WATCHDOG" == "yes" ]
     then
         npm run watchdog >/dev/null 2>/dev/null
@@ -88,6 +90,7 @@ start() {
 stop() {
     kill $(cat $COREPID 2>/dev/null) 2>/dev/null
     kill $(cat $WDPID 2>/dev/null) 2>/dev/null
+    kill $(cat $MONPID 2>/dev/null) 2>/dev/null
 }
 
 status() {
@@ -100,12 +103,11 @@ case $1 in
     'start')
         start 
     ;;
+    'restart')    
+        start 
+    ;;
     'stop')
         stop 
-    ;;
-    'restart')
-        stop
-        start
     ;;
     'status')
         status
