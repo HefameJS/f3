@@ -28,7 +28,7 @@ const MONGODB_OPTIONS = {
 	w: WRITE_CONCERN,
 	wtimeout: 1000,
 	j: 1000,
-	replicaSet: config.mongodb.replicaSet,
+	replicaSet: C.mongodb.replicaSet,
 	useUnifiedTopology: true,
 	appname: global.instanceID + '-log',
 	loggerLevel: 'warn'
@@ -50,7 +50,7 @@ const mongoConnect = () => {
 			mongoDatabase = mongoClient.db(dbName);
 			L.i(['*** Conexión a la base de datos [' + dbName + '] para almacenamiento de logs'], 'mongodb');
 
-			var logCollectionName = config.mongodb.logCollection || 'log';
+			var logCollectionName = C.mongodb.logCollection || 'log';
 			collections.log = mongoDatabase.collection(logCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + logCollectionName + '] para almacenamiento de logs'], 'mongodb');
 		})
