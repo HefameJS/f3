@@ -74,7 +74,6 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
 
     Isap.getAlbaranXML(req.txId, numAlbaranSaneado, clienteSap, (err, sapRes, soapBody) => {
         if (err) {
-            console.log(err);
             L.xe(req.txId, ['Ocurrió un error al solicitar el albarán XML', err]);
             var fedicomError = new FedicomError('ALB-ERR-999', 'Ocurrió un error al buscar el albarán', 500);
             fedicomError.send(res);
@@ -95,6 +94,8 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
             soapResult = soapResult['env:Envelope']['env:Body'][0]['n0:YTC_ALBARAN_XML_HEFAMEResponse'][0];
             var status = soapResult['O_STATUS'][0];
 
+
+
             L.xd(req.txId, ['Se obtuvo el código O_STATUS', status])
             
             if (status !== '00') {
@@ -102,8 +103,15 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
                 var fedicomError = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
                 fedicomError.send(res);
                 return;
+            }
+            else if (!soapResult['TO_EDATA'][0] || !soapResult['TO_EDATA'][0]['item']) {
+                L.xe(req.txId, ['soapResult.TO_EDATA[0].item no existe', soapResult])
+                var fedicomError = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
+                fedicomError.send(res);
+                return;
             } else {
                 var albaranXML = '';
+                
                 soapResult['TO_EDATA'][0]['item'].forEach( (linea) => {
                     albaranXML += linea['ELINEA'][0];
                 });
