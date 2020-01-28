@@ -250,7 +250,7 @@ C.getMongoUrl = (servers, username, password, database, replicaSet) => {
 
 	var servers = servers.join(',');
 
-	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
+	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database + '?replicaSet=' + replicaSet;
 	return url;
 }
 
@@ -264,7 +264,7 @@ C.getMongoLogUrl = (servers, username, password, database, replicaSet) => {
 
 	var servers = servers.join(',');
 
-	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database;
+	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database + '?replicaSet=' + replicaSet;
 	return url;
 }
 

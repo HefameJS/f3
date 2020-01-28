@@ -20,19 +20,15 @@ const WRITE_CONCERN = C.mongodb.writeconcern || 1;
 
 const MONGODB_OPTIONS = {
 	useNewUrlParser: true,
-	/*autoReconnect: true,*/
 	keepAlive: 1000,
 	keepAliveInitialDelay: 1000,
 	connectTimeoutMS: 1500,
 	socketTimeoutMS: 1500,
 	serverSelectionTimeoutMS: 1500,
-	/*reconnectTries: 99999,*/
-	/*reconnectInterval: 5000,*/
 	ha: false,
 	w: C.mongodb.writeconcern || 1,
 	wtimeout: 1000,
 	j: 1000,
-	replicaSet: C.mongodb.replicaSet,
 	useUnifiedTopology: true,
 	appname: global.instanceID,
 	loggerLevel: 'warn'
