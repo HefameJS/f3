@@ -19,16 +19,12 @@ const ObjectID = require('mongodb').ObjectID;
 const WRITE_CONCERN = C.mongodb.writeconcern || 1;
 
 const MONGODB_OPTIONS = {
-	useNewUrlParser: true,
 	keepAlive: 1000,
-	keepAliveInitialDelay: 1000,
-	connectTimeoutMS: 1500,
+	connectTimeoutMS: 5000,
 	socketTimeoutMS: 1500,
-	serverSelectionTimeoutMS: 1500,
-	ha: false,
+	serverSelectionTimeoutMS: 5000,
 	w: C.mongodb.writeconcern || 1,
 	wtimeout: 1000,
-	j: 1000,
 	useUnifiedTopology: true,
 	appname: global.instanceID,
 	loggerLevel: 'warn'

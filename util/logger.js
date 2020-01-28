@@ -15,16 +15,12 @@ const MongoClient = require('mongodb').MongoClient;
 const WRITE_CONCERN = 0;
 
 const MONGODB_OPTIONS = {
-	useNewUrlParser: true,
 	keepAlive: 1000,
-	keepAliveInitialDelay: 1000,
-	connectTimeoutMS: 1500,
-	socketTimeoutMS: 1500,
-	serverSelectionTimeoutMS: 1500,
-	ha: false,
+	connectTimeoutMS: 5000,
+	socketTimeoutMS: 10000,
+	serverSelectionTimeoutMS: 5000,
 	w: WRITE_CONCERN,
 	wtimeout: 1000,
-	j: 1000,
 	useUnifiedTopology: true,
 	appname: global.instanceID + '-log',
 	loggerLevel: 'warn'
