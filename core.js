@@ -16,6 +16,7 @@ var cluster = require('cluster');
 if (cluster.isMaster) {
 
 	process.title = K.PROCESS_TITLES.CORE_MASTER;
+	process.type = K.PROCESS_TYPES.CORE_MASTER;
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 	L.i('*** ID master: ' + global.instanceID , 'cluster');
@@ -38,6 +39,7 @@ if (cluster.isMaster) {
 } else {
 
 	process.title = K.PROCESS_TITLES.CORE_WORKER + '-' + cluster.worker.id;
+	process.type = K.PROCESS_TYPES.CORE_WORKER;
 	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
 
 	const fs = require('fs');
@@ -98,7 +100,12 @@ if (cluster.isMaster) {
 		L.f(ex);
 		process.exit(K.EXIT_CODES.E_HTTPS_SERVER_ERROR);
 	}
+	
 }
+
+
+
+require(BASE + 'util/processRegister').iniciarIntervaloRegistro();
 
 
 cluster.on('exit', function (worker) {

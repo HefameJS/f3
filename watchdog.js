@@ -7,7 +7,7 @@ const K = global.constants;
 
 
 process.title = K.PROCESS_TITLES.WATCHDOG;
-
+process.type = K.PROCESS_TYPES.WATCHDOG;
 
 global.instanceID += '-wd';
 global.config = require(BASE + 'config');
@@ -72,3 +72,6 @@ try {
 
 const mdbWatchdog = require(BASE + 'watchdog/mdb');
 const sqliteWatchdog = require(BASE + 'watchdog/sqlite');
+
+
+require(BASE + 'util/processRegister').iniciarIntervaloRegistro();

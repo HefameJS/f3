@@ -9,7 +9,8 @@ const L = global.logger;
 module.exports = function (app) {
 
 	var controllers = {
-		consultas: require(BASE + 'controllers/monitor/consultasGenericas')
+		consultas: require(BASE + 'controllers/monitor/consultas')
+		
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -45,8 +46,10 @@ module.exports = function (app) {
 
 	/* RUTAS */
 	app.route('/query') 
-		.put(controllers.consultas.consultaMDB);
+		.put(controllers.consultas.consultaTX);
 
+	app.route('/status/proc')
+		.get(controllers.consultas.consultaProcesos);
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {

@@ -7,6 +7,7 @@ const K = global.constants;
 
 
 process.title = K.PROCESS_TITLES.MONITOR;
+process.type = K.PROCESS_TYPES.MONITOR;
 
 
 global.instanceID += '-mon';
@@ -67,3 +68,6 @@ try {
 	L.f(ex);
 	process.exit(K.EXIT_CODES.E_HTTPS_SERVER_ERROR);
 }
+
+
+require(BASE + 'util/processRegister').iniciarIntervaloRegistro();

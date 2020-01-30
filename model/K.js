@@ -315,6 +315,18 @@ module.exports = {
         WATCHDOG: 'f3-watchdog',
         MONITOR: 'f3-monitor'
     },
+    PROCESS_TYPES: {
+        CORE_MASTER: 'core-master',
+        CORE_WORKER: 'core-worker',
+        WATCHDOG: 'watchdog',
+        MONITOR: 'monitor'
+    },
+    PROCESS_REGISTER_INTERVAL: 10000,
+    PROCESS_STATUS: {
+        ALIVE: 0,
+        MISSING: 10,
+        DEAD: 99
+    },
     DOMINIOS: {
         verificar: (dominio) => {
             var DOMINIOS = module.exports.DOMINIOS;

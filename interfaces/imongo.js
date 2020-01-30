@@ -56,17 +56,10 @@ const mongoConnect = () => {
 			collections.discard = mongoDatabase.collection(discardCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
 
-			if (process.title === K.PROCESS_TITLES.WATCHDOG) {
-				var controlCollectionName = C.mongodb.controlCollection || 'control';
-				collections.control = mongoDatabase.collection(controlCollectionName);
-				L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
-			}
+			var controlCollectionName = C.mongodb.controlCollection || 'control';
+			collections.control = mongoDatabase.collection(controlCollectionName);
+			L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
 
-			if (process.title === K.PROCESS_TITLES.MONITOR) {
-				/*var querysCollectionName = C.mongodb.querysCollection || 'querys';
-				collections.querys = mongoDatabase.collection(querysCollectionName);
-				L.i(['*** Conexión a la colección [' + dbName + '.' + querysCollectionName + '] para querys'], 'mongodb');*/
-			}
 		})
 		.catch(error => L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb'));
 }
@@ -88,11 +81,11 @@ const consultaTX = (query, callback) => {
 	limit = Math.min(limit, 100);
 
 
-	
+
 
 	try {
 		if (filter._id) {
-			if (filter._id.$in) filter._id.$in = filter._id.$in.map( id => new ObjectID(id))
+			if (filter._id.$in) filter._id.$in = filter._id.$in.map(id => new ObjectID(id))
 			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
 			else filter._id = new ObjectID(filter._id);
 		}
@@ -333,10 +326,10 @@ const updateFromSqlite = (data, cb) => {
 	convertToOidsAndDates(data);
 	var key = data['$setOnInsert']._id;
 
-	if (!data.$set) 		data.$set = {};
+	if (!data.$set) data.$set = {};
 
 	data.$set['flags.' + K.FLAGS.SQLITE] = true;
-	
+
 
 	if (mongoClient && mongoClient.isConnected()) {
 		collections.tx.updateOne({ _id: key }, data, { upsert: true, w: WRITE_CONCERN }, function (err, res) {
@@ -359,6 +352,9 @@ const updateFromSqlite = (data, cb) => {
 
 };
 
+
+
+
 module.exports = {
 	ObjectID,
 	connectionStatus,
@@ -374,7 +370,9 @@ module.exports = {
 	buffer,
 	updateFromSqlite,
 
-	consultaTX
+	consultaTX,
+
+	coleccionControl: () => collections.control,
 }
 
 function convertToOidsAndDates(data) {
@@ -492,4 +490,5 @@ function mergeDataWithCache(oldData, newData) {
 		return newData;
 	}
 }
+
 
