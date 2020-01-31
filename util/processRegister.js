@@ -44,7 +44,7 @@ const iniciarIntervaloRegistro = () => {
 		if (control) {
 			control.updateOne(filtro, update, { upsert: true, w: 0 })
 				.then(res => {
-					L.t(['Proceso registrado', datos], 'procRegister');
+					// L.t(['Proceso registrado', datos], 'procRegister');
 				})
 				.catch(err => {
 					L.e(['Error al registrar el proceso', err, datos], 'procRegister');
@@ -73,8 +73,6 @@ const limpiarLocales = () => {
 		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER ] }
 	}
 
-
-	
 	let control = Imongo.coleccionControl();
 	if (control) {
 		control.deleteMany(filtro, { w: 0 })
