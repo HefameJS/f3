@@ -212,8 +212,14 @@ try {
 	configVerificator.ldap(C);
 
 	// Configuracion para la instancia de watchdog
-	if (process.title === K.PROCESS_TITLES.WATCHDOG) {
+	if (process.type === K.PROCESS_TYPES.WATCHDOG) {
 		configVerificator.watchdog(C);
+	}
+
+
+	// Configuracion para la instancia de monitor
+	if (process.type === K.PROCESS_TYPES.MONITOR) {
+		configVerificator.monitor(C);
 	}
 
 
