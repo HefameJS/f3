@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -32,6 +32,9 @@ const iniciarIntervaloRegistro = () => {
 			timestamp: Date.fedicomTimestamp()
 		}
 		if (!cluster.isMaster) datos.workerId = cluster.worker.id
+		if (process.type === K.PROCESS_TYPES.WATCHDOG) {
+			datos.priority = C.watchdog.priority || -1
+		}
 
 		let update = { 
 			$setOnInsert: { 
@@ -58,6 +61,55 @@ const iniciarIntervaloRegistro = () => {
 const detenerIntervaloRegistro = () => {
 	if (!idIntervalo) return;
 	clearInterval(idIntervalo);
+}
+
+const obtenerWatchdogMaestro = ( callback ) => {
+
+	let filtro = {
+		type: K.PROCESS_TYPES.WATCHDOG,
+		priority: { $gte: 0 }
+	}
+
+	if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
+		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER] }
+	}
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.find(filtro).sort({ priority: -1 }).toArray()
+			.then(res => {
+				callback(null, res)
+			})
+			.catch(err => {
+				L.e(['Error al obtener el watchdog maestro', err], 'election');
+				callback(err, null)
+			})
+	} else {
+		L.e(['Error al obtener el watchdog maestro. No conectado a MDB'], 'election');
+		callback({error: 'No conectado a MDB'}, null)
+	}
+}
+
+const asumirMaestro = () => {
+
+	let filtro = {
+		type: K.PROCESS_TYPES.WATCHDOG,
+		host: {$ne: OS.hostname()}
+	}
+
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.updateMany(filtro, { $set: { priority: -1} })
+			.then(res => {
+				L.e(['Lanzada petición a la red para obtener el rol de watchdog maestro'], 'election');
+			})
+			.catch(err => {
+				L.e(['Error al asumir el rol de watchdog maestro', err], 'election');
+			})
+	} else {
+		L.e(['Error al asumir el rol de watchdog maestro. No conectado a MDB'], 'election');
+	}
 }
 
 
@@ -92,5 +144,7 @@ const limpiarLocales = () => {
 }
 module.exports = {
 	iniciarIntervaloRegistro,
-	detenerIntervaloRegistro
+	detenerIntervaloRegistro,
+	obtenerWatchdogMaestro,
+	asumirMaestro
 }
