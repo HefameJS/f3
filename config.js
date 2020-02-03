@@ -210,6 +210,7 @@ try {
 	configVerificator.mongodb(C);
 	configVerificator.sqlite(C);
 	configVerificator.ldap(C);
+	
 
 	// Configuracion para la instancia de watchdog
 	if (process.type === K.PROCESS_TYPES.WATCHDOG) {
@@ -220,6 +221,7 @@ try {
 	// Configuracion para la instancia de monitor
 	if (process.type === K.PROCESS_TYPES.MONITOR) {
 		configVerificator.monitor(C);
+		configVerificator.monitor_https(C);
 	}
 
 
