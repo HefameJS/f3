@@ -36,13 +36,7 @@ const iniciarIntervaloRegistro = () => {
 		if (!cluster.isMaster) datos.workerId = cluster.worker.id
 		if (process.type === K.PROCESS_TYPES.WATCHDOG) {
 			datos.priority = C.watchdog.priority || -1
-			if (!vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG] === 0) {
-				datos.maestro = 0;
-			} else if (vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG] < 3) {
-				datos.maestro = 50;
-			} else {
-				datos.maestro = 100;
-			}
+			datos.maestro = vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG]
 		}
 
 		let update = { 
@@ -82,7 +76,7 @@ const asumirMaestro = () => {
 
 	let control = Imongo.coleccionControl();
 	if (control) {
-		control.updateMany(filtro, { $set: { priority: -1} })
+		control.updateMany(filtro, { $set: { priority: -1, maestro: 0} })
 			.then(res => {
 				L.e(['Lanzada petición a la red para obtener el rol de watchdog maestro'], 'election');
 			})
