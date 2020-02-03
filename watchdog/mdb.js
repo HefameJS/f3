@@ -26,22 +26,10 @@ var interval = setInterval(function () {
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 
-	processRegister.obtenerWatchdogMaestro((err, watchdogs) => {
+	processRegister.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
 		if (err) return;
 
-		let maestro = watchdogs[0]
-
-		if (!maestro || maestro.host === os.hostname()) {
-			if (!maestro) L.i(['No hay procesos de watchdog compitiendo por ser maestros'], 'election')
-			if (vecesGanadoMaestro < 2) {
-				vecesGanadoMaestro++
-				L.i(['He ganado la elección de maestro ' + vecesGanadoMaestro + '/3 veces consecutivas'], 'election')
-				return;
-			} else if (vecesGanadoMaestro === 2) {
-				vecesGanadoMaestro++
-				L.i(['He ganado la elección de maestro suficientes veces, comienzo a hacer el trabajo de maestro'], 'election')
-			}
-
+		if (maestro) {
 			retransmissionSearch = true;
 			Imongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size || 10, mdbwatchConfig.minimum_age || 300, (err, candidatos) => {
 				retransmissionSearch = false;
@@ -135,40 +123,7 @@ var interval = setInterval(function () {
 				}
 
 			});
-
 		} else {
-			if (vecesGanadoMaestro > 0) L.t(['Un proceso con mayor prioridad ha reclamado ser maestro', maestro.host], 'election')
-			// L.t(['No soy el maestro, el maestro es', maestro.host], 'election')
-
-			vecesGanadoMaestro = 0
-
-			let diff = Date.fedicomTimestamp() - maestro.timestamp
-			if (diff > 20000) {
-				L.w(['El maestro en ' + maestro.host + ' no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos'], 'election')
-
-				for (let i = 1; i < watchdogs.length; i++) {
-					let candidato = watchdogs[i]
-					if (!candidato) break
-
-					if (candidato.host === os.hostname()) {
-						L.i(['Yo soy el candidato con mayor prioridad, me postulo como próximo maestro'])
-						processRegister.asumirMaestro()
-						break;
-					} else {
-						let diff = Date.fedicomTimestamp() - candidato.timestamp
-						if (diff > 20000) {
-							L.w(['El candidato ' + candidato.host + 'no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos'], 'election')
-						} else {
-							L.i(['Hay un candidato en ' + candidato.host + '  con mayor prioridad. Espero a que de señales de vida', ], 'election')
-							break;
-						}
-					}
-				}
-			}
-
-
-		
-
 
 		}
 

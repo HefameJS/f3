@@ -9,7 +9,9 @@ const cluster = require('cluster');
 const OS = require('os')
 const Imongo = require(BASE + 'interfaces/imongo');
 
-let idIntervalo = null;
+var idIntervalo = null;
+var vecesGanadoMaestro = {}
+
 
 
 const iniciarIntervaloRegistro = () => {
@@ -34,6 +36,13 @@ const iniciarIntervaloRegistro = () => {
 		if (!cluster.isMaster) datos.workerId = cluster.worker.id
 		if (process.type === K.PROCESS_TYPES.WATCHDOG) {
 			datos.priority = C.watchdog.priority || -1
+			if (!vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG] === 0) {
+				datos.maestro = 0;
+			} else if (vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG] < 3) {
+				datos.maestro = 50;
+			} else {
+				datos.maestro = 100;
+			}
 		}
 
 		let update = { 
@@ -63,33 +72,6 @@ const detenerIntervaloRegistro = () => {
 	clearInterval(idIntervalo);
 }
 
-const obtenerWatchdogMaestro = ( callback ) => {
-
-	let filtro = {
-		type: K.PROCESS_TYPES.WATCHDOG,
-		priority: { $gte: 0 }
-	}
-
-	if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
-		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER] }
-	}
-
-	let control = Imongo.coleccionControl();
-	if (control) {
-		control.find(filtro).sort({ priority: -1 }).toArray()
-			.then(res => {
-				callback(null, res)
-			})
-			.catch(err => {
-				L.e(['Error al obtener el watchdog maestro', err], 'election');
-				callback(err, null)
-			})
-	} else {
-		L.e(['Error al obtener el watchdog maestro. No conectado a MDB'], 'election');
-		callback({error: 'No conectado a MDB'}, null)
-	}
-}
-
 const asumirMaestro = () => {
 
 	let filtro = {
@@ -112,6 +94,91 @@ const asumirMaestro = () => {
 	}
 }
 
+
+const obtenerProcesoMaestro = (tipoProceso, callback) => {
+
+	let filtro = {
+		type: tipoProceso,
+		priority: { $gte: 0 }
+	}
+
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.find(filtro).sort({ priority: -1 }).toArray()
+			.then(res => {
+				callback(null, res)
+			})
+			.catch(err => {
+				L.e(['Error al obtener el proceso maestro', err], 'election');
+				callback(err, null)
+			})
+	} else {
+		L.e(['Error al obtener el proceso maestro. No conectado a MDB'], 'election');
+		callback({ error: 'No conectado a MDB' }, null)
+	}
+}
+
+const soyMaestro = (tipoProceso, callback) => {
+	obtenerProcesoMaestro(tipoProceso, (err, watchdogs) => {
+		if (err) {
+			callback(err, false)
+			return;
+		}
+
+		let maestro = watchdogs[0]
+
+		if (!maestro || maestro.host === OS.hostname()) {
+			if (!maestro) L.i(['No hay procesos de watchdog compitiendo por ser maestros'], 'election')
+			if (vecesGanadoMaestro[tipoProceso] < 2) {
+				vecesGanadoMaestro[tipoProceso]++
+				L.i(['He ganado la elección de maestro ' + vecesGanadoMaestro[tipoProceso] + '/3 veces consecutivas'], 'election')
+				callback(null, false);
+				return;
+			} else if (vecesGanadoMaestro[tipoProceso] === 2) {
+				vecesGanadoMaestro[tipoProceso]++
+				L.i(['He ganado la elección de maestro suficientes veces, comienzo a hacer el trabajo de maestro'], 'election')
+			}
+			callback(null, true);
+			return;
+		} else {
+			if (vecesGanadoMaestro[tipoProceso] > 0) L.t(['Un proceso con mayor prioridad ha reclamado ser maestro', maestro.host], 'election')
+			// L.t(['No soy el maestro, el maestro es', maestro.host], 'election')
+
+			vecesGanadoMaestro[tipoProceso] = 0
+
+			let diff = Date.fedicomTimestamp() - maestro.timestamp
+			if (diff > 20000) {
+				L.w(['El maestro en ' + maestro.host + ' no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos'], 'election')
+
+				for (let i = 1; i < watchdogs.length; i++) {
+					let candidato = watchdogs[i]
+					if (!candidato) {break;}
+
+					if (candidato.host === OS.hostname()) {
+						L.i(['Yo soy el candidato con mayor prioridad, me postulo como próximo maestro'])
+						asumirMaestro()
+						callback(null, false)
+						return;
+					} else {
+						let diff = Date.fedicomTimestamp() - candidato.timestamp
+						if (diff > 20000) {
+							L.w(['El candidato ' + candidato.host + 'no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos. Probamos el siguiente'], 'election')
+						} else {
+							L.i(['Hay un candidato en ' + candidato.host + '  con mayor prioridad. Espero a que de señales de vida',], 'election')
+							callback(null, false)
+							return;
+						}
+					}
+				}
+			}
+		}
+
+
+
+
+	})
+}
 
 const limpiarLocales = () => {
 	if (process.type === K.PROCESS_TYPES.CORE_WORKER) return;
@@ -145,6 +212,5 @@ const limpiarLocales = () => {
 module.exports = {
 	iniciarIntervaloRegistro,
 	detenerIntervaloRegistro,
-	obtenerWatchdogMaestro,
-	asumirMaestro
+	soyMaestro
 }
