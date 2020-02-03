@@ -73,7 +73,7 @@ exports.ping = (sapSystem, callback) => {
 			return;
 		}
 
-		callback(null, true);
+		callback(null, true, sapSystem);
 
 	});
 }

@@ -1,11 +1,12 @@
 'use strict';
 const BASE = global.BASE;
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 const Tokens = require(BASE + 'util/tokens');
 const Imongo = require(BASE + 'interfaces/imongo');
+const Isap = require(BASE + 'interfaces/isap')
 
 const consultaTX = function (req, res) {
 	var txId = req.txId;
@@ -28,15 +29,11 @@ const consultaTX = function (req, res) {
 	Imongo.consultaTX(query, (err, resultado) => {
 		if (err) {
 			console.log(err);
-			res.status(500).json({ error: (err.error || err.message) });
+			res.status(500).json({ ok: false, error: (err.error || err.message) });
 			return;
 		}
-		res.status(200).json(resultado);
+		res.status(200).json({ ok: true, ...resultado });
 	});
-
-
-
-	
 
 }
 
@@ -60,21 +57,40 @@ const consultaProcesos = function (req, res) {
 		control.find({}).toArray()
 			.then(procesos => {
 				L.xi(txId, ['Obtenida lista de procesos', procesos]);
-				res.status(200).json({ data: procesos });
+				res.status(200).json({ ok: true, data: procesos });
 			})
 			.catch(err => {
 				L.xe(txId, ['Error al obtener la lista de procesos', err]);
-				res.status(500).json({ error: (err.error || err.message) });
+				res.status(500).json({ ok: false, error: (err.error || err.message) });
 			})
 	} else {
 		L.xe(txId, ['Error al obtener la lista de procesos. No conectado a MDB', datos]);
-		res.status(500).json({ error: "No se pudo obtener la lista de procesos." });
+		res.status(500).json({ ok: false, error: "No se pudo obtener la lista de procesos." });
 
 	}
 
 }
 
+
+const consultaSap = function (req, res) {
+	let sapSysName = req.query.sapSystem || C.sap_systems.default;
+
+	Isap.ping(sapSysName, (err, status, sapSystem) => {
+		if (!err) {
+			res.status(200).json({ ok: true, data: { available: status, info: { baseUrl: sapSystem.preCalculatedBaseUrl, name: sapSysName } } });
+		} else {
+			res.status(200).json({ ok: true, data: { available: status, error: err } });
+		}
+	});
+}
+
+
+
+
+
 module.exports = {
 	consultaTX,
-	consultaProcesos
+	consultaProcesos,
+	consultaSap,
+	mongodb: require(BASE + 'controllers/monitor/consultasMongoDb')
 }

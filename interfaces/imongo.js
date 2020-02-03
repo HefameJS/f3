@@ -11,7 +11,7 @@ const dbName = C.mongodb.database;
 var memCache = require('memory-cache');
 const commitBuffer = new memCache.Cache();
 const iSqlite = require(BASE + 'interfaces/isqlite');
-
+const MongoMonitor = require(BASE + 'interfaces/imongo/monitoring');
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
@@ -19,9 +19,7 @@ const ObjectID = require('mongodb').ObjectID;
 const WRITE_CONCERN = C.mongodb.writeconcern || 1;
 
 const MONGODB_OPTIONS = {
-	keepAlive: 1000,
 	connectTimeoutMS: 5000,
-	socketTimeoutMS: 1500,
 	serverSelectionTimeoutMS: 5000,
 	w: C.mongodb.writeconcern || 1,
 	wtimeout: 1000,
@@ -31,9 +29,9 @@ const MONGODB_OPTIONS = {
 };
 
 
-var mongoConnection = null;
 var mongoClient = null;
-var mongoDatabase = null;
+var fedicomDatabase = null;
+
 var collections = {
 	tx: null,
 	discard: null,
@@ -41,23 +39,30 @@ var collections = {
 };
 
 const mongoConnect = () => {
-	mongoConnection = new MongoClient(mongourl, MONGODB_OPTIONS);
-	mongoConnection.connect()
+
+	if (mongoClient && mongoClient.close) {
+		try {
+			mongoClient.close().catch((err) => {})
+		} catch (e) {}
+	}
+
+	mongoClient = new MongoClient(mongourl, MONGODB_OPTIONS);
+	mongoClient.connect()
 		.then((client) => {
 			mongoClient = client;
-			mongoDatabase = mongoClient.db(dbName);
+			fedicomDatabase = mongoClient.db(dbName);
 			L.i(['*** Conexión a la base de datos [' + dbName + ']'], 'mongodb');
 
 			var txCollectionName = C.mongodb.txCollection || 'tx';
-			collections.tx = mongoDatabase.collection(txCollectionName);
+			collections.tx = fedicomDatabase.collection(txCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + txCollectionName + '] para almacenamiento de transmisiones'], 'mongodb');
 
 			var discardCollectionName = C.mongodb.discardCollection || 'discard';
-			collections.discard = mongoDatabase.collection(discardCollectionName);
+			collections.discard = fedicomDatabase.collection(discardCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + discardCollectionName + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
 
 			var controlCollectionName = C.mongodb.controlCollection || 'control';
-			collections.control = mongoDatabase.collection(controlCollectionName);
+			collections.control = fedicomDatabase.collection(controlCollectionName);
 			L.i(['*** Conexión a la colección [' + dbName + '.' + controlCollectionName + '] para control'], 'mongodb');
 
 		})
@@ -65,6 +70,7 @@ const mongoConnect = () => {
 }
 
 mongoConnect();
+
 
 /**
  * 
@@ -79,9 +85,6 @@ const consultaTX = (query, callback) => {
 	let skip = query.skip || 0;
 	let limit = query.limit || 100;
 	limit = Math.min(limit, 100);
-
-
-
 
 	try {
 		if (filter._id) {
@@ -140,7 +143,7 @@ const consultaTX = (query, callback) => {
 }
 
 const connectionStatus = (cb) => {
-	if (mongoClient && mongoClient.isConnected()) {
+	if (mongoClient) {
 		collections.tx.findOne({}, { _id: 1 }, (err, res) => {
 			if (err) {
 				mongoConnect();
@@ -153,6 +156,7 @@ const connectionStatus = (cb) => {
 		return cb(false);
 	}
 }
+
 const findTxById = (myId, id, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		try {
@@ -168,6 +172,7 @@ const findTxById = (myId, id, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
+
 const findTxByCrc = (myId, crc, cb) => {
 
 	if (mongoClient && mongoClient.isConnected()) {
@@ -188,6 +193,7 @@ const findTxByCrc = (myId, crc, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
+
 const findCrcDuplicado = (crc, cb) => {
 
 	if (mongoClient && mongoClient.isConnected()) {
@@ -203,6 +209,7 @@ const findCrcDuplicado = (crc, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
+
 const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.DEVOLUCION, numerosDevolucion: numeroDevolucion }], 'mongodb');
@@ -212,6 +219,7 @@ const findTxByNumeroDevolucion = (myId, numeroDevolucion, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
+
 const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		L.xd(myId, ['Consulta MDB', { type: K.TX_TYPES.PEDIDO, numerosPedido: numeroPedido }], 'mongodb');
@@ -221,6 +229,7 @@ const findTxByNumeroPedido = (myId, numeroPedido, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 };
+
 const findConfirmacionPedidoByCRC = (crc, cb) => {
 	if (mongoClient && mongoClient.isConnected()) {
 		crc = crc.substr(0, 8).toUpperCase();
@@ -254,6 +263,7 @@ const findCandidatosRetransmision = (limit, minimumAge, cb) => {
 		cb({ error: "No conectado a MongoDB" }, null);
 	}
 }
+
 
 const commitDiscard = (data) => {
 
@@ -352,9 +362,6 @@ const updateFromSqlite = (data, cb) => {
 
 };
 
-
-
-
 module.exports = {
 	ObjectID,
 	connectionStatus,
@@ -372,7 +379,14 @@ module.exports = {
 
 	consultaTX,
 
+	cliente: () => mongoClient,
+	database: () => fedicomDatabase,
+	coleccionTx: () => collections.tx,
+	coleccionDiscard: () => collections.discard,
 	coleccionControl: () => collections.control,
+
+	monitor: MongoMonitor
+
 }
 
 function convertToOidsAndDates(data) {

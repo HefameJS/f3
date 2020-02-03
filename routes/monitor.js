@@ -46,10 +46,32 @@ module.exports = function (app) {
 
 	/* RUTAS */
 	app.route('/query') 
-		.put(controllers.consultas.consultaTX);
+		.put(controllers.consultas.consultaTX)
 
 	app.route('/status/proc')
-		.get(controllers.consultas.consultaProcesos);
+		.get(controllers.consultas.consultaProcesos)
+
+	app.route('/status/sap')
+		.get(controllers.consultas.consultaSap)
+
+
+	app.route('/status/mdb/col')
+		.get(controllers.consultas.mongodb.getNombresColecciones)
+
+	app.route('/status/mdb/col/:colName')
+		.get(controllers.consultas.mongodb.getColeccion)
+
+	app.route('/status/mdb/db')
+		.get(controllers.consultas.mongodb.getDatabase)
+
+	app.route('/status/mdb/op')
+		.get(controllers.consultas.mongodb.getOperaciones)
+
+	app.route('/status/mdb/rs')
+		.get(controllers.consultas.mongodb.getReplicaSet)
+
+	app.route('/status/mdb/log')
+		.get(controllers.consultas.mongodb.getLogs)
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
