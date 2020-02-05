@@ -66,21 +66,21 @@ exports.saveDevolucion = function (req, res) {
 				if (sapError) {
 					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
 						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-						L.xe(txId, ['Error al grabar la devolución', sapError]);
+						L.xe(req.txId, ['Error al grabar la devolución', sapError]);
 						var responseBody = fedicomError.send(res);
 						Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 					}
 					else {
-						L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
+						L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
 						var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
 						var responseBody = fedicomError.send(res)
-						Flags.set(txId, K.FLAGS.NO_SAP)
+						Flags.set(req.txId, K.FLAGS.NO_SAP)
 						Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
 					}
 					return;
 				}
 
-				var clientResponse = devolucion.obtenerRespuestaCliente(txId, sapResponse.body);
+				var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
 				var [estadoTransmision, numerosDevolucion] = clientResponse.estadoTransmision();
 
 				res.status(201).json(clientResponse);
