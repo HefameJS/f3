@@ -252,7 +252,7 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 		}
 	}
 
-	Flags.finaliza(res.txId, resData);
+	Flags.finaliza(res.txId, data);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	Imongo.commit(data);
