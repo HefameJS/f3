@@ -33,11 +33,15 @@ const iniciarIntervaloRegistro = () => {
 			status: K.PROCESS_STATUS.ALIVE,
 			timestamp: Date.fedicomTimestamp()
 		}
+
 		if (!cluster.isMaster) datos.workerId = cluster.worker.id
 		if (process.type === K.PROCESS_TYPES.WATCHDOG) {
 			datos.priority = C.watchdog.priority || -1
 			datos.maestro = vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG]
+		} else if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
+			datos.childrens = Math.max(parseInt(C.workers), 1) || (require('os').cpus().length - 1 || 1);
 		}
+
 
 		let update = { 
 			$setOnInsert: { 
