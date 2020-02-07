@@ -67,7 +67,8 @@
 		"sqlite": {
 			"interval": 5,
 			"maxRetries": 10
-		}
+		},
+		"priority": 100
 	},
 	"ldap": {
 		"url": "ldap://ad.domain.com",
