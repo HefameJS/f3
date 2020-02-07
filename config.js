@@ -172,6 +172,16 @@ var configVerificator = {
 		}
 		this.monitor_https(config);
 	},
+	monitor_http: function (config) {
+		if (!config.monitor.http) {
+			console.error("No se ha definido el nodo MONITOR - HTTP (monitor.http)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTP);
+		}
+		if (!config.monitor.http.port) {
+			console.error("No se ha definido el puerto para MONITOR - HTTP (monitor.http.port)");
+			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTP_PORT);
+		}
+	},
 	monitor_https: function (config) {
 		if (!config.monitor.https) {
 			console.error("No se ha definido el nodo MONITOR - HTTPS (monitor.https)");
@@ -226,6 +236,7 @@ try {
 	// Configuracion para la instancia de monitor
 	if (process.type === K.PROCESS_TYPES.MONITOR) {
 		configVerificator.monitor(C);
+		configVerificator.monitor_http(C);
 		configVerificator.monitor_https(C);
 	}
 

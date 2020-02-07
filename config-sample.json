@@ -81,6 +81,9 @@
 			"cert": "ssl/server.crt",
 			"key": "ssl/server.key",
 			"passphrase": ""
+		},
+		"http": {
+				"port": 8080
 		}
 	}
 }

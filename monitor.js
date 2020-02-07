@@ -30,6 +30,7 @@ const fs = require('fs');
 const http = require('http');
 const https = require('https');
 var httpsConf = C.monitor.https;
+var httpConf = C.monitor.http;
 
 try {
 	httpsConf.ssl = {
@@ -67,6 +68,22 @@ try {
 	L.f("Ocurrió un error al arrancar el servicio HTTPS");
 	L.f(ex);
 	process.exit(K.EXIT_CODES.E_HTTPS_SERVER_ERROR);
+}
+
+
+
+try {
+	var server = http.createServer(app).listen(httpConf.port, function () {
+		L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
+	}).on('error', function (err) {
+		L.e("Ocurrió un error al arrancar el servicio HTTP");
+		L.e(err);
+		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
+	});
+} catch (ex) {
+	L.f("Ocurrió un error al arrancar el servicio HTTP");
+	L.f(ex);
+	process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 }
 
 
