@@ -1,4 +1,5 @@
 {
+	"production": false, 
 	"workers": 8,
 	"pid": "/var/run/f3",
 	"depurar_transmisiones": false,

@@ -308,7 +308,9 @@ module.exports = {
         E_MONITOR_NO_HTTPS_PORT: 39,
         E_MONITOR_NO_HTTPS_CERT: 40,
         E_MONITOR_NO_HTTPS_KEY: 41,
-        E_MONITOR_NO_HTTPS_PASSPHRASE: 42
+        E_MONITOR_NO_HTTPS_PASSPHRASE: 42,
+
+        E_NO_PRODUCTION_DEFINED: 43
     },
     PROCESS_TITLES: {
         CORE_MASTER: 'f3-core-master',

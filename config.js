@@ -203,6 +203,11 @@ try {
 
 	// Verificando la configuración mínima.
 	// Los siguientes métodos detienen la ejecución en caso de fallo
+
+	if (!(C.production === true || C.production === false)) {
+		console.error("No se ha definido el nodo PRODUCTION (production) a TRUE o FALSE");
+		process.exit(K.EXIT_CODES.E_NO_PRODUCTION_DEFINED);
+	}
 	configVerificator.sapSystems(C);
 	configVerificator.http(C);
 	configVerificator.https(C);
