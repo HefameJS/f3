@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -26,17 +26,39 @@ exports.savePedido = function (req, res) {
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
+
+	// Comprobación de si el pedido es una simulacion hecha desde la APP
+	// En cuyo caso se aceptará si el token que viene es del dominio HEFAME, tiene el permiso 'F3_SIMULADOR' y
+	// el concentrador está en modo desarrollo (config.produccion === false)
 	if (req.token.aud === K.DOMINIOS.HEFAME) {
-		var error = new FedicomError('AUTH-005', 'No tienes permisos para realizar esta acción', 403);
-		var responseBody = error.send(res);
-		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
-		return;
+		if (C.production === true) {
+			L.xw(txId, ['El concentrador está en PRODUCCION. No se admiten pedidos simulados.', req.token.perms])
+			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten pedidos simulados.', 403);
+			var responseBody = error.send(res);
+			Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
+			return;
+		}
+		if (!req.token.perms || req.token.perms.includes('F3_SIMULADOR')) {
+			L.xw(txId, ['El usuario no tiene los permisos necesarios para realizar un pedido', req.token.perms])
+			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			var responseBody = error.send(res);
+			Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
+			return;
+		} else {
+			L.xi(txId, ['El pedido es simulado por un usuario del dominio', req.token.sub ])
+			let newToken = Tokens.generateJWT(txId, req.body.authReq, [])
+			L.xd(txId, ['Se ha generado un token para el pedido simulado. Se sustituye por el de la petición simulada', newToken])
+			req.headers['authorization'] = 'Bearer ' + newToken
+			req.token = Tokens.verifyJWT(newToken, txId);
+		}
 	}
-	L.xi(txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
+
+
+	L.xi(txId, ['El token transmitido resultó VALIDO'], 'txToken');
 
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
-  		var pedido = new Pedido(req);
+		var pedido = new Pedido(req);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(txId, fedicomError);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
@@ -62,7 +84,7 @@ exports.savePedido = function (req, res) {
 		} else {
 			Events.pedidos.emitInicioCrearPedido(req, pedido);
 			pedido.limpiarEntrada(req.txId);
-			
+
 			Isap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
 				if (sapError) {
 					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -85,7 +107,7 @@ exports.savePedido = function (req, res) {
 
 				var clientResponse = pedido.obtenerRespuestaCliente(txId, sapResponse.body);
 				var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
-				
+
 				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
 				res.status(responseHttpStatusCode).json(clientResponse);
 				Events.pedidos.emitFinCrearPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
@@ -126,7 +148,7 @@ exports.getPedido = function (req, res) {
 		L.xi(req.txId, ['Se recupera la transmisión de la base de datos', dbTx]);
 
 
-		if (dbTx && dbTx.clientResponse)	{
+		if (dbTx && dbTx.clientResponse) {
 			// TODO: Autorizacion
 			var originalBody = dbTx.clientResponse.body;
 			res.status(200).json(originalBody);
