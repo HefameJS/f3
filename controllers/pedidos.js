@@ -38,7 +38,7 @@ exports.savePedido = function (req, res) {
 			Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
 			return;
 		}
-		if (!req.token.perms || req.token.perms.includes('F3_SIMULADOR')) {
+		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
 			L.xw(txId, ['El usuario no tiene los permisos necesarios para realizar un pedido', req.token.perms])
 			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
 			var responseBody = error.send(res);
