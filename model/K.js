@@ -179,6 +179,7 @@ module.exports = {
                 login: { ignore: true },
                 crc: { ignore: true },
                 sapSystem: { ignore: true },
+                authReq: { ignore: true },
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 numeroDevolucion: { remove: true },
@@ -198,6 +199,7 @@ module.exports = {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
                 codigoArticulo: { ignore: true },
                 sap_ignore: { ignore: true },
+                crc: { ignore: true },
 
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones

@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -24,13 +24,34 @@ exports.saveDevolucion = function (req, res) {
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
+
+	// Comprobación de si la devolución es una simulacion hecha desde la APP
+	// En cuyo caso se aceptará si el token que viene es del dominio HEFAME, tiene el permiso 'F3_SIMULADOR' y
+	// el concentrador está en modo desarrollo (config.produccion === false)
 	if (req.token.aud === K.DOMINIOS.HEFAME) {
-		var error = new FedicomError('AUTH-005', 'No tienes permisos para realizar esta acción', 403);
-		var responseBody = error.send(res);
-		Events.pedidos.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
-		return;
+		if (C.production === true) {
+			L.xw(req.txId, ['El concentrador está en PRODUCCION. No se admiten devoluciones simuladas.', req.token.perms])
+			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten devoluciones simuladas.', 403);
+			var responseBody = error.send(res);
+			Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
+			return;
+		}
+		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
+			L.xw(req.txId, ['El usuario no tiene los permisos necesarios para realizar una devolución', req.token.perms])
+			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			var responseBody = error.send(res);
+			Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
+			return;
+		} else {
+			L.xi(req.txId, ['La devolución es simulada por un usuario del dominio', req.token.sub])
+			let newToken = Tokens.generateJWT(req.txId, req.body.authReq, [])
+			L.xd(req.txId, ['Se ha generado un token para la devolución simulada. Se sustituye por el de la petición simulada', newToken])
+			req.headers['authorization'] = 'Bearer ' + newToken
+			req.token = Tokens.verifyJWT(newToken, req.txId);
+		}
 	}
-	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token], 'txToken');
+
+	L.xi(req.txId, ['El token transmitido resultó VALIDO'], 'txToken');
 
 
 	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
