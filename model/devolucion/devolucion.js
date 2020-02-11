@@ -41,15 +41,30 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-		var [lineas, crc] = parseLines( json, req.txId );
+		var [lineas, lineasExcluidas, crc] = parseLines(json, req.txId);
 		this.lineas = lineas;
+		this.lineasExcluidas = lineasExcluidas
 		this.crc = crc;
 
+
+
 		// GENERACION DE CRC
-		var timestamp = Math.floor(Date.fedicomTimestamp() / 100000); // Con esto redondeamos mas o menos a 16.6 minutos
+		var timestamp = Math.floor(Date.fedicomTimestamp() / 10000); // Con esto redondeamos mas o menos a 100 segundos
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.crc + this.codigoCliente + timestamp).digest('hex').substring(0,24).toUpperCase();
+		this.crc = hash.update(this.crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
+
+	}
+
+	contienteLineasValidas() {
+		return this.lineas.length > 0
+	}
+
+	generarRespuestaExclusiones() {
+		return {
+			codigoCliente: this.codigoCliente,
+			lineas: this.lineasExcluidas
+		}
 	}
 
 	limpiarEntrada(txId) {
@@ -83,8 +98,20 @@ class Devolucion {
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
-		respuestaSAP.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP) }
-		respuestaSAP.isRechazadoSap = () => true;
+
+		let estado = K.TX_STATUS.OK;
+
+		// Si se excluyeron lineas, generamos una devolución sin número donde incluimos 
+		// las lineas que quedaron excluidas y el motivo
+		if (this.lineasExcluidas.length > 0) {
+			respuestaSAP.push( this.generarRespuestaExclusiones() );
+			estado = K.TX_STATUS.DEVOLUCION.PARCIAL
+		} 
+
+		
+
+		respuestaSAP.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP, estado) }
+		respuestaSAP.isRechazadoSap = () => false;
 		return respuestaSAP;
 	}
 
@@ -93,6 +120,7 @@ class Devolucion {
 
 const parseLines = (json, txId) => {
 	var lineas = [];
+	var lineasExcluidas = [];
 	var crc = '';
 	var ordenes = [];
 
@@ -100,9 +128,19 @@ const parseLines = (json, txId) => {
 
 		json.lineas.forEach(function (linea, i) {
 			var nuevaLinea = new LineaDevolucion(linea, txId, i);
-			lineas.push(nuevaLinea);
+
 			var hash = crypto.createHash('sha1');
 			crc = hash.update(crc + nuevaLinea.crc).digest('hex');
+
+			if (nuevaLinea.excluir) {
+				delete nuevaLinea.crc;
+				delete nuevaLinea.excluir;
+				lineasExcluidas.push(nuevaLinea);
+
+			} else {
+				lineas.push(nuevaLinea);
+			}
+			
 
 			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
 			if (nuevaLinea.orden) {
@@ -123,7 +161,7 @@ const parseLines = (json, txId) => {
 			}
 		});
 
-		return [lineas, crc];
+		return [lineas, lineasExcluidas, crc];
 	}
 	return rellena(lineas);
 }
@@ -198,9 +236,9 @@ const SaneadorDevolucionesSAP = {
 }
 
 
-const obtenerEstadoDeRespuestaSap = (sapBody) => {
+const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 
-	var estadoTransmision = K.TX_STATUS.OK;
+	var estadoTransmision = estado || K.TX_STATUS.OK;
 
 	var numerosDevolucion = [];
 	if (sapBody && sapBody.length > 0) {

@@ -10,7 +10,7 @@ const Events = require(BASE + 'interfaces/events');
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/devolucion');
 const Tokens = require(BASE + 'util/tokens');
-const Flags = require(BASE + 'interfaces/cache/flags')
+const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 exports.saveDevolucion = function (req, res) {
@@ -30,23 +30,23 @@ exports.saveDevolucion = function (req, res) {
 	// el concentrador está en modo desarrollo (config.produccion === false)
 	if (req.token.aud === K.DOMINIOS.HEFAME) {
 		if (C.production === true) {
-			L.xw(req.txId, ['El concentrador está en PRODUCCION. No se admiten devoluciones simuladas.', req.token.perms])
+			L.xw(req.txId, ['El concentrador está en PRODUCCION. No se admiten devoluciones simuladas.', req.token.perms]);
 			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten devoluciones simuladas.', 403);
 			var responseBody = error.send(res);
 			Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
 			return;
 		}
 		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
-			L.xw(req.txId, ['El usuario no tiene los permisos necesarios para realizar una devolución', req.token.perms])
+			L.xw(req.txId, ['El usuario no tiene los permisos necesarios para realizar una devolución', req.token.perms]);
 			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
 			var responseBody = error.send(res);
 			Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.NO_AUTORIZADO);
 			return;
 		} else {
-			L.xi(req.txId, ['La devolución es simulada por un usuario del dominio', req.token.sub])
-			let newToken = Tokens.generateJWT(req.txId, req.body.authReq, [])
-			L.xd(req.txId, ['Se ha generado un token para la devolución simulada. Se sustituye por el de la petición simulada', newToken])
-			req.headers['authorization'] = 'Bearer ' + newToken
+			L.xi(req.txId, ['La devolución es simulada por un usuario del dominio', req.token.sub]);
+			let newToken = Tokens.generateJWT(req.txId, req.body.authReq, []);
+			L.xd(req.txId, ['Se ha generado un token para la devolución simulada. Se sustituye por el de la petición simulada', newToken]);
+			req.headers['authorization'] = 'Bearer ' + newToken;
 			req.token = Tokens.verifyJWT(newToken, req.txId);
 		}
 	}
@@ -59,13 +59,22 @@ exports.saveDevolucion = function (req, res) {
   		var devolucion = new Devolucion(req);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(req.txId, ['Ocurrió un error al analizar la petición', fedicomError])
+		L.xe(req.txId, ['Ocurrió un error al analizar la petición', fedicomError]);
 		var responseBody = fedicomError.send(res);
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
+	
 
+	if (!devolucion.contienteLineasValidas()) {
+		L.xd(req.txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
+		var responseBody = [devolucion.generarRespuestaExclusiones()];
+		res.status(400).json(responseBody);
+		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		return;
+	}
+
+	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
 
 	Imongo.findCrcDuplicado(devolucion.crc, function (err, dbTx) {
 		if (err) {
@@ -104,7 +113,9 @@ exports.saveDevolucion = function (req, res) {
 				var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
 				var [estadoTransmision, numerosDevolucion] = clientResponse.estadoTransmision();
 
-				res.status(201).json(clientResponse);
+				let codigoHttp = estadoTransmision === K.TX_STATUS.DEVOLUCION.PARCIAL ? 206 : 201
+
+				res.status(codigoHttp).json(clientResponse);
 				Events.devoluciones.emitFinCrearDevolucion(res, clientResponse, estadoTransmision, { numerosDevolucion });
 
 			});

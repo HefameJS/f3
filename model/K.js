@@ -30,6 +30,9 @@ module.exports = {
             ESPERA_AGOTADA: 8100,
             SIN_NUMERO_PEDIDO_SAP: 9140,
         },
+        DEVOLUCION: {
+            PARCIAL: 29000
+        },
         CONFIRMACION_PEDIDO: {
             NO_ASOCIADA_A_PEDIDO: 9004,
         },
@@ -180,6 +183,7 @@ module.exports = {
                 crc: { ignore: true },
                 sapSystem: { ignore: true },
                 authReq: { ignore: true },
+                lineasExcluidas: {ignore: true},
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 numeroDevolucion: { remove: true },
@@ -258,8 +262,8 @@ module.exports = {
             removePosIfFalse: []
         }
     },
-    PROTOCOL_VERSION: '3.3.8',
-    SERVER_VERSION: '0.9.2',
+    PROTOCOL_VERSION: '3.4.0',
+    SERVER_VERSION: '0.9.3',
     TX_VERSION: 902,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
