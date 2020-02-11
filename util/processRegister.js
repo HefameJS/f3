@@ -128,7 +128,8 @@ const soyMaestro = (tipoProceso, callback) => {
 
 		if (!maestro || maestro.host === OS.hostname()) {
 			if (!maestro) L.i(['No hay procesos de watchdog compitiendo por ser maestros'], 'election')
-			if (vecesGanadoMaestro[tipoProceso] < 2) {
+			if (!vecesGanadoMaestro[tipoProceso] || vecesGanadoMaestro[tipoProceso] < 2) {
+				if (!vecesGanadoMaestro[tipoProceso]) vecesGanadoMaestro[tipoProceso] = 0
 				vecesGanadoMaestro[tipoProceso]++
 				L.i(['He ganado la elección de maestro ' + vecesGanadoMaestro[tipoProceso] + '/3 veces consecutivas'], 'election')
 				callback(null, false);
