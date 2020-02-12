@@ -73,6 +73,11 @@ module.exports = function (app) {
 	app.route('/status/mdb/log')
 		.get(controllers.consultas.mongodb.getLogs)
 
+
+	app.route('/status/apache/balanceadores')
+		.get(controllers.consultas.apache.consultaBalanceadorApache)
+		.put(controllers.consultas.apache.actualziaBalanceadorApache)
+
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
 

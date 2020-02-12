@@ -92,5 +92,6 @@ module.exports = {
 	consultaTX,
 	consultaProcesos,
 	consultaSap,
-	mongodb: require(BASE + 'controllers/monitor/consultasMongoDb')
+	mongodb: require(BASE + 'controllers/monitor/consultasMongoDb'),
+	apache: require(BASE + 'controllers/monitor/consultasApache')
 }
