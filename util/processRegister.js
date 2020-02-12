@@ -208,8 +208,31 @@ const limpiarLocales = () => {
 
 
 }
+
+const consultaProcesos = (tipoProceso, callback) => {
+	let filtro = {
+		type: tipoProceso,
+		priority: { $gte: 0 }
+	}
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.find(filtro).toArray()
+			.then(res => {
+				callback(null, res)
+			})
+			.catch(err => {
+				L.e(['Error al obtener la lista de procesos', err]);
+				callback(err, null)
+			})
+	} else {
+		L.e(['Error al obtener la lista de procesos. No conectado a MDB']);
+		callback({ error: 'No conectado a MDB' }, null)
+	}
+}
 module.exports = {
 	iniciarIntervaloRegistro,
 	detenerIntervaloRegistro,
-	soyMaestro
+	soyMaestro,
+	consultaProcesos
 }
