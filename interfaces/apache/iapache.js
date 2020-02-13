@@ -1,7 +1,7 @@
 'use strict';
 //const BASE = global.BASE;
 //const C = global.config;
-//const L = global.logger;
+const L = global.logger;
 //const K = global.constants;
 
 const request = require('request');
@@ -114,6 +114,8 @@ const getBalanceadores = (servidor, callback) => {
 		}
 	}
 
+	L.i(["Consultando balanceadores del servidor", servidor])
+
 	request(httpCallParams, function (callError, httpResponse, httpBody) {
 
 		if (callError) {
@@ -162,6 +164,8 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 		},
 		body: urlencoded.toString()
 	}
+
+	L.i(["Actualizando worker del balanceador del servidor", servidor, urlencoded])
 
 	request(httpCallParams, function (callError, httpResponse, httpBody) {
 
