@@ -10,7 +10,7 @@ const Iapache = require(BASE + 'interfaces/apache/iapache');
 const consultaBalanceadorApache = (req, res) => {
 
 	let servidor = req.query.servidor || (C.production ? 'fedicom3' : 'fedicom3-dev')
-	servidor = 'https://' + servidor + '.hefame.es'
+	servidor = 'http://' + servidor + '.hefame.es'
 
 	Iapache.getBalanceadores(servidor, (err, balanceadores) => {
 		if (err) {
@@ -42,7 +42,7 @@ const actualziaBalanceadorApache = (req, res) => {
 
 
 	let servidor = req.query.servidor || (C.production ? 'fedicom3' : 'fedicom3-dev')
-	servidor = 'https://' + servidor + '.hefame.es'
+	servidor = 'http://' + servidor + '.hefame.es'
 
 	let peticion = req.body
 
