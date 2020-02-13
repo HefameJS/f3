@@ -107,6 +107,7 @@ const parseDataToBalanceadores = (data) => {
 const getBalanceadores = (servidor, callback) => {
 
 	var httpCallParams = {
+		followAllRedirects: true,
 		uri: servidor + '/balancer-manager',
 		headers: {
 			referer: servidor + '/balancer-manager',
@@ -153,6 +154,7 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 	urlencoded.append("nonce", nonce);
 
 	var httpCallParams = {
+		followAllRedirects: true,
 		uri: servidor + '/balancer-manager',
 		method: 'POST',
 		headers: {
