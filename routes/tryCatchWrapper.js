@@ -4,6 +4,8 @@
 const L = global.logger;
 //const K = global.constants;
 
+const FedicomError = require(BASE + 'model/fedicomError');
+
 const tryCatch = (funcionControlador) => {
 	let controlador = (req, res) => {
 		let txId = req.txId;
