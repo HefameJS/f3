@@ -1,22 +1,27 @@
 'use strict';
 const BASE = global.BASE;
+//const C = global.config;
 const L = global.logger;
-// const config = global.config;
+//const K = global.constants;
+
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const Events = require(BASE + 'interfaces/events');
 const ExpressExtensions = require(BASE + 'util/expressExtensions');
 
 
+const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
-module.exports = function(app) {
+
+module.exports = function (app) {
 
 	var controllers = {
 		authenticate: require(BASE + 'controllers/authenticate'),
-  		pedidos: require(BASE + 'controllers/pedidos'),
+		pedidos: require(BASE + 'controllers/pedidos'),
 		devoluciones: require(BASE + 'controllers/devoluciones'),
 		albaranes: require(BASE + 'controllers/albaranes'),
-  		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
+		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
+		retransmit: require(BASE + 'controllers/retransmit'),
 		stats: require(BASE + 'controllers/stats')
 	}
 
@@ -29,8 +34,8 @@ module.exports = function(app) {
 
 			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
-			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp );
-			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error] );
+			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
+			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error]);
 
 			var fedicomError = new FedicomError(error);
 			var responseBody = fedicomError.send(res);
@@ -49,8 +54,8 @@ module.exports = function(app) {
 
 		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
-		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.originIp );
-		L.xt(req.txId, 'Iniciando procesamiento de la transmisión' );
+		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.originIp);
+		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');
 
 		return next();
 	});
@@ -59,30 +64,30 @@ module.exports = function(app) {
 
 	/* RUTAS */
 	app.route('/authenticate')
-		.post(controllers.authenticate.doAuth)
-		.get(controllers.authenticate.verifyToken);
+		.post(tryCatch(controllers.authenticate.doAuth))
+		.get(tryCatch(controllers.authenticate.verifyToken));
 
 
 	app.route('/pedidos')
-		.get(controllers.pedidos.getPedido)
-		.post(controllers.pedidos.savePedido)
-		.put(controllers.pedidos.updatePedido);
+		.get(tryCatch(controllers.pedidos.getPedido))
+		.post(tryCatch(controllers.pedidos.savePedido))
+		.put(tryCatch(controllers.pedidos.updatePedido));
 	app.route('/pedidos/:numeroPedido')
-		.get(controllers.pedidos.getPedido);
+		.get(tryCatch(controllers.pedidos.getPedido));
 
 
 	app.route('/devoluciones')
-		.get(controllers.devoluciones.getDevolucion)
-		.post(controllers.devoluciones.saveDevolucion);
+		.get(tryCatch(controllers.devoluciones.getDevolucion))
+		.post(tryCatch(controllers.devoluciones.saveDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(controllers.devoluciones.getDevolucion);
+		.get(tryCatch(controllers.devoluciones.getDevolucion));
 
 
 	app.route('/albaranes')
-		.get(controllers.albaranes.findAlbaran);
+		.get(tryCatch(controllers.albaranes.findAlbaran));
 	// app.route('/albaranes/confirmacion');
 	app.route('/albaranes/:numeroAlbaran')
-		.get(controllers.albaranes.getAlbaran);
+		.get(tryCatch(controllers.albaranes.getAlbaran));
 
 
 	//app.route('/facturas')
@@ -95,15 +100,20 @@ module.exports = function(app) {
 	 *	RUTAS NO STANDARD FEDICOM3
 	 */
 	app.route('/confirmaPedido')
-		.post(controllers.confirmacionPedido.confirmaPedido);
+		.post(tryCatch(controllers.confirmacionPedido.confirmaPedido));
 
-	app.route('/stats').get(controllers.stats.getStats);
-	app.route('/stats/:item').get(controllers.stats.getStats);
+	app.route('/retransmitir/:txId')
+		.get(tryCatch(controllers.retransmit.retransmitirPedido));
 
-	
+	app.route('/stats')
+		.get(tryCatch(controllers.stats.getStats));
+	app.route('/stats/:item')
+		.get(tryCatch(controllers.stats.getStats));
+
+
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
-	app.use(function(req, res, next) {
-		L.xw( req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe' );
+	app.use(function (req, res, next) {
+		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
 		var responseBody = fedicomError.send(res);
 		Events.emitDiscard(req, res, responseBody, null);

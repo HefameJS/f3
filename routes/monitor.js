@@ -1,16 +1,20 @@
 'use strict';
 const BASE = global.BASE;
+//const C = global.config;
+const L = global.logger;
+//const K = global.constants;
 
 const FedicomError = require(BASE + 'model/fedicomError');
 const ExpressExtensions = require(BASE + 'util/expressExtensions');
+const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
-const L = global.logger;
+
 
 module.exports = function (app) {
 
 	var controllers = {
 		consultas: require(BASE + 'controllers/monitor/consultas')
-		
+
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -33,7 +37,7 @@ module.exports = function (app) {
 
 
 	app.use(function (req, res, next) {
-		
+
 		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
 		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.ip);
@@ -45,38 +49,38 @@ module.exports = function (app) {
 
 
 	/* RUTAS */
-	app.route('/query') 
-		.put(controllers.consultas.consultaTX)
+	app.route('/query')
+		.put(tryCatch(controllers.consultas.consultaTX))
 
 	app.route('/status/proc')
-		.get(controllers.consultas.consultaProcesos)
+		.get(tryCatch(controllers.consultas.consultaProcesos))
 
 	app.route('/status/sap')
-		.get(controllers.consultas.consultaSap)
+		.get(tryCatch(controllers.consultas.consultaSap))
 
 
 	app.route('/status/mdb/col')
-		.get(controllers.consultas.mongodb.getNombresColecciones)
+		.get(tryCatch(controllers.consultas.mongodb.getNombresColecciones))
 
 	app.route('/status/mdb/col/:colName')
-		.get(controllers.consultas.mongodb.getColeccion)
+		.get(tryCatch(controllers.consultas.mongodb.getColeccion))
 
 	app.route('/status/mdb/db')
-		.get(controllers.consultas.mongodb.getDatabase)
+		.get(tryCatch(controllers.consultas.mongodb.getDatabase))
 
 	app.route('/status/mdb/op')
-		.get(controllers.consultas.mongodb.getOperaciones)
+		.get(tryCatch(controllers.consultas.mongodb.getOperaciones))
 
 	app.route('/status/mdb/rs')
-		.get(controllers.consultas.mongodb.getReplicaSet)
+		.get(tryCatch(controllers.consultas.mongodb.getReplicaSet))
 
 	app.route('/status/mdb/log')
-		.get(controllers.consultas.mongodb.getLogs)
+		.get(tryCatch(controllers.consultas.mongodb.getLogs))
 
 
 	app.route('/status/apache/balanceadores')
-		.get(controllers.consultas.apache.consultaBalanceadorApache)
-		.put(controllers.consultas.apache.actualizaBalanceadorApache)
+		.get(tryCatch(controllers.consultas.apache.consultaBalanceadorApache))
+		.put(tryCatch(controllers.consultas.apache.actualizaBalanceadorApache))
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
