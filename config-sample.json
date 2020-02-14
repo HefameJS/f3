@@ -54,12 +54,6 @@
 		}
 	},
 	"watchdog": {
-		"https": {
-			"port": 50010,
-			"cert": "ssl/server.crt",
-			"key": "ssl/server.key",
-			"passphrase": ""
-		},
 		"mdbwatch": {
 			"buffer_size": 10,
 			"interval": 5,

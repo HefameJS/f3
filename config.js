@@ -141,35 +141,13 @@ var configVerificator = {
 			console.error("No se encuentra definido el nodo WATCHDOG (watchdog)")
 			process.exit(K.EXIT_CODES.E_NO_WATCHDOG_CONFIG);
 		}
-		this.watchdog_http(config);
-	},
-	watchdog_http: function (config) {
-		if (!config.watchdog.https) {
-			console.error("No se ha definido el nodo WATCHDOG - HTTPS (watchdog.https)");
-			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS);
-		}
-		if (!config.watchdog.https.port) {
-			console.error("No se ha definido el puerto para WATCHDOG - HTTPS (watchdog.https.port)");
-			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PORT);
-		}
-		if (!config.watchdog.https.cert) {
-			console.error("No se ha definido el certificado para WATCHDOG - HTTPS (watchdog.https.cert)");
-			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_CERT);
-		}
-		if (!config.watchdog.https.key) {
-			console.error("No se ha definido la clave privada para WATCHDOG - HTTPS (watchdog.https.key)");
-			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_KEY);
-		}
-		if (!config.watchdog.https.passphrase && config.watchdog.https.passphrase !== '') {
-			console.error("No se ha definido la passphrase para WATCHDOG - HTTPS (watchdog.https.passphrase)");
-			process.exit(K.EXIT_CODES.E_WATCHDOG_NO_HTTPS_PASSPHRASE);
-		}
 	},
 	monitor: function (config) {
 		if (!config.monitor) {
 			console.error("No se encuentra definido el nodo MONITOR (monitor)")
 			process.exit(K.EXIT_CODES.E_NO_MONITOR_CONFIG);
 		}
+		this.monitor_http(config);
 		this.monitor_https(config);
 	},
 	monitor_http: function (config) {
@@ -236,8 +214,6 @@ try {
 	// Configuracion para la instancia de monitor
 	if (process.type === K.PROCESS_TYPES.MONITOR) {
 		configVerificator.monitor(C);
-		configVerificator.monitor_http(C);
-		configVerificator.monitor_https(C);
 	}
 
 
