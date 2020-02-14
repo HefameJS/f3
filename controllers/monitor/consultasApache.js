@@ -26,7 +26,7 @@ const consultaBalanceadorApache = (req, res) => {
 }
 
 
-const actualziaBalanceadorApache = (req, res) => {
+const actualizaBalanceadorApache = (req, res) => {
 
 	var txId = req.txId;
 
@@ -66,6 +66,6 @@ const actualziaBalanceadorApache = (req, res) => {
 
 module.exports = {
 	consultaBalanceadorApache,
-	actualziaBalanceadorApache
+	actualizaBalanceadorApache
 }
 

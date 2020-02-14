@@ -76,7 +76,7 @@ module.exports = function (app) {
 
 	app.route('/status/apache/balanceadores')
 		.get(controllers.consultas.apache.consultaBalanceadorApache)
-		.put(controllers.consultas.apache.actualziaBalanceadorApache)
+		.put(controllers.consultas.apache.actualizaBalanceadorApache)
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
