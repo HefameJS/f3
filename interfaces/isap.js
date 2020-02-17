@@ -64,7 +64,7 @@ exports.ping = (sapSystem, callback) => {
 			return;
 		}
 
-		if (sapResponse.sapError) {
+		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: res.statusCode,
@@ -103,6 +103,7 @@ exports.authenticate = (txId, authReq, callback) => {
 	Events.sap.emitRequestToSap(txId, httpCallParams);
 
 	request(httpCallParams, (callError, sapResponse, sapBody) => {
+
 		sapResponse = ampliaSapResponse(sapResponse, sapBody);
 		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
 
@@ -112,7 +113,7 @@ exports.authenticate = (txId, authReq, callback) => {
 			return;
 		}
 
-		if (sapResponse.sapError) {
+		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: sapResponse.statusCode,
@@ -157,7 +158,7 @@ exports.realizarPedido = (txId, pedido, callback ) => {
 			return;
 		}
 
-		if (sapResponse.sapError) {
+		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: sapResponse.statusCode,
@@ -195,7 +196,7 @@ exports.realizarDevolucion = (txId, devolucion, callback) => {
 			return;
 		}
 
-		if (sapResponse.sapError) {
+		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: sapResponse.statusCode,
@@ -238,7 +239,7 @@ exports.retransmitirPedido = (pedido, callback) => {
 			return;
 		}
 		
-		if (sapResponse.sapError) {
+		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: sapResponse.statusCode,
