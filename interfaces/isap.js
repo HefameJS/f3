@@ -67,8 +67,8 @@ exports.ping = (sapSystem, callback) => {
 		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: res.statusCode,
-				code: res.statusMessage
+				errno: sapResponse.statusCode,
+				code: sapResponse.statusMessage
 			}, false);
 			return;
 		}
