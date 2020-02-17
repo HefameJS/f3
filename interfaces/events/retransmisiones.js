@@ -61,6 +61,8 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
 			}
 		} else {
+			// Si se habían establecido flags, las borramos, pues no queremos actualizar nada
+			// mas que añadir el flag de retransmision sin update
 			Flags.del(originalTxId);
 			Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 		}
