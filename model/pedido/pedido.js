@@ -140,10 +140,7 @@ class Pedido {
 		var clon = clone(respuestaSAP);
 
 		
-		// Si la respuesta lleva el valor del punto de entrega del cliente, generamos flag
-		if (clon && clon.sap_punto_entrega) {
-			Flags.set(txId, K.FLAGS.PUNTO_ENTREGA, clon.sap_punto_entrega);
-		}
+
 
 		// Si la respuesta de SAP es un array, no hay que sanearlo
 		if (Array.isArray(clon)) {
@@ -151,6 +148,11 @@ class Pedido {
 			clon.estadoTransmision = () => { return [K.TX_STATUS.PEDIDO.RECHAZADO_SAP, null, null] }
 			clon.isRechazadoSap = () => true;
 			return clon;
+		}
+
+		// Si la respuesta lleva el valor del punto de entrega del cliente, generamos flag
+		if (clon && clon.sap_punto_entrega) {
+			Flags.set(txId, K.FLAGS.PUNTO_ENTREGA, clon.sap_punto_entrega);
 		}
 
 		clon = SaneadorPedidosSAP.sanearMayusculas(clon);
