@@ -39,8 +39,6 @@ const grabarLog = (event) => {
 			console.log('###',err)
 		}
 	})
-
-	console.log(message);
 }
 
 const logGeneral = (datos, level, categoria) => {
@@ -109,15 +107,10 @@ const dump = (err, req) => {
 		message += util.inspect(req.body)
 	}
 
-	console.log(getLogFile(new Date(), true))
-	// console.log(message)
-
 	fs.appendFileSync(getLogFile(new Date(), true), message, (err) => {
 		if (err) {
 			console.error(message)
 			console.error('###', err)
-		} else {
-			console.error(message)
 		}
 	})
 
