@@ -102,7 +102,7 @@ const retransmitirPedido = function (otxId, options, callback) {
         // Para esto, necesitaremos que existan los campos 'body', 'txId' y 'token'
         var pedido = null;
         try {
-            dbTx.clientRequest.txId = dbTx.txId;
+            dbTx.clientRequest.txId = dbTx._id;
             dbTx.clientRequest.token = dbTx.clientRequest.authentication;
             var pedido = new Pedido(dbTx.clientRequest);
         } catch (fedicomError) {
