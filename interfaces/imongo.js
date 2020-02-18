@@ -275,12 +275,12 @@ const commitDiscard = (data) => {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', err], 'mdbCommitDiscard');
 			} else {
-				L.xd(key, ['COMMIT DISCARD OK', L.saneaCommit(data)], 'mdbCommitDiscard');
+				//L.xd(key, ['COMMIT DISCARD OK'], 'mdbCommitDiscard');
 			}
 		});
 	}
 	else {
-		L.xf(key, ['ERROR AL HACER COMMIT DISCARD', L.saneaCommit(data)], 'mdbCommitDiscard');
+		L.xf(key, ['ERROR AL HACER COMMIT DISCARD'], 'mdbCommitDiscard');
 	}
 
 };
@@ -300,8 +300,6 @@ const commit = (data, noMerge) => {
 			if (err) {
 				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
 				iSqlite.storeTx(data);
-			} else {
-				L.xd(key, ['COMMIT OK', L.saneaCommit(data)], 'mdbCommit');
 			}
 		});
 	}
@@ -320,12 +318,10 @@ const buffer = (data) => {
 
 	var key = data['$setOnInsert']._id;
 
-	L.xd(key, ['BUFFER OK', L.saneaCommit(data)], 'mdbBuffer');
-
 	var cachedData = commitBuffer.get(key);
 	var mergedData = mergeDataWithCache(cachedData, data);
 	commitBuffer.put(key, mergedData, 5000, function /*onTimeout*/(key, value) {
-		L.xw(key, ['Forzando COMMIT por timeout'], 'mdbBuffer');
+		L.xw(key, ['Atención: Se fuerza COMMIT por timeout'], 'mdbCommit');
 		module.exports.commit(value, false);
 	});
 
@@ -348,7 +344,6 @@ const updateFromSqlite = (data, cb) => {
 				mongoConnect();
 				cb(false);
 			} else {
-				L.xd(key, ['COMMIT desde SQLite OK', L.saneaCommit(data)], 'txSqliteCommit');
 				cb(true);
 			}
 		});

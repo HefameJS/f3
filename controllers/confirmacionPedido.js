@@ -17,10 +17,10 @@ const Tokens = require(BASE + 'util/tokens');
 exports.confirmaPedido = (req, res) => {
 	var txId = req.txId;
 
-	L.xi(txId, ['Procesando confirmación de confirmación de pedido']);
+	L.xi(txId, ['Procesando transmisión de CONFIRMACION DE PEDIDO']);
 	req.token = Tokens.verifyJWT(req.token, txId);
 
-	L.xt(req.txId, ['Datos de confirmacion recibidos', req.body]);
+	L.xt(req.txId, ['Datos de confirmacion recibidos']);
 	try {
 		var confirmacionPedidoSAP = new ConfirmacionPedidoSAP(req);
 	} catch (fedicomError) {

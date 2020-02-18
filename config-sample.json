@@ -1,6 +1,7 @@
 {
 	"production": false, 
 	"workers": 8,
+	"logdir": "/var/log/f3",
 	"pid": "/var/run/f3",
 	"depurar_transmisiones": false,
 	"mongodb": {

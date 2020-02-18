@@ -6,11 +6,6 @@ const L = global.logger;
 const K = global.constants;
 
 
-
-
-
-
-
 var cluster = require('cluster');
 
 if (cluster.isMaster) {
@@ -20,6 +15,11 @@ if (cluster.isMaster) {
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 	L.i('*** ID master: ' + global.instanceID , 'cluster');
+
+	process.on('uncaughtException', function (err) {
+		L.dump(err)
+		process.exit(1)
+	})
 
 
 	var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
@@ -40,6 +40,12 @@ if (cluster.isMaster) {
 
 	process.title = K.PROCESS_TITLES.CORE_WORKER + '-' + cluster.worker.id;
 	process.type = K.PROCESS_TYPES.CORE_WORKER;
+
+	process.on('uncaughtException', function (err) {
+		L.dump(err)
+		process.exit(1)
+	})
+
 	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
 
 	const fs = require('fs');

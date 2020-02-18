@@ -97,7 +97,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 
 	Flags.finaliza(res.txId, data);
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido', data['$set']], 'txCommit');
+	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido'], 'txCommit');
 	Imongo.commit(data);
 }
 module.exports.emitRequestConsultarPedido = function(req) {

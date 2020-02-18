@@ -66,7 +66,7 @@ exports.savePedido = function (req, res) {
 		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-	L.xd(txId, ['El contenido de la transmisión es un pedido correcto', pedido]);
+	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
 
 
 	Imongo.findCrcDuplicado(pedido.crc, function (err, dbTx) {

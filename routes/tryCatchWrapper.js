@@ -15,6 +15,7 @@ const tryCatch = (funcionControlador) => {
 			let fedicomError = FedicomError.fromException(txId, exception);
 			L.xf(txId, ['Ocurrió un error al ejecutar la petición', fedicomError])
 			fedicomError.send(res);
+			L.dump(exception, req)
 			return;
 		}
 	}

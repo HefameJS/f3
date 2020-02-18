@@ -14,6 +14,10 @@ global.instanceID += '-mon';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
+process.on('uncaughtException', function (err) {
+	L.dump(err)
+	process.exit(1)
+})
 
 L.i('**** ARRANCANDO MONITOR FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
@@ -88,3 +92,4 @@ try {
 
 
 require(BASE + 'util/processRegister').iniciarIntervaloRegistro();
+

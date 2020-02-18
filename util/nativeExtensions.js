@@ -20,6 +20,9 @@ dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
 
 dateFormat.masks.sapDate = 'yyyymmdd';
 
+dateFormat.masks.shortDate = 'yyyymmdd';
+dateFormat.masks.shortTime = 'HHMMss.l';
+
 /**
  * Date.toFedicomDate(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 Date.
@@ -43,7 +46,6 @@ if (!Date.toFedicomDateTime) {
 		return dateFormat(date, "fedicomDateTime")
 	}
 }
-
 
 /**
  * Date.fromFedicomDate
@@ -91,9 +93,6 @@ if (!Date.fromFedicomDateTime) {
 	}
 }
 
-
-
-
 /**
  * Date.fromSAPtoFedicomDate
  * Convierte un string en formato fecha SAP (yyyy-mm-dd) a formato Fedicom3
@@ -123,3 +122,27 @@ if (!Date.toSapDate) {
 		return dateFormat(date, "sapDate")
 	}
 }
+
+/**
+ * Date.prototype.toShortDate
+ * Devuelve una representación del objeto Date en formato corto (yyyymmdd).
+ */
+if (!Date.toShortDate) {
+	Date.toShortDate = function (date) {
+		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		return dateFormat(date, "shortDate")
+	}
+}
+
+
+/**
+ * Date.prototype.toShortTime
+ * Devuelve una representación del objeto Date en formato corto (HHMMss.sss).
+ */
+if (!Date.toShortTime) {
+	Date.toShortTime = function (date) {
+		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		return dateFormat(date, "shortTime")
+	}
+}
+

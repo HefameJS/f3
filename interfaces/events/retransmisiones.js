@@ -75,7 +75,7 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 	Flags.finaliza(originalTxId, updateQuery);
 
 	Imongo.commit(updateQuery);
-	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit', L.saneaCommit(updateQuery)], 'txCommit');
+	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit'], 'txCommit');
 	L.yell(originalTxId, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [rtxResult]);
 }
 
@@ -197,7 +197,7 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 		//Flags.set(txId, K.FLAGS.WATCHDOG);
 		Flags.finaliza(txId, dataUpdate);
 
-		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix', L.saneaCommit(dataUpdate)], 'txCommit');
+		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
 		Imongo.commit(dataUpdate);
 		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, newStatus, ['StatusFix']);
 	}
@@ -235,7 +235,7 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 	//Flags.set(originalTxId, K.FLAGS.WATCHDOG);
 	Flags.finaliza(originalTxId, updateData);
 
-	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido', L.saneaCommit(updateData)], 'txCommit');
+	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido'], 'txCommit');
 	Imongo.commit(updateData);
 	L.yell(originalTxId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
@@ -255,7 +255,7 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 			confirmingId: originalTxId,
 		}
 	}
-	L.xi(confirmId, ['Se ha asociado esta confirmación con la transmisión del pedido con ID ' + originalTxId, L.saneaCommit(commitConfirmacionSap)], 'txCommit');
+	L.xi(confirmId, ['Se ha asociado esta confirmación con el pedido que confirma', originalTxId], 'txCommit');
 	Imongo.commit(commitConfirmacionSap);
 
 }

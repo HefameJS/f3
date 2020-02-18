@@ -4,124 +4,129 @@ const C = global.config;
 var L = {};
 const K = global.constants;
 
+const fs = require('fs');
+const logDir = C.logdir || '.'
+const util = require('util');
 
 
-const cluster = require('cluster');
+const TRACE = 'TRC'
+const DEBUG = 'DBG'
+const INFO = 'INF'
+const WARN = 'WRN'
+const ERROR = 'ERR'
+const FATAL = 'DIE'
+const EVENT = 'EVT'
 
 
-const mongourl = C.getMongoLogUrl();
-const dbName = C.mongodb.database;
-const MongoClient = require('mongodb').MongoClient;
-const WRITE_CONCERN = 0;
-
-const MONGODB_OPTIONS = {
-	keepAlive: 1000,
-	connectTimeoutMS: 5000,
-	socketTimeoutMS: 10000,
-	serverSelectionTimeoutMS: 5000,
-	w: WRITE_CONCERN,
-	wtimeout: 1000,
-	useUnifiedTopology: true,
-	appname: global.instanceID + '-log',
-	loggerLevel: 'warn'
-};
-
-
-var mongoConnection = null;
-var mongoClient = null;
-var mongoDatabase = null;
-var collections = {
-	log: null
-};
-
-const mongoConnect = () => {
-	mongoConnection = new MongoClient(mongourl, MONGODB_OPTIONS);
-	mongoConnection.connect()
-		.then((client) => {
-			mongoClient = client;
-			mongoDatabase = mongoClient.db(dbName);
-			L.i(['*** Conexión a la base de datos [' + dbName + '] para almacenamiento de logs'], 'mongodb');
-
-			var logCollectionName = C.mongodb.logCollection || 'log';
-			collections.log = mongoDatabase.collection(logCollectionName);
-			L.i(['*** Conexión a la colección [' + dbName + '.' + logCollectionName + '] para almacenamiento de logs'], 'mongodb');
-		})
-		.catch((error) => {
-			L.f(['*** Error en la conexión a de MongoDB para LOGS ***', mongourl, error], 'mongodb');
-		});
+const getLogFile = (timestamp, dump) => {
+	let fecha = Date.toShortDate(timestamp)
+	if (dump) fecha += '.' + Date.toShortTime(timestamp)
+	return logDir + '/' + fecha + '-' + process.title + '-' + process.pid + (dump ? '.dump' : '.log')
 }
-mongoConnect();
 
+const grabarLog = (event) => {
 
+	let txId = event.tx
+	let categoria = event.categoria.padStart(15)
 
-const writeMongo = (event) => {
+	let hora = Date.toShortTime(event.timestamp)
 	
-	if (collections.log) {
-		collections.log.insertOne(event, { w: WRITE_CONCERN } , (err, res) => {});
-	}
+	let message = (txId ? txId + '|' : '') + hora + '|' + event.level + '|' + categoria + '|' + JSON.stringify(event.datos)
 
+	fs.appendFile(getLogFile(event.timestamp), message + '\n', (err) => {
+		if (err) {
+			console.log(message)
+			console.log('###',err)
+		}
+	})
 
-	var workerId = cluster.isMaster ? 'master' : 'th#' + cluster.worker.id;
-	if (!event.tx) { // Logs a nivel del global los mandamos a consola
-		console.log('[' + workerId + '][' + event.timestamp.toISOString() + '][' + event.level + '][' + event.category + '] ' + event.data);
-	} else {
-		console.log('[' + workerId + '][' + event.timestamp.toISOString() + '][' + event.level + '][' + event.tx.toString() + '][' + event.category + '] ' + event.data);
-	}
-
+	console.log(message);
 }
 
-const writeServer = (data, level, category) => {
-	if (!Array.isArray(data)) data = [data];
+const logGeneral = (datos, level, categoria) => {
+	if (!Array.isArray(datos)) datos = [datos];
 
 	var event = {
-		category: category || 'server',
-		level: level || 5000,
-		data: data,
+		categoria: categoria || 'server',
+		level: level || INFO,
+		datos: datos,
 		timestamp: new Date()
 	}
-	writeMongo(event);
+	grabarLog(event);
 };
 
-const writeTx = (id, data, level, category) => {
-	if (!Array.isArray(data)) data = [data];
+const logTransmision = (id, datos, level, categoria) => {
+	if (!Array.isArray(datos)) datos = [datos];
 
 	var event = {
 		tx: id,
-		category: category || 'tx',
+		categoria: categoria || 'tx',
 		level: level || 5000,
-		data: data,
+		datos: datos,
 		timestamp: new Date()
 	};
-	writeMongo(event);
+	grabarLog(event);
 };
 
-const saneaEstructuraDeCommit = (data) => {
+const saneaEstructuraDeCommit = (datos) => {
 	return {
-		setOnInsert: data['$setOnInsert'],
-		max: data['$max'],
-		set: data['$set'],
-		push: data['$push']
+		setOnInsert: datos['$setOnInsert'],
+		max: datos['$max'],
+		set: datos['$set'],
+		push: datos['$push']
 	}
 }
 
-
-const yell = (txId, txType, txStat, data) => {
-	if (!Array.isArray(data)) data = [data];
+const logEvento = (txId, txType, txStat, datos) => {
+	/*
+	if (!Array.isArray(datos)) datos = [datos];
 
 	var event = {
 		tx: txId,
-		yell: true,
+		categoria: 'evento',
+		level: EVENT,
 		txType: txType,
 		txStatus: txStat,
-		data: data,
+		datos: [txType, txStat, ...datos],
 		timestamp: new Date()
 	};
-	writeMongo(event);
+	*/
+	// grabarLog(event);
 }
 
-var generaCategoriaLog = (categoria) => {
-	return categoria;
+
+const dump = (err, req) => {
+
+	let message = (new Date).toUTCString() + '\n\n'
+	message += err.stack
+
+
+	if (req) {
+		message += '\n\nPETICIÓN HTTP\n=============\n'
+		message += 'IP: ' + req.ip + ' (' + req.protocol +  ')\n'
+		message += req.method + ' ' + req.originalUrl + ' HTTP/' + req.httpVersion + '\n'
+		message += util.inspect(req.headers) + '\n\n',
+		message += util.inspect(req.body)
+	}
+
+	console.log(getLogFile(new Date(), true))
+	// console.log(message)
+
+	fs.appendFileSync(getLogFile(new Date(), true), message, (err) => {
+		if (err) {
+			console.error(message)
+			console.error('###', err)
+		} else {
+			console.error(message)
+		}
+	})
+
+	
 }
+
+
+var generaCategoriaLog = (categoria) => categoria;
+
 switch (process.title) {
 	case K.PROCESS_TITLES.WATCHDOG:
 		generaCategoriaLog = (categoria) => categoria ? 'wd-' + categoria : 'watchdog';
@@ -131,23 +136,25 @@ switch (process.title) {
 		break;
 }
 
+
+
 L = {
-	t: (data, category) => writeServer(data, 1000, generaCategoriaLog(category)),
-	d: (data, category) => writeServer(data, 3000, generaCategoriaLog(category)),
-	i: (data, category) => writeServer(data, 5000, generaCategoriaLog(category)),
-	w: (data, category) => writeServer(data, 7000, generaCategoriaLog(category)),
-	e: (data, category) => writeServer(data, 9000, generaCategoriaLog(category)),
-	f: (data, category) => writeServer(data, 10000, generaCategoriaLog(category)),
-	xt: (id, data, category) => writeTx(id, data, 1000, generaCategoriaLog(category)),
-	xd: (id, data, category) => writeTx(id, data, 3000, generaCategoriaLog(category)),
-	xi: (id, data, category) => writeTx(id, data, 5000, generaCategoriaLog(category)),
-	xw: (id, data, category) => writeTx(id, data, 7000, generaCategoriaLog(category)),
-	xe: (id, data, category) => writeTx(id, data, 9000, generaCategoriaLog(category)),
-	xf: (id, data, category) => writeTx(id, data, 10000, generaCategoriaLog(category)),
-	yell: yell,
+	t: (datos, categoria) => logGeneral(datos, TRACE, generaCategoriaLog(categoria)),
+	d: (datos, categoria) => logGeneral(datos, DEBUG, generaCategoriaLog(categoria)),
+	i: (datos, categoria) => logGeneral(datos, INFO, generaCategoriaLog(categoria)),
+	w: (datos, categoria) => logGeneral(datos, WARN, generaCategoriaLog(categoria)),
+	e: (datos, categoria) => logGeneral(datos, ERROR, generaCategoriaLog(categoria)),
+	f: (datos, categoria) => logGeneral(datos, FATAL, generaCategoriaLog(categoria)),
+	xt: (id, datos, categoria) => logTransmision(id, datos, TRACE, generaCategoriaLog(categoria)),
+	xd: (id, datos, categoria) => logTransmision(id, datos, DEBUG, generaCategoriaLog(categoria)),
+	xi: (id, datos, categoria) => logTransmision(id, datos, INFO, generaCategoriaLog(categoria)),
+	xw: (id, datos, categoria) => logTransmision(id, datos, WARN, generaCategoriaLog(categoria)),
+	xe: (id, datos, categoria) => logTransmision(id, datos, ERROR, generaCategoriaLog(categoria)),
+	xf: (id, datos, categoria) => logTransmision(id, datos, FATAL, generaCategoriaLog(categoria)),
+	yell: logEvento,
+	dump: dump,
 	saneaCommit: saneaEstructuraDeCommit
 };
-
 
 
 module.exports = L;
