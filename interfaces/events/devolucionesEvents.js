@@ -124,6 +124,8 @@ module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
 }
 module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
 
+	if (!extra) extra = {}
+
 	var resData = {
 		$setOnInsert: {
 			_id: res.txId,
