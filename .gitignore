@@ -5,3 +5,5 @@ config.json
 *.log
 *.pid
 test.js
+console.log
+console.err
