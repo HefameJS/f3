@@ -304,7 +304,7 @@ const commit = (data, noMerge) => {
 		});
 	}
 	else {
-		L.xf(key, ['ERROR AL HACER COMMIT', L.saneaCommit(data)], 'mdbCommit');
+		L.xf(key, ['ERROR AL HACER COMMIT', data], 'mdbCommit');
 		iSqlite.storeTx(data);
 	}
 

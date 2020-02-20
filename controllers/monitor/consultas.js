@@ -56,7 +56,7 @@ const consultaProcesos = function (req, res) {
 	if (control) {
 		control.find({}).toArray()
 			.then(procesos => {
-				L.xi(txId, ['Obtenida lista de procesos', procesos]);
+				L.xi(txId, ['Obtenida lista de procesos']);
 				res.status(200).json({ ok: true, data: procesos });
 			})
 			.catch(err => {
@@ -64,7 +64,7 @@ const consultaProcesos = function (req, res) {
 				res.status(500).json({ ok: false, error: (err.error || err.message) });
 			})
 	} else {
-		L.xe(txId, ['Error al obtener la lista de procesos. No conectado a MDB', datos]);
+		L.xe(txId, ['Error al obtener la lista de procesos. No conectado a MDB']);
 		res.status(500).json({ ok: false, error: "No se pudo obtener la lista de procesos." });
 
 	}

@@ -39,6 +39,11 @@ const grabarLog = (event) => {
 			console.log('###',err)
 		}
 	})
+
+	if (C.logconsole) {
+		console.log(message)
+	}
+
 }
 
 const logGeneral = (datos, level, categoria) => {
@@ -65,7 +70,7 @@ const logTransmision = (id, datos, level, categoria) => {
 	};
 	grabarLog(event);
 };
-
+/*
 const saneaEstructuraDeCommit = (datos) => {
 	return {
 		setOnInsert: datos['$setOnInsert'],
@@ -74,7 +79,7 @@ const saneaEstructuraDeCommit = (datos) => {
 		push: datos['$push']
 	}
 }
-
+*/
 const logEvento = (txId, txType, txStat, datos) => {
 	/*
 	if (!Array.isArray(datos)) datos = [datos];
@@ -114,6 +119,10 @@ const dump = (err, req) => {
 		}
 	})
 
+	if (C.logconsole) {
+		console.log('DUMP GENERADO: ' + getLogFile(new Date(), true))
+		console.log(message)
+	}
 	
 }
 
@@ -145,8 +154,8 @@ L = {
 	xe: (id, datos, categoria) => logTransmision(id, datos, ERROR, generaCategoriaLog(categoria)),
 	xf: (id, datos, categoria) => logTransmision(id, datos, FATAL, generaCategoriaLog(categoria)),
 	yell: logEvento,
-	dump: dump,
-	saneaCommit: saneaEstructuraDeCommit
+	dump: dump
+	/*saneaCommit: saneaEstructuraDeCommit*/
 };
 
 
