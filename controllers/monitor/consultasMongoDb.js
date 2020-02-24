@@ -93,7 +93,7 @@ const getReplicaSet = function (req, res) {
 
 const getLogs = function (req, res) {
 
-	var logType = req.params.type ? req.params.type : 'global';
+	var logType = req.query.type ? req.query.type : 'global';
 
 	Imongo.monitor.getLogs(logType, (err, logs) => {
 		if (err) {
