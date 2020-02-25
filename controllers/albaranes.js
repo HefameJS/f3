@@ -47,7 +47,7 @@ exports.getAlbaran = function (req, res) {
     }
 
     var clienteSap = req.token.sub;
-    if (clienteSap.endsWith('@hefame'))         clienteSap = clienteSap.substring(0, clienteSap.length - 7)
+    if (clienteSap.endsWith('@hefame')) clienteSap = clienteSap.substring(0, clienteSap.length - 7)
     clienteSap = clienteSap.padStart(10, '0')
 
     L.xi(req.txId, ['El token transmitido resultó VALIDO y se obtuvo el clienteSAP', clienteSap], 'txToken');
@@ -148,8 +148,7 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
                     var albaranJSON = new AlbaranJSON(req.txId, albaranJSONpre)
                     if (returnAsArray) albaranJSON = [albaranJSON];
                     res.send(albaranJSON);
-                    L.xi(req.txId, ['Se envía albarán al cliente'
-                ]);
+                    L.xi(req.txId, ['Se envía albarán al cliente']);
 
                 });
             }
