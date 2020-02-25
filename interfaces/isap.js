@@ -34,7 +34,7 @@ const ampliaSapResponse = (sapResponse, sapBody) => {
 	sapResponse.body = sapBody;
 	sapResponse.errorSap = Math.floor(sapResponse.statusCode / 100) !== 2;
 	return sapResponse;
-} 
+}
 
 const NO_SAP_SYSTEM_ERROR = {
 	type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
@@ -128,13 +128,13 @@ exports.authenticate = (txId, authReq, callback) => {
 		}
 
 		callback(null, sapResponse);
-		
+
 
 	});
 
 }
 
-exports.realizarPedido = (txId, pedido, callback ) => {
+exports.realizarPedido = (txId, pedido, callback) => {
 
 	var sapSystem = getSapSystem(pedido.sapSystem);
 	if (!sapSystem) {
@@ -216,7 +216,7 @@ exports.retransmitirPedido = (pedido, callback) => {
 		callback(NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	
+
 	var httpCallParams = sapSystem.getRequestCallParams({
 		path: '/api/zsd_ent_ped_api/pedidos',
 		body: pedido
@@ -238,7 +238,7 @@ exports.retransmitirPedido = (pedido, callback) => {
 			callback(callError, sapResponse, sapRequest);
 			return;
 		}
-		
+
 		if (sapResponse.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
@@ -259,7 +259,7 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
 		return;
 	}
 	var sapSystem = new SapSystem(sapSystemData);
-	var url = sapSystem.getURI('/sap/bc/srt/rfc/sap/zws_ytc_albaran_xml_hefame/020/zws_ytc_albaran_xml_hefame/zws_ytc_albaran_xml_hefame' );
+	var url = sapSystem.getURI('/sap/bc/srt/rfc/sap/zws_ytc_albaran_xml_hefame/020/zws_ytc_albaran_xml_hefame/zws_ytc_albaran_xml_hefame');
 
 	var body = '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:urn="urn:sap-com:document:sap:rfc:functions"> \
 		<soap:Header/>	 \
@@ -287,7 +287,7 @@ exports.getAlbaranXML = function (txId, numeroAlbaran, codigoUsuario, callback) 
 		body: body
 	};
 
-	L.xd(txId, ['Enviando a SAP consulta de albaránXML', httpCallParams]);
+	L.xd(txId, ['Enviando a SAP consulta de albaránXML']);
 
 	request(httpCallParams, function (err, res, body) {
 
@@ -366,8 +366,8 @@ exports.findAlbaranes = function (txId, query, callback) {
 	}
 	var sapSystem = new SapSystem(sapSystemData);
 	var url = sapSystem.getURI('/api/zsf_get_order_list/find');
-	
-	
+
+
 	var httpCallParams = {
 		followAllRedirects: true,
 		json: true,
@@ -396,10 +396,16 @@ exports.findAlbaranes = function (txId, query, callback) {
 		if (statusCodeType === 2) {
 			callback(null, res, body);
 		} else {
-			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+			// SAP puede dar un falso error si no se encuentran albaranes
+			if (res.statusCode === 404 && res.statusMessage === 'No se han encontrado datos') {
+				callback(null, res, []);
+			}
+			else {
+				callback({
+					errno: res.statusCode,
+					code: res.statusMessage
+				}, res, body);
+			}
 		}
 
 	});

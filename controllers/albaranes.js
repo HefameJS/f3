@@ -1,7 +1,8 @@
 'use strict';
 const BASE = global.BASE;
+//const C = global.config;
 const L = global.logger;
-const config = global.config;
+const K = global.constants;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
@@ -22,12 +23,34 @@ exports.getAlbaran = function (req, res) {
         return;
     }
 
-    var clienteSap = req.token.sub;
-    if (clienteSap && clienteSap.endsWith('@hefame')) {
-        clienteSap = clienteSap.substring(0, clienteSap.length - 7).padStart(10, '0')
+    // Comprobación de si la consulta está hecha desde la APP
+    // En cuyo caso se aceptará si el token que viene es del dominio HEFAME, tiene el permiso 'F3_SIMULADOR'
+    if (req.token.aud === K.DOMINIOS.HEFAME) {
+        if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
+            L.xw(req.txId, ['El usuario no tiene los permisos necesarios para realizar la consulta', req.token.perms])
+            var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+            var responseBody = error.send(res);
+            return;
+        } else {
+            L.xi(req.txId, ['La consulta es simulada por un usuario del dominio', req.token.sub])
+            if (!req.query.codigoCliente) {
+                L.xw(req.txId, ['Las consultas simuladas deben indicar el campo codigoCliente en la queryString', req.token.perms])
+                var error = new FedicomError('ALB-ERR-001', 'No se ha indicado el codigo del cliente para la simulación', 400);
+                var responseBody = error.send(res);
+                return;
+            }
+            let newToken = Tokens.generateJWT(req.txId, { username: req.query.codigoCliente, domain: 'FEDICOM' }, [])
+            L.xd(req.txId, ['Se ha generado un token para la consulta simulada. Se sustituye por el de la petición simulada', newToken])
+            req.headers['authorization'] = 'Bearer ' + newToken
+            req.token = Tokens.verifyJWT(newToken, req.txId);
+        }
     }
 
-    L.xi(req.txId, ['El token transmitido resultó VALIDO y se obtuvo el clienteSAP', req.token, clienteSap], 'txToken');
+    var clienteSap = req.token.sub;
+    if (clienteSap.endsWith('@hefame'))         clienteSap = clienteSap.substring(0, clienteSap.length - 7)
+    clienteSap = clienteSap.padStart(10, '0')
+
+    L.xi(req.txId, ['El token transmitido resultó VALIDO y se obtuvo el clienteSAP', clienteSap], 'txToken');
 
     var numAlbaran = req.params.numeroAlbaran;
     if (!numAlbaran) {
@@ -37,18 +60,18 @@ exports.getAlbaran = function (req, res) {
     }
 
     var numAlbaranSaneado = numAlbaran.padStart(10, '0');
-    L.xi(req.txId, ['El número de albarán solicitado', numAlbaran, numAlbaranSaneado])
+    L.xi(req.txId, ['El número de albarán solicitado', numAlbaranSaneado])
 
     var formatoAlbaran = 'JSON';
 
     if (req.headers['accept']) {
-        switch (req.headers['accept'].toLowerCase()){
+        switch (req.headers['accept'].toLowerCase()) {
             case 'application/pdf': formatoAlbaran = 'PDF'; break;
             default: formatoAlbaran = 'JSON'; break;
         }
     }
 
-    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept'], req.headers]);
+    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept']]);
 
     switch (formatoAlbaran) {
         case 'JSON':
@@ -60,9 +83,6 @@ exports.getAlbaran = function (req, res) {
             fedicomError.send(res);
             return;
     }
-
-
-        
 
 }
 
@@ -80,8 +100,6 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
             return;
         }
 
-        // L.xd(req.txId, ['Se obtuvo el siguiente albarán XML', soapBody]);
-
         var parseString = require('xml2js').parseString;
         parseString(soapBody, (err, soapResult) => {
             if (err) {
@@ -97,7 +115,7 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
 
 
             L.xd(req.txId, ['Se obtuvo el código O_STATUS', status])
-            
+
             if (status !== '00') {
                 L.xe(req.txId, ['Se obtuvo el código O_STATUS distinto de "00". No se consigue recuperar el albarán de SAP', status])
                 var fedicomError = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
@@ -111,11 +129,11 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
                 return;
             } else {
                 var albaranXML = '';
-                
-                soapResult['TO_EDATA'][0]['item'].forEach( (linea) => {
+
+                soapResult['TO_EDATA'][0]['item'].forEach((linea) => {
                     albaranXML += linea['ELINEA'][0];
                 });
-                L.xd(req.txId, ['Se obtuvo el siguiente albarán XML', {albaranXML}]);
+                L.xd(req.txId, ['Se obtuvo el albarán XML']);
 
                 parseString(albaranXML, (err, albaranJSONpre) => {
                     if (err) {
@@ -130,12 +148,13 @@ const getAlbaranJSON = function (req, res, numAlbaranSaneado, clienteSap, return
                     var albaranJSON = new AlbaranJSON(req.txId, albaranJSONpre)
                     if (returnAsArray) albaranJSON = [albaranJSON];
                     res.send(albaranJSON);
-                    L.xi(req.txId, ['Se envía albarán al cliente', albaranJSON]);
-                    
+                    L.xi(req.txId, ['Se envía albarán al cliente'
+                ]);
+
                 });
             }
 
- 
+
         });
 
     });
@@ -151,8 +170,6 @@ const getAlbaranPDF = function (req, res, numAlbaranSaneado) {
             return;
         }
 
-         
-        
         if (soapBody && soapBody[0] && soapBody[0].pdf_file) {
             L.xi(req.txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
             var buffer = Buffer.from(soapBody[0].pdf_file, 'base64');
@@ -163,16 +180,17 @@ const getAlbaranPDF = function (req, res, numAlbaranSaneado) {
             res.send(buffer);
         }
         else {
-            L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', err]);
-            var fedicomError = new FedicomError('ALB-ERR-999', 'Ocurrió un error al buscar el albarán', 500);
+            L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', soapBody]);
+            var fedicomError = new FedicomError('ALB-ERR-999', 'Ocurrió un error al buscar el albarán', 404);
             fedicomError.send(res);
         }
-        
+
     });
 }
 
 
 exports.findAlbaran = function (req, res) {
+
 
     L.xi(req.txId, ['Procesando transmisión como BÚSQUEDA DE ALBARAN']);
 
@@ -183,19 +201,40 @@ exports.findAlbaran = function (req, res) {
         return;
     }
 
-    var usuarioFedicom = req.token.sub;
-    if (usuarioFedicom && usuarioFedicom.endsWith('@hefame')) {
-        usuarioFedicom = usuarioFedicom.substring(0, usuarioFedicom.length - 7).padStart(10, '0')
-    }
-
-
-    if (!req.query.codigoCliente) {
+    // El campo codigoCliente es obligatorio. Se padea a 10 si existe.
+    // Nota: si la consulta es simulada, el token se genera para este codigo.
+    let codigoCliente = req.query.codigoCliente
+    if (!codigoCliente) {
         var error = new FedicomError('ALB-ERR-002', 'El "codigoCliente" es inválido.', 400);
         error.send(res);
         return;
     }
+    codigoCliente = codigoCliente.padStart(10, '0');
 
-    var codigoCliente = req.query.codigoCliente.padStart(10, '0');
+
+    // Comprobación de si la consulta está hecha desde la APP
+    // En cuyo caso se aceptará si el token que viene es del dominio HEFAME, tiene el permiso 'F3_SIMULADOR'
+    if (req.token.aud === K.DOMINIOS.HEFAME) {
+        if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
+            L.xw(req.txId, ['El usuario no tiene los permisos necesarios para realizar la consulta', req.token.perms])
+            var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+            var responseBody = error.send(res);
+            return;
+        } else {
+            L.xi(req.txId, ['La consulta es simulada por un usuario del dominio', req.token.sub])
+            let newToken = Tokens.generateJWT(req.txId, { username: codigoCliente, domain: 'FEDICOM' }, [])
+            L.xd(req.txId, ['Se ha generado un token para la consulta simulada. Se sustituye por el de la petición simulada', newToken])
+            req.headers['authorization'] = 'Bearer ' + newToken
+            req.token = Tokens.verifyJWT(newToken, req.txId);
+        }
+    }
+
+
+    // usuarioFedicom - El usuario del token, saneado: sin el @hefame y padeado por la izquierda con 10 ceros.
+    var usuarioFedicom = req.token.sub;
+    if (usuarioFedicom.endsWith('@hefame')) usuarioFedicom = usuarioFedicom.substring(0, usuarioFedicom.length - 7)
+    usuarioFedicom = usuarioFedicom.padStart(10, '0')
+
 
     // Comprobación de autorizacion.
     // Comprobamos que los 5 últimos digitos del usuario del token coincidan con los 5 últimos del codigo de cliente
@@ -210,7 +249,7 @@ exports.findAlbaran = function (req, res) {
 
 
     // En el caso (absurdo) de que se busque por un numeroAlbaran concreto,
-    // hacemos la búsqueda de ese albaran concreto
+    // hacemos la búsqueda de ese albaran JSON concreto
     if (req.query.numeroAlbaran) {
         var numAlbaran = req.query.numeroAlbaran.padStart(10, '0');
         return getAlbaranJSON(req, res, numAlbaran, codigoCliente, true /*Responder en un array*/);
@@ -245,7 +284,7 @@ exports.findAlbaran = function (req, res) {
         sapQueryString.date_ini = Date.toSapDate(Date.fromFedicomDate(req.query.fechaDesde));
         sapQueryString.date_end = Date.toSapDate(Date.fromFedicomDate(req.query.fechaHasta));
 
-        // TODO: Comprobar que el rango no es 
+        // TODO: Comprobar que el rango no es superior a X meses
     }
 
     L.xd(req.txId, ['Buscando en SAP albaranes con filtro', sapQueryString]);
@@ -259,24 +298,25 @@ exports.findAlbaran = function (req, res) {
         }
 
         if (sapBody && sapBody.forEach) {
-            if (sapBody[0].id)  {
+
+            if (sapBody.length > 0 && sapBody[0].id) {
                 L.xe(req.txId, ['SAP indicó un error de precondición', sapBody[0].id, sapBody[0].message]);
                 var errCode = (sapBody[0].id === 4) ? 'ALB-ERR-009' : 'ALB-ERR-999';
                 var error = new FedicomError(errCode, sapBody[0].message, 500);
                 error.send(res);
                 return;
             }
-            
+
             L.xd(req.txId, ['SAP retornó un total de ' + sapBody.length + ' albaranes']);
             var listaAlbaranes = [];
-            sapBody.forEach( (albaran) => {
-                
+            sapBody.forEach((albaran) => {
+
                 if (albaran.oproforma && albaran.order_dec === 'Cargo' && albaran.stats_now !== 'Registrado') {
                     if (--offset < 0 && limit-- > 0) {
                         listaAlbaranes.push({
                             numeroAlbaran: albaran.oproforma,
-                            fechaAlbaran: Date.fromSAPtoFedicomDate( albaran.prof_date ),
-                            totales: { 
+                            fechaAlbaran: Date.fromSAPtoFedicomDate(albaran.prof_date),
+                            totales: {
                                 precioAlbaran: albaran.amount_or,
                                 precioNeto: albaran.amount_ne
                             },
@@ -285,7 +325,7 @@ exports.findAlbaran = function (req, res) {
                     }
                 }
 
-                
+
 
             });
             L.xi(req.txId, ['Se le envían al cliente ' + listaAlbaranes.length + ' albaranes']);
@@ -296,7 +336,7 @@ exports.findAlbaran = function (req, res) {
             res.setHeader('X-Total-Count', 0);
             res.status(200).json([]);
         }
-        
+
     });
 
 }
