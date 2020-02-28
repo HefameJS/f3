@@ -13,7 +13,7 @@ const Events = require(BASE + 'interfaces/events');
 const Flags = require(BASE + 'interfaces/cache/flags');
 
 const retransmitirPedido = require(BASE + 'watchdog/retransmitirPedido').retransmitirPedido;
-const processRegister = require(BASE + 'util/processRegister');
+const IRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos');
 
 
 var retransmissionsInProgress = 0;
@@ -26,7 +26,7 @@ var interval = setInterval(function () {
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 
-	processRegister.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
+	IRegistroProcesos.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
 		if (err) return;
 
 		if (maestro) {

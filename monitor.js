@@ -91,5 +91,5 @@ try {
 }
 
 
-require(BASE + 'util/processRegister').iniciarIntervaloRegistro();
+require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

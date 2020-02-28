@@ -34,5 +34,5 @@ const mdbWatchdog = require(BASE + 'watchdog/mdb');
 const sqliteWatchdog = require(BASE + 'watchdog/sqlite');
 
 
-require(BASE + 'util/processRegister').iniciarIntervaloRegistro();
+require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

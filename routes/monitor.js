@@ -53,7 +53,7 @@ module.exports = function (app) {
 		.put(tryCatch(controllers.consultas.consultaTX))
 
 	app.route('/status/proc')
-		.get(tryCatch(controllers.consultas.consultaProcesos))
+		.get(tryCatch(controllers.consultas.procesos.consultaProcesos))
 
 	app.route('/status/sap')
 		.get(tryCatch(controllers.consultas.consultaSap))

@@ -111,7 +111,7 @@ if (cluster.isMaster) {
 
 
 
-require(BASE + 'util/processRegister').iniciarIntervaloRegistro();
+require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 
 
 cluster.on('exit', function (worker) {
