@@ -14,109 +14,35 @@ var vecesGanadoMaestro = {}
 
 
 
+/**
+ * Inicia un setInterval que va refrescando el registro del proceso
+ * actual en la tabla de control.
+ */
 const iniciarIntervaloRegistro = () => {
 	if (idIntervalo) return;
 
 	setTimeout(limpiarLocales, K.PROCESS_REGISTER_INTERVAL / 2);
 
 	idIntervalo = setInterval(() => {
-
-		let filtro = {
-			pid: process.pid,
-			host: OS.hostname()
-		}
-
-		let datos = {
-			...filtro,
-			version: global.constants.SERVER_VERSION,
-			type: process.type,
-			status: K.PROCESS_STATUS.ALIVE,
-			timestamp: Date.fedicomTimestamp()
-		}
-
-		if (!cluster.isMaster) datos.workerId = cluster.worker.id
-		if (process.type === K.PROCESS_TYPES.WATCHDOG) {
-			datos.priority = C.watchdog.priority || -1
-			datos.maestro = vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG]
-		} else if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
-			datos.childrens = Math.max(parseInt(C.workers), 1) || (require('os').cpus().length - 1 || 1);
-		}
-
-
-		let update = { 
-			$setOnInsert: { 
-				init: Date.fedicomTimestamp() 
-			},
-			$set: datos 
-		}
-
-		let control = Imongo.coleccionControl();
-		if (control) {
-			control.updateOne(filtro, update, { upsert: true, w: 0 })
-				.then(res => {
-					// L.t(['Proceso registrado', datos], 'procRegister');
-				})
-				.catch(err => {
-					L.e(['Error al registrar el proceso', err, datos], 'procRegister');
-				})
-		} else {
-			L.e(['Error al registrar el proceso. No conectado a MDB', datos], 'procRegister');
-		}
-
+		registrarProceso()
 	}, K.PROCESS_REGISTER_INTERVAL)
+
 }
+
+/**
+ * Detiene el registro periodico del proceso.
+ */
 const detenerIntervaloRegistro = () => {
 	if (!idIntervalo) return;
 	clearInterval(idIntervalo);
 }
 
-const asumirMaestro = () => {
-
-	let filtro = {
-		type: K.PROCESS_TYPES.WATCHDOG,
-		host: {$ne: OS.hostname()}
-	}
-
-
-	let control = Imongo.coleccionControl();
-	if (control) {
-		control.updateMany(filtro, { $set: { priority: -1, maestro: 0} })
-			.then(res => {
-				L.e(['Lanzada petición a la red para obtener el rol de watchdog maestro'], 'election');
-			})
-			.catch(err => {
-				L.e(['Error al asumir el rol de watchdog maestro', err], 'election');
-			})
-	} else {
-		L.e(['Error al asumir el rol de watchdog maestro. No conectado a MDB'], 'election');
-	}
-}
-
-
-const obtenerProcesoMaestro = (tipoProceso, callback) => {
-
-	let filtro = {
-		type: tipoProceso,
-		priority: { $gte: 0 }
-	}
-
-
-	let control = Imongo.coleccionControl();
-	if (control) {
-		control.find(filtro).sort({ priority: -1 }).toArray()
-			.then(res => {
-				callback(null, res)
-			})
-			.catch(err => {
-				L.e(['Error al obtener el proceso maestro', err], 'election');
-				callback(err, null)
-			})
-	} else {
-		L.e(['Error al obtener el proceso maestro. No conectado a MDB'], 'election');
-		callback({ error: 'No conectado a MDB' }, null)
-	}
-}
-
+/**
+ * Realiza una consulta a la tabla de control para determinar si el proceso
+ * es el maestro de su tipo.
+ * @param {*} tipoProceso 
+ * @param {function} callback function (err, false)
+ */
 const soyMaestro = (tipoProceso, callback) => {
 	obtenerProcesoMaestro(tipoProceso, (err, watchdogs) => {
 		if (err) {
@@ -179,36 +105,11 @@ const soyMaestro = (tipoProceso, callback) => {
 	})
 }
 
-const limpiarLocales = () => {
-	if (process.type === K.PROCESS_TYPES.CORE_WORKER) return;
-
-	let filtro = {
-		host: OS.hostname(),
-		type: process.type
-	}
-
-	if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
-		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER ] }
-	}
-
-	let control = Imongo.coleccionControl();
-	if (control) {
-		control.deleteMany(filtro, { w: 0 })
-			.then(res => {
-				L.t(['Limpiados registros de proceso anteriores', filtro], 'procRegister');
-			})
-			.catch(err => {
-				L.e(['Error al borrar el registro de procesos', err, filtro], 'procRegister');
-			})
-	} else {
-		L.e(['Error al borrar el registro de procesos. No conectado a MDB', filtro], 'procRegister');
-	}
-
-
-
-
-}
-
+/**
+ * Obtiene la lista de procesos del tipo indicado.
+ * @param {*} tipoProceso 
+ * @param {*} callback 
+ */
 const consultaProcesos = (tipoProceso, callback) => {
 	let filtro = {
 		type: tipoProceso,
@@ -230,9 +131,151 @@ const consultaProcesos = (tipoProceso, callback) => {
 		callback({ error: 'No conectado a MDB' }, null)
 	}
 }
+
 module.exports = {
 	iniciarIntervaloRegistro,
 	detenerIntervaloRegistro,
 	soyMaestro,
 	consultaProcesos
+}
+
+
+
+
+
+/**
+ * Registra el proceso actual en la tabla de control
+ */
+const registrarProceso = () => {
+	let filtro = {
+		pid: process.pid,
+		host: OS.hostname()
+	}
+
+	let datos = {
+		...filtro,
+		version: global.constants.SERVER_VERSION,
+		type: process.type,
+		status: K.PROCESS_STATUS.ALIVE,
+		timestamp: Date.fedicomTimestamp()
+	}
+
+	if (!cluster.isMaster) datos.workerId = cluster.worker.id
+	if (process.type === K.PROCESS_TYPES.WATCHDOG) {
+		datos.priority = C.watchdog.priority || -1
+		datos.maestro = vecesGanadoMaestro[K.PROCESS_TYPES.WATCHDOG]
+	} else if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
+		datos.childrens = Math.max(parseInt(C.workers), 1) || (require('os').cpus().length - 1 || 1);
+	}
+
+
+	let update = {
+		$setOnInsert: {
+			init: Date.fedicomTimestamp()
+		},
+		$set: datos
+	}
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.updateOne(filtro, update, { upsert: true, w: 0 })
+			.then(res => {
+				// L.t(['Proceso registrado', datos], 'procRegister');
+			})
+			.catch(err => {
+				L.e(['Error al registrar el proceso', err, datos], 'procRegister');
+			})
+	} else {
+		L.e(['Error al registrar el proceso. No conectado a MDB', datos], 'procRegister');
+	}
+}
+
+
+/**
+ * Devuelve la información del proceso maestro para el tipo de 
+ * proceso indidado
+ * @param {*} tipoProceso 
+ * @param {function} callback function (err, procesoMaestro)
+ */
+const obtenerProcesoMaestro = (tipoProceso, callback) => {
+
+	let filtro = {
+		type: tipoProceso,
+		priority: { $gte: 0 }
+	}
+
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.find(filtro).sort({ priority: -1 }).toArray()
+			.then(res => {
+				callback(null, res)
+			})
+			.catch(err => {
+				L.e(['Error al obtener el proceso maestro', err], 'election');
+				callback(err, null)
+			})
+	} else {
+		L.e(['Error al obtener el proceso maestro. No conectado a MDB'], 'election');
+		callback({ error: 'No conectado a MDB' }, null)
+	}
+}
+
+
+/**
+ * Hacer que el proceso lance una petición a la tabla de control
+ * para hacerse maestro. 
+ */
+const asumirMaestro = () => {
+
+	let filtro = {
+		type: K.PROCESS_TYPES.WATCHDOG,
+		host: { $ne: OS.hostname() }
+	}
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.updateMany(filtro, { $set: { priority: -1, maestro: 0 } })
+			.then(res => {
+				L.e(['Lanzada petición a la red para obtener el rol de watchdog maestro'], 'election');
+			})
+			.catch(err => {
+				L.e(['Error al asumir el rol de watchdog maestro', err], 'election');
+			})
+	} else {
+		L.e(['Error al asumir el rol de watchdog maestro. No conectado a MDB'], 'election');
+	}
+}
+
+
+/**
+ * Elimina la información de registro de otros procesos del mismo tipo que el proceso
+ * actual en el host del proceso actual.
+ */
+const limpiarLocales = () => {
+	if (process.type === K.PROCESS_TYPES.CORE_WORKER) return;
+
+	let filtro = {
+		host: OS.hostname(),
+		type: process.type
+	}
+
+	if (process.type === K.PROCESS_TYPES.CORE_MASTER) {
+		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER] }
+	}
+
+	let control = Imongo.coleccionControl();
+	if (control) {
+		control.deleteMany(filtro, { w: 0 })
+			.then(res => {
+				L.t(['Limpiados registros de proceso anteriores', filtro], 'procRegister');
+				registrarProceso()
+			})
+			.catch(err => {
+				L.e(['Error al borrar el registro de procesos', err, filtro], 'procRegister');
+			})
+	} else {
+		L.e(['Error al borrar el registro de procesos. No conectado a MDB', filtro], 'procRegister');
+	}
+
 }
