@@ -110,11 +110,17 @@ const soyMaestro = (tipoProceso, callback) => {
  * @param {*} tipoProceso 
  * @param {*} callback 
  */
-const consultaProcesos = (tipoProceso, callback) => {
+const consultaProcesos = (tipoProceso, host, callback) => {
 	let filtro = {
-		type: tipoProceso,
-		priority: { $gte: 0 }
+		$or: [
+			{priority: { $exists: false }}, 
+			{priority: { $gte: 0 }}
+		] 
 	}
+
+	if (tipoProceso) filtro.type = tipoProceso
+	if (host) filtro.host = host
+
 
 	let control = Imongo.coleccionControl();
 	if (control) {
