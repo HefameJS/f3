@@ -46,28 +46,6 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_NO_HTTP_PORT);
 		}
 	},
-	https: function (config) {
-		if (!config.https) {
-			console.error("No se ha definido el nodo HTTPS (https)");
-			process.exit(K.EXIT_CODES.E_NO_HTTPS_CONFIG);
-		}
-		if (!config.https.port) {
-			console.error("No se ha definido el puerto para HTTPS (https.port)");
-			process.exit(K.EXIT_CODES.E_NO_HTTPS_PORT);
-		}
-		if (!config.https.cert) {
-			console.error("No se ha definido el certificado para HTTPS (https.cert)");
-			process.exit(K.EXIT_CODES.E_NO_HTTPS_CERT);
-		}
-		if (!config.https.key) {
-			console.error("No se ha definido la clave privada para HTTPS (https.key)");
-			process.exit(K.EXIT_CODES.E_NO_HTTPS_KEY);
-		}
-		if (!config.https.passphrase && config.https.passphrase !== '') {
-			console.error("No se ha definido la passphrase para HTTPS (https.passphrase)");
-			process.exit(K.EXIT_CODES.E_NO_HTTPS_PASSPHRASE);
-		}
-	},
 	jwt: function (config) {
 		if (!config.jwt) {
 			console.error("No se ha definido el nodo JTW (jwt)");
@@ -148,7 +126,6 @@ var configVerificator = {
 			process.exit(K.EXIT_CODES.E_NO_MONITOR_CONFIG);
 		}
 		this.monitor_http(config);
-		this.monitor_https(config);
 	},
 	monitor_http: function (config) {
 		if (!config.monitor.http) {
@@ -158,28 +135,6 @@ var configVerificator = {
 		if (!config.monitor.http.port) {
 			console.error("No se ha definido el puerto para MONITOR - HTTP (monitor.http.port)");
 			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTP_PORT);
-		}
-	},
-	monitor_https: function (config) {
-		if (!config.monitor.https) {
-			console.error("No se ha definido el nodo MONITOR - HTTPS (monitor.https)");
-			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS);
-		}
-		if (!config.monitor.https.port) {
-			console.error("No se ha definido el puerto para MONITOR - HTTPS (monitor.https.port)");
-			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_PORT);
-		}
-		if (!config.monitor.https.cert) {
-			console.error("No se ha definido el certificado para MONITOR - HTTPS (monitor.https.cert)");
-			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_CERT);
-		}
-		if (!config.monitor.https.key) {
-			console.error("No se ha definido la clave privada para MONITOR - HTTPS (monitor.https.key)");
-			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_KEY);
-		}
-		if (!config.monitor.https.passphrase && config.monitor.https.passphrase !== '') {
-			console.error("No se ha definido la passphrase para MONITOR - HTTPS (monitor.https.passphrase)");
-			process.exit(K.EXIT_CODES.E_MONITOR_NO_HTTPS_PASSPHRASE);
 		}
 	}
 };
@@ -198,7 +153,6 @@ try {
 	}
 	configVerificator.sapSystems(C);
 	configVerificator.http(C);
-	configVerificator.https(C);
 	configVerificator.jwt(C);
 	configVerificator.mongodb(C);
 	configVerificator.sqlite(C);

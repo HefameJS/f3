@@ -22,13 +22,7 @@
 		"db_path": "./db/sqlite.db"
 	},
 	"http": {
-		"port": 80
-	},
-	"https": {
-		"port": 443,
-		"cert": "path/to/server.crt",
-		"key": "path/to/server.key",
-		"passphrase": "keyPass"
+		"port": 5000
 	},
 	"jwt": {
 		"token_signing_key": "SecretOne",
@@ -71,14 +65,8 @@
 		"cacert": "ssl/ad_ca_cert.crt"
 	},
 	"monitor": {
-		"https": {
-			"port": 8443,
-			"cert": "ssl/server.crt",
-			"key": "ssl/server.key",
-			"passphrase": ""
-		},
 		"http": {
-				"port": 8080
+				"port": 5001
 		}
 	}
 }

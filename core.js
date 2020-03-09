@@ -48,24 +48,9 @@ if (cluster.isMaster) {
 
 	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
 
-	const fs = require('fs');
 	const http = require('http');
-	const https = require('https');
 	var httpConf = C.http;
-	var httpsConf = C.https;
 
-
-	try {
-		httpsConf.ssl = {
-		    key: fs.readFileSync(httpsConf.key || './ssl/server.key'),
-		    cert: fs.readFileSync(httpsConf.cert  || './ssl/server.crt'),
-			 passphrase: httpsConf.passphrase || ''
-		};
-	} catch (ex) {
-		L.f("Ocurrió un error al cargar el material criptográfico para HTTPS");
-		L.f(ex);
-		process.exit(K.EXIT_CODES.E_KEY_OR_CERT_NOT_FOUND);
-	}
 
 	var app = require('express')();
 	var cors = require('cors');
@@ -93,19 +78,6 @@ if (cluster.isMaster) {
 		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 	}
 
-	try {
-		var secureServer = https.createServer(httpsConf.ssl, app).listen(httpsConf.port, function() {
-			L.i("Servidor HTTPS a la escucha en el puerto " + httpsConf.port);
-		}).on('error', function(err) {
-			L.e("Ocurrió un error al arrancar el servicio HTTPS");
-		   L.e(err);
-			process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
-		});
-	} catch (ex) {
-		L.f("Ocurrió un error al arrancar el servicio HTTPS");
-		L.f(ex);
-		process.exit(K.EXIT_CODES.E_HTTPS_SERVER_ERROR);
-	}
 	
 }
 

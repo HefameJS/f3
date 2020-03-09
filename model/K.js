@@ -275,10 +275,7 @@ module.exports = {
 
         E_NO_HTTP_CONFIG: 6,
         E_NO_HTTP_PORT: 7,
-        E_NO_HTTPS_CONFIG: 8,
-        E_NO_HTTPS_PORT: 9,
         E_HTTP_SERVER_ERROR: 10,
-        E_HTTPS_SERVER_ERROR: 11,
 
         E_NO_JWT_CONFIG: 12,
         E_JWT_NO_SIGN_KEY: 13,
@@ -295,26 +292,12 @@ module.exports = {
         E_NO_SQLITE_CONFIG: 22,
         E_SQLITE_NO_PATH: 23,
         E_NO_WATCHDOG_CONFIG: 24,
-        E_WATCHDOG_NO_HTTPS: 25,
-        E_WATCHDOG_NO_HTTPS_PORT: 26,
-        E_WATCHDOG_NO_HTTPS_CERT: 27,
-        E_WATCHDOG_NO_HTTPS_KEY: 28,
-        E_WATCHDOG_NO_HTTPS_PASSPHRASE: 29,
-
-        E_NO_HTTPS_CERT: 30,
-        E_NO_HTTPS_KEY: 31,
-        E_NO_HTTPS_PASSPHRASE: 32,
-        E_KEY_OR_CERT_NOT_FOUND: 33,
 
         E_NO_LDAP_CONFIG: 34,
         E_NO_LDAP_URL: 35,
         E_NO_LDAP_CA: 36,
         E_NO_MONITOR_CONFIG: 37,
-        E_MONITOR_NO_HTTPS: 38,
-        E_MONITOR_NO_HTTPS_PORT: 39,
-        E_MONITOR_NO_HTTPS_CERT: 40,
-        E_MONITOR_NO_HTTPS_KEY: 41,
-        E_MONITOR_NO_HTTPS_PASSPHRASE: 42,
+        E_MONITOR_NO_HTTP: 38,
 
         E_NO_PRODUCTION_DEFINED: 43
     },
