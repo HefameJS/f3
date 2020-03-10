@@ -1,8 +1,8 @@
 {
 	"production": false, 
 	"workers": 8,
-	"logdir": "/var/log/f3",
-	"pid": "/var/run/f3",
+	"logdir": "/home/fedicom3/log",
+	"pid": "/home/fedicom3/pid",
 	"depurar_transmisiones": false,
 	"mongodb": {
 		"username": "fedicom",
@@ -11,15 +11,15 @@
 			"fedicom1.mydomain.com:27017",
 			"fedicom2.mydomain.com:27017"
 		],
-		"database": "fedicom",
-		"replicaset": "rs0",
+		"database": "fedicom3",
+		"replicaset": "fedicom3",
 		"writeconcern": 1,
-		"txCollection": "myCollection",
-		"discardCollection": "myDiscardCollection",
+		"txCollection": "tx",
+		"discardCollection": "discard",
 		"logCollection": "log"
 	},
 	"sqlite": {
-		"db_path": "./db/sqlite.db"
+		"db_path": "/home/fedicom3/db/sqlite.db"
 	},
 	"http": {
 		"port": 5000
