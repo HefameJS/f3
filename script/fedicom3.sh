@@ -28,12 +28,15 @@ WORKERNAME=f3-core-worker
 mkdir -p $PIDDIR 2>/dev/null
 
 UPDATE_GIT=no
+MOSTRAR_AYUDA=no
 
 
 while getopts "hu" OPT "${@:2}"
 do
     case $OPT in
-        h ) echo "Mostrar ayuda" ;;
+        h ) 
+            MOSTRAR_AYUDA=yes
+            ;;
         u ) echo "Se actualizan librerias NPM y codigo desde GIT"
             UPDATE_GIT=yes
             ;;
@@ -44,6 +47,34 @@ do
 done
 
 
+
+if [ $MOSTRAR_AYUDA == "yes"]
+then
+    echo "Uso: $0 (<accion> [<opciones>]) | -h"
+    echo ""
+    echo "    -h  Muestra esta ayuda"
+    echo ""
+    echo "<accion>:"
+    echo "    start"
+    echo "        Arranca los procesos de la aplicación Fedicom 3."
+    echo ""
+    echo "        <opciones>:"
+    echo "            -u  Actualiza la aplicación desde el repositorio GIT."
+    echo ""
+    echo "    stop"
+    echo "        Detiene los procesos de la aplicación Fedicom 3."
+    echo ""
+    echo "    restart"
+    echo "        Reinicia los procesos de la aplicación Fedicom 3."
+    echo "        Equivale a ejecutar 'f3 stop' y 'f3 start' en ese orden."
+    echo ""
+    echo "        <opciones>:"
+    echo "            -u  Actualiza la aplicación desde el repositorio GIT."
+    echo ""
+    echo "    status"
+    echo "        Muestra el estado de los procesos Fedicom 3 ejecuntandose en el servidor."
+    exit 0
+fi
 
 
 
@@ -76,8 +107,11 @@ stop() {
 }
 
 status() {
-    ps -ef | grep f3 | grep -v grep | grep -v 'f3 status'
+    ps lf | grep f3 | grep -v grep | grep -v 'f3 status'
 }
+
+
+
 
 
 
