@@ -48,7 +48,7 @@ done
 
 
 
-if [ $MOSTRAR_AYUDA == "yes"]
+if [ $MOSTRAR_AYUDA == "yes" ]
 then
     echo "Uso: $0 (<accion> [<opciones>]) | -h"
     echo ""
@@ -73,6 +73,7 @@ then
     echo ""
     echo "    status"
     echo "        Muestra el estado de los procesos Fedicom 3 ejecuntandose en el servidor."
+    echo ""
     exit 0
 fi
 
@@ -107,6 +108,7 @@ stop() {
 }
 
 status() {
+    ps lf | head -1
     ps lf | grep f3 | grep -v grep | grep -v 'f3 status'
 }
 
