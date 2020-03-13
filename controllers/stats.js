@@ -16,38 +16,8 @@ module.exports.getStats = function (req, res) {
 	}
 
 
-	if (req.params.item === 'sqlite') {
-	
-		Isqlite.countTx(null, (err, numRows) => {
-			if (err) return res.status(500).send({ok: false, msg: err});
-			
-			Isqlite.countTx(10, (err, pendingRows) => {
-				res.status(200).json({
-					ok: true,
-					data: {
-						totalEntries: numRows,
-						activeEntries: pendingRows
-					}
-				});
-			});
-
-		});
-	} else if(req.params.item === 'fedicomCredentialsCache') {
+	if(req.params.item === 'fedicomCredentialsCache') {
 		res.status(200).json(credentialsCache.stats());
-	}
-	else if(req.params.item === 'mdbStatus') {
-		Imongo.connectionStatus( (status) => {
-			res.status(200).json({ok: true, data: {connected: status }});
-		});	
-	}
-	else if (req.params.item === 'sap') {
-		Isap.ping(req.query.sapSystem || null, (err, status) => {
-			if (!err) {
-				res.status(200).json({ ok: true, data: { available: status } });
-			} else {
-				res.status(200).json({ ok: true, data: { available: status, error: err } });
-			}
-		});
 	}
 	else {
 		res.status(404).json({ok: false, msg: 'Elemento no encontrado'});

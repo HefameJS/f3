@@ -34,7 +34,7 @@ var interval = setInterval(function() {
 					return;
 				}
 
-				Isqlite.retrieveAll(maxRetries, function (error, rows) {
+				Isqlite.retrieveAll(maxRetries, 50, 0, function (error, rows) {
 					if (error) {
 						L.f(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
 						operationInProgress = false;

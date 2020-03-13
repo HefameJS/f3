@@ -57,6 +57,7 @@ const consultaSap = function (req, res) {
 module.exports = {
 	consultaTX,
 	consultaSap,
+	sqlite: require(BASE + 'controllers/monitor/consultasSqlite'),
 	procesos: require(BASE + 'controllers/monitor/consultasProcesos'),
 	mongodb: require(BASE + 'controllers/monitor/consultasMongoDb'),
 	apache: require(BASE + 'controllers/monitor/consultasApache')

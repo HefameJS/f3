@@ -9,7 +9,7 @@ const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 
-module.exports.generateJWT = (txId, authReq, perms) => {
+const generateJWT = (txId, authReq, perms) => {
 	var jwt = require('jsonwebtoken');
 	var jwtData = {
 		sub: authReq.username,
@@ -25,8 +25,7 @@ module.exports.generateJWT = (txId, authReq, perms) => {
 	return token;
 }
 
-
-module.exports.verifyJWT = (token, txId) => {
+const verifyJWT = (token, txId) => {
 
 	L.xd(txId, ['Analizando token', token], 'txToken');
 
@@ -92,4 +91,78 @@ module.exports.verifyJWT = (token, txId) => {
 			}
 		};
 	}
+}
+
+/**
+ * Realiza la comprobación del token de la petición, pudiendo indicarse opciones de autorización.
+ * Si el token no resultara válido, se retorna un error Fedicom3 al cliente con el error.
+ * 
+ * El método retorna un objeto tal que:
+ * {
+ * 		ok: booleano que indica si el token es válido o no
+ * 		responseBody: Si el token no es válido, este es el cuerpo del mensaje enviado al cliente
+ * 		status: Si el token no es válido, el estado en el que queda la transmisión [ FALLO_AUTENTICACION | ]
+ * }
+ * @param {*} req El objeto de petición HTTP entrante
+ * @param {*} res El objeto de respuesta HTTP sobre el que enviar las respuestas de error, en caso de haberlo
+ * @param {*} opciones Un objeto que permite indicar los dominios y/o permisos que el token debe tener.
+ */
+const validarTransmision = (req, res, opciones) => {
+
+	let txId = req.txId
+
+	/**
+	 * Verificación básica de integridad y expiración del token
+	 */
+	req.token = verifyJWT(req.token, txId);
+	if (req.token.meta.exception) {
+		L.xe(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
+		var responseBody = req.token.meta.exception.send(res);
+		return { ok: false, responseBody, status: K.TX_STATUS.FALLO_AUTENTICACION };
+	}
+
+	/**
+	 * Comprobamos que el dominio del token está en la lista de dominios permitidos
+	 */
+	let dominiosValidos = opciones.dominios || []
+	if (dominiosValidos.length > 0) {
+		if (!dominiosValidos.includes(req.token.aud)) {
+			L.xe(txId, ['El dominio del token no es valido para realizar esta acción.', req.token, opciones], 'txToken');
+			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			var responseBody = error.send(res);
+			return { ok: false, responseBody, status: K.TX_STATUS.NO_AUTORIZADO };
+		}
+	}
+
+	/**
+	 * Comprobamos que el token contiene al menos uno de los permisos necesarios para la acción.
+	 * Los permisos solo aplican en el caso de que el dominio sea HEFAME. Si el dominio no es HEFAME 
+	 * y ha pasado la verificación de dominios permitidos, se acepta el token.
+	 */
+	let permisosNecesarios = opciones.permisos || []
+	if (permisosNecesarios.length > 0 && req.token.aud === K.DOMINIOS.HEFAME) {
+		if (req.token.perms.length > 0) {
+			// Intersección entre la lista de permisos necesarios y los del token.
+			// Si la intersección es vacía es que ninguno coincide y por tanto el token no vale
+			let interseccion = permisosNecesarios.filter(value => req.token.perms.includes(value))	
+			if (interseccion.length > 0) {
+				return { ok: true }
+			}
+		}
+
+		L.xe(txId, ['Los permisos del token no sos válidos para realizar esta acción.', req.token, opciones], 'txToken');
+		var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+		var responseBody = error.send(res);
+		return { ok: false, responseBody, status: K.TX_STATUS.NO_AUTORIZADO };
+
+	}
+
+	return { ok: true }
+
+}
+
+module.exports = {
+	generateJWT,
+	verifyJWT,
+	validarTransmision
 }

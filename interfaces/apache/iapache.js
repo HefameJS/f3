@@ -6,6 +6,7 @@ const L = global.logger;
 
 const request = require('request');
 
+
 class MatchEnlace {
 	constructor(match) {
 		if (match[14])
@@ -60,7 +61,6 @@ class Balanceador {
 	}
 }
 
-
 class Worker {
 	constructor(enlace) {
 		this.nombre = enlace.getDestino();
@@ -83,7 +83,6 @@ class Worker {
 	}
 }
 
-
 const parseDataToBalanceadores = (data) => {
 	let regex = /<td><a href=\"([a-z0-9\/\-?=&;:]+)\">([a-z0-9\/\-?=&;:]+)<\/a><\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td><td>([0-9a-z\-\.\s]*)<\/td>|(for <a href=\")([a-z0-9\/\-?=&;:]+)(\">)/gmi;
 	let balanceadores = {}
@@ -101,6 +100,13 @@ const parseDataToBalanceadores = (data) => {
 		match = regex.exec(data);
 	}
 	return balanceadores
+}
+
+const getServidor = (name) => {
+
+
+
+
 }
 
 
@@ -134,7 +140,6 @@ const getBalanceadores = (servidor, callback) => {
 
 	});
 }
-
 
 const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFactor, callback) => {
 
