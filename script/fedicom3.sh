@@ -109,7 +109,7 @@ stop() {
 
 status() {
     ps lf | head -1
-    ps lf | grep f3 | grep -v grep | grep -v 'f3 status'
+    ps -e lf | grep f3 | grep -v grep | grep -v 'f3 status'
 }
 
 
