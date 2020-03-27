@@ -111,11 +111,9 @@ exports.saveDevolucion = function (req, res) {
 				}
 
 				var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
-				var [estadoTransmision, numerosDevolucion] = clientResponse.estadoTransmision();
+				var [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = clientResponse.estadoTransmision();
 
-				let codigoHttp = estadoTransmision === K.TX_STATUS.DEVOLUCION.PARCIAL ? 206 : 201
-
-				res.status(codigoHttp).json(clientResponse);
+				res.status(codigoRespuestaHttp).json(clientResponse);
 				Events.devoluciones.emitFinCrearDevolucion(res, clientResponse, estadoTransmision, { numerosDevolucion });
 
 			});

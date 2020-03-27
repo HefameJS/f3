@@ -94,7 +94,18 @@ class Devolucion {
 	}
 
 	obtenerRespuestaCliente(txId, respuestaSAP) {
-		respuestaSAP.forEach(function (devolucion) {
+
+		// Comprobamos si SAP ha devuelto un error de "cliente desconocido"
+		if (respuestaSAP[0] && respuestaSAP[0].incidencias[0] && respuestaSAP[0].incidencias[0].descripcion === "Cliente desconocido") {
+			L.xw(txId, 'Se encontró un error de cliente desconocido en la respuesta de SAP')
+			let error = new FedicomError('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido')
+			respuestaSAP = error.getErrors()
+			respuestaSAP.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
+			respuestaSAP.isRechazadoSap = () => true;
+			return respuestaSAP;
+		}
+
+		respuestaSAP.forEach(devolucion => {
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
@@ -104,11 +115,11 @@ class Devolucion {
 		// Si se excluyeron lineas, generamos una devolución sin número donde incluimos 
 		// las lineas que quedaron excluidas y el motivo
 		if (this.lineasExcluidas.length > 0) {
-			respuestaSAP.push( this.generarRespuestaExclusiones() );
+			respuestaSAP.push(this.generarRespuestaExclusiones());
 			estado = K.TX_STATUS.DEVOLUCION.PARCIAL
-		} 
+		}
 
-		
+
 
 		respuestaSAP.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP, estado) }
 		respuestaSAP.isRechazadoSap = () => false;
@@ -140,7 +151,7 @@ const parseLines = (json, txId) => {
 			} else {
 				lineas.push(nuevaLinea);
 			}
-			
+
 
 			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
 			if (nuevaLinea.orden) {
@@ -238,9 +249,10 @@ const SaneadorDevolucionesSAP = {
 
 const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 
-	var estadoTransmision = estado || K.TX_STATUS.OK;
+	let estadoTransmision = estado || K.TX_STATUS.OK;
+	let codigoHttpRespuesta = estadoTransmision === K.TX_STATUS.OK ? 201 : 206;
 
-	var numerosDevolucion = [];
+	let numerosDevolucion = [];
 	if (sapBody && sapBody.length > 0) {
 		sapBody.forEach(function (devolucion) {
 			if (devolucion && devolucion.numeroDevolucion) {
@@ -249,7 +261,7 @@ const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 		});
 	}
 
-	return [estadoTransmision, numerosDevolucion];
+	return [estadoTransmision, numerosDevolucion, codigoHttpRespuesta];
 }
 
 module.exports = Devolucion;
