@@ -145,7 +145,7 @@ class Pedido {
 		// Si la respuesta de SAP es un array, no hay que sanearlo
 		if (Array.isArray(clon)) {
 			clon = SaneadorPedidosSAP.eliminaIncidenciasDeBloqueos(clon);
-			clon.estadoTransmision = () => { return [K.TX_STATUS.PEDIDO.RECHAZADO_SAP, null, null] }
+			clon.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, null, null] }
 			clon.isRechazadoSap = () => true;
 			return clon;
 		}

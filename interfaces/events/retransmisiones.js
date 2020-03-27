@@ -112,7 +112,7 @@ const actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
 	}
 	switch (estadoOriginal) {
 		case K.TX_STATUS.PETICION_INCORRECTA:
-		case K.TX_STATUS.PEDIDO.RECHAZADO_SAP:
+		case K.TX_STATUS.RECHAZADO_SAP:
 			return [true, false];
 	}
 	return [true, (estadoNuevo === K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP && estadoNuevo === estadoOriginal)];
