@@ -28,6 +28,7 @@ class ConsultaAlbaran {
 		this.max_result = 0;
 		this.campos = {};
 		this.campos['r_kunnr'] = new FiltroCampo('I','EQ',codigoCliente);
+		this.campos['r_prof'] = new FiltroCampo('E', 'EQ', '');
 	}
 
 	mostrarPuntoEntrega(flag) {
