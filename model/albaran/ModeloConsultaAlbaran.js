@@ -1,0 +1,90 @@
+'use strict';
+//const BASE = global.BASE;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
+
+
+class FiltroCampo {
+	constructor(sign, option, low, high) {
+		this.sign = sign || 'I';
+		this.option = option || 'EQ';
+		this.low = low || '';
+		if (high !== undefined)
+			this.high = high || '';
+	}
+}
+
+
+class ConsultaAlbaran {
+
+	constructor(codigoCliente) { 
+		this.no_all_pto = ' ';
+		this.only_yvcab = 'X';
+
+		this.result_per_page = 20;
+		this.view_page = 1;
+		this._offset = 0;
+		this.max_result = 0;
+		this.campos = {};
+		this.campos['r_kunnr'] = new FiltroCampo('I','EQ',codigoCliente);
+	}
+
+	mostrarPuntoEntrega(flag) {
+		if (flag) this.no_all_pto = ' ';
+		else this.no_all_pto = 'X';
+	}
+
+	setOffset(offset) {
+		this._offset = offset;
+		this.view_page = Math.floor(this._offset  / this.result_per_page) + 1;
+		return this;
+	}
+
+	setLimit(limit) {
+		this.result_per_page = limit;
+		this.view_page = Math.floor(this._offset / this.result_per_page) + 1;
+		return this;
+	}
+
+	setFechas(inicio, fin) {
+		this.campos['r_erdat'] = new FiltroCampo('I', 'BT', inicio, fin);
+		return this;
+	}
+
+	setCrc(crc) {
+		if (crc && crc.length >= 8) {
+			crc  = crc.substring(0, 8)
+			this.campos['r_bstkd'] = new FiltroCampo('I', 'CP', '*' + crc);
+		}
+		return this;
+	}
+
+	setNumeroAlbaran(numeroAlbaran) {
+		this.campos['r_vbeln'] = new FiltroCampo('I', 'EQ', numeroAlbaran);
+	}
+
+
+	toQueryObject() {
+		let root = {}
+		root.no_all_pto = this.no_all_pto = ' ';
+		root.result_per_page = this.result_per_page;
+		root.view_page = this.view_page;
+		root.max_result = this.max_result;
+
+		for(let campo in this.campos) {
+			root[campo] = [this.campos[campo]]
+		}
+		
+		return root;
+	}
+
+	toQueryString() {
+		return JSON.stringify(this.toQueryObject());
+	}
+
+
+}
+
+
+module.exports = ConsultaAlbaran;

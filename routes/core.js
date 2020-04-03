@@ -19,7 +19,7 @@ module.exports = function (app) {
 		authenticate: require(BASE + 'controllers/authenticate'),
 		pedidos: require(BASE + 'controllers/pedidos'),
 		devoluciones: require(BASE + 'controllers/devoluciones'),
-		albaranes: require(BASE + 'controllers/albaranes'),
+		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
 		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
 		retransmit: require(BASE + 'controllers/retransmit'),
 		stats: require(BASE + 'controllers/stats')
@@ -84,10 +84,10 @@ module.exports = function (app) {
 
 
 	app.route('/albaranes')
-		.get(tryCatch(controllers.albaranes.findAlbaran));
+		.get(tryCatch(controllers.albaranes.listadoAlbaranes));
 	// app.route('/albaranes/confirmacion');
 	app.route('/albaranes/:numeroAlbaran')
-		.get(tryCatch(controllers.albaranes.getAlbaran));
+		.get(tryCatch(controllers.albaranes.consultaAlbaran));
 
 
 	//app.route('/facturas')
