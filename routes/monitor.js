@@ -13,7 +13,7 @@ const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 module.exports = function (app) {
 
 	var controllers = {
-		consultas: require(BASE + 'controllers/monitor/consultas')
+		consultas: require(BASE + 'controllers/monitor/controladorConsultas')
 
 	}
 
@@ -56,7 +56,7 @@ module.exports = function (app) {
 		.get(tryCatch(controllers.consultas.procesos.consultaProcesos))
 
 	app.route('/status/sap')
-		.get(tryCatch(controllers.consultas.consultaSap))
+		.get(tryCatch(controllers.consultas.sap.consultaSap))
 
 
 	app.route('/status/mdb/col')

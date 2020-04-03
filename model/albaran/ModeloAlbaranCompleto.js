@@ -102,7 +102,7 @@ class LineaAlbaran {
 		if (pos.t_lotes.length > 0) this.lotes = pos.t_lotes.map(lote => {
 			return {
 				lote: lote.lote,
-				fechaCaducidad: lote.fecad
+				fechaCaducidad: Date.fromSAPtoFedicomDate(lote.fecad)
 			}
 		});
 		if (pos.t_box && pos.t_box.length) this.cubeta = pos.t_box;
