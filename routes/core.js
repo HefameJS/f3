@@ -22,7 +22,6 @@ module.exports = function (app) {
 		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
 		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
 		retransmit: require(BASE + 'controllers/retransmit'),
-		stats: require(BASE + 'controllers/stats')
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
