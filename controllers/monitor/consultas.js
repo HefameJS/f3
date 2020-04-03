@@ -8,6 +8,7 @@ const Tokens = require(BASE + 'util/tokens');
 const Imongo = require(BASE + 'interfaces/imongo');
 const Isap = require(BASE + 'interfaces/isap')
 
+// PUT /query
 const consultaTX = function (req, res) {
 	var txId = req.txId;
 	var query = req.body;
@@ -15,12 +16,9 @@ const consultaTX = function (req, res) {
 	L.xi(txId, ['Consulta Generica a MDB']);
 
 
-	req.token = Tokens.verifyJWT(req.token, req.txId);
-	if (req.token.meta.exception) {
-		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
-		req.token.meta.exception.send(res);
-		return;
-	}
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
 
 	L.xi(txId, ['Token correcto', req.token]);
 

@@ -4,12 +4,16 @@ const BASE = global.BASE;
 const L = global.logger;
 //const K = global.constants;
 
-//const Tokens = require(BASE + 'util/tokens');
+const Tokens = require(BASE + 'util/tokens');
 const Imongo = require(BASE + 'interfaces/imongo');
 const ReplicaSetStatus = require(BASE + 'model/monitor/replicaSetStatus')
 
-
+// GET /status/mdb/col
 const getNombresColecciones = (req, res) => {
+
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
 	Imongo.monitor.getNombresColecciones( (err, colecciones) => {
 		if (err) {
 			L.e(['Error al obtener la lista de colecciones', err]);
@@ -20,7 +24,11 @@ const getNombresColecciones = (req, res) => {
 	})
 }
 
+// GET /status/mdb/col/:colName
 const getColeccion = function (req, res) {
+
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
 
 	if (!req.params.colName) {
 		return res.status(400).json({ ok: false, error: 'Debe especificar el nombre de la colección' });
@@ -48,7 +56,12 @@ const getColeccion = function (req, res) {
 	});
 }
 
+// GET /status/mdb/db
 const getDatabase = function (req, res) {
+
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
 	Imongo.monitor.getDatabase((err, dbStats) => {
 		if (err) {
 			L.e(['Error al obtener estadísticas de la base de datos', err]);
@@ -64,7 +77,12 @@ const getDatabase = function (req, res) {
 	});
 }
 
+// GET /status/mdb/op
 const getOperaciones = function (req, res) {
+
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
 	Imongo.monitor.getOperaciones((err, sessions) => {
 		if (err) {
 			L.e(['Error al obtener la lista de operaciones', err]);
@@ -76,8 +94,12 @@ const getOperaciones = function (req, res) {
 	});
 }
 
+// GET /status/mdb/rs
 const getReplicaSet = function (req, res) {
 
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+	
 	Imongo.monitor.getReplicaSet((err, data) => {
 		if (err) {
 			L.e(['Error al obtener el estado del cluster', err]);
@@ -91,7 +113,11 @@ const getReplicaSet = function (req, res) {
 	});
 }
 
+// GET /status/mdb/log [?type=(global|rs|startupWarnings)]
 const getLogs = function (req, res) {
+
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
 
 	var logType = req.query.type ? req.query.type : 'global';
 

@@ -9,7 +9,7 @@ const Flags = require(BASE + 'interfaces/cache/flags');
 
 
 
-module.exports.generateJWT = (txId, authReq, perms) => {
+const generateJWT = (txId, authReq, perms) => {
 	var jwt = require('jsonwebtoken');
 	var jwtData = {
 		sub: authReq.username,
@@ -26,7 +26,7 @@ module.exports.generateJWT = (txId, authReq, perms) => {
 }
 
 
-module.exports.verifyJWT = (token, txId) => {
+const verifyJWT = (token, txId) => {
 
 	L.xd(txId, ['Analizando token', token], 'txToken');
 
@@ -92,4 +92,78 @@ module.exports.verifyJWT = (token, txId) => {
 			}
 		};
 	}
+}
+
+
+/**
+ * Funcion que verifica los permisos del token de una petición entrante.
+ * En caso de que el token no sea válido, responde a la petición.
+ * 
+ * La funcion devuelve un objeto donde siempre se incluirá la propiedad 'ok' con el resultado de la autenticacion.
+ * Si el resultado es negativo, la respuesta también incluirá la propiedad 'responseBody' con la respuesta dada al cliente.
+ * En el caso de simulaciones, la respuesta incluirá la propiedad 'usuarioSimulador' indicando el usuario que ordena la simulación.
+ */
+const DEFAULT_OPTS = {
+	admitirSimulaciones: false,
+	admitirSimulacionesEnProduccion: false,
+	grupoRequerido: null
+}
+const verificaPermisos = (req, res, opciones) => {
+
+	let txId = req.txId;
+
+	opciones = { ...DEFAULT_OPTS, ...opciones }
+
+	L.xt(txId, ['Verificando validez de token', req.token, opciones], 'txToken')
+
+	req.token = verifyJWT(req.token, req.txId);
+	if (req.token.meta.exception) {
+		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
+		let responseBody = req.token.meta.exception.send(res);
+		return { ok: false, responseBody: responseBody };
+	}
+
+	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
+	if (opciones.grupoRequerido) {
+		if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
+			L.xw(req.txId, ['El token no tiene el permiso necesario para realizar la consulta', opciones.grupoRequerido, req.token.perms], 'txToken');
+			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			let responseBody = error.send(res);
+			return { ok: false, responseBody: responseBody };
+		}
+	}
+
+	// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
+	if (opciones.admitirSimulaciones && req.token.aud === K.DOMINIOS.HEFAME) {
+
+		// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza al petición
+		if (C.production === true && !opciones.admitirSimulacionesEnProduccion) {
+			L.xw(req.txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
+			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
+			var responseBody = error.send(res);
+			return { ok: false, responseBody: responseBody };
+		}
+
+		// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
+		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
+			L.xw(req.txId, ['El token no tiene los permisos necesarios para realizar una llamada simulada', req.token.perms], 'txToken');
+			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
+			let responseBody = error.send(res);
+			return { ok: false, responseBody: responseBody };
+		} else {
+			L.xi(req.txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
+			return { ok: true, usuarioSimulador: req.token.sub };
+		}
+	}
+
+
+	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token.sub], 'txToken');
+	return { ok: true };
+}
+
+
+module.exports = {
+	generateJWT,
+	verifyJWT,
+	verificaPermisos
 }

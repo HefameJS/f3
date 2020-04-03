@@ -7,20 +7,15 @@ const L = global.logger;
 const Tokens = require(BASE + 'util/tokens');
 const IRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos')
 
-
+// GET /status/proc
 const consultaProcesos = function (req, res) {
 	var txId = req.txId;
 
 	L.xi(txId, ['Consulta de procesos']);
 
-	req.token = Tokens.verifyJWT(req.token, req.txId);
-	if (req.token.meta.exception) {
-		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
-		req.token.meta.exception.send(res);
-		return;
-	}
-
-	L.xi(txId, ['Token correcto', req.token]);
+	// Verificación del token del usuario
+	let estadoToken = Tokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
 
 
 	var procType = req.query.type ? req.query.type : null;
@@ -44,5 +39,5 @@ const consultaProcesos = function (req, res) {
 
 
 module.exports = {
-	consultaProcesos
+	consultaProcesos // GET /status/proc
 }
