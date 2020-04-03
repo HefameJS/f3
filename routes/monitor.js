@@ -82,6 +82,12 @@ module.exports = function (app) {
 		.get(tryCatch(controllers.consultas.apache.consultaBalanceadorApache))
 		.put(tryCatch(controllers.consultas.apache.actualizaBalanceadorApache))
 
+	app.route('/status/cache/credenciales')
+		.get(tryCatch(controllers.consultas.cache.getEstadoCacheCredenciales))
+
+	app.route('/status/sqlite')
+		.get(tryCatch(controllers.consultas.sqlite.getEstadoSQLite))
+
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
 

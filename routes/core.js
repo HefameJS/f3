@@ -105,11 +105,6 @@ module.exports = function (app) {
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controllers.retransmit.retransmitirPedido));
 
-	app.route('/stats')
-		.get(tryCatch(controllers.stats.getStats));
-	app.route('/stats/:item')
-		.get(tryCatch(controllers.stats.getStats));
-
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use(function (req, res, next) {
