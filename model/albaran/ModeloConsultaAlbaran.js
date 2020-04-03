@@ -28,7 +28,12 @@ class ConsultaAlbaran {
 		this.max_result = 0;
 		this.campos = {};
 		this.campos['r_kunnr'] = new FiltroCampo('I','EQ',codigoCliente);
-		this.campos['r_prof'] = new FiltroCampo('E', 'EQ', '');
+		// this.campos['r_prof'] = new FiltroCampo('E', 'EQ', '');
+	}
+
+	mostrarSoloConProforma(flag) {
+		if (flag) this.only_yvcab = ' ';
+		else this.only_yvcab = 'X';
 	}
 
 	mostrarPuntoEntrega(flag) {
@@ -68,7 +73,9 @@ class ConsultaAlbaran {
 
 	toQueryObject() {
 		let root = {}
-		root.no_all_pto = this.no_all_pto = ' ';
+		root.no_all_pto = this.no_all_pto;
+		root.only_yvcab = this.only_yvcab;
+
 		root.result_per_page = this.result_per_page;
 		root.view_page = this.view_page;
 		root.max_result = this.max_result;
