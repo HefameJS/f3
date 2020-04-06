@@ -56,7 +56,7 @@ exports.saveDevolucion = function (req, res) {
 
 	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
 	try {
-  		var devolucion = new Devolucion(req);
+		var devolucion = new Devolucion(req);
 	} catch (fedicomError) {
 		fedicomError = FedicomError.fromException(req.txId, fedicomError);
 		L.xe(req.txId, ['Ocurrió un error al analizar la petición', fedicomError]);
@@ -64,7 +64,7 @@ exports.saveDevolucion = function (req, res) {
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-	
+
 
 	if (!devolucion.contienteLineasValidas()) {
 		L.xd(req.txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
@@ -76,53 +76,34 @@ exports.saveDevolucion = function (req, res) {
 
 	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
 
-	Imongo.findCrcDuplicado(devolucion.crc, function (err, dbTx) {
-		if (err) {
-			L.xe(req.txId, ['Ocurrió un error al comprobar si la devolución está duplicada - Se asume que no lo es', err], 'crc');
+	Events.devoluciones.emitInicioCrearDevolucion(req, devolucion);
+	devolucion.limpiarEntrada(req.txId);
+	Isap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
+
+		if (sapError) {
+			if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+				var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+				L.xe(req.txId, ['Error al grabar la devolución', sapError]);
+				var responseBody = fedicomError.send(res);
+				Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+			}
+			else {
+				L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
+				var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
+				var responseBody = fedicomError.send(res)
+				Flags.set(req.txId, K.FLAGS.NO_SAP)
+				Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
+			}
+			return;
 		}
 
-		if (dbTx) {
-			var duplicatedId = dbTx._id;
-			L.xi(req.txId, 'Detectada la transmisión de devolución con ID ' + duplicatedId + ' con identico CRC', 'crc');
-			L.xi(duplicatedId, 'Se ha detectado un duplicado de esta devolución con ID ' + req.txId, 'crc');
-			var errorDuplicado = new FedicomError('DEV-ERR-999', 'Devolución duplicada', 400);
-			var responseBody = errorDuplicado.send(res);
-			Events.devoluciones.emitDevolucionDuplicada(req, res, responseBody, duplicatedId);
-		} else {
-			Events.devoluciones.emitInicioCrearDevolucion(req, devolucion);
-			devolucion.limpiarEntrada(req.txId);
-			Isap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
+		var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
+		var [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = clientResponse.estadoTransmision();
 
-				if (sapError) {
-					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-						L.xe(req.txId, ['Error al grabar la devolución', sapError]);
-						var responseBody = fedicomError.send(res);
-						Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
-					}
-					else {
-						L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
-						var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
-						var responseBody = fedicomError.send(res)
-						Flags.set(req.txId, K.FLAGS.NO_SAP)
-						Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
-					}
-					return;
-				}
+		res.status(codigoRespuestaHttp).json(clientResponse);
+		Events.devoluciones.emitFinCrearDevolucion(res, clientResponse, estadoTransmision, { numerosDevolucion });
 
-				var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
-				var [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = clientResponse.estadoTransmision();
-
-				res.status(codigoRespuestaHttp).json(clientResponse);
-				Events.devoluciones.emitFinCrearDevolucion(res, clientResponse, estadoTransmision, { numerosDevolucion });
-
-			});
-
-
-		}
 	});
-
-
 }
 
 
@@ -160,13 +141,13 @@ exports.getDevolucion = function (req, res) {
 
 		L.xi(req.txId, ['Se recupera la transmisión de la base de datos', dbTx]);
 
-		if (dbTx && dbTx.clientResponse)	{
+		if (dbTx && dbTx.clientResponse) {
 			// TODO: Autorizacion
 			var originalBody = dbTx.clientResponse.body;
 			var documentoDevolucion = null;
 
 			if (originalBody && originalBody.length) {
-				originalBody.some( function (doc) {
+				originalBody.some(function (doc) {
 					if (doc && doc.numeroDevolucion && doc.numeroDevolucion === numeroDevolucion) {
 						documentoDevolucion = doc;
 						return true;

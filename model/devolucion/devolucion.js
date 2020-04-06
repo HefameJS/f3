@@ -9,7 +9,7 @@ const LineaDevolucion = require(BASE + 'model/devolucion/lineaDevolucion');
 
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
-const crypto = require('crypto');
+// const crypto = require('crypto');
 
 
 
@@ -41,19 +41,17 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-		var [lineas, lineasExcluidas, crc] = parseLines(json, req.txId);
+	var [lineas, lineasExcluidas/*, crc*/] = parseLines(json, req.txId);
 		this.lineas = lineas;
 		this.lineasExcluidas = lineasExcluidas
-		this.crc = crc;
-
-
-
-		// GENERACION DE CRC
+	
+		// GENERACION DE CRC DESHABILITADA
+		/*
 		var timestamp = Math.floor(Date.fedicomTimestamp() / 10000); // Con esto redondeamos mas o menos a 100 segundos
 		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
+		this.crc = hash.update(crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
-
+		*/
 	}
 
 	contienteLineasValidas() {
@@ -132,7 +130,7 @@ class Devolucion {
 const parseLines = (json, txId) => {
 	var lineas = [];
 	var lineasExcluidas = [];
-	var crc = '';
+	// var crc = '';
 	var ordenes = [];
 
 	function rellena(lineas) {
@@ -140,11 +138,11 @@ const parseLines = (json, txId) => {
 		json.lineas.forEach(function (linea, i) {
 			var nuevaLinea = new LineaDevolucion(linea, txId, i);
 
-			var hash = crypto.createHash('sha1');
-			crc = hash.update(crc + nuevaLinea.crc).digest('hex');
+			// var hash = crypto.createHash('sha1');
+			// crc = hash.update(crc + nuevaLinea.crc).digest('hex');
 
 			if (nuevaLinea.excluir) {
-				delete nuevaLinea.crc;
+				// delete nuevaLinea.crc;
 				delete nuevaLinea.excluir;
 				lineasExcluidas.push(nuevaLinea);
 
@@ -172,7 +170,7 @@ const parseLines = (json, txId) => {
 			}
 		});
 
-		return [lineas, lineasExcluidas, crc];
+		return [lineas, lineasExcluidas/*, crc*/];
 	}
 	return rellena(lineas);
 }

@@ -2,7 +2,7 @@
 const BASE = global.BASE;
 const L = global.logger;
 const FedicomError = require(BASE + 'model/fedicomError');
-const crypto = require('crypto');
+// const crypto = require('crypto');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaDevolucion {
@@ -36,12 +36,12 @@ class LineaDevolucion {
 		Object.assign(this, json);
 
 		// Generacion de CRC de línea
-		this.generateCRC();
-
-		L.xi(txId, ['Generado CRC de linea', this.crc], 'txCRC');
+		// this.generateCRC();
+		// L.xi(txId, ['Generado CRC de linea', this.crc], 'txCRC');
 
 	}
 
+	/*
 	generateCRC() {
 		var crc = '';
 		if (this.numeroAlbaran) crc += this.numeroAlbaran;
@@ -54,6 +54,7 @@ class LineaDevolucion {
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(crc).digest('hex');
 	}
+	*/
 }
 
 
