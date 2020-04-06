@@ -79,6 +79,7 @@ module.exports = {
         RETRANSMISOR: '9002',
         APP_EMPLEADO: '9700',
         FMASONLINE: '9800',
+        PORTAL_HEFAME: '9801',
         SAP_P01: '9993',
         SAP_T01: '9992',
         SAP_D01: '9991',
