@@ -120,7 +120,7 @@ const verificaPermisos = (req, res, opciones) => {
 	if (req.token.meta.exception) {
 		L.xe(req.txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
 		let responseBody = req.token.meta.exception.send(res);
-		return { ok: false, responseBody: responseBody };
+		return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.FALLO_AUTENTICACION  };
 	}
 
 	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
@@ -129,7 +129,7 @@ const verificaPermisos = (req, res, opciones) => {
 			L.xw(req.txId, ['El token no tiene el permiso necesario para realizar la consulta', opciones.grupoRequerido, req.token.perms], 'txToken');
 			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
 			let responseBody = error.send(res);
-			return { ok: false, responseBody: responseBody };
+			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO };
 		}
 	}
 
@@ -141,7 +141,7 @@ const verificaPermisos = (req, res, opciones) => {
 			L.xw(req.txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
 			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
 			var responseBody = error.send(res);
-			return { ok: false, responseBody: responseBody };
+			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO  };
 		}
 
 		// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
@@ -149,7 +149,7 @@ const verificaPermisos = (req, res, opciones) => {
 			L.xw(req.txId, ['El token no tiene los permisos necesarios para realizar una llamada simulada', req.token.perms], 'txToken');
 			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
 			let responseBody = error.send(res);
-			return { ok: false, responseBody: responseBody };
+			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO  };
 		} else {
 			L.xi(req.txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
 			return { ok: true, usuarioSimulador: req.token.sub };

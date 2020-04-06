@@ -18,7 +18,7 @@ module.exports = function (app) {
 	var controllers = {
 		authenticate: require(BASE + 'controllers/authenticate'),
 		pedidos: require(BASE + 'controllers/pedidos'),
-		devoluciones: require(BASE + 'controllers/devoluciones'),
+		devoluciones: require(BASE + 'controllers/controladorDevoluciones'),
 		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
 		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
 		retransmit: require(BASE + 'controllers/retransmit'),
@@ -76,10 +76,10 @@ module.exports = function (app) {
 
 
 	app.route('/devoluciones')
-		.get(tryCatch(controllers.devoluciones.getDevolucion))
-		.post(tryCatch(controllers.devoluciones.saveDevolucion));
+		.get(tryCatch(controllers.devoluciones.consultaDevolucion))
+		.post(tryCatch(controllers.devoluciones.crearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(tryCatch(controllers.devoluciones.getDevolucion));
+		.get(tryCatch(controllers.devoluciones.consultaDevolucion));
 
 
 	app.route('/albaranes')
