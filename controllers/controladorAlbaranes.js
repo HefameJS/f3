@@ -14,6 +14,8 @@ const ConsultaAlbaran = require(BASE + '/model/albaran/ModeloConsultaAlbaran');
 const AlbaranSimple = require(BASE + '/model/albaran/ModeloAlbaranSimple');
 const AlbaranCompleto = require(BASE + '/model/albaran/ModeloAlbaranCompleto');
 
+const CRC = require(BASE + 'model/CRC');
+
 const _consultaAlbaranPDF = (req, res, numAlbaran) => {
     Isap.albaranes.consultaAlbaranPDF(req.txId, numAlbaran, (sapError, sapRes, sapBody) => {
         if (sapError) {
@@ -227,12 +229,24 @@ exports.listadoAlbaranes = (req, res) => {
             .setOffset(offset)
             .setFechas(fechaDesde, fechaHasta);
 
-    // #4 - El cliente indica CRC ?
-    let crc = req.query.numeroPedido;
-    if (crc) {
-        consulta.setCrc(crc)
+
+
+
+    // #4 - El cliente filtra por numeroPedidoOrigen
+    let numeroPedidoOrigen = req.query.numeroPedidoOrigen;
+    if (numeroPedidoOrigen) {
+        // El codigo de cliente con el que se crean los pedidos es el corto, por lo que deberemos
+        // convertir el que nos viene a corto para generar el mismo CRC
+        let codigoClienteOrigen = parseInt(codigoCliente.slice(-5));
+        consulta.setCrc(CRC.crear(codigoClienteOrigen, numeroPedidoOrigen))
     }
     
+    // #5 - El cliente filtra por numeroPedido (de distribuidor)
+    // En este caso, nos pasan el CRC del pedido
+    let numeroPedido = req.query.numeroPedido;
+    if (numeroPedido) {
+        consulta.setCrc(numeroPedido)
+    }
 
     L.xd(req.txId, ['Buscando en SAP albaranes con filtro', consulta.toQueryString()]);
 
