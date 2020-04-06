@@ -13,7 +13,6 @@ const Flags = require(BASE + 'interfaces/cache/flags')
 const CRC = require(BASE + 'model/CRC');
 
 const clone = require('clone');
-const crypto = require('crypto');
 const HOSTNAME = require('os').hostname();
 
 
