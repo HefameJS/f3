@@ -10,6 +10,7 @@ const LineaPedido = require(BASE + 'model/pedido/lineaPedido');
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 const Flags = require(BASE + 'interfaces/cache/flags')
+const CRC = require(BASE + 'model/CRC');
 
 const clone = require('clone');
 const crypto = require('crypto');
@@ -80,8 +81,7 @@ class Pedido {
 	}
 
 	generarCRC() {
-		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(this.codigoCliente + this.numeroPedidoOrigen).digest('hex').substring(1, 25).toUpperCase();
+		this.crc = CRC.crear(this.codigoCliente, this.numeroPedidoOrigen);
 	}
 
 	simulaFaltas() {
