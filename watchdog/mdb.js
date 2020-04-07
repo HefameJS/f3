@@ -18,7 +18,6 @@ const IRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos'
 
 var retransmissionsInProgress = 0;
 var retransmissionSearch = false;
-var vecesGanadoMaestro = 0;
 
 var interval = setInterval(function () {
 
