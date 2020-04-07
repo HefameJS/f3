@@ -138,9 +138,6 @@ class Pedido {
 		
 		var clon = clone(respuestaSAP);
 
-		
-
-
 		// Si la respuesta de SAP es un array, no hay que sanearlo
 		if (Array.isArray(clon)) {
 			clon = SaneadorPedidosSAP.eliminaIncidenciasDeBloqueos(clon);
@@ -302,7 +299,7 @@ const SaneadorPedidosSAP = {
 			if (message[field] === '') delete message[field];
 		});
 		K.POST_CLEAN.PEDIDOS.removeCabEmptyArray.forEach(function (field) {
-			if (typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
 		});
 		K.POST_CLEAN.PEDIDOS.removeCabZeroValue.forEach(function (field) {
 			if (message[field] === 0) delete message[field];
