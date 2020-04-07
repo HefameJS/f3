@@ -222,6 +222,23 @@ const SaneadorDevolucionesSAP = {
 			if (message[field] === false) delete message[field];
 		});
 
+		// Limpieza de incidencias si vienen con algún campo vacío
+		/* Por ejemplo, si se manda un CN6+1, SAP responde: {
+			"codigo": "LIN-DEV-WARN-999",
+			"descripcion": ""
+		}
+		*/
+		if (message.incidencias && message.incidencias.forEach) {
+			let incidenciasSaneadas = []
+			message.incidencias.forEach(incidencia => {
+				if (incidencia && incidencia.codigo && incidencia.descripcion) {
+					incidenciasSaneadas.push(incidencia);
+				}
+			})
+			if (incidenciasSaneadas.length > 0)
+				linea.incidencias = incidenciasSaneadas;
+		}
+
 		if (message.lineas && message.lineas.forEach) {
 			message.lineas.forEach(function (linea) {
 				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach(function (field) {
@@ -239,6 +256,23 @@ const SaneadorDevolucionesSAP = {
 				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach(function (field) {
 					if (linea[field] === false) delete linea[field];
 				});
+
+				// Limpieza de incidencias si vienen con algún campo vacío
+				/* Por ejemplo, si se manda un CN6+1, SAP responde: {
+					"codigo": "LIN-DEV-WARN-999",
+					"descripcion": ""
+				}
+				*/
+				if (linea.incidencias && linea.incidencias.forEach) {
+					let incidenciasSaneadas = []
+					linea.incidencias.forEach( incidencia => {
+						if (incidencia && incidencia.codigo && incidencia.descripcion) {
+							incidenciasSaneadas.push(incidencia);
+						}
+					})
+					if (incidenciasSaneadas.length > 0)
+						linea.incidencias = incidenciasSaneadas;
+				}
 			});
 		}
 		return message;
