@@ -9,7 +9,7 @@ const LineaDevolucion = require(BASE + 'model/devolucion/ModeloLineaDevolucion')
 
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
-// const crypto = require('crypto');
+const crypto = require('crypto');
 
 
 
@@ -52,6 +52,7 @@ class Devolucion {
 		this.crc = hash.update(crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
 		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 		*/
+		this.crc = crypto.createHash('sha1').update(Math.random()+"").digest('hex').substring(0, 24).toUpperCase();
 	}
 
 	contienteLineasValidas() {
