@@ -245,6 +245,7 @@ exports.retransmitirPedido = (pedido, callback) => {
 				errno: sapResponse.statusCode,
 				code: sapResponse.statusMessage
 			}, sapResponse, sapRequest);
+			return;
 		}
 		callback(null, sapResponse, sapRequest);
 	});
