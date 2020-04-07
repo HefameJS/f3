@@ -236,7 +236,9 @@ const SaneadorDevolucionesSAP = {
 				}
 			})
 			if (incidenciasSaneadas.length > 0)
-				linea.incidencias = incidenciasSaneadas;
+				message.incidencias = incidenciasSaneadas;
+			else
+				delete message.incidencias;
 		}
 
 		if (message.lineas && message.lineas.forEach) {
@@ -264,14 +266,18 @@ const SaneadorDevolucionesSAP = {
 				}
 				*/
 				if (linea.incidencias && linea.incidencias.forEach) {
+					console.log(linea.incidencias)
 					let incidenciasSaneadas = []
 					linea.incidencias.forEach( incidencia => {
 						if (incidencia && incidencia.codigo && incidencia.descripcion) {
 							incidenciasSaneadas.push(incidencia);
 						}
 					})
+
 					if (incidenciasSaneadas.length > 0)
 						linea.incidencias = incidenciasSaneadas;
+					else
+						delete linea.incidencias;
 				}
 			});
 		}

@@ -264,7 +264,7 @@ module.exports = {
         }
     },
     PROTOCOL_VERSION: '3.4.0',
-    SERVER_VERSION: '0.9.3',
+    SERVER_VERSION: '0.9.5',
     TX_VERSION: 902,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
