@@ -1,6 +1,8 @@
 'use strict';
-const BASE = global.BASE;
-const L = global.logger;
+//const BASE = global.BASE;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
 module.exports =  {
 	/**
