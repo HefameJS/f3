@@ -366,17 +366,18 @@ const SaneadorPedidosSAP = {
 	eliminarInicidenciaPedidoDuplicado: (txId, respuestaSAP) => {
 		if (respuestaSAP.incidencias && respuestaSAP.incidencias.forEach) {
 			let incidenciasSaneadas = [];
-			respuestaSAP.incidencias.forEach ( indicencia => {
+			respuestaSAP.incidencias.forEach ( incidencia => {
 				if (incidencia) {
-					if (indicencia.codigo && indicencia.descripcion) {
-						incidenciasSaneadas.push(indicencia);
-					} else if (!indicencia.codigo && indicencia.descripcion === 'Pedido duplicado') {
+					if (incidencia.codigo && incidencia.descripcion) {
+						incidenciasSaneadas.push(incidencia);
+					} else if (!incidencia.codigo && incidencia.descripcion === 'Pedido duplicado') {
 						iFlags.set(txId, K.FLAGS.DUPLICADO_SAP, true);
 					}
 				}
 			});
 			respuestaSAP.incidencias = incidenciasSaneadas;
 		}
+		return respuestaSAP;
 	}
 }
 

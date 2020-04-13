@@ -150,7 +150,7 @@ const retransmitirPedido = (pedido, callback) => {
 	}
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-		respuestaSap = ampliaSapResponse(respuestaSap, cuerpoSap);
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
