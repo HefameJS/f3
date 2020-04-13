@@ -4,17 +4,21 @@ const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const FedicomError = require(BASE + 'model/fedicomError');
-const LineaPedido = require(BASE + 'model/pedido/ModeloLineaPedido');
-
-const PreCleaner = require(BASE + 'transmutes/preCleaner');
-const FieldChecker = require(BASE + 'util/fieldChecker');
-const iFlags = require(BASE + 'interfaces/iFlags')
-const CRC = require(BASE + 'model/CRC');
-
+// Externo
 const clone = require('clone');
 const HOSTNAME = require('os').hostname();
 
+// Interfaces
+const iFlags = require(BASE + 'interfaces/iFlags')
+
+// Modelos
+const FedicomError = require(BASE + 'model/fedicomError');
+const LineaPedido = require(BASE + 'model/pedido/ModeloLineaPedido');
+const CRC = require(BASE + 'model/CRC');
+
+// Helpers
+const PreCleaner = require(BASE + 'transmutes/preCleaner');
+const FieldChecker = require(BASE + 'util/fieldChecker');
 
 
 class Pedido {
@@ -155,16 +159,14 @@ class Pedido {
 		clon = SaneadorPedidosSAP.establecerNumeroPedido(clon, this.crc);
 		clon = SaneadorPedidosSAP.establecerFechaPedido(clon);
 		clon = SaneadorPedidosSAP.eliminarCamposInnecesarios(clon);
+		clon = SaneadorPedidosSAP.eliminarInicidenciaPedidoDuplicado(txId, clon);
 		
 		clon.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP) }
 		clon.isRechazadoSap = () => false;
 
 		// Establecemos FLAGS
-		estableceFlags(txId, clon);
+		_estableceFlags(txId, clon);
 		
-
-
-
 		return clon;
 	}
 
@@ -356,6 +358,25 @@ const SaneadorPedidosSAP = {
 		});
 		if (result.length > 0) return result;
 		return null;
+	},
+	/**
+	 * Elimina en las indidencias de cabecera una que sea exactamente {codigo: "", "descripcion": "Pedido duplicado"}
+	 * y activa el flag K.FLAGS.DUPLICADO_SAP si la encuentra
+	 */
+	eliminarInicidenciaPedidoDuplicado: (txId, respuestaSAP) => {
+		if (respuestaSAP.incidencias && respuestaSAP.incidencias.forEach) {
+			let incidenciasSaneadas = [];
+			respuestaSAP.incidencias.forEach ( indicencia => {
+				if (incidencia) {
+					if (indicencia.codigo && indicencia.descripcion) {
+						incidenciasSaneadas.push(indicencia);
+					} else if (!indicencia.codigo && indicencia.descripcion === 'Pedido duplicado') {
+						iFlags.set(txId, K.FLAGS.DUPLICADO_SAP, true);
+					}
+				}
+			});
+			respuestaSAP.incidencias = incidenciasSaneadas;
+		}
 	}
 }
 
@@ -376,9 +397,15 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP || [] ];
 }
 
-const estableceFlags = (txId, clon) => {
+/**
+ * Analiza la respuesta del pedido y establece las flags que se apliquen en función del contenido de la misma.
+ * 
+ * @param {*} txId Id de transmisión sobre el que se aplicarán las flags
+ * @param {*} respuestaPedido 
+ */
+const _estableceFlags = (txId, respuestaPedido) => {
 
-	if (clon && clon.lineas && clon.lineas.forEach) {
+	if (respuestaPedido && respuestaPedido.lineas && respuestaPedido.lineas.forEach) {
 
 		let totales = {
 			lineas: 0,
@@ -392,8 +419,8 @@ const estableceFlags = (txId, clon) => {
 			cantidadEstupe: 0,
 		}
 
-		clon.lineas.forEach(linea => {
-			let tipificacionMotivosFalta = analizaMotivosFalta(linea.incidencias);
+		respuestaPedido.lineas.forEach(linea => {
+			let tipificacionMotivosFalta = _analizaMotivosFalta(linea.incidencias);
 
 			totales.lineas++;
 			if (linea.incidencias && linea.incidencias.length) totales.lineasIncidencias++;
@@ -416,12 +443,20 @@ const estableceFlags = (txId, clon) => {
 
 		iFlags.set(txId, K.FLAGS.TOTALES, totales);
 
-		if (clon.tipoPedido) {
-			let tipoInt = parseInt(clon.tipoPedido)
+
+		// El Flag tipoPedido contiene el tipo del pedido saneado para permitir búsquedas por tipo de pedido rápidas y fiables.
+		// Si tipoPedido es una clave de transmisión típica de fedicom (un número de 0 a 999999) se guarda el valor numérico. 
+		// Si no se indica nada, por defecto se usa un 0.
+		// Si el valor no es numérico (se indica grupo de precios SAP p.e. "KF"), no se guarda lo que hará que las búsquedas de este código sean 
+		// mortales ya que el campo tipoPedido no está indexado en mongo, ya que mete mucha mierda 
+		// (p.e: no reconocería que "1", "001", "000001", "001   " son el mismo valor)
+		if (respuestaPedido.tipoPedido) {
+			let tipoInt = parseInt(respuestaPedido.tipoPedido);
 			if (tipoInt >= 0 && tipoInt <= 999999) {
 				iFlags.set(txId, K.FLAGS.TIPO, tipoInt);
 			}
 		} else {
+			// Si no hay tipoPedido, se pone un cerapio a capón
 			iFlags.set(txId, K.FLAGS.TIPO, 0);
 		}
 
@@ -431,7 +466,12 @@ const estableceFlags = (txId, clon) => {
 	
 }
 
-const analizaMotivosFalta  = (incidencias) => {
+/**
+ * Analiza burdamente los mensajes de faltas de lineas para clasificar las faltas en 
+ * grupos generalizados (estupe|stock|noPermitido|suministro|desconocido)
+ * @param {*} incidencias 
+ */
+const _analizaMotivosFalta  = (incidencias) => {
 	if (!incidencias || ! incidencias.forEach ) return {}
 
 	let tipos = {};

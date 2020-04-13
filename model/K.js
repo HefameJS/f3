@@ -356,6 +356,7 @@ module.exports = {
         NO_FALTAS: 'noFaltas',
         ESTUPEFACIENTE: 'estupe',
         DUPLICADOS: 'dupes',
+        DUPLICADO_SAP: 'sapDupe',
         BONIFICADO: 'bonif',
         TRANSFER:'transfer',
         FALTATOTAL: 'faltaTotal',
