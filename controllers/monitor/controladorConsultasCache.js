@@ -6,7 +6,7 @@ const L = global.logger;
 
 // Interfaces
 const iTokens = require(BASE + 'util/tokens');
-const iCacheCredencialesSap = require(BASE + 'interfaces/cache/fedicomCredentials');
+const iCacheCredencialesSap = require(BASE + 'interfaces/isap/iCacheCredencialesSap');
 
 // GET /status/cache/credenciales
 const getEstadoCacheCredenciales = (req, res) => {
