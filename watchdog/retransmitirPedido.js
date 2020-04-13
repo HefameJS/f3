@@ -92,7 +92,7 @@ const retransmitirPedido = function (otxId, options, callback) {
         }
         L.xt(rtxId, ['OK: Tenemos todos los campos necesarios para la retransmisión']);
 
-        var [retransmisible, estadoError, mensajeError] = isRetransmitible(dbTx, options.force);
+        var [retransmisible, estadoError, mensajeError] = _esRetransmisible(dbTx, options.force);
         if (!retransmisible) {
             L.xe(rtxId, [mensajeError, estadoError, dbTx.status]);
             L.xe(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con errores', errorMessage]);
@@ -171,7 +171,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
         iSap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
 
-            sapResponse = construyeSapResponse(sapError, sapResponse);
+            sapResponse = _construyeRespuestaSap(sapError, sapResponse);
 
             if (sapError) {
                 if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -180,7 +180,7 @@ const retransmitirPedido = function (otxId, options, callback) {
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
                         sapRequest: sapRequest,
                         sapResponse: sapResponse,
-                        clientResponse: construyeClientResponse(ctxId || otxId, 400, fedicomError.getErrors()),
+                        clientResponse: _construyeRespuestaCliente(ctxId || otxId, 400, fedicomError.getErrors()),
                         status: K.TX_STATUS.PETICION_INCORRECTA
                     });
                     L.xi(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con éxito']);
@@ -194,7 +194,7 @@ const retransmitirPedido = function (otxId, options, callback) {
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
                         sapRequest: sapRequest,
                         sapResponse: sapResponse,
-                        clientResponse: construyeClientResponse(ctxId || otxId, 201, pedido),
+                        clientResponse: _construyeRespuestaCliente(ctxId || otxId, 201, pedido),
                         status: K.TX_STATUS.NO_SAP
                     });
 
@@ -211,7 +211,7 @@ const retransmitirPedido = function (otxId, options, callback) {
             emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
                 sapRequest: sapRequest,
                 sapResponse: sapResponse,
-                clientResponse: construyeClientResponse(ctxId || otxId, responseHttpStatusCode, clientResponse),
+                clientResponse: _construyeRespuestaCliente(ctxId || otxId, responseHttpStatusCode, clientResponse),
                 status: estadoTransmision,
                 numerosPedidoSAP: numerosPedidoSAP,
                 numeroPedidoAgrupado: numeroPedidoAgrupado
@@ -225,19 +225,24 @@ const retransmitirPedido = function (otxId, options, callback) {
 
 }
 
-const construyeSapResponse = (callError, httpResponse) => {
+/**
+ * Construye el campo 'sapResponse' de la transmisión para almacenarlo en MongoDB
+ * @param {*} errorSap 
+ * @param {*} respuestaSap 
+ */
+const _construyeRespuestaSap = (errorSap, respuestaSap) => {
 
-    if (callError) {
-        switch (callError.type) {
+    if (errorSap) {
+        switch (errorSap.type) {
             case K.ISAP.ERROR_TYPE_NO_SAPSYSTEM:
                 return null;
             default:
                 return {
                     timestamp: new Date(),
                     error: {
-                        source: K.ISAP.errorToString(callError.type),
-                        statusCode: (callError.errno || callError.errno === 0) ? callError.errno : null,
-                        message: callError.code
+                        source: K.ISAP.errorToString(errorSap.type),
+                        statusCode: (errorSap.errno || errorSap.errno === 0) ? errorSap.errno : null,
+                        message: errorSap.code
                     }
                 };
         }
@@ -245,35 +250,35 @@ const construyeSapResponse = (callError, httpResponse) => {
 
     return {
         timestamp: new Date(),
-        statusCode: httpResponse.statusCode,
-        headers: httpResponse.headers,
-        body: httpResponse.body
+        statusCode: respuestaSap.statusCode,
+        headers: respuestaSap.headers,
+        body: respuestaSap.body
     }
 
 }
 
-const construyeClientResponse = (txId, responseStatus, responseBody) => {
+const _construyeRespuestaCliente = (txId, codigoEstadoHttp, cuerpoRespuesta) => {
     return {
         timestamp: new Date(),
-        statusCode: responseStatus,
+        statusCode: codigoEstadoHttp,
         headers: {
             'x-txid': txId,
             'software-id': K.SOFTWARE_ID.HEFAME,
             'content-api-version': K.PROTOCOL_VERSION,
             'content-type': 'application/json; charset=utf-8',
-            'content-length': responseBody ? '' + responseBody.length : '0'
+            'content-length': cuerpoRespuesta ? '' + cuerpoRespuesta.length : '0'
         },
-        body: responseBody
+        body: cuerpoRespuesta
     };
 }
 
-const isRetransmitible = (dbTx, force) => {
+const _esRetransmisible = (dbTx, forzar) => {
 
     if (estadosRetransmitibles.includes(dbTx.status))
         return [true, null, 'El estado de la transmisión es válido para ser retransmitido'];
 
     if (estadosRetransmitiblesForzando.includes(dbTx.status)) {
-        if (force)
+        if (forzar)
             return [true, null, 'El estado de la transmisión es válido para ser retransmitido porque se está forzando'];
         else
             return [false, K.TX_STATUS.RETRANSMISION.SOLO_FORZANDO, 'El estado de la retransmisión solo permite retransmitirla forzando'];
@@ -284,5 +289,5 @@ const isRetransmitible = (dbTx, force) => {
 
 
 module.exports = {
-    retransmitirPedido: retransmitirPedido
+    retransmitirPedido
 };
