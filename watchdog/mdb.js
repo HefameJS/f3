@@ -4,7 +4,6 @@ const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const os = require('os')
 const mdbwatchConfig = C.watchdog.mdbwatch;
 
 const Imongo = require(BASE + 'interfaces/imongo');
