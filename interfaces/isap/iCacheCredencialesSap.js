@@ -1,4 +1,8 @@
 'use strict';
+//const BASE = global.BASE;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
 
 const memCache = require('memory-cache');

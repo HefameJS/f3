@@ -4,13 +4,17 @@ const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const Isap = require(BASE + 'interfaces/isap');
-const Imongo = require(BASE + 'interfaces/imongo');
+// Interfaces
+const iSap = require(BASE + 'interfaces/isap');
+const iMongo = require(BASE + 'interfaces/imongo');
 const Events = require(BASE + 'interfaces/events');
+const iTokens = require(BASE + 'util/tokens');
+const iFlags = require(BASE + 'interfaces/iFlags');
+
+// Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
 const Devolucion = require(BASE + 'model/devolucion/ModeloDevolucion');
-const Tokens = require(BASE + 'util/tokens');
-const Flags = require(BASE + 'interfaces/cache/flags');
+
 
 // POST /devoluciones
 exports.crearDevolucion = function (req, res) {
@@ -18,19 +22,10 @@ exports.crearDevolucion = function (req, res) {
 	L.xi(req.txId, ['Procesando transmisión como CREACION DE DEVOLUCION']);
 
 	// Verificacion del estado del token
-	let estadoToken = Tokens.verificaPermisos(req, res, {
-		admitirSimulaciones: true
-	})
+	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, simulacionRequiereSolicitudAutenticacion: true });
 	if (!estadoToken.ok) {
 		Events.devoluciones.emitErrorCrearDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
-	}
-	// Si se trata de una simulación, recreamos el token como si fuera de la farmacia
-	if (estadoToken.usuarioSimulador) {
-		let newToken = Tokens.generateJWT(req.txId, req.body.authReq, []);
-		L.xd(req.txId, ['Se ha generado un token para la devolución simulada. Se sustituye por el de la petición simulada', newToken]);
-		req.headers['authorization'] = 'Bearer ' + newToken;
-		req.token = Tokens.verifyJWT(newToken, req.txId);
 	}
 
 
@@ -59,7 +54,7 @@ exports.crearDevolucion = function (req, res) {
 
 	Events.devoluciones.emitInicioCrearDevolucion(req, devolucion);
 	devolucion.limpiarEntrada(req.txId);
-	Isap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
+	iSap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
 
 		if (sapError) {
 			if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -72,7 +67,7 @@ exports.crearDevolucion = function (req, res) {
 				L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
 				var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
 				var responseBody = fedicomError.send(res)
-				Flags.set(req.txId, K.FLAGS.NO_SAP)
+				iFlags.set(req.txId, K.FLAGS.NO_SAP)
 				Events.devoluciones.emitFinCrearDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
 			}
 			return;
@@ -101,14 +96,15 @@ exports.consultaDevolucion = function (req, res) {
 		return;
 	}
 
-	let estadoToken = Tokens.verificaPermisos(req, res)
+	// Verificacion del estado del token
+	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
 		Events.devoluciones.emitErrorConsultarDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
 	Events.devoluciones.emitRequestConsultarDevolucion(req);
-	Imongo.findTxByNumeroDevolucion(req.txId, numeroDevolucion, function (err, dbTx) {
+	iMongo.findTxByNumeroDevolucion(req.txId, numeroDevolucion, function (err, dbTx) {
 		if (err) {
 			var error = new FedicomError('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
 			var responseBody = error.send(res);
@@ -116,7 +112,7 @@ exports.consultaDevolucion = function (req, res) {
 			return;
 		}
 
-		L.xi(req.txId, ['Se recupera la transmisión de la base de datos', dbTx]);
+		L.xi(req.txId, ['Se recupera la transmisión de la base de datos']);
 
 		if (dbTx && dbTx.clientResponse) {
 			// TODO: Autorizacion

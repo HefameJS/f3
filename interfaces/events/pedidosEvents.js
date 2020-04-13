@@ -4,9 +4,12 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const ObjectID = Imongo.ObjectID;
-const Flags = require(BASE + 'interfaces/cache/flags');
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+const iFlags = require(BASE + 'interfaces/iFlags');
+
+// Modelos
+const ObjectID = iMongo.ObjectID;
 
 
 module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
@@ -51,12 +54,12 @@ module.exports.emitPedidoDuplicado = (req, res, responseBody, originalTxId) => {
 		}
 	}
 	
-	Flags.set(req.txId, K.FLAGS.DUPLICADOS);
-	Flags.finaliza(res.txId, dataUpdate);
+	iFlags.set(req.txId, K.FLAGS.DUPLICADOS);
+	iFlags.finaliza(res.txId, dataUpdate);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
-	Imongo.commit(dataUpdate);
-	Imongo.commit(data);
+	iMongo.commit(dataUpdate);
+	iMongo.commit(data);
 }
 
 module.exports.emitErrorConsultarPedido = function (req, res, responseBody, status) {
@@ -95,10 +98,10 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 		}
 	}
 
-	Flags.finaliza(res.txId, data);
+	iFlags.finaliza(res.txId, data);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido'], 'txCommit');
-	Imongo.commit(data);
+	iMongo.commit(data);
 }
 module.exports.emitRequestConsultarPedido = function(req) {
 	var reqData = {
@@ -129,7 +132,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido'], 'txCommit');
-	Imongo.buffer(reqData);
+	iMongo.buffer(reqData);
 }
 module.exports.emitResponseConsultarPedido = function (res, responseBody, status) {
 	var resData = {
@@ -151,10 +154,10 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 		}
 	}
 
-	Flags.finaliza(res.txId, resData);
+	iFlags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 }
 
 
@@ -188,7 +191,7 @@ module.exports.emitInicioCrearPedido = (req, pedido) => {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
-	Imongo.commit(reqData);
+	iMongo.commit(reqData);
 	L.yell(req.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
 }
 module.exports.emitFinCrearPedido = (res, responseBody, status, extra) => {
@@ -215,10 +218,10 @@ module.exports.emitFinCrearPedido = (res, responseBody, status, extra) => {
 		}
 	}
 
-	Flags.finaliza(res.txId, resData);
+	iFlags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 	L.yell(res.txId, K.TX_TYPES.PEDIDO, status, [responseBody]);
 }
 module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) {
@@ -252,9 +255,9 @@ module.exports.emitErrorCrearPedido = function (req, res, responseBody, status) 
 		}
 	}
 
-	Flags.finaliza(res.txId, data);
+	iFlags.finaliza(res.txId, data);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
-	Imongo.commit(data);
+	iMongo.commit(data);
 	L.yell(req.txId, K.TX_TYPES.PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }

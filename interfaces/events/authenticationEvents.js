@@ -4,10 +4,12 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+const iFlags = require(BASE + 'interfaces/iFlags');
+
 
 const clone = require('clone');
-const Imongo = require(BASE + 'interfaces/imongo');
-const Flags = require(BASE + 'interfaces/cache/flags');
 
 module.exports.emitAuthRequest = function (req) {
 
@@ -40,7 +42,7 @@ module.exports.emitAuthRequest = function (req) {
 	if (reqData['$set'].clientRequest.body.password) reqData['$set'].clientRequest.body.password = '******';
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest'], 'txCommit');
-	Imongo.buffer(reqData);
+	iMongo.buffer(reqData);
 }
 module.exports.emitAuthResponse = function (res, responseBody, status) {
 	var resData = {
@@ -62,9 +64,9 @@ module.exports.emitAuthResponse = function (res, responseBody, status) {
 		}
 	}
 
-	Flags.finaliza(res.txId, resData);
+	iFlags.finaliza(res.txId, resData);
 
 	
 	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 }

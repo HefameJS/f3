@@ -1,26 +1,24 @@
 'use strict';
 const BASE = global.BASE;
-const C = global.config;
-const L = global.logger;
-const K = global.constants;
+//const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
-
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
 
 
 const getReplicaSet = (cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.cliente().db('admin').command({ "replSetGetStatus": 1 }, cb)
+	iMongo.cliente().db('admin').command({ "replSetGetStatus": 1 }, cb)
 }
 
 const getColeccion = (collectionName, cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.database().command({ collStats: collectionName }, cb);
+	iMongo.database().command({ collStats: collectionName }, cb);
 }
 
 
 const getNombresColecciones = (cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.database().command({ listCollections: 1, nameOnly: true }, (err, data) => {
+	iMongo.database().command({ listCollections: 1, nameOnly: true }, (err, data) => {
 		if (err) {
 			return cb(err, null);
 		}
@@ -37,13 +35,11 @@ const getNombresColecciones = (cb) => {
 }
 
 const getDatabase = (cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.database().command({ dbStats: 1 }, cb);
+	iMongo.database().command({ dbStats: 1 }, cb);
 }
 
 const getOperaciones = (cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.cliente().db('admin').executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
+	iMongo.cliente().db('admin').executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
 		if (err) {
 			return cb(err, null);
 		}
@@ -55,8 +51,7 @@ const getOperaciones = (cb) => {
 
 
 const getLogs = (logType, cb) => {
-	const Imongo = require(BASE + 'interfaces/imongo');
-	Imongo.database().executeDbAdminCommand({ getLog: logType }, cb);
+	iMongo.database().executeDbAdminCommand({ getLog: logType }, cb);
 }
 
 module.exports = {

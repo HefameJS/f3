@@ -4,17 +4,20 @@ const BASE = global.BASE;
 const L = global.logger;
 //const K = global.constants;
 
-const Tokens = require(BASE + 'util/tokens');
-const Imongo = require(BASE + 'interfaces/imongo');
+// Interfaces
+const iTokens = require(BASE + 'util/tokens');
+const iMongo = require(BASE + 'interfaces/imongo');
+
+// Modelos
 const ReplicaSetStatus = require(BASE + 'model/monitor/replicaSetStatus')
 
 // GET /status/mdb/col
 const getNombresColecciones = (req, res) => {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	Imongo.monitor.getNombresColecciones( (err, colecciones) => {
+	iMongo.monitor.getNombresColecciones( (err, colecciones) => {
 		if (err) {
 			L.e(['Error al obtener la lista de colecciones', err]);
 			res.status(500).send({ ok: false, error: err });
@@ -27,7 +30,7 @@ const getNombresColecciones = (req, res) => {
 // GET /status/mdb/col/:colName
 const getColeccion = function (req, res) {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
 	if (!req.params.colName) {
@@ -36,7 +39,7 @@ const getColeccion = function (req, res) {
 
 	var fullData = (req.query.full === 'true');
 
-	Imongo.monitor.getColeccion(req.params.colName, (err, collStats) => {
+	iMongo.monitor.getColeccion(req.params.colName, (err, collStats) => {
 		if (err) {
 			L.e(['Error al obtener los datos de la colección', err]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener los datos de la colección' });
@@ -59,10 +62,10 @@ const getColeccion = function (req, res) {
 // GET /status/mdb/db
 const getDatabase = function (req, res) {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	Imongo.monitor.getDatabase((err, dbStats) => {
+	iMongo.monitor.getDatabase((err, dbStats) => {
 		if (err) {
 			L.e(['Error al obtener estadísticas de la base de datos', err]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener estadísticas de la base de datos' });
@@ -80,10 +83,10 @@ const getDatabase = function (req, res) {
 // GET /status/mdb/op
 const getOperaciones = function (req, res) {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	Imongo.monitor.getOperaciones((err, sessions) => {
+	iMongo.monitor.getOperaciones((err, sessions) => {
 		if (err) {
 			L.e(['Error al obtener la lista de operaciones', err]);
 			return res.status(500).json({ ok: false, msg: 'Error al obtener la lista de operaciones' });
@@ -97,10 +100,10 @@ const getOperaciones = function (req, res) {
 // GET /status/mdb/rs
 const getReplicaSet = function (req, res) {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 	
-	Imongo.monitor.getReplicaSet((err, data) => {
+	iMongo.monitor.getReplicaSet((err, data) => {
 		if (err) {
 			L.e(['Error al obtener el estado del cluster', err]);
 			return res.status(500).json({ ok: false, msg: 'Error al obtener el estado del cluster' });
@@ -116,12 +119,12 @@ const getReplicaSet = function (req, res) {
 // GET /status/mdb/log [?type=(global|rs|startupWarnings)]
 const getLogs = function (req, res) {
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
 	var logType = req.query.type ? req.query.type : 'global';
 
-	Imongo.monitor.getLogs(logType, (err, logs) => {
+	iMongo.monitor.getLogs(logType, (err, logs) => {
 		if (err) {
 			L.e(['Error al obtener los logs', err]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener los logs' });

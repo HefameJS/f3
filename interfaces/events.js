@@ -4,7 +4,8 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
 
 
 module.exports.devoluciones = require('./events/devolucionesEvents');
@@ -44,5 +45,5 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 		}
 	}
 	L.xi(req.txId, ['Emitiendo COMMIT DISCARD para evento Discard'], 'txCommit');
-	Imongo.commitDiscard(data);
+	iMongo.commitDiscard(data);
 }

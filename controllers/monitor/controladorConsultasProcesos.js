@@ -4,8 +4,9 @@ const BASE = global.BASE;
 const L = global.logger;
 //const K = global.constants;
 
-const Tokens = require(BASE + 'util/tokens');
-const IRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos')
+// Interfaces
+const iTokens = require(BASE + 'util/tokens');
+const iRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos')
 
 // GET /status/proc
 const consultaProcesos = function (req, res) {
@@ -14,7 +15,7 @@ const consultaProcesos = function (req, res) {
 	L.xi(txId, ['Consulta de procesos']);
 
 	// Verificación del token del usuario
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
 
@@ -22,7 +23,7 @@ const consultaProcesos = function (req, res) {
 	var host = req.query.host ? req.query.host : null;
 
 
-	IRegistroProcesos.consultaProcesos(procType, host, (err, procesos) => {
+	iRegistroProcesos.consultaProcesos(procType, host, (err, procesos) => {
 		if (err) {
 			L.xe(txId, ['Error al obtener la lista de procesos', err]);
 			res.status(500).json({ ok: false, error: (err.error || err.message) });

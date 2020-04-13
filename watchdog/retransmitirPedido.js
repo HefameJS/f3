@@ -4,16 +4,20 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const Isap = require(BASE + 'interfaces/isap');
-
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+const iSap = require(BASE + 'interfaces/isap');
 const Events = require(BASE + 'interfaces/events')
-const emitRetransmision = Events.retransmisiones.emitRetransmision;
-const ObjectID = Imongo.ObjectID;
 
+// Modelos
+const ObjectID = iMongo.ObjectID;
 const FedicomError = require(BASE + 'model/fedicomError');
-const Pedido = require(BASE + 'model/pedido/pedido');
+const Pedido = require(BASE + 'model/pedido/ModeloPedido');
+
+// Helpers
 const expressExtensions = require(BASE + 'util/expressExtensions');
+const emitRetransmision = Events.retransmisiones.emitRetransmision;
+
 
 const estadosRetransmitibles = [
     K.TX_STATUS.RECEPCIONADO,
@@ -50,7 +54,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
     L.xi(rtxId, ['Retransmisión de pedido con ID ' + otxId, options]);
 
-    Imongo.findTxById(rtxId, otxId, function (err, dbTx) {
+    iMongo.findTxById(rtxId, otxId, function (err, dbTx) {
         // Comprobación de error en la búsqueda
         if (err) {
             var errorMessage = 'Ocurrió un error al buscar la transmisión en la base de datos';
@@ -165,7 +169,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
 
 
-        Isap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
+        iSap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
 
             sapResponse = construyeSapResponse(sapError, sapResponse);
 

@@ -4,8 +4,11 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const ObjectID = Imongo.ObjectID;
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+
+// Modelos
+const ObjectID = iMongo.ObjectID;
 
 
 module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) => {
@@ -51,8 +54,8 @@ module.exports.emitDevolucionDuplicada = (req, res, responseBody, originalTxId) 
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
-	Imongo.commit(dataUpdate);
-	Imongo.commit(data);
+	iMongo.commit(dataUpdate);
+	iMongo.commit(data);
 }
 module.exports.emitErrorCrearDevolucion = (req, res, responseBody, status) => {
 
@@ -86,7 +89,7 @@ module.exports.emitErrorCrearDevolucion = (req, res, responseBody, status) => {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
-	Imongo.commit(data);
+	iMongo.commit(data);
 	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
 module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
@@ -119,7 +122,7 @@ module.exports.emitInicioCrearDevolucion = (req, devolucion) => {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
-	Imongo.buffer(reqData);
+	iMongo.buffer(reqData);
 	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
 module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
@@ -147,7 +150,7 @@ module.exports.emitFinCrearDevolucion = (res, responseBody, status, extra) => {
 	}
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 	L.yell(res.txId, K.TX_TYPES.DEVOLUCION, status, [responseBody]);
 }
 
@@ -189,7 +192,7 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarDevolucion'], 'txCommit');
-	Imongo.commit(data);
+	iMongo.commit(data);
 }
 module.exports.emitRequestConsultarDevolucion = function(req) {
 	var reqData = {
@@ -220,7 +223,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion'], 'txCommit');
-	Imongo.buffer(reqData);
+	iMongo.buffer(reqData);
 }
 module.exports.emitResponseConsultarDevolucion = function (res, responseBody, status) {
 	var resData = {
@@ -243,5 +246,5 @@ module.exports.emitResponseConsultarDevolucion = function (res, responseBody, st
 	}
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarDevolucion'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 }

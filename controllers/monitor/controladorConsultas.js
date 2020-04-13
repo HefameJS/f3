@@ -4,8 +4,9 @@ const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
-const Tokens = require(BASE + 'util/tokens');
-const Imongo = require(BASE + 'interfaces/imongo');
+// Interfaces
+const iTokens = require(BASE + 'util/tokens');
+const iMongo = require(BASE + 'interfaces/imongo');
 
 
 // PUT /query
@@ -13,13 +14,13 @@ const consultaTX = function (req, res) {
 
 	L.xi(txId, ['Consulta de transmisiones']);
 
-	let estadoToken = Tokens.verificaPermisos(req, res);
+	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
 	var txId = req.txId;
 	var query = req.body;
 
-	Imongo.consultaTX(query, (err, resultado) => {
+	iMongo.consultaTX(query, (err, resultado) => {
 		if (err) {
 			console.log(err);
 			res.status(500).json({ ok: false, error: (err.error || err.message) });

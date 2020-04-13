@@ -2,120 +2,127 @@
 const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
+const iSapComun = require('./iSapComun');
+const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
 
-const NO_SAP_SYSTEM_ERROR = {
-	type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
-	errno: null,
-	code: 'No se encuentra definido el sistema SAP destino'
-}
-
-const SapSystem = require(BASE + 'model/sapsystem');
 const request = require('request');
 
 
 exports.consultaAlbaranJSON = (txId, numeroAlbaran, callback) => {
 
-	let sapSystemData = C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+	let destinoSap = DestinoSap.porDefecto();
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	let sapSystem = new SapSystem(sapSystemData);
-	let httpCallParams = sapSystem.getRequestCallParams({
+
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
 		method: 'GET'
 	});
 
-	L.xd(txId, ['Enviando a SAP consulta de albarán', httpCallParams]);
+	L.xd(txId, ['Enviando a SAP consulta de albarán', parametrosHttp]);
 
-	request(httpCallParams, function (err, res, body) {
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
-		if (err) {
-			callback(err, res, body);
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, null);
 			return;
 		}
 
-		let statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
+		if (respuestaSap.errorSap) {
 			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
+			}, null);
+			return;
 		}
+
+		callback(null, respuestaSap);
+
 
 	});
 }
 
-exports.consultaAlbaranPDF = function (txId, numeroAlbaran, callback) {
+exports.consultaAlbaranPDF = (txId, numeroAlbaran, callback) => {
 
-	let sapSystemData = C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+	let destinoSap = DestinoSap.porDefecto();
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	let sapSystem = new SapSystem(sapSystemData);
-	let httpCallParams = sapSystem.getRequestCallParams({
+
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsf_get_document/proforma/' + numeroAlbaran,
 		method: 'GET'
 	});
 
-	L.xd(txId, ['Enviando a SAP consulta de albarán PDF', httpCallParams]);
+	L.xd(txId, ['Enviando a SAP consulta de albarán PDF', parametrosHttp]);
 
-	request(httpCallParams, function (err, res, body) {
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
-		if (err) {
-			callback(err, res, body);
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, null);
 			return;
 		}
 
-		var statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
+		if (respuestaSap.errorSap) {
 			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
+			}, false);
+			return;
 		}
+
+		callback(null, respuestaSap);
 
 	});
 }
 
 exports.listadoAlbaranes = (txId, consultaAlbaran, callback) => {
-
-	let sapSystemData = C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+	let destinoSap = DestinoSap.porDefecto();
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
-	let sapSystem = new SapSystem(sapSystemData);
-	let httpCallParams = sapSystem.getRequestCallParams({
+
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsd_orderlist_api/query/?query=' + consultaAlbaran.toQueryString(),
 		method: 'GET'
 	});
 
-	L.xd(txId, ['Enviando a SAP consulta de listado de albaranes', httpCallParams]);
+	L.xd(txId, ['Enviando a SAP consulta de listado de albaranes', parametrosHttp]);
 
-	request(httpCallParams, function (err, res, body) {
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
-		if (err) {
-			callback(err, res, body);
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, null);
 			return;
 		}
 
-		let statusCodeType = Math.floor(res.statusCode / 100);
-		if (statusCodeType === 2) {
-			callback(null, res, body);
-		} else {
+		if (respuestaSap.errorSap) {
 			callback({
-				errno: res.statusCode,
-				code: res.statusMessage
-			}, res, body);
+				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
+			}, null);
+			return;
 		}
+
+		callback(null, respuestaSap);
 
 	});
 }

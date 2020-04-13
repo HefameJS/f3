@@ -4,7 +4,8 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
 
 module.exports.emitRequestToSap = (txId, callParams) => {
 
@@ -29,7 +30,7 @@ module.exports.emitRequestToSap = (txId, callParams) => {
 	}
 
 	L.xi(txId, ['Emitiendo BUFFER para evento RequestToSap'], 'txBuffer');
-	Imongo.buffer(data);
+	iMongo.buffer(data);
 }
 
 module.exports.emitResponseFromSap = (txId, callError, sapHttpResponse) => {
@@ -78,7 +79,7 @@ module.exports.emitResponseFromSap = (txId, callError, sapHttpResponse) => {
 	}
 
 	L.xi(txId, ['Emitiendo BUFFER para evento ResponseFromSap'], 'txBuffer');
-	Imongo.buffer(data);
+	iMongo.buffer(data);
 }
 
 module.exports.emitErrorConfirmacionPedido = function (req, status) {
@@ -105,7 +106,7 @@ module.exports.emitErrorConfirmacionPedido = function (req, status) {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
-	Imongo.commit(reqData);
+	iMongo.commit(reqData);
 	L.yell(req.txId, K.TX_TYPES.CONFIRMACION_PEDIDO, status, [req.body]);
 }
 
@@ -156,8 +157,8 @@ module.exports.emitConfirmacionPedido = function (req, originalTxId, updatedTxSt
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
-	Imongo.commit(reqData);
-	Imongo.commit(updateData);
+	iMongo.commit(reqData);
+	iMongo.commit(updateData);
 
 	L.yell(originalTxId, K.TX_TYPES.CONFIRMACION_PEDIDO, updatedTxStatus, extra.numerosPedidoSAP);
 }

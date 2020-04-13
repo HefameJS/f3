@@ -4,10 +4,14 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const ObjectID = Imongo.ObjectID;
-const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/confirmacionPedidoSAP');
-const Flags = require(BASE + 'interfaces/cache/flags');
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+const iFlags = require(BASE + 'interfaces/iFlags');
+
+// Modelos
+const ObjectID = iMongo.ObjectID;
+const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionPedidoSAP');
+
 
 
 module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessage, rtxResult) => {
@@ -40,7 +44,7 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 	if (options.ctxId) {
 		// La retransmisión ha generado un clon.
 		module.exports.emitFinClonarPedido(originalTxId, options.ctxId, rtxResult)
-		Flags.set(originalTxId, K.FLAGS.CLONADO);
+		iFlags.set(originalTxId, K.FLAGS.CLONADO);
 	}
 	else if (!options.noActualizarOriginal && rtxResult) {
 		// ¿Debemos actualizar la transmisión original?
@@ -55,26 +59,26 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 			}
 
 			if (advertencia) {
-				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE_WARN);
+				iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE_WARN);
 				L.xw(originalTxId, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
 			} else {
-				Flags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
+				iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
 			}
 		} else {
 			// Si se habían establecido flags, las borramos, pues no queremos actualizar nada
 			// mas que añadir el flag de retransmision sin update
-			Flags.del(originalTxId);
-			Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
+			iFlags.del(originalTxId);
+			iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 		}
 
 	} else {
-		Flags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
+		iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
 	}
 
 	
-	Flags.finaliza(originalTxId, updateQuery);
+	iFlags.finaliza(originalTxId, updateQuery);
 
-	Imongo.commit(updateQuery);
+	iMongo.commit(updateQuery);
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit'], 'txCommit');
 	L.yell(originalTxId, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [rtxResult]);
 }
@@ -148,11 +152,11 @@ module.exports.emitInicioClonarPedido = (clonReq, pedido, otxId) => {
 		}
 	};
 
-	Flags.set(ctxId, K.FLAGS.CLON);
-	Flags.finaliza(ctxId, reqData);
+	iFlags.set(ctxId, K.FLAGS.CLON);
+	iFlags.finaliza(ctxId, reqData);
 
 	L.xi(clonReq.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
-	Imongo.commit(reqData);
+	iMongo.commit(reqData);
 	L.yell(clonReq.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [clonReq.identificarUsuarioAutenticado(), pedido.crc, clonReq.body]);
 }
 
@@ -172,10 +176,10 @@ module.exports.emitFinClonarPedido = (oTxId, ctxId, rtxResult) => {
 		}
 	}
 
-	Flags.finaliza(ctxId, resData);
+	iFlags.finaliza(ctxId, resData);
 
 	L.xi(ctxId, ['Emitiendo COMMIT para evento FinClonarPedido'], 'txCommit');
-	Imongo.commit(resData);
+	iMongo.commit(resData);
 	L.yell(ctxId, K.TX_TYPES.PEDIDO, rtxResult.status, [rtxResult]);
 }
 
@@ -195,10 +199,10 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 		};
 
 		//Flags.set(txId, K.FLAGS.WATCHDOG);
-		Flags.finaliza(txId, dataUpdate);
+		iFlags.finaliza(txId, dataUpdate);
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
-		Imongo.commit(dataUpdate);
+		iMongo.commit(dataUpdate);
 		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, newStatus, ['StatusFix']);
 	}
 }
@@ -233,10 +237,10 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 	}
 
 	//Flags.set(originalTxId, K.FLAGS.WATCHDOG);
-	Flags.finaliza(originalTxId, updateData);
+	iFlags.finaliza(originalTxId, updateData);
 
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido'], 'txCommit');
-	Imongo.commit(updateData);
+	iMongo.commit(updateData);
 	L.yell(originalTxId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
 	/**
@@ -256,6 +260,6 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 		}
 	}
 	L.xi(confirmId, ['Se ha asociado esta confirmación con el pedido que confirma', originalTxId], 'txCommit');
-	Imongo.commit(commitConfirmacionSap);
+	iMongo.commit(commitConfirmacionSap);
 
 }

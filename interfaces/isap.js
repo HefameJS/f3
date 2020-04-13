@@ -1,255 +1,182 @@
 'use strict';
 const BASE = global.BASE;
-const C = global.config;
-const L = global.logger;
+//const C = global.config;
+//const L = global.logger;
 const K = global.constants;
 
-const SapSystem = require(BASE + 'model/sapsystem');
+const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
 const Events = require(BASE + 'interfaces/events');
-const credentialsCache = require(BASE + 'interfaces/cache/fedicomCredentials');
+
 const request = require('request');
 
-const isapAlbaranes = require(BASE + 'interfaces/isap/isapAlbaranes');
+const iSapComun = require(BASE + 'interfaces/isap/iSapComun');
 
 
-/**
- * Trata de crear el objeto del sistema SAP en base al nombre del mismo.
- * Si no se especifica el nombre, se usa el sistema SAP por defecto.
- * En caso de que el sistema SAP no exista, se devuelve null.
- * Si el sistema SAP es correcto, se devuelve el objeto SapSystem
- * 
- * @param {*} sapSystemName 
- * @param {*} callback 
- */
-const getSapSystem = (sapSystemName) => {
-	var sapSystemData = sapSystemName ? C.getSapSystem(sapSystemName) : C.getDefaultSapSystem();
-	if (!sapSystemData) {
-		return null;
-	}
-	return new SapSystem(sapSystemData);
-}
-
-const ampliaSapResponse = (sapResponse, sapBody) => {
-	if (!sapResponse) sapResponse = {};
-	sapResponse.body = sapBody;
-	sapResponse.errorSap = Math.floor(sapResponse.statusCode / 100) !== 2;
-	return sapResponse;
-}
-
-const NO_SAP_SYSTEM_ERROR = {
-	type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
-	errno: null,
-	code: 'No se encuentra definido el sistema SAP destino'
-}
-
-
-exports.ping = (sapSystem, callback) => {
-	var sapSystem = getSapSystem(sapSystem);
-	if (!sapSystem) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+const ping = (nombreSistemaSap, callback) => {
+	let destinoSap = DestinoSap.desdeNombre(nombreSistemaSap);
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-	var httpCallParams = sapSystem.getRequestCallParams({
-		path: '/api/zsd_ent_ped_api/pedidos/avalibity'
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+		path: '/api/zsd_ent_ped_api/pedidos/avalibity' /* AVALIBITY is gud englis */
 	});
 
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
-	request(httpCallParams, function (callError, sapResponse, sapBody) {
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
 
-		sapResponse = ampliaSapResponse(sapResponse, sapBody);
-		if (callError) {
-			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, false);
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, false);
 			return;
 		}
 
-		if (sapResponse.errorSap) {
+		if (respuestaSap.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapResponse.statusCode,
-				code: sapResponse.statusMessage
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
 			}, false);
 			return;
 		}
 
-		callback(null, true, sapSystem);
+		callback(null, true, nombreSistemaSap);
 
 	});
 }
 
-exports.authenticate = (txId, authReq, callback) => {
+const realizarPedido = (txId, pedido, callback) => {
 
-	if (!authReq.noCache) {
-		var fromCache = credentialsCache.check(authReq);
-		if (fromCache) {
-			L.xd(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache');
-			callback(null, { body: { username: authReq.username } });
-			return;
-		}
-	}
-
-	var sapSystem = getSapSystem(authReq.sapSystem);
-	if (!sapSystem) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+	let destinoSap = DestinoSap.desdeNombre(pedido.sapSystem);
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-	var httpCallParams = sapSystem.getRequestCallParams({
-		path: '/api/zverify_fedi_credentials',
-		body: authReq
-	});
-
-	Events.sap.emitRequestToSap(txId, httpCallParams);
-
-	request(httpCallParams, (callError, sapResponse, sapBody) => {
-
-		sapResponse = ampliaSapResponse(sapResponse, sapBody);
-		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
-
-		if (callError) {
-			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, sapResponse);
-			return;
-		}
-
-		if (sapResponse.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapResponse.statusCode,
-				code: sapResponse.statusMessage
-			}, sapResponse)
-			return;
-		}
-
-		// Solo si SAP responde con el nombre del usuario guardamos la entrada en caché
-		if (!authReq.noCache && sapBody.username && sapBody.username.length > 0) {
-			credentialsCache.add(authReq);
-		}
-
-		callback(null, sapResponse);
-
-
-	});
-
-}
-
-exports.realizarPedido = (txId, pedido, callback) => {
-
-	var sapSystem = getSapSystem(pedido.sapSystem);
-	if (!sapSystem) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
-
-	var httpCallParams = sapSystem.getRequestCallParams({
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsd_ent_ped_api/pedidos',
 		body: pedido
 	});
 
-	Events.sap.emitRequestToSap(txId, httpCallParams);
-	request(httpCallParams, (callError, sapResponse, sapBody) => {
-		sapResponse = ampliaSapResponse(sapResponse, sapBody);
-		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
+	Events.sap.emitRequestToSap(txId, parametrosHttp);
 
-		if (callError) {
-			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, sapResponse);
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+		Events.sap.emitResponseFromSap(txId, errorComunicacion, respuestaSap);
+
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, respuestaSap);
 			return;
 		}
 
-		if (sapResponse.errorSap) {
+		if (respuestaSap.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapResponse.statusCode,
-				code: sapResponse.statusMessage
-			}, sapResponse)
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
+			}, respuestaSap);
 			return;
 		}
 
-		callback(null, sapResponse);
+		callback(null, respuestaSap);
 
 	});
 }
 
-exports.realizarDevolucion = (txId, devolucion, callback) => {
-	var sapSystem = getSapSystem(devolucion.sapSystem);
-	if (!sapSystem) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+const realizarDevolucion = (txId, devolucion, callback) => {
+	let destinoSap = DestinoSap.desdeNombre(devolucion.sapSystem);
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-
-	var httpCallParams = sapSystem.getRequestCallParams({
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsd_ent_ped_api/devoluciones',
 		body: devolucion
 	});
 
-	Events.sap.emitRequestToSap(txId, httpCallParams);
-	request(httpCallParams, (callError, sapResponse, sapBody) => {
-		sapResponse = ampliaSapResponse(sapResponse, sapBody);
-		Events.sap.emitResponseFromSap(txId, callError, sapResponse);
+	Events.sap.emitRequestToSap(txId, parametrosHttp);
 
-		if (callError) {
-			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, sapResponse);
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+
+		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+		Events.sap.emitResponseFromSap(txId, errorComunicacion, respuestaSap);
+
+
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, respuestaSap);
 			return;
 		}
 
-		if (sapResponse.errorSap) {
+		if (respuestaSap.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapResponse.statusCode,
-				code: sapResponse.statusMessage
-			}, sapResponse)
+				errno: respuestaSap.statusCode,
+				code: respuestaSap.statusMessage
+			}, respuestaSap);
 			return;
 		}
 
-		callback(null, sapResponse);
+		callback(null, respuestaSap);
+
 	});
 }
 
-exports.retransmitirPedido = (pedido, callback) => {
+const retransmitirPedido = (pedido, callback) => {
 
-	var sapSystem = getSapSystem(pedido.sapSystem);
-	if (!sapSystem) {
-		callback(NO_SAP_SYSTEM_ERROR, null);
+
+	let destinoSap = DestinoSap.desdeNombre(pedido.sapSystem);
+	if (!destinoSap) {
+		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
 	}
 
-	var httpCallParams = sapSystem.getRequestCallParams({
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsd_ent_ped_api/pedidos',
 		body: pedido
 	});
 
-	var sapRequest = {
+	var peticionASap = {
 		timestamp: new Date(),
-		method: httpCallParams.method,
-		headers: httpCallParams.headers,
-		body: httpCallParams.body,
-		url: httpCallParams.url
+		method: parametrosHttp.method,
+		headers: parametrosHttp.headers,
+		body: parametrosHttp.body,
+		url: parametrosHttp.url
 	}
 
-	request(httpCallParams, function (callError, sapResponse, sapBody) {
-		sapResponse = ampliaSapResponse(sapResponse, sapBody);
+	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+		respuestaSap = ampliaSapResponse(respuestaSap, cuerpoSap);
 
-		if (callError) {
-			callError.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(callError, sapResponse, sapRequest);
+		if (errorComunicacion) {
+			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
+			callback(errorComunicacion, respuestaSap, peticionASap);
 			return;
 		}
 
-		if (sapResponse.errorSap) {
+		if (respuestaSap.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapResponse.statusCode,
-				code: sapResponse.statusMessage
-			}, sapResponse, sapRequest);
+				errno: sapRrespuestaSapesponse.statusCode,
+				code: respuestaSap.statusMessage
+			}, respuestaSap, peticionASap);
 			return;
 		}
-		callback(null, sapResponse, sapRequest);
+
+		callback(null, respuestaSap, peticionASap);
 	});
 
 }
 
-exports.albaranes =	isapAlbaranes;
+module.exports = {
+	ping: ping,
+	autenticacion: require(BASE + 'interfaces/isap/iSapAutenticacion'),
+	realizarPedido: realizarPedido,
+	realizarDevolucion: realizarDevolucion,
+	retransmitirPedido: retransmitirPedido,
+	albaranes: require(BASE + 'interfaces/isap/iSapAlbaranes')
+}

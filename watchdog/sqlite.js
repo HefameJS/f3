@@ -3,8 +3,9 @@ const BASE = global.BASE;
 const config = global.config;
 const L = global.logger;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const Isqlite = require(BASE + 'interfaces/isqlite');
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo');
+const iSQLite = require(BASE + 'interfaces/isqlite');
 
 
 var operationInProgress = false;
@@ -17,7 +18,7 @@ var interval = setInterval(function() {
 
 	operationInProgress = true;
 
-	Isqlite.countTx(maxRetries, function (err, count) {
+	iSQLite.countTx(maxRetries, function (err, count) {
 		if (err) {
 			L.e(['Error al contar el número de entradas en base de datos de respaldo', err], 'sqlitewatch');
 			operationInProgress = false;
@@ -27,14 +28,14 @@ var interval = setInterval(function() {
 		if (count) {
 			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', count], 'sqlitewatch');
 
-			Imongo.connectionStatus( (connected) => {
+			iMongo.connectionStatus( (connected) => {
 				if (!connected) {
 					operationInProgress = false;
 					L.w(['Aún no se ha restaurado la conexión con MongoDB']);
 					return;
 				}
 
-				Isqlite.retrieveAll(maxRetries, function (error, rows) {
+				iSQLite.retrieveAll(maxRetries, function (error, rows) {
 					if (error) {
 						L.f(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
 						operationInProgress = false;
@@ -45,13 +46,13 @@ var interval = setInterval(function() {
 
 					rows.forEach( function (row) {
 
-						Imongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
+						iMongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
 							if (updated) {
-								Isqlite.removeUid(row.uid, function (err, count) {
+								iSQLite.removeUid(row.uid, function (err, count) {
 									rowsOnTheFly --;
 								});
 							} else {
-								Isqlite.incrementUidRetryCount(row.uid, () => {});
+								iSQLite.incrementUidRetryCount(row.uid, () => {});
 								rowsOnTheFly --;
 								// Log de cuando una entrada agota el número de transmisiones
 								if (row.retryCount === maxRetries - 1) {

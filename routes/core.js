@@ -15,13 +15,13 @@ const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
 module.exports = function (app) {
 
-	var controllers = {
-		authenticate: require(BASE + 'controllers/authenticate'),
-		pedidos: require(BASE + 'controllers/pedidos'),
+	var controladores = {
+		autenticacion: require(BASE + 'controllers/controladorAutenticacion'),
+		pedidos: require(BASE + 'controllers/controladorPedidos'),
 		devoluciones: require(BASE + 'controllers/controladorDevoluciones'),
 		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
-		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
-		retransmit: require(BASE + 'controllers/retransmit'),
+		confirmacionPedido: require(BASE + 'controllers/controladorConfirmacionPedido'),
+		retransmision: require(BASE + 'controllers/controladorRetransmision'),
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -63,30 +63,30 @@ module.exports = function (app) {
 
 	/* RUTAS */
 	app.route('/authenticate')
-		.post(tryCatch(controllers.authenticate.doAuth))
-		.get(tryCatch(controllers.authenticate.verifyToken));
+		.post(tryCatch(controladores.autenticacion.autenticar))
+		.get(tryCatch(controladores.autenticacion.verificarToken));
 
 
 	app.route('/pedidos')
-		.get(tryCatch(controllers.pedidos.getPedido))
-		.post(tryCatch(controllers.pedidos.savePedido))
-		.put(tryCatch(controllers.pedidos.updatePedido));
+		.get(tryCatch(controladores.pedidos.consultaPedido))
+		.post(tryCatch(controladores.pedidos.crearPedido))
+		.put(tryCatch(controladores.pedidos.actualizarPedido));
 	app.route('/pedidos/:numeroPedido')
-		.get(tryCatch(controllers.pedidos.getPedido));
+		.get(tryCatch(controladores.pedidos.consultaPedido));
 
 
 	app.route('/devoluciones')
-		.get(tryCatch(controllers.devoluciones.consultaDevolucion))
-		.post(tryCatch(controllers.devoluciones.crearDevolucion));
+		.get(tryCatch(controladores.devoluciones.consultaDevolucion))
+		.post(tryCatch(controladores.devoluciones.crearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(tryCatch(controllers.devoluciones.consultaDevolucion));
+		.get(tryCatch(controladores.devoluciones.consultaDevolucion));
 
 
 	app.route('/albaranes')
-		.get(tryCatch(controllers.albaranes.listadoAlbaranes));
+		.get(tryCatch(controladores.albaranes.listadoAlbaranes));
 	// app.route('/albaranes/confirmacion');
 	app.route('/albaranes/:numeroAlbaran')
-		.get(tryCatch(controllers.albaranes.consultaAlbaran));
+		.get(tryCatch(controladores.albaranes.consultaAlbaran));
 
 
 	//app.route('/facturas')
@@ -99,10 +99,10 @@ module.exports = function (app) {
 	 *	RUTAS NO STANDARD FEDICOM3
 	 */
 	app.route('/confirmaPedido')
-		.post(tryCatch(controllers.confirmacionPedido.confirmaPedido));
+		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
 
 	app.route('/retransmitir/:txId')
-		.get(tryCatch(controllers.retransmit.retransmitirPedido));
+		.get(tryCatch(controladores.retransmision.retransmitePedido));
 
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */

@@ -8,12 +8,12 @@ const K = global.constants;
 const FedicomError = require(BASE + 'model/fedicomError');
 const ERROR_CODE = K.CODIGOS_ERROR_FEDICOM.WARN_PROTOCOLO;
 const DEPURACION_ACTIVA = (C.depurar_transmisiones ? true : false);
-const Flags = require(BASE + 'interfaces/cache/flags');
-const FLAG = K.FLAGS.FORMATO;
+const iFlags = require(BASE + 'interfaces/iFlags');
+const FLAG_ERROR_FORMATO = K.FLAGS.FORMATO;
 
 
 const errorEncontrado = (txId, incidencias, mensaje) => {
-    Flags.set(txId, FLAG);
+    iFlags.set(txId, FLAG_ERROR_FORMATO);
     if (DEPURACION_ACTIVA) incidencias.add(ERROR_CODE, mensaje);
     L.xw(txId, mensaje, 'preCleaner');
 }

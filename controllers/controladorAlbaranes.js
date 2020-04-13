@@ -4,45 +4,51 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
+// Interfaces
+const iTokens = require(BASE + 'util/tokens');
+const iSap = require(BASE + 'interfaces/isap');
 
+// Modelos
+const CRC = require(BASE + 'model/CRC');
 const FedicomError = require(BASE + 'model/fedicomError');
-const Tokens = require(BASE + 'util/tokens');
-const Isap = require(BASE + 'interfaces/isap');
-
-
 const ConsultaAlbaran = require(BASE + '/model/albaran/ModeloConsultaAlbaran');
 const AlbaranSimple = require(BASE + '/model/albaran/ModeloAlbaranSimple');
 const AlbaranCompleto = require(BASE + '/model/albaran/ModeloAlbaranCompleto');
 
-const CRC = require(BASE + 'model/CRC');
+
 
 const _consultaAlbaranPDF = (req, res, numAlbaran) => {
-    Isap.albaranes.consultaAlbaranPDF(req.txId, numAlbaran, (sapError, sapRes, sapBody) => {
-        if (sapError) {
-            if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                L.xe(txId, ['Error al consultar el albarán PDF', sapError]);
-                let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+
+    let txId = req.txId;
+
+    iSap.albaranes.consultaAlbaranPDF(txId, numAlbaran, (errorSap, respuestaSap) => {
+        if (errorSap) {
+            if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                L.xe(txId, ['Error al consultar el albarán PDF', errorSap]);
+                let fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
                 fedicomError.send(res);
                 return;
             }
             else {
                 // Cuando el albarán no existe, SAP devuelve un 503 
-                if (sapRes.statusCode === 503) {
-                    L.xe(req.txId, ['SAP devolvió un 503, probablemente el albarán no existe', sapError]);
+                if (respuestaSap.statusCode === 503) {
+                    L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
                     let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
                     error.send(res);
                     return;
                 }
-                L.xe(req.txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán PDF', sapError]);
+                L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán PDF', errorSap]);
                 var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
                 error.send(res);
                 return;
             }
         }
 
-        if (sapBody && sapBody[0] && sapBody[0].pdf_file) {
+        let cuerpoSap = respuestaSap.body;
+
+        if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
             L.xi(req.txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
-            var buffer = Buffer.from(sapBody[0].pdf_file, 'base64');
+            let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
             
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=' + numAlbaran + '.pdf');
@@ -50,8 +56,8 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
             res.send(buffer);
         }
         else {
-            L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', sapBody]);
-            var fedicomError = new FedicomError('ALB-ERR-001', 'No se encontró el albarán', 404);
+            L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', cuerpoSap]);
+            let fedicomError = new FedicomError('ALB-ERR-001', 'No se encontró el albarán', 404);
             fedicomError.send(res);
         }
 
@@ -59,36 +65,40 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
 }
 
 const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
-    Isap.albaranes.consultaAlbaranJSON(req.txId, numAlbaran, (sapError, sapRes, sapBody) => {
-        if (sapError) {
-            if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                L.xe(txId, ['Error al consultar albarán JSON', sapError]);
-                let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+    let txId = req.txId;
+
+    iSap.albaranes.consultaAlbaranJSON(txId, numAlbaran, (errorSap, respuestaSap) => {
+        
+        if (errorSap) {
+            if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                L.xe(txId, ['Error al consultar albarán JSON', errorSap]);
+                let fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
                 fedicomError.send(res);
                 return;
             }
             else {
                 // Cuando el albarán no existe, SAP devuelve un 503 
-                if (sapRes.statusCode === 503) {
-                    L.xe(req.txId, ['SAP devolvió un 503, probablemente el albarán no existe', sapError]);
+                if (respuestaSap.statusCode === 503) {
+                    L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
                     let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
                     error.send(res);
                     return;
                 }
-                L.xe(req.txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', sapError]);
+                L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', errorSap]);
                 var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
                 error.send(res);
                 return;
             }
         }
 
+        let cuerpoSap = respuestaSap.body;
         
-        if (sapBody && sapBody.t_pos) {
-            let datosAlbaran = new AlbaranCompleto(sapBody)
+        if (cuerpoSap && cuerpoSap.t_pos) {
+            let datosAlbaran = new AlbaranCompleto(cuerpoSap)
             if (asArray) datosAlbaran = [datosAlbaran]
             res.status(200).json(datosAlbaran);
         } else {
-            L.xe(req.txId, ["SAP no ha devuelto albaranes", sapBody]);
+            L.xe(req.txId, ["SAP no ha devuelto albaranes", cuerpoSap]);
             let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
             error.send(res);
         }
@@ -101,7 +111,7 @@ exports.consultaAlbaran = (req, res) => {
     L.xi(req.txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
 
     // Verificación del token del usuario
-    let estadoToken = Tokens.verificaPermisos(req, res, {
+    let estadoToken = iTokens.verificaPermisos(req, res, {
         admitirSimulaciones: true,
         admitirSimulacionesEnProduccion: true
     });
@@ -109,18 +119,18 @@ exports.consultaAlbaran = (req, res) => {
 
 
     // Saneado del número del albarán
-    var numAlbaran = req.params.numeroAlbaran;
+    let numAlbaran = req.params.numeroAlbaran;
     if (!numAlbaran) {
         var error = new FedicomError('ALB-ERR-003', 'El parámetro "numeroAlbaran" es obligatorio', 400);
         error.send(res);
         return;
     }
-    var numAlbaranSaneado = numAlbaran.padStart(10, '0');
+    let numAlbaranSaneado = numAlbaran.padStart(10, '0');
     L.xi(req.txId, ['El número de albarán solicitado', numAlbaranSaneado])
 
 
     // Detección del formato solicitado
-    var formatoAlbaran = 'JSON';
+    let formatoAlbaran = 'JSON';
 
     if (req.headers['accept']) {
         switch (req.headers['accept'].toLowerCase()) {
@@ -137,7 +147,7 @@ exports.consultaAlbaran = (req, res) => {
         case 'PDF':
             return _consultaAlbaranPDF(req, res, numAlbaranSaneado);
         default:
-            var error = new FedicomError('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
+            let error = new FedicomError('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
             error.send(res);
             return;
     }
@@ -147,10 +157,12 @@ exports.consultaAlbaran = (req, res) => {
 // GET /albaranes
 exports.listadoAlbaranes = (req, res) => {
 
-    L.xi(req.txId, ['Procesando transmisión como BÚSQUEDA DE ALBARAN']);
+    let txId = req.txId;
+
+    L.xi(txId, ['Procesando transmisión como BÚSQUEDA DE ALBARAN']);
     
     // Verificación del token del usuario
-    let estadoToken = Tokens.verificaPermisos(req, res, {
+    let estadoToken = iTokens.verificaPermisos(req, res, {
         admitirSimulaciones: true,
         admitirSimulacionesEnProduccion: true
     });
@@ -248,17 +260,17 @@ exports.listadoAlbaranes = (req, res) => {
         consulta.setCrc(numeroPedido)
     }
 
-    L.xd(req.txId, ['Buscando en SAP albaranes con filtro', consulta.toQueryString()]);
+    L.xd(txId, ['Buscando en SAP albaranes con filtro', consulta.toQueryString()]);
 
-    Isap.albaranes.listadoAlbaranes(req.txId, consulta, (sapError, sapRes, sapBody) => {
-        if (sapError) {
-            if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                L.xe(txId, ['Error al consultar el listado de albaranes', sapError]);
-                var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+    iSap.albaranes.listadoAlbaranes(txId, consulta, (errorSap, respuestaSap) => {
+        if (errorSap) {
+            if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                L.xe(txId, ['Error al consultar el listado de albaranes', errorSap]);
+                var fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
                 fedicomError.send(res);
             }
             else {
-                L.xe(req.txId, ['Ocurrió un error al buscar albaranes en SAP', sapError]);
+                L.xe(txId, ['Ocurrió un error al buscar albaranes en SAP', errorSap]);
                 var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda de albaranes', 500);
                 error.send(res);
                 return;
@@ -266,16 +278,18 @@ exports.listadoAlbaranes = (req, res) => {
             return;
         }
         
-        if (sapBody && sapBody.tot_rec >= 0 && sapBody.t_data && sapBody.t_data.forEach ) {
+        let cuerpoSap = respuestaSap.body;
+
+        if (cuerpoSap && cuerpoSap.tot_rec >= 0 && cuerpoSap.t_data && cuerpoSap.t_data.forEach ) {
             let listaAlbaranesSimples = [];
-            sapBody.t_data.forEach( datosAlbaran => {
+            cuerpoSap.t_data.forEach( datosAlbaran => {
                 listaAlbaranesSimples.push(new AlbaranSimple(datosAlbaran))
             })
 
-            res.setHeader('X-Total-Count', sapBody.tot_rec);
+            res.setHeader('X-Total-Count', cuerpoSap.tot_rec);
             res.status(200).json(listaAlbaranesSimples);
         } else {
-            L.xe(req.txId, ["SAP no ha devuelto albaranes", sapBody])
+            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap])
             res.setHeader('X-Total-Count', 0);
             res.status(200).json([]);
         }
