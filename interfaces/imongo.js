@@ -11,7 +11,7 @@ const dbName = C.mongodb.database;
 var memCache = require('memory-cache');
 const commitBuffer = new memCache.Cache();
 const iSqlite = require(BASE + 'interfaces/isqlite');
-const MongoMonitor = require(BASE + 'interfaces/imongo/monitoring');
+const MongoMonitor = require(BASE + 'interfaces/imongo/iMongoMonitoring');
 
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
