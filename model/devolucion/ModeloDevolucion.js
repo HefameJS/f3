@@ -266,7 +266,6 @@ const SaneadorDevolucionesSAP = {
 				}
 				*/
 				if (linea.incidencias && linea.incidencias.forEach) {
-					console.log(linea.incidencias)
 					let incidenciasSaneadas = []
 					linea.incidencias.forEach( incidencia => {
 						if (incidencia && incidencia.codigo && incidencia.descripcion) {
