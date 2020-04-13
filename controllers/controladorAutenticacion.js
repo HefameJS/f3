@@ -6,7 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iSap = require(BASE + 'interfaces/isap');
-const iLdap = require(BASE + 'interfaces/ildap');
+const iLdap = require(BASE + 'interfaces/iLdap');
 const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
 const Events = require(BASE + 'interfaces/events');
@@ -76,8 +76,6 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 			return;
 		}
 
-		// Ojo que sapRes podría ser NULL si hubo acierto en caché
-
 		if (sapResponse.body.username) {
 			// AUTH OK POR SAP
 
@@ -101,7 +99,7 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 
 const _autenticarContraLDAP = (txId, solicitudAutenticacion, res) => {
 	L.xi(txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
-	iLdap.authenticate(txId, solicitudAutenticacion, (errorLdap, groups) => {
+	iLdap.autenticar(txId, solicitudAutenticacion, (errorLdap, groups) => {
 		if (errorLdap || !groups) {
 			L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
 			let error = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);

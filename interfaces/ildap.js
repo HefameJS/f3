@@ -2,12 +2,13 @@
 //const BASE = global.BASE;
 const C = global.config;
 //const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
+// Externo
 const ActiveDirectory = require('activedirectory');
 const clone = require('clone');
 
-const authenticate = (txId, authReq, callback) => {
+const autenticar = (txId, authReq, callback) => {
 
     var ldapConfig = clone(C.ldap);
     ldapConfig.baseDN = 'DC=hefame,DC=es';
@@ -41,6 +42,6 @@ const authenticate = (txId, authReq, callback) => {
 }
 
 module.exports = {
-    authenticate: authenticate
+    autenticar
 }
 
