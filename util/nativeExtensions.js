@@ -86,7 +86,7 @@ if (!Date.fromFedicomDateTime) {
 			if (!date || !date instanceof Date || isNaN(date)) return null;
 			return date;
 		} catch (exception) {
-			console.log('Error al convertir la fecha', date, exception);
+			L.e('Date.fromFedicomDateTime: Error al convertir la fecha', string, exception);
 			return null;
 		}
 
