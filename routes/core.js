@@ -6,7 +6,7 @@ const L = global.logger;
 
 
 const FedicomError = require(BASE + 'model/fedicomError');
-const Events = require(BASE + 'interfaces/events');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const ExpressExtensions = require(BASE + 'util/expressExtensions');
 
 
@@ -38,7 +38,7 @@ module.exports = function (app) {
 
 			var fedicomError = new FedicomError(error);
 			var responseBody = fedicomError.send(res);
-			Events.emitDiscard(req, res, responseBody, error);
+			iEventos.emitDiscard(req, res, responseBody, error);
 		} else {
 			next();
 		}
@@ -110,7 +110,7 @@ module.exports = function (app) {
 		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
 		var responseBody = fedicomError.send(res);
-		Events.emitDiscard(req, res, responseBody, null);
+		iEventos.emitDiscard(req, res, responseBody, null);
 
 		return;
 	});

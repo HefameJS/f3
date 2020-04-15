@@ -4,15 +4,18 @@ const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const mdbwatchConfig = C.watchdog.mdbwatch;
 
+
+// Interfaces
 const iMongo = require(BASE + 'interfaces/imongo');
 const iSap = require(BASE + 'interfaces/isap');
-const Events = require(BASE + 'interfaces/events');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iFlags = require(BASE + 'interfaces/iFlags');
+const iRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos');
 
+// Helpers
 const retransmitirPedido = require(BASE + 'watchdog/retransmitirPedido').retransmitirPedido;
-const IRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos');
+const configuracionWatchdowgMDB = C.watchdog.mdbwatch;
 
 
 var retransmissionsInProgress = 0;
@@ -24,12 +27,12 @@ var interval = setInterval(function () {
 	if (retransmissionsInProgress || retransmissionSearch) return;
 
 
-	IRegistroProcesos.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
+	iRegistroProcesos.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
 		if (err) return;
 
 		if (maestro) {
 			retransmissionSearch = true;
-			iMongo.findCandidatosRetransmision(mdbwatchConfig.buffer_size || 10, mdbwatchConfig.minimum_age || 300, (err, candidatos) => {
+			iMongo.findCandidatosRetransmision(configuracionWatchdowgMDB.buffer_size || 10, configuracionWatchdowgMDB.minimum_age || 300, (err, candidatos) => {
 				retransmissionSearch = false;
 
 				if (err) {
@@ -61,7 +64,7 @@ var interval = setInterval(function () {
 								else if (tx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO && tx.sapConfirms) {
 									L.xi(txId, 'Recuperando estado de pedido ya que existe confirmación del mismo por SAP', 'mdbwatch');
 									iFlags.set(txId, K.FLAGS.STATUS_FIX1);
-									return Events.retransmisiones.emitStatusFix(txId, K.TX_STATUS.OK);
+									return iEventos.retransmisiones.emitStatusFix(txId, K.TX_STATUS.OK);
 								}
 								// SAP NO DA CONFIRMACION
 								else if (tx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO) {
@@ -87,7 +90,7 @@ var interval = setInterval(function () {
 										if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
 											L.xw(txId, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
 											iFlags.set(txId, K.FLAGS.STATUS_FIX2);
-											Events.retransmisiones.emitStatusFix(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
+											iEventos.retransmisiones.emitStatusFix(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
 											retransmissionsInProgress--;
 											return;
 										}
@@ -95,7 +98,7 @@ var interval = setInterval(function () {
 										// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
 										L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id], 'mdbwatch');
 										iFlags.set(txId, K.FLAGS.STATUS_FIX3);
-										Events.retransmisiones.emitRecoverConfirmacionPedido(txId, confirmacionPedido);
+										iEventos.retransmisiones.emitRecoverConfirmacionPedido(txId, confirmacionPedido);
 										retransmissionsInProgress--;
 										return;
 
@@ -126,4 +129,4 @@ var interval = setInterval(function () {
 		}
 
 	});
-}, ((mdbwatchConfig.interval || 5) * 1000));
+}, ((configuracionWatchdowgMDB.interval || 5) * 1000));

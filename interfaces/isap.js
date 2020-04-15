@@ -4,12 +4,17 @@ const BASE = global.BASE;
 //const L = global.logger;
 const K = global.constants;
 
-const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
-const Events = require(BASE + 'interfaces/events');
-
+// Externo
 const request = require('request');
 
-const iSapComun = require(BASE + 'interfaces/isap/iSapComun');
+// Interfaces
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
+
+// Modelos
+const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
+
+// Helpers
+const iSapComun = require('./isap/iSapComun');
 
 
 const ping = (nombreSistemaSap, callback) => {
@@ -60,12 +65,12 @@ const realizarPedido = (txId, pedido, callback) => {
 		body: pedido
 	});
 
-	Events.sap.emitRequestToSap(txId, parametrosHttp);
+	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
 		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		Events.sap.emitResponseFromSap(txId, errorComunicacion, respuestaSap);
+		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
@@ -99,12 +104,12 @@ const realizarDevolucion = (txId, devolucion, callback) => {
 		body: devolucion
 	});
 
-	Events.sap.emitRequestToSap(txId, parametrosHttp);
+	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
 		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		Events.sap.emitResponseFromSap(txId, errorComunicacion, respuestaSap);
+		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
 
 
 		if (errorComunicacion) {

@@ -7,7 +7,7 @@ const K = global.constants;
 // Interfaces
 const iSap = require(BASE + 'interfaces/isap');
 const iMongo = require(BASE + 'interfaces/imongo');
-const Events = require(BASE + 'interfaces/events');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
 
@@ -27,7 +27,7 @@ exports.crearPedido = function (req, res) {
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, simulacionRequiereSolicitudAutenticacion: true });
 	if (!estadoToken.ok) {
-		Events.devoluciones.emitErrorCrearPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.devoluciones.errorPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
@@ -39,7 +39,7 @@ exports.crearPedido = function (req, res) {
 		let fedicomError = FedicomError.fromException(txId, exception);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
 		let responseBody = fedicomError.send(res);
-		Events.pedidos.emitErrorCrearPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		iEventos.pedidos.errorPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
@@ -56,9 +56,9 @@ exports.crearPedido = function (req, res) {
 			L.xi(duplicatedId, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
 			var errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
 			var responseBody = errorDuplicado.send(res);
-			Events.pedidos.emitPedidoDuplicado(req, res, responseBody, duplicatedId);
+			iEventos.pedidos.pedidoDuplicado(req, res, responseBody, duplicatedId);
 		} else {
-			Events.pedidos.emitInicioCrearPedido(req, pedido);
+			iEventos.pedidos.inicioPedido(req, pedido);
 			pedido.limpiarEntrada(req.txId);
 
 			iSap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
@@ -67,7 +67,7 @@ exports.crearPedido = function (req, res) {
 						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
 						L.xe(txId, ['Error al grabar el pedido', sapError]);
 						var responseBody = fedicomError.send(res);
-						Events.pedidos.emitFinCrearPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+						iEventos.pedidos.finPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 					}
 					else {
 						L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
@@ -75,7 +75,7 @@ exports.crearPedido = function (req, res) {
 						res.status(202).json(pedido);
 						iFlags.set(txId, K.FLAGS.NO_SAP);
 						iFlags.set(txId, K.FLAGS.NO_FALTAS);
-						Events.pedidos.emitFinCrearPedido(res, pedido, K.TX_STATUS.NO_SAP);
+						iEventos.pedidos.finPedido(res, pedido, K.TX_STATUS.NO_SAP);
 					}
 					return;
 				}
@@ -86,7 +86,7 @@ exports.crearPedido = function (req, res) {
 
 				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
 				res.status(responseHttpStatusCode).json(clientResponse);
-				Events.pedidos.emitFinCrearPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
+				iEventos.pedidos.finPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
 			});
 		}
 	});
@@ -102,18 +102,18 @@ exports.consultaPedido = function (req, res) {
 	// Comprobación del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		Events.devoluciones.emitErrorConsultarPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.devoluciones.emitErrorConsultarPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
 	let numeroPedido = req.params.numeroPedido || req.query.numeroPedido;
-	Events.pedidos.emitRequestConsultarPedido(req);
+	iEventos.pedidos.emitRequestConsultarPedido(req);
 	iMongo.findTxByCrc(req.txId, numeroPedido, function (err, dbTx) {
 		if (err) {
 			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			var responseBody = error.send(res);
-			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
+			iEventos.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
@@ -125,11 +125,11 @@ exports.consultaPedido = function (req, res) {
 			// TODO: Autorizacion
 			var originalBody = dbTx.clientResponse.body;
 			res.status(200).json(originalBody);
-			Events.pedidos.emitResponseConsultarPedido(res, originalBody, K.TX_STATUS.OK);
+			iEventos.pedidos.emitResponseConsultarPedido(res, originalBody, K.TX_STATUS.OK);
 		} else {
 			var error = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
 			var responseBody = error.send(res);
-			Events.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			iEventos.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 

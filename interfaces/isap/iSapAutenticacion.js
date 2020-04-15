@@ -10,7 +10,7 @@ const request = require('request');
 // Interfaces
 const iSapComun = require('./iSapComun');
 const iCacheCredencialesSap = require('./iCacheCredencialesSap');
-const Events = require(BASE + 'interfaces/events');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 
 // Modelos
 const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
@@ -45,12 +45,12 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 	});
 
 
-	Events.sap.emitRequestToSap(txId, parametrosHttp);
+	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
 		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		Events.sap.emitResponseFromSap(txId, errorComunicacion, respuestaSap);
+		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;

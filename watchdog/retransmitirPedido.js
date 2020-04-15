@@ -7,7 +7,7 @@ const K = global.constants;
 // Interfaces
 const iMongo = require(BASE + 'interfaces/imongo');
 const iSap = require(BASE + 'interfaces/isap');
-const Events = require(BASE + 'interfaces/events')
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
@@ -16,7 +16,7 @@ const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 
 // Helpers
 const expressExtensions = require(BASE + 'util/expressExtensions');
-const emitRetransmision = Events.retransmisiones.emitRetransmision;
+const emitRetransmision = iEventos.retransmisiones.emitRetransmision;
 
 
 const estadosRetransmitibles = [
@@ -160,7 +160,7 @@ const retransmitirPedido = function (otxId, options, callback) {
             L.xi(otxId, ['Se ha generado un clon de la transmisión con ID [' + ctxId + ']']);
             L.xi(ctxId, ['Se inicia esta transmisión como clon de [' + otxId + '], generado por la retransmisión [' + rtxId + ']']);
 
-            Events.retransmisiones.emitInicioClonarPedido(req, pedido, otxId);
+            iEventos.retransmisiones.emitInicioClonarPedido(req, pedido, otxId);
         }
 
 

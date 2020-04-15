@@ -9,7 +9,7 @@ const iSap = require(BASE + 'interfaces/isap');
 const iLdap = require(BASE + 'interfaces/iLdap');
 const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
-const Events = require(BASE + 'interfaces/events');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 
 // Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
@@ -24,7 +24,7 @@ const autenticar = (req, res) => {
 	let txId = req.txId;
 
 	L.xi(txId, 'Procesando petición de autenticación');
-	Events.authentication.emitAuthRequest(req);
+	iEventos.autenticacion.inicioAutenticacion(req);
 
 	let solicitudAutenticacion = null;
 	try {
@@ -33,7 +33,7 @@ const autenticar = (req, res) => {
 		fedicomError = FedicomError.fromException(txId, fedicomError);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError]);
 		let responseBody = fedicomError.send(res);
-		Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		iEventos.autenticacion.finAutenticacion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 	
@@ -48,7 +48,7 @@ const autenticar = (req, res) => {
 			L.xi(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.domain]);
 			let fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
 			let responseBody = fedicomError.send(res);
-			Events.authentication.emitAuthResponse(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+			iEventos.autenticacion.finAutenticacion(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	}
 
@@ -62,7 +62,7 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 				let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
 				L.xe(txId, ['Error al autenticar al usuario', sapError]);
 				let cuerpoRespuesta = fedicomError.send(res);
-				Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 			}
 			else {
 				L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', sapError]);
@@ -71,7 +71,7 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 				res.status(201).json(cuerpoRespuesta);
 
 				iFlags.set(txId, K.FLAGS.NO_SAP)
-				Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 			}
 			return;
 		}
@@ -87,12 +87,12 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 				cuerpoRespuesta.data = iTokens.verificarToken(token);
 
 			res.status(201).json(cuerpoRespuesta);
-			Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.OK);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
 		} else {
 			// SAP INDICA QUE EL USUARIO NO ES VALIDO
 			var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
 			let cuerpoRespuesta = fedicomError.send(res);
-			Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	});
 }
@@ -104,7 +104,7 @@ const _autenticarContraLDAP = (txId, solicitudAutenticacion, res) => {
 			L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
 			let error = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
 			let cuerpoRespuesta = error.send(res);
-			Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 			return;
 		}
 
@@ -114,7 +114,7 @@ const _autenticarContraLDAP = (txId, solicitudAutenticacion, res) => {
 		let cuerpoRespuesta = { auth_token: token };
 		if (solicitudAutenticacion.debug) cuerpoRespuesta.data = iTokens.verificarToken(token);
 		res.status(201).json(cuerpoRespuesta);
-		Events.authentication.emitAuthResponse(res, cuerpoRespuesta, K.TX_STATUS.OK);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
 
 	});
 }
