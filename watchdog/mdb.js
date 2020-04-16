@@ -32,7 +32,7 @@ var interval = setInterval(function () {
 
 		if (maestro) {
 			retransmissionSearch = true;
-			iMongo.findCandidatosRetransmision(configuracionWatchdowgMDB.buffer_size || 10, configuracionWatchdowgMDB.minimum_age || 300, (err, candidatos) => {
+			iMongo.consultaTx.candidatasParaRetransmitir(configuracionWatchdowgMDB.buffer_size || 10, configuracionWatchdowgMDB.minimum_age || 300, (err, candidatos) => {
 				retransmissionSearch = false;
 
 				if (err) {
@@ -78,7 +78,7 @@ var interval = setInterval(function () {
 									L.xi(txId, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
 									retransmissionsInProgress++;
 									var crc = tx.crc.toHexString().substr(0, 8);
-									iMongo.findConfirmacionPedidoByCRC(crc, function (err, confirmacionPedido) {
+									iMongo.consultaTx.porCRCDeConfirmacion(crc, function (err, confirmacionPedido) {
 										// Error al consultar a MDB - Sigue habiendo problemas, nos estamos quietos por el momento
 										if (err) {
 											L.xi(txId, ['Error al buscar la confirmación del pedido - Abortamos recuperación', err], 'mdbwatch');

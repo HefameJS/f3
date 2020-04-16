@@ -41,7 +41,7 @@ module.exports.inicioDevolucion = (req, devolucion) => {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
-	iMongo.buffer(reqData);
+	iMongo.transaccion.grabarEnMemoria(reqData);
 	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
 module.exports.finDevolucion = (res, responseBody, status, extra) => {
@@ -69,7 +69,7 @@ module.exports.finDevolucion = (res, responseBody, status, extra) => {
 	}
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 	L.yell(res.txId, K.TX_TYPES.DEVOLUCION, status, [responseBody]);
 }
 module.exports.errorDevolucion = (req, res, responseBody, status) => {
@@ -104,7 +104,7 @@ module.exports.errorDevolucion = (req, res, responseBody, status) => {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
 
@@ -139,7 +139,7 @@ module.exports.emitRequestConsultarDevolucion = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarDevolucion'], 'txCommit');
-	iMongo.buffer(reqData);
+	iMongo.transaccion.grabarEnMemoria(reqData);
 }
 module.exports.emitResponseConsultarDevolucion = function (res, responseBody, status) {
 	var resData = {
@@ -162,7 +162,7 @@ module.exports.emitResponseConsultarDevolucion = function (res, responseBody, st
 	}
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarDevolucion'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 }
 module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, status) {
 
@@ -201,5 +201,5 @@ module.exports.emitErrorConsultarDevolucion = function (req, res, responseBody, 
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarDevolucion'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 }

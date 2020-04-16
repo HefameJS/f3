@@ -10,17 +10,19 @@ const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 
 // PUT /query
-const consultaTX = function (req, res) {
+const consultaTransmisiones = function (req, res) {
+
+	let txId = req.txId;
 
 	L.xi(txId, ['Consulta de transmisiones']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	var txId = req.txId;
-	var query = req.body;
+	
+	let query = req.body;
 
-	iMongo.consultaTX(query, (err, resultado) => {
+	iMongo.consultaTx.consulta(txId, query, (err, resultado) => {
 		if (err) {
 			console.log(err);
 			res.status(500).json({ ok: false, error: (err.error || err.message) });
@@ -32,7 +34,7 @@ const consultaTX = function (req, res) {
 }
 
 module.exports = {
-	consultaTX,
+	consultaTX: consultaTransmisiones,
 	sap: require(BASE + 'controllers/monitor/controladorConsultasSap'),
 	procesos: require(BASE + 'controllers/monitor/controladorConsultasProcesos'),
 	mongodb: require(BASE + 'controllers/monitor/controladorConsultasMongoDb'),

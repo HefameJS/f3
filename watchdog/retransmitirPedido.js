@@ -54,7 +54,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
     L.xi(rtxId, ['Retransmisión de pedido con ID ' + otxId, options]);
 
-    iMongo.findTxById(rtxId, otxId, function (err, dbTx) {
+    iMongo.consultaTx.porId(rtxId, otxId, function (err, dbTx) {
         // Comprobación de error en la búsqueda
         if (err) {
             var errorMessage = 'Ocurrió un error al buscar la transmisión en la base de datos';

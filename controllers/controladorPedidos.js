@@ -45,7 +45,7 @@ exports.crearPedido = function (req, res) {
 	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
 
 
-	iMongo.findCrcDuplicado(pedido.crc, (err, dbTx) => {
+	iMongo.consultaTx.duplicadoDeCRC(txId, pedido.crc, (err, dbTx) => {
 		if (err) {
 			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', err], 'crc');
 		}
@@ -97,7 +97,9 @@ exports.crearPedido = function (req, res) {
 // GET /pedido/:numeroPedido
 exports.consultaPedido = function (req, res) {
 
-	L.xi(req.txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
+	let txId= txId;
+
+	L.xi(txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
 
 	// Comprobación del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
@@ -108,9 +110,9 @@ exports.consultaPedido = function (req, res) {
 
 	let numeroPedido = req.params.numeroPedido || req.query.numeroPedido;
 	iEventos.pedidos.emitRequestConsultarPedido(req);
-	iMongo.findTxByCrc(req.txId, numeroPedido, function (err, dbTx) {
+	iMongo.consultaTx.porCRC(txId, numeroPedido, function (err, dbTx) {
 		if (err) {
-			L.xe(req.txId, ['No se ha podido recuperar el pedido', err]);
+			L.xe(txId, ['No se ha podido recuperar el pedido', err]);
 			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			var responseBody = error.send(res);
 			iEventos.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
@@ -118,7 +120,7 @@ exports.consultaPedido = function (req, res) {
 		}
 
 
-		L.xi(req.txId, ['Se recupera la transmisión de la base de datos', dbTx]);
+		L.xi(txId, ['Se recupera la transmisión de la base de datos', dbTx]);
 
 
 		if (dbTx && dbTx.clientResponse) {

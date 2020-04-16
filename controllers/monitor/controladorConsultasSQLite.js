@@ -6,7 +6,7 @@ const L = global.logger;
 
 // Interfaces
 const iTokens = require(BASE + 'util/tokens');
-const iSQLite = require(BASE + 'interfaces/isqlite');
+const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
 
 // GET /status/sqlite
 const getEstadoSQLite = (req, res) => {
@@ -17,14 +17,14 @@ const getEstadoSQLite = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iSQLite.countTx(null, (err, numRows) => {
+	iSQLite.contarEntradas(null, (err, numRows) => {
 
 		if (err) {
 			L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', err])
 			return res.status(500).send({ ok: false, msg: err });
 		}
 
-		iSQLite.countTx(10, (err, pendingRows) => {
+		iSQLite.contarEntradas(C.watchdog.sqlite.maxRetries || 10, (err, pendingRows) => {
 
 			if (err) {
 				L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', err])

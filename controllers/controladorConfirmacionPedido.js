@@ -42,7 +42,7 @@ exports.confirmaPedido = (req, res) => {
 		return;
 	}
 
-	iMongo.findTxByCrc(txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
+	iMongo.consultaTx.porCRC(txId, confirmacionPedidoSAP.crc, function(err, dbTx) {
 		if (err) {
 			var fedicomError = FedicomError.fromException(txId, err);
 			L.xe(req.txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', fedicomError]);

@@ -50,8 +50,8 @@ const conectar = () => {
 
 		})
 		.catch(error => {
-			L.f(['*** Error en la conexión a de MongoDB ***', mongourl, error], 'mongodb')
 			clienteDb = null;
+			L.f(['*** Error en la conexión a de MongoDB ***', C.getMongoUrl(), error], 'mongodb')
 		});
 }
 

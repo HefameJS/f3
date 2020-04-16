@@ -30,7 +30,7 @@ module.exports.incioLlamadaSap = (txId, callParams) => {
 	}
 
 	L.xi(txId, ['Emitiendo BUFFER para evento RequestToSap'], 'txBuffer');
-	iMongo.buffer(data);
+	iMongo.transaccion.grabarEnMemoria(data);
 }
 
 module.exports.finLlamadaSap = (txId, callError, sapHttpResponse) => {
@@ -79,7 +79,7 @@ module.exports.finLlamadaSap = (txId, callError, sapHttpResponse) => {
 	}
 
 	L.xi(txId, ['Emitiendo BUFFER para evento ResponseFromSap'], 'txBuffer');
-	iMongo.buffer(data);
+	iMongo.transaccion.grabarEnMemoria(data);
 }
 
 module.exports.errorConfirmacionPedido = function (req, status) {
@@ -106,7 +106,7 @@ module.exports.errorConfirmacionPedido = function (req, status) {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
-	iMongo.commit(reqData);
+	iMongo.transaccion.grabar(reqData);
 	L.yell(req.txId, K.TX_TYPES.CONFIRMACION_PEDIDO, status, [req.body]);
 }
 
@@ -157,8 +157,8 @@ module.exports.confirmacionPedido = function (req, originalTxId, updatedTxStatus
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
-	iMongo.commit(reqData);
-	iMongo.commit(updateData);
+	iMongo.transaccion.grabar(reqData);
+	iMongo.transaccion.grabar(updateData);
 
 	L.yell(originalTxId, K.TX_TYPES.CONFIRMACION_PEDIDO, updatedTxStatus, extra.numerosPedidoSAP);
 }

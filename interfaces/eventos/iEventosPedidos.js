@@ -51,7 +51,7 @@ module.exports.emitErrorConsultarPedido = function (req, res, responseBody, stat
 	iFlags.finaliza(res.txId, data);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 }
 module.exports.emitRequestConsultarPedido = function(req) {
 	var reqData = {
@@ -82,7 +82,7 @@ module.exports.emitRequestConsultarPedido = function(req) {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido'], 'txCommit');
-	iMongo.buffer(reqData);
+	iMongo.transaccion.grabarEnMemoria(reqData);
 }
 module.exports.emitResponseConsultarPedido = function (res, responseBody, status) {
 	var resData = {
@@ -107,7 +107,7 @@ module.exports.emitResponseConsultarPedido = function (res, responseBody, status
 	iFlags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 }
 
 
@@ -141,7 +141,7 @@ module.exports.inicioPedido = (req, pedido) => {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
-	iMongo.commit(reqData);
+	iMongo.transaccion.grabar(reqData);
 	L.yell(req.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
 }
 module.exports.finPedido = (res, responseBody, status, extra) => {
@@ -171,7 +171,7 @@ module.exports.finPedido = (res, responseBody, status, extra) => {
 	iFlags.finaliza(res.txId, resData);
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseCrearPedido'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 	L.yell(res.txId, K.TX_TYPES.PEDIDO, status, [responseBody]);
 }
 module.exports.errorPedido = function (req, res, responseBody, status) {
@@ -208,7 +208,7 @@ module.exports.errorPedido = function (req, res, responseBody, status) {
 	iFlags.finaliza(res.txId, data);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 	L.yell(req.txId, K.TX_TYPES.PEDIDO, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
 module.exports.pedidoDuplicado = (req, res, responseBody, originalTxId) => {
@@ -257,6 +257,6 @@ module.exports.pedidoDuplicado = (req, res, responseBody, originalTxId) => {
 	iFlags.finaliza(res.txId, dataUpdate);
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
-	iMongo.commit(dataUpdate);
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(dataUpdate);
+	iMongo.transaccion.grabar(data);
 }

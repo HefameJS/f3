@@ -50,7 +50,7 @@ module.exports = function (app) {
 
 	/* RUTAS */
 	app.route('/query')
-		.put(tryCatch(controllers.consultas.consultaTX))
+		.put(tryCatch(controllers.consultas.consultaTransmisiones))
 
 	app.route('/status/proc')
 		.get(tryCatch(controllers.consultas.procesos.consultaProcesos))

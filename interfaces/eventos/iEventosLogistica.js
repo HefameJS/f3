@@ -41,7 +41,7 @@ module.exports.inicioLogistica = (req, logistica) => {
 	};
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
-	iMongo.commit(reqData);
+	iMongo.transaccion.grabar(reqData);
 	L.yell(req.txId, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), logistica.crc, req.body]);
 }
 
@@ -70,7 +70,7 @@ module.exports.finLogistica = (res, responseBody, status, extra) => {
 	}
 
 	L.xi(res.txId, ['Emitiendo COMMIT para evento finLogistica'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 	L.yell(res.txId, K.TX_TYPES.LOGISTICA, status, [responseBody]);
 }
 
@@ -106,7 +106,7 @@ module.exports.errorLogistica = (req, res, responseBody, status) => {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 	L.yell(req.txId, K.TX_TYPES.LOGISTICA, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
 
@@ -146,5 +146,5 @@ module.exports.consultaLogistica = function (req, res, responseBody, status) {
 	}
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento consultaLogistica'], 'txCommit');
-	iMongo.commit(data);
+	iMongo.transaccion.grabar(data);
 }

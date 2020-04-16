@@ -104,7 +104,7 @@ exports.consultaDevolucion = function (req, res) {
 	}
 
 	iEventos.devoluciones.emitRequestConsultarDevolucion(req);
-	iMongo.findTxByNumeroDevolucion(req.txId, numeroDevolucion, function (err, dbTx) {
+	iMongo.consultaTx.porCRCDeConfirmacion(req.txId, numeroDevolucion, function (err, dbTx) {
 		if (err) {
 			var error = new FedicomError('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
 			var responseBody = error.send(res);

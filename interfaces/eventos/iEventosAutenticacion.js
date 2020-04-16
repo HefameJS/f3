@@ -42,7 +42,7 @@ module.exports.inicioAutenticacion = function (req) {
 	if (reqData['$set'].clientRequest.body.password) reqData['$set'].clientRequest.body.password = '******';
 
 	L.xi(req.txId, ['Emitiendo COMMIT para evento AuthRequest'], 'txCommit');
-	iMongo.buffer(reqData);
+	iMongo.transaccion.grabarEnMemoria(reqData);
 }
 
 module.exports.finAutenticacion = function (res, responseBody, status) {
@@ -69,5 +69,5 @@ module.exports.finAutenticacion = function (res, responseBody, status) {
 
 	
 	L.xi(res.txId, ['Emitiendo COMMIT para evento AuthResponse'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 }

@@ -1,16 +1,17 @@
 'use strict';
 const BASE = global.BASE;
-const config = global.config;
+const C = global.config;
 const L = global.logger;
+//const K = global.constants;
 
 // Interfaces
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
-const iSQLite = require(BASE + 'interfaces/isqlite');
+const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
 
 
 var operationInProgress = false;
 var rowsOnTheFly = 0;
-var maxRetries = config.watchdog.sqlite.maxRetries || 10;
+const intentosMaximosDeEnvio = C.watchdog.sqlite.maxRetries || 10;
 
 var interval = setInterval(function() {
 
@@ -18,7 +19,7 @@ var interval = setInterval(function() {
 
 	operationInProgress = true;
 
-	iSQLite.countTx(maxRetries, function (err, count) {
+	iSQLite.contarEntradas(intentosMaximosDeEnvio, function (err, count) {
 		if (err) {
 			L.e(['Error al contar el número de entradas en base de datos de respaldo', err], 'sqlitewatch');
 			operationInProgress = false;
@@ -28,14 +29,14 @@ var interval = setInterval(function() {
 		if (count) {
 			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', count], 'sqlitewatch');
 
-			iMongo.connectionStatus( (connected) => {
-				if (!connected) {
+			iMongo.chequeaConexion( (conectado) => {
+				if (!conectado) {
 					operationInProgress = false;
-					L.w(['Aún no se ha restaurado la conexión con MongoDB']);
+					L.w(['Aún no se ha restaurado la conexión con MongoDB'], 'sqlitewatch');
 					return;
 				}
 
-				iSQLite.retrieveAll(maxRetries, function (error, rows) {
+				iSQLite.obtenerEntradas(intentosMaximosDeEnvio, function (error, rows) {
 					if (error) {
 						L.f(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
 						operationInProgress = false;
@@ -46,16 +47,16 @@ var interval = setInterval(function() {
 
 					rows.forEach( function (row) {
 
-						iMongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
-							if (updated) {
-								iSQLite.removeUid(row.uid, function (err, count) {
+						iMongo.transaccion.grabarDesdeSQLite(JSON.parse(row.data), (exito) => {
+							if (exito) {
+								iSQLite.eliminarEntrada(row.uid, (errorSQLite, numeroEntradasBorradas) => {
 									rowsOnTheFly --;
 								});
 							} else {
-								iSQLite.incrementUidRetryCount(row.uid, () => {});
+								iSQLite.incrementarNumeroDeIntentos(row.uid, () => {});
 								rowsOnTheFly --;
 								// Log de cuando una entrada agota el número de transmisiones
-								if (row.retryCount === maxRetries - 1) {
+								if (row.retryCount === intentosMaximosDeEnvio - 1) {
 									row.retryCount++; 
 									L.f(['Se ha alcanzado el número máximo de retransmisiones para la entrada', row], 'sqlitewatch');
 								} else {
@@ -76,4 +77,4 @@ var interval = setInterval(function() {
 
 	});
 
-}, ((config.watchdog.sqlite.interval || 5) * 1000) );
+}, ((C.watchdog.sqlite.interval || 5) * 1000) );

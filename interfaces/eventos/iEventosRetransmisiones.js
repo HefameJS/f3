@@ -78,7 +78,7 @@ module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessag
 	
 	iFlags.finaliza(originalTxId, updateQuery);
 
-	iMongo.commit(updateQuery);
+	iMongo.transaccion.grabar(updateQuery);
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit'], 'txCommit');
 	L.yell(originalTxId, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [rtxResult]);
 }
@@ -156,7 +156,7 @@ module.exports.emitInicioClonarPedido = (clonReq, pedido, otxId) => {
 	iFlags.finaliza(ctxId, reqData);
 
 	L.xi(clonReq.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
-	iMongo.commit(reqData);
+	iMongo.transaccion.grabar(reqData);
 	L.yell(clonReq.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [clonReq.identificarUsuarioAutenticado(), pedido.crc, clonReq.body]);
 }
 
@@ -179,7 +179,7 @@ module.exports.emitFinClonarPedido = (oTxId, ctxId, rtxResult) => {
 	iFlags.finaliza(ctxId, resData);
 
 	L.xi(ctxId, ['Emitiendo COMMIT para evento FinClonarPedido'], 'txCommit');
-	iMongo.commit(resData);
+	iMongo.transaccion.grabar(resData);
 	L.yell(ctxId, K.TX_TYPES.PEDIDO, rtxResult.status, [rtxResult]);
 }
 
@@ -201,7 +201,7 @@ module.exports.emitStatusFix = (txId, newStatus) => {
 		iFlags.finaliza(txId, dataUpdate);
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
-		iMongo.commit(dataUpdate);
+		iMongo.transaccion.grabar(dataUpdate);
 		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, newStatus, ['StatusFix']);
 	}
 }
@@ -238,7 +238,7 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 	iFlags.finaliza(originalTxId, updateData);
 
 	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido'], 'txCommit');
-	iMongo.commit(updateData);
+	iMongo.transaccion.grabar(updateData);
 	L.yell(originalTxId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
 	/**
@@ -258,6 +258,6 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 		}
 	}
 	L.xi(confirmId, ['Se ha asociado esta confirmación con el pedido que confirma', originalTxId], 'txCommit');
-	iMongo.commit(commitConfirmacionSap);
+	iMongo.transaccion.grabar(commitConfirmacionSap);
 
 }

@@ -45,7 +45,7 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 		}
 	}
 	L.xi(req.txId, ['Emitiendo COMMIT DISCARD para evento Discard'], 'txCommit');
-	iMongo.commitDiscard(data);
+	iMongo.transaccion.descartar(data);
 }
 
 
