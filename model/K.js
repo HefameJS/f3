@@ -62,7 +62,9 @@ module.exports = {
         BUSCAR_ALBARANES: 30,
         CONSULTAR_ALBARAN: 31,
         BUSCAR_FACTURAS: 40,
-        CONSULTAR_FACTURA: 41
+        CONSULTAR_FACTURA: 41,
+        LOGISTICA: 50,
+        CONSULTA_LOGISTICA: 51
     },
     SOFTWARE_ID: {
         FARMABRAIN: '0010',
@@ -130,11 +132,8 @@ module.exports = {
             },
             LINEAS: {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-
                 codigoArticulo: { ignore: true },
-
                 sap_ignore: { ignore: true },
-
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 descripcionArticulo: { remove: true },
@@ -150,7 +149,6 @@ module.exports = {
                 servicioAplazado: { remove: true },
 
                 // Campos que de aparecer deben ser cadenas de texto
-                codigoArticulo: { string: { max: 15 } },
                 codigoUbicacion: { string: { max: 50 } },
                 valeEstupefaciente: { string: { max: 50 } },
                 observaciones: { string: { max: 50 } },
@@ -204,8 +202,6 @@ module.exports = {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
                 codigoArticulo: { ignore: true },
                 sap_ignore: { ignore: true },
-                crc: { ignore: true },
-
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 descripcionArticulo: { remove: true },
@@ -213,12 +209,10 @@ module.exports = {
 
                 // Campos que de aparecer deben ser cadenas de texto
                 numeroAlbaran: { string: { max: 50 } },
-                codigoArticulo: { string: { max: 15 } },
                 lote: { string: { max: 15 } },
                 codigoMotivo: { string: { max: 15 } },
                 valeEstupefaciente: { string: { max: 50 } },
                 observaciones: { string: { max: 50 } },
-
 
                 // Campos que de aparecer deben ser enteros
                 orden: { integer: {} },
@@ -231,7 +225,51 @@ module.exports = {
                 // Campos que deben ser array
                 incidencias: { array: {} }
             }
-        }
+        },
+        LOGISTICA: {
+            CABECERA: {
+                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
+                codigoCliente: { ignore: true },
+                numeroLogisticaOrigen: { ignore: true },
+                lineas: { ignore: true },
+                login: { ignore: true },
+                crc: { ignore: true },
+                sapSystem: { ignore: true },
+                authReq: { ignore: true },
+                ignorarTodasLineas: { ignore: true },
+                origen: { ignore: true },
+                destino: { ignore: true },
+
+                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
+                numeroLogistica: { remove: true },
+                fechaLogistica: { remove: true },
+                
+                // Campos que de aparecer deben ser cadenas de texto
+                tipoLogistica: { string: { max: 1 } },
+                observaciones: { string: { max: 50 } },
+
+                // Campos que deben ser array
+                incidencias: { array: {} }
+            },
+            LINEAS: {
+                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
+                codigoArticulo: { ignore: true },
+                sap_ignore: { ignore: true },
+
+                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
+                descripcionArticulo: { remove: true },
+
+                // Campos que de aparecer deben ser cadenas de texto
+                observaciones: { string: { max: 50 } },
+
+                // Campos que de aparecer deben ser enteros
+                orden: { integer: {} },
+                cantidad: { integer: {} },
+
+                // Campos que deben ser array
+                incidencias: { array: {} }
+            }
+        },
     },
     POST_CLEAN: {
         PEDIDOS: {
@@ -261,7 +299,23 @@ module.exports = {
             removePosEmptyArray: ['incidencias'],
             removePosZeroValue: [],
             removePosIfFalse: []
-        }
+        },
+        LOGISTICA: {
+            removeCab: ['login', 'crc', 'sap_punto_entrega', 'ignorarTodasLineas', 'sap_bloqueo_entrega', 'sap_create_logistic'],
+            removePos: ['sap_pos'],
+            replaceCab: ['numeroLogistica', 'codigoCliente', 'numeroLogisticaOrigen', 'tipoLogistica', 'fechaLogistica'],
+            replacePos: ['codigoArticulo', 'descripcionArticulo'],
+            removeCabEmptyString: ['observaciones', 'tipoLogistica'],
+            removeCabEmptyArray: ['incidencias'],
+            removeCabZeroValue: [],
+            removeCabIfFalse: [],
+            removePosEmptyString: ['observaciones'],
+            removePosEmptyArray: ['incidencias'],
+            removePosZeroValue: [],
+            removePosIfFalse: [],
+            replaceDireccionLogistica: ['codigoPostal'],
+            removeDireccionLogisticaEmptyString: ['codigo', 'nombre', 'calle', 'poblacion', 'provincia', 'codigoPostal', 'pais', 'telefono', 'email']
+        },
     },
     PROTOCOL_VERSION: '3.4.0',
     SERVER_VERSION: '0.9.5',

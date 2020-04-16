@@ -1,0 +1,84 @@
+'use strict';
+const BASE = global.BASE;
+//const C = global.config;
+const L = global.logger;
+const K = global.constants;
+
+// Interfaces
+const iSap = require(BASE + 'interfaces/isap');
+//const iMongo = require(BASE + 'interfaces/imongo');
+const iEventos = require(BASE + 'interfaces/eventos/iEventos');
+const iTokens = require(BASE + 'util/tokens');
+const iFlags = require(BASE + 'interfaces/iFlags');
+
+// Modelos
+const FedicomError = require(BASE + 'model/fedicomError');
+const Logistica = require(BASE + 'model/logistica/ModeloLogistica');
+
+
+// POST /logistica
+exports.crearLogistica = function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Procesando transmisión como CREACION DE SOLICITUD DE LOGISTICA']);
+
+	// Verificacion del estado del token
+	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, simulacionRequiereSolicitudAutenticacion: true });
+	if (!estadoToken.ok) {
+		iEventos.logistica.errorLogistica(req, res, estadoToken.respuesta, estadoToken.motivo);
+		return;
+	}
+
+
+	let logistica = null;
+	L.xd(txId, ['Analizando el contenido de la transmisión']);
+	try {
+		logistica = new Logistica(req);
+	} catch (fedicomError) {
+		fedicomError = FedicomError.fromException(txId, fedicomError);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError]);
+		let cuerpoRespuesta = fedicomError.send(res);
+		iEventos.logistica.errorLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		return;
+	}
+
+
+	if (!logistica.contienteLineasValidas()) {
+		L.xd(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
+		let cuerpoRespuesta = logistica;
+		res.status(400).json(cuerpoRespuesta);
+		iEventos.logistica.errorLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		return;
+	}
+
+	L.xd(txId, ['El contenido de la transmisión es una solicitud de logistica correcta', logistica]);
+
+	iEventos.logistica.inicioLogistica(req, logistica);
+	logistica.limpiarEntrada(txId);
+	iSap.logistica.realizarLogistica(txId, logistica, (errorLlamadaSap, respuestaSap) => {
+
+		if (errorLlamadaSap) {
+			if (errorLlamadaSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+				let fedicomError = new FedicomError('HTTP-400', errorLlamadaSap.code, 400);
+				L.xe(txId, ['Error al grabar la devolución', errorLlamadaSap]);
+				let cuerpoRespuesta = fedicomError.send(res);
+				//iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+			}
+			else {
+				L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
+				let fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
+				let cuerpoRespuesta = fedicomError.send(res)
+				iFlags.set(txId, K.FLAGS.NO_SAP)
+				iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+			}
+			return;
+		}
+
+		let respuestaCliente = logistica.obtenerRespuestaCliente(txId, respuestaSap.body);
+		let [estadoTransmision, numeroLogistica, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
+
+		res.status(codigoRespuestaHttp).json(respuestaCliente);
+		iEventos.logistica.finLogistica(res, respuestaCliente, estadoTransmision, { numeroLogistica });
+
+	});
+}

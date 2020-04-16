@@ -179,9 +179,10 @@ const retransmitirPedido = (pedido, callback) => {
 
 module.exports = {
 	ping: ping,
-	autenticacion: require(BASE + 'interfaces/isap/iSapAutenticacion'),
+	autenticacion: require('./isap/iSapAutenticacion'),
 	realizarPedido: realizarPedido,
 	realizarDevolucion: realizarDevolucion,
 	retransmitirPedido: retransmitirPedido,
-	albaranes: require(BASE + 'interfaces/isap/iSapAlbaranes')
+	albaranes: require('./isap/iSapAlbaranes'),
+	logistica: require('./isap/iSapLogistica'),
 }

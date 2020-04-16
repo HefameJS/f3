@@ -20,6 +20,7 @@ module.exports = function (app) {
 		pedidos: require(BASE + 'controllers/controladorPedidos'),
 		devoluciones: require(BASE + 'controllers/controladorDevoluciones'),
 		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
+		logistica: require(BASE + 'controllers/controladorLogistica'),
 		confirmacionPedido: require(BASE + 'controllers/controladorConfirmacionPedido'),
 		retransmision: require(BASE + 'controllers/controladorRetransmision'),
 	}
@@ -103,6 +104,9 @@ module.exports = function (app) {
 
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controladores.retransmision.retransmitePedido));
+
+	app.route('/logistica')
+		.post(tryCatch(controladores.logistica.crearLogistica));
 
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
