@@ -6,7 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iTokens = require(BASE + 'util/tokens');
-const iSap = require(BASE + 'interfaces/isap');
+const iSap = require(BASE + 'interfaces/isap/iSap');
 
 // Modelos
 const CRC = require(BASE + 'model/CRC');

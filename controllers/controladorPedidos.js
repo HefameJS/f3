@@ -5,7 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iSap = require(BASE + 'interfaces/isap');
+const iSap = require(BASE + 'interfaces/isap/iSap');
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iTokens = require(BASE + 'util/tokens');
@@ -27,7 +27,7 @@ exports.crearPedido = function (req, res) {
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, simulacionRequiereSolicitudAutenticacion: true });
 	if (!estadoToken.ok) {
-		iEventos.devoluciones.errorPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.pedidos.errorPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 

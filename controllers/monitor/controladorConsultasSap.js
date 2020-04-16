@@ -6,7 +6,7 @@ const L = global.logger;
 
 // Interfaces
 const iTokens = require(BASE + 'util/tokens');
-const iSap = require(BASE + 'interfaces/isap')
+const iSap = require(BASE + 'interfaces/isap/iSap');
 
 // GET /status/sap
 const consultaSap = function (req, res) {

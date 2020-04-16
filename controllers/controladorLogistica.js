@@ -5,7 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iSap = require(BASE + 'interfaces/isap');
+const iSap = require(BASE + 'interfaces/isap/iSap');
 //const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iTokens = require(BASE + 'util/tokens');
