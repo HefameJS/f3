@@ -6,7 +6,7 @@ const L = global.logger;
 
 // Interfaces
 const iTokens = require(BASE + 'util/tokens');
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 // Modelos
 const ReplicaSetStatus = require(BASE + 'model/monitor/replicaSetStatus')

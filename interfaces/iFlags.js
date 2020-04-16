@@ -4,10 +4,17 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
-const ObjectID = require(BASE + 'interfaces/imongo').ObjectID;
+// Externos
 const memCache = require('memory-cache');
-const flagsCache = new memCache.Cache();
-flagsCache.countStats(false);
+
+// Interfaces
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+
+
+
+const ObjectID = iMongo.ObjectID;
+const cacheFlags = new memCache.Cache();
+cacheFlags.countStats(false);
 
 
 const set = (txId, flagName, value = true ) => {
@@ -16,17 +23,16 @@ const set = (txId, flagName, value = true ) => {
     if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
 
     txId = new ObjectID(txId);
-    let flags = flagsCache.get(txId) || {};
+    let flags = cacheFlags.get(txId) || {};
     flags[flagName] = value;
 
-    flagsCache.put(txId, flags);
+    cacheFlags.put(txId, flags);
 }
 
 const get = (txId) => {
-    let flags = flagsCache.get(new ObjectID(txId));
+    let flags = cacheFlags.get(new ObjectID(txId));
     return flags || {};
 }
-
 
 const finaliza = (txId, mdbQuery) => {
     let flags = get(txId);
@@ -41,9 +47,8 @@ const finaliza = (txId, mdbQuery) => {
     }
 }
 
-
 const del = (txId) => {
-    flagsCache.del(new ObjectID(txId));
+    cacheFlags.del(new ObjectID(txId));
 }
 
 module.exports = {

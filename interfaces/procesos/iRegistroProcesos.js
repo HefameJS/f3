@@ -5,7 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 const cluster = require('cluster');
 const OS = require('os')
@@ -123,7 +123,7 @@ const consultaProcesos = (tipoProceso, host, callback) => {
 	if (host) filtro.host = host
 
 
-	let control = iMongo.coleccionControl();
+	let control = iMongo.colControl();
 	if (control) {
 		control.find(filtro).toArray()
 			.then(res => {
@@ -181,7 +181,7 @@ const registrarProceso = () => {
 		$set: datos
 	}
 
-	let control = iMongo.coleccionControl();
+	let control = iMongo.colControl();
 	if (control) {
 		control.updateOne(filtro, update, { upsert: true, w: 0 })
 			.then(res => {
@@ -210,7 +210,7 @@ const obtenerProcesoMaestro = (tipoProceso, callback) => {
 	}
 
 
-	let control = iMongo.coleccionControl();
+	let control = iMongo.colControl();
 	if (control) {
 		control.find(filtro).sort({ priority: -1 }).toArray( (err, res) => {
 			if (err) {
@@ -240,7 +240,7 @@ const asumirMaestro = (tipoProceso) => {
 		host: { $ne: OS.hostname() }
 	}
 
-	let control = iMongo.coleccionControl();
+	let control = iMongo.colControl();
 	if (control) {
 		control.updateMany(filtro, { $set: { priority: -1, maestro: 0 } }, (err, res) => {
 			if (err) {
@@ -272,7 +272,7 @@ const limpiarLocales = () => {
 		filtro.type = { $in: [K.PROCESS_TYPES.CORE_WORKER, K.PROCESS_TYPES.CORE_MASTER] }
 	}
 
-	let control = iMongo.coleccionControl();
+	let control = iMongo.colControl();
 	if (control) {
 		control.deleteMany(filtro, { w: 0 })
 			.then(res => {

@@ -5,7 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;

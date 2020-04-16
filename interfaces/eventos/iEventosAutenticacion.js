@@ -8,7 +8,7 @@ const K = global.constants;
 const clone = require('clone');
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iFlags = require(BASE + 'interfaces/iFlags');
 
 

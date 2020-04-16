@@ -1,11 +1,13 @@
 'use strict';
-const BASE = global.BASE;
+//const BASE = global.BASE;
 //const C = global.config;
 //const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-//const iMongo = require(BASE + 'interfaces/imongo');
+const MDB = require('./iMongoConexion');
+
+//const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 /*
 No se puede requerir iMongo a nivel global porque las funciones
 iMongo.cliente() y iMongo.database() no están aún definidas.
@@ -13,20 +15,17 @@ TODO: Mover estas funciones a un modulo separado iMongoComun
 */
 
 
-const getReplicaSet = (cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.cliente().db('admin').command({ "replSetGetStatus": 1 }, cb)
+const getReplicaSet = (callback) => {
+	MDB.db('admin').command({ "replSetGetStatus": 1 }, callback)
 }
 
-const getColeccion = (collectionName, cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.database().command({ collStats: collectionName }, cb);
+const getColeccion = (collectionName, callback) => {
+	MDB.db().command({ collStats: collectionName }, callback);
 }
 
 
 const getNombresColecciones = (cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.database().command({ listCollections: 1, nameOnly: true }, (err, data) => {
+	MDB.db().command({ listCollections: 1, nameOnly: true }, (err, data) => {
 		if (err) {
 			return cb(err, null);
 		}
@@ -43,13 +42,11 @@ const getNombresColecciones = (cb) => {
 }
 
 const getDatabase = (cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.database().command({ dbStats: 1 }, cb);
+	MDB.db().command({ dbStats: 1 }, cb);
 }
 
 const getOperaciones = (cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.cliente().db('admin').executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
+	MDB.db('admin').executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
 		if (err) {
 			return cb(err, null);
 		}
@@ -61,8 +58,7 @@ const getOperaciones = (cb) => {
 
 
 const getLogs = (logType, cb) => {
-	const iMongo = require(BASE + 'interfaces/imongo');
-	iMongo.database().executeDbAdminCommand({ getLog: logType }, cb);
+	MDB.db('admin').executeDbAdminCommand({ getLog: logType }, cb);
 }
 
 module.exports = {

@@ -6,7 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iSap = require(BASE + 'interfaces/isap');
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');

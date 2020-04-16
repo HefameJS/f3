@@ -4,7 +4,7 @@ const config = global.config;
 const L = global.logger;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iSQLite = require(BASE + 'interfaces/isqlite');
 
 
