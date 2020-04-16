@@ -1,10 +1,15 @@
 'use strict';
 const BASE = global.BASE;
-// const config = global.config;
+//const C = global.config;
 const L = global.logger;
+//const K = global.constants;
 
+// Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
+
+// Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
+
 
 class LineaPedido {
 	constructor(json, txId, parent) {

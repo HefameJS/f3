@@ -4,12 +4,17 @@ const BASE = global.BASE;
 const L = global.logger;
 const K = global.constants;
 
+// Externo
+const crypto = require('crypto');
+
+// Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
 const LineaDevolucion = require(BASE + 'model/devolucion/ModeloLineaDevolucion');
 
+// Helpers
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
 const FieldChecker = require(BASE + 'util/fieldChecker');
-const crypto = require('crypto');
+
 
 
 
@@ -213,7 +218,7 @@ const SaneadorDevolucionesSAP = {
 			if (message[field] === '') delete message[field];
 		});
 		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach(function (field) {
-			if (typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
 		});
 		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach(function (field) {
 			if (message[field] === 0) delete message[field];
@@ -250,7 +255,7 @@ const SaneadorDevolucionesSAP = {
 					if (linea[field] === '') delete linea[field];
 				});
 				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach(function (field) {
-					if (linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
+					if (linea[field] && linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
 				});
 				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach(function (field) {
 					if (linea[field] === 0) delete linea[field];

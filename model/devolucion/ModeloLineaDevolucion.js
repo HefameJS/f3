@@ -1,8 +1,13 @@
 'use strict';
 const BASE = global.BASE;
+//const C = global.config;
 const L = global.logger;
+//const K = global.constants;
+
+// Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
-// const crypto = require('crypto');
+
+// Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaDevolucion {
