@@ -144,9 +144,12 @@ const duplicadoDeCRC = (txId, crc, callback) => {
 				callback(errorMongo, null)
 				return;
 			}
-			if (resultado)
-				return (null, resultado._id);
-			return (null, false);
+			if (resultado) {
+				callback(null, resultado._id);
+				return;
+			}
+			callback(null, false);
+			return;
 		});
 	} else {
 		callback({ error: "No conectado a MongoDB" }, null);
@@ -181,11 +184,13 @@ const porNumeroLogistica = (txId, numeroLogistica, callback) => {
 };
 
 const porCRCDeConfirmacion = (crc, callback) => {
-	let query = {
+	let filtro = {
 		type: K.TX_TYPES.CONFIRMACION_PEDIDO,
 		"clientRequest.body.crc": crc.substr(0, 8).toUpperCase()
 	};
 
+	// No podemos llamar a _consultaUnaTransmision = (txId, filtro, callback) 
+	// porque no tenemos txId
 	if (MDB.colTx()) {
 		L.d(['Buscando transmisión', filtro], 'mongodb');
 		MDB.colTx().findOne(filtro, callback);
