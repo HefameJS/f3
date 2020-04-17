@@ -7,14 +7,13 @@ const L = global.logger;
 
 class DireccionLogistica {
 	constructor(txId, json) {
-		console.log(json)
+
 		Object.assign(this, json);
 
 		if (!this.codigo) {
 			L.xe(txId, ['No se ha indicado el campo código en la dirección logística', this]);
 			this.erronea = true;
 		}
-
 
 	}
 
