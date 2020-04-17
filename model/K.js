@@ -64,7 +64,8 @@ module.exports = {
         BUSCAR_FACTURAS: 40,
         CONSULTAR_FACTURA: 41,
         LOGISTICA: 50,
-        CONSULTA_LOGISTICA: 51
+        CONSULTA_LOGISTICA: 51,
+        LOGISTICA_DUPLICADA: 52
     },
     SOFTWARE_ID: {
         FARMABRAIN: '0010',

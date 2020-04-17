@@ -6,7 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iSap = require(BASE + 'interfaces/isap/iSap');
-//const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
@@ -53,32 +53,49 @@ exports.crearLogistica = function (req, res) {
 
 	L.xd(txId, ['El contenido de la transmisión es una solicitud de logistica correcta', logistica]);
 
-	iEventos.logistica.inicioLogistica(req, logistica);
-	logistica.limpiarEntrada(txId);
-	iSap.logistica.realizarLogistica(txId, logistica, (errorLlamadaSap, respuestaSap) => {
-
-		if (errorLlamadaSap) {
-			if (errorLlamadaSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				let fedicomError = new FedicomError('HTTP-400', errorLlamadaSap.code, 400);
-				L.xe(txId, ['Error al grabar la devolución', errorLlamadaSap]);
-				let cuerpoRespuesta = fedicomError.send(res);
-				//iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-			}
-			else {
-				L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
-				let fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
-				let cuerpoRespuesta = fedicomError.send(res)
-				iFlags.set(txId, K.FLAGS.NO_SAP)
-				iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-			}
+	iMongo.consultaTx.porCRC(txId, logistica.crc, (errorMongo, transmisionOriginal) => {
+		if (errorMongo) {
+			L.xe(txId, ['Ocurrió un error al comprobar si el pedido logístico es duplicado - Se asume que no lo es', errorMongo], 'crc');
+			dbTx = null;
+		} else if (transmisionOriginal && transmisionOriginal.clientResponse && transmisionOriginal.clientResponse.body) {
+			let idTxOriginal = transmisionOriginal._id;
+			let cuerpoRespuestaOriginal = transmisionOriginal.clientResponse.body;
+			L.xi(txId, 'Detectada la transmisión de pedido logístico con ID ' + idTxOriginal + ' con identico CRC', 'crc');
+			L.xi(transmisionOriginal, 'Se ha detectado un duplicado de este pedido logístico con ID ' + txId, 'crc');
+			let errorDuplicado = new FedicomError('LOG-ERR-008', 'Solicitud logística duplicada', 400);
+			if (!cuerpoRespuestaOriginal.incidencias) cuerpoRespuestaOriginal.incidencias = [];
+			cuerpoRespuestaOriginal.incidencias.push(errorDuplicado.getErrors());
+			res.status(201).json(cuerpoRespuestaOriginal);
+			iEventos.logistica.logisticaDuplicado(req, res, cuerpoRespuestaOriginal, idTxOriginal);
 			return;
 		}
 
-		let respuestaCliente = logistica.obtenerRespuestaCliente(txId, respuestaSap.body);
-		let [estadoTransmision, numeroLogistica, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
+		iEventos.logistica.inicioLogistica(req, logistica);
+		logistica.limpiarEntrada(txId);
+		iSap.logistica.realizarLogistica(txId, logistica, (errorLlamadaSap, respuestaSap) => {
 
-		res.status(codigoRespuestaHttp).json(respuestaCliente);
-		iEventos.logistica.finLogistica(res, respuestaCliente, estadoTransmision, { numeroLogistica });
+			if (errorLlamadaSap) {
+				if (errorLlamadaSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					let fedicomError = new FedicomError('HTTP-400', errorLlamadaSap.code, 400);
+					L.xe(txId, ['Error al grabar la devolución', errorLlamadaSap]);
+					let cuerpoRespuesta = fedicomError.send(res);
+					//iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+				}
+				else {
+					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
+					let fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
+					let cuerpoRespuesta = fedicomError.send(res)
+					iFlags.set(txId, K.FLAGS.NO_SAP)
+					iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+				}
+				return;
+			}
 
+			let respuestaCliente = logistica.obtenerRespuestaCliente(txId, respuestaSap.body);
+			let [estadoTransmision, numeroLogistica, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
+
+			res.status(codigoRespuestaHttp).json(respuestaCliente);
+			iEventos.logistica.finLogistica(res, respuestaCliente, estadoTransmision, { numeroLogistica });
+		});
 	});
 }

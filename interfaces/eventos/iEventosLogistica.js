@@ -6,6 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
@@ -110,6 +111,55 @@ module.exports.errorLogistica = (req, res, responseBody, status) => {
 	L.yell(req.txId, K.TX_TYPES.LOGISTICA, status, [req.identificarUsuarioAutenticado(), responseBody]);
 }
 
+module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, idTxOriginal) => {
+
+	var data = {
+		$setOnInsert: {
+			_id: req.txId,
+			createdAt: new Date(),
+			type: K.TX_TYPES.LOGISTICA_DUPLICADA,
+			status: K.TX_STATUS.OK,
+			originalTx: idTxOriginal,
+			iid: global.instanceID,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.originIp,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: cuerpoRespuesta
+			},
+		}
+	}
+
+	var dataUpdate = {
+		$setOnInsert: {
+			_id: idTxOriginal,
+			createdAt: new Date()
+		},
+		$push: {
+			duplicates: {
+				_id: req.txId,
+				timestamp: new Date()
+			}
+		}
+	}
+
+	iFlags.set(req.txId, K.FLAGS.DUPLICADOS);
+	iFlags.finaliza(res.txId, dataUpdate);
+
+	L.xi(req.txId, ['Emitiendo COMMIT para evento LogisticaDuplicado'], 'txCommit');
+	iMongo.transaccion.grabar(dataUpdate);
+	iMongo.transaccion.grabar(data);
+}
 
 module.exports.consultaLogistica = function (req, res, responseBody, status) {
 
