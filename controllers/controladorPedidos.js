@@ -45,50 +45,49 @@ exports.crearPedido = function (req, res) {
 	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
 
 
-	iMongo.consultaTx.duplicadoDeCRC(txId, pedido.crc, (err, dbTx) => {
-		if (err) {
-			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', err], 'crc');
+	iMongo.consultaTx.duplicadoDeCRC(txId, pedido.crc, (errorMongo, txIdOriginal) => {
+		if (errorMongo) {
+			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', errorMongo], 'crc');
+		}
+		else if (dbTx) {
+			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + txIdOriginal + ' con identico CRC', 'crc');
+			L.xi(txIdOriginal, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
+			let errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
+			let responseBody = errorDuplicado.send(res);
+			iEventos.pedidos.pedidoDuplicado(req, res, responseBody, txIdOriginal);
+			return
 		}
 
-		if (dbTx) {
-			var duplicatedId = dbTx._id;
-			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + duplicatedId + ' con identico CRC', 'crc');
-			L.xi(duplicatedId, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
-			var errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
-			var responseBody = errorDuplicado.send(res);
-			iEventos.pedidos.pedidoDuplicado(req, res, responseBody, duplicatedId);
-		} else {
-			iEventos.pedidos.inicioPedido(req, pedido);
-			pedido.limpiarEntrada(req.txId);
+		iEventos.pedidos.inicioPedido(req, pedido);
+		pedido.limpiarEntrada(req.txId);
 
-			iSap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
-				if (sapError) {
-					if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-						var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-						L.xe(txId, ['Error al grabar el pedido', sapError]);
-						var responseBody = fedicomError.send(res);
-						iEventos.pedidos.finPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
-					}
-					else {
-						L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
-						pedido.simulaFaltas();
-						res.status(202).json(pedido);
-						iFlags.set(txId, K.FLAGS.NO_SAP);
-						iFlags.set(txId, K.FLAGS.NO_FALTAS);
-						iEventos.pedidos.finPedido(res, pedido, K.TX_STATUS.NO_SAP);
-					}
-					return;
+		iSap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
+			if (sapError) {
+				if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+					L.xe(txId, ['Error al grabar el pedido', sapError]);
+					let responseBody = fedicomError.send(res);
+					iEventos.pedidos.finPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
 				}
+				else {
+					L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
+					pedido.simulaFaltas();
+					res.status(202).json(pedido);
+					iFlags.set(txId, K.FLAGS.NO_SAP);
+					iFlags.set(txId, K.FLAGS.NO_FALTAS);
+					iEventos.pedidos.finPedido(res, pedido, K.TX_STATUS.NO_SAP);
+				}
+				return;
+			}
 
+			let clientResponse = pedido.obtenerRespuestaCliente(txId, sapResponse.body);
+			let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
 
-				var clientResponse = pedido.obtenerRespuestaCliente(txId, sapResponse.body);
-				var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
+			let responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
+			res.status(responseHttpStatusCode).json(clientResponse);
+			iEventos.pedidos.finPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
+		});
 
-				var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
-				res.status(responseHttpStatusCode).json(clientResponse);
-				iEventos.pedidos.finPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
-			});
-		}
 	});
 
 }
@@ -97,7 +96,7 @@ exports.crearPedido = function (req, res) {
 // GET /pedido/:numeroPedido
 exports.consultaPedido = function (req, res) {
 
-	let txId= txId;
+	let txId = txId;
 
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
 
