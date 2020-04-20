@@ -33,7 +33,7 @@ const consultaTransmisiones = function (req, res) {
 }
 
 module.exports = {
-	consultaTX: consultaTransmisiones,
+	consultaTransmisiones,
 	sap: require(BASE + 'controllers/monitor/controladorConsultasSap'),
 	procesos: require(BASE + 'controllers/monitor/controladorConsultasProcesos'),
 	mongodb: require(BASE + 'controllers/monitor/controladorConsultasMongoDb'),
