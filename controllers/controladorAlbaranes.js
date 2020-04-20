@@ -47,7 +47,7 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
         let cuerpoSap = respuestaSap.body;
 
         if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
-            L.xi(req.txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
+            L.xi(txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
             let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
             
             res.setHeader('Content-Type', 'application/pdf');
@@ -55,7 +55,7 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
             res.status(200).send(buffer);
         }
         else {
-            L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', cuerpoSap]);
+            L.xe(txId, ['Ocurrió un error al solicitar el albarán PDF', cuerpoSap]);
             let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'No se encontró el albarán', 404);
             errorFedicom.enviarRespuestaDeError(res);
         }
@@ -97,7 +97,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
             if (asArray) datosAlbaran = [datosAlbaran]
             res.status(200).json(datosAlbaran);
         } else {
-            L.xe(req.txId, ["SAP no ha devuelto albaranes", cuerpoSap]);
+            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap]);
             let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
             errorFedicom.enviarRespuestaDeError(res);
         }
@@ -107,7 +107,8 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
 // GET /albaranes/:numeroAlbaran
 exports.consultaAlbaran = (req, res) => {
 
-    L.xi(req.txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
+    let txId = req.txId;
+    L.xi(txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
 
     // Verificación del token del usuario
     let estadoToken = iTokens.verificaPermisos(req, res, {
@@ -125,7 +126,7 @@ exports.consultaAlbaran = (req, res) => {
         return;
     }
     let numAlbaranSaneado = numAlbaran.padStart(10, '0');
-    L.xi(req.txId, ['El número de albarán solicitado', numAlbaranSaneado])
+    L.xi(txId, ['El número de albarán solicitado', numAlbaranSaneado])
 
 
     // Detección del formato solicitado
@@ -138,7 +139,7 @@ exports.consultaAlbaran = (req, res) => {
         }
     }
 
-    L.xd(req.txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept']]);
+    L.xd(txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept']]);
 
     switch (formatoAlbaran) {
         case 'JSON':

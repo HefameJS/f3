@@ -22,17 +22,18 @@ class Devolucion {
 
 	constructor(req) {
 
-		var json = req.body;
+		let txId = req.txId;
+		let json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new ErrorFedicom();
+		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'DEV-ERR-002', 'El campo "codigoCliente" es obligatorio');
-		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'DEV-ERR-003', 'El campo "lineas" no puede estar vacío');
+		FieldChecker.checkNotEmptyString(json.codigoCliente, errorFedicom, 'DEV-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'DEV-ERR-003', 'El campo "lineas" no puede estar vacío');
 
-		if (fedicomError.hasError()) {
-			L.xe(req.txId, 'La devolución contiene errores. Se aborta el procesamiento de la misma');
-			throw fedicomError;
+		if (errorFedicom.hasError()) {
+			L.xe(txId, 'La devolución contiene errores. Se aborta el procesamiento de la misma');
+			throw errorFedicom;
 		}
 		// FIN DE SANEADO
 
@@ -46,7 +47,7 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-	var [lineas, lineasExcluidas/*, crc*/] = parseLines(json, req.txId);
+	var [lineas, lineasExcluidas/*, crc*/] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 		this.lineasExcluidas = lineasExcluidas
 	
@@ -55,7 +56,7 @@ class Devolucion {
 		var timestamp = Math.floor(Date.fedicomTimestamp() / 10000); // Con esto redondeamos mas o menos a 100 segundos
 		var hash = crypto.createHash('sha1');
 		this.crc = hash.update(crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
-		L.xd(req.txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
+		L.xd(txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
 		*/
 		this.crc = crypto.createHash('sha1').update(Math.random()+"").digest('hex').substring(0, 24).toUpperCase();
 	}
@@ -133,7 +134,7 @@ class Devolucion {
 
 }
 
-const parseLines = (json, txId) => {
+const _analizarPosiciones = (txId, json) => {
 	var lineas = [];
 	var lineasExcluidas = [];
 	// var crc = '';

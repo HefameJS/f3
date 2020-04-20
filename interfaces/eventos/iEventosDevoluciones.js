@@ -12,9 +12,11 @@ const ObjectID = iMongo.ObjectID;
 
 
 module.exports.inicioDevolucion = (req, devolucion) => {
-	var reqData = {
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$max: {
@@ -40,43 +42,46 @@ module.exports.inicioDevolucion = (req, devolucion) => {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
-	iMongo.transaccion.grabarEnMemoria(reqData);
-	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
+	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
+	iMongo.transaccion.grabarEnMemoria(transaccion);
+	L.yell(txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
-module.exports.finDevolucion = (res, responseBody, status, extra) => {
+module.exports.finDevolucion = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
-	if (!extra) extra = {}
+	let txId = res.txId;
+	if (!datosExtra) datosExtra = {}
 
-	var resData = {
+	let transaccion = {
 		$setOnInsert: {
-			_id: res.txId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: status
+			status: estadoFinal
 		},
 		$set: {
-			numerosDevolucion: extra.numerosDevolucion || [],
+			numerosDevolucion: datosExtra.numerosDevolucion || [],
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
-				body: responseBody
+				body: cuerpoRespuesta
 			}
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
-	iMongo.transaccion.grabar(resData);
-	L.yell(res.txId, K.TX_TYPES.DEVOLUCION, status, [responseBody]);
+	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.DEVOLUCION, estadoFinal, [cuerpoRespuesta]);
 }
-module.exports.errorDevolucion = (req, res, responseBody, status) => {
+module.exports.errorDevolucion = (req, res, cuerpoRespuesta, status) => {
 
-	var data = {
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date(),
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
@@ -98,14 +103,14 @@ module.exports.errorDevolucion = (req, res, responseBody, status) => {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
-				body: responseBody
+				body: cuerpoRespuesta
 			}
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
-	iMongo.transaccion.grabar(data);
-	L.yell(req.txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), responseBody]);
+	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 module.exports.consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
 

@@ -59,7 +59,7 @@ exports.crearPedido = (req, res) => {
 		}
 
 		iEventos.pedidos.inicioPedido(req, pedido);
-		pedido.limpiarEntrada(req.txId);
+		pedido.limpiarEntrada(txId);
 
 		iSap.realizarPedido(txId, pedido, (errorSap, respuestaSap) => {
 			if (errorSap) {
@@ -137,11 +137,12 @@ exports.consultaPedido = (req, res) => {
 // PUT /pedido
 exports.actualizarPedido = (req, res) => {
 
-	L.xi(req.txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);
+	let txId = req.txId;
+	L.xi(txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);
 
 	let errorFedicom = new ErrorFedicom('PED-ERR-999', 'No se ha implementado el servicio de actualización de pedidos', 501);
 	/*let cuerpoRespuesta = */errorFedicom.enviarRespuestaDeError(res);
 
-	L.xw(req.txId, [errorFedicom]);
+	L.xw(txId, [errorFedicom]);
 
 }

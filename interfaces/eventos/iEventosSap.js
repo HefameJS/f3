@@ -7,9 +7,9 @@ const K = global.constants;
 // Interfaces
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
-module.exports.incioLlamadaSap = (txId, callParams) => {
+module.exports.incioLlamadaSap = (txId, parametrosLlamada) => {
 
-	var data = {
+	let transaccion = {
 		$setOnInsert: {
 			_id: txId,
 			createdAt: new Date()
@@ -21,45 +21,79 @@ module.exports.incioLlamadaSap = (txId, callParams) => {
 		$set: {
 			sapRequest: {
 				timestamp: new Date(),
-				method: callParams.method,
-				headers: callParams.headers,
-				body: callParams.body,
-				url: callParams.url
+				method: parametrosLlamada.method,
+				headers: parametrosLlamada.headers,
+				body: parametrosLlamada.body,
+				url: parametrosLlamada.url
 			}
 		}
 	}
 
-	L.xi(txId, ['Emitiendo BUFFER para evento RequestToSap'], 'txBuffer');
-	iMongo.transaccion.grabarEnMemoria(data);
+	L.xi(txId, ['Emitiendo BUFFER para evento incioLlamadaSap'], 'txBuffer');
+	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
-module.exports.finLlamadaSap = (txId, callError, sapHttpResponse) => {
-	var sapResponse = {};
-	if (callError) { // Error de RED
-		sapResponse = {
+module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
+	/*
+		respuestaSapTransaccion: El objeto que se incluye en el objeto de la transaccion como 'sapResponse'
+		puede ser de 2 formas:
+		Forma SIN error:
+			respuestaSapTransaccion = {
+				timestamp: new Date(),
+				statusCode: respuestaSap.statusCode,
+				headers: respuestaSap.headers,
+				body: respuestaSap.body
+			}
+		
+		Forma CON error:
+			Si hay un error en la llamada a SAP (error en la red como que el socket no responde, da timeout, DNS not found ...,
+				o se dan errores de protocolo como SSL):
+				respuestaSapTransaccion = {
+					timestamp: new Date(),
+					error: {
+						source: 'NET',
+						statusCode: errorLlamadaSap.errno || false,
+						message: errorLlamadaSap.message || 'Sin descripción del error'
+					}
+				}
+			Si SAP da respuesta de error (HTTP 500, 404, 401, 4xx, 5xx ...):
+				respuestaSapTransaccion = {
+					timestamp: new Date(),
+					error: {
+						source: 'SAP',
+						statusCode: respuestaSap.statusCode,
+						message: respuestaSap.statusMessage
+					}
+				}
+	*/
+	
+	let respuestaSapTransaccion = {};
+
+	if (errorLlamadaSap) { // Error de RED
+		respuestaSapTransaccion = {
 			timestamp: new Date(),
 			error: {
 				source: 'NET',
-				statusCode: callError.errno || false,
-				message: callError.message || 'Sin descripción del error'
+				statusCode: errorLlamadaSap.errno || false,
+				message: errorLlamadaSap.message || 'Sin descripción del error'
 			}
 		}
 	} else {
-		if (sapHttpResponse.errorSap) { // Error de SAP
-			sapResponse = {
+		if (respuestaSap.errorSap) { // Error de SAP
+			respuestaSapTransaccion = {
 				timestamp: new Date(),
 				error: {
 					source: 'SAP',
-					statusCode: sapHttpResponse.statusCode,
-					message: sapHttpResponse.statusMessage
+					statusCode: respuestaSap.statusCode,
+					message: respuestaSap.statusMessage
 				}
 			}
 		} else { // Respuesta correcta de SAP
-			sapResponse = {
+			respuestaSapTransaccion = {
 				timestamp: new Date(),
-				statusCode: sapHttpResponse.statusCode,
-				headers: sapHttpResponse.headers,
-				body: sapHttpResponse.body
+				statusCode: respuestaSap.statusCode,
+				headers: respuestaSap.headers,
+				body: respuestaSap.body
 			}
 		}
 	}
@@ -74,21 +108,23 @@ module.exports.finLlamadaSap = (txId, callError, sapHttpResponse) => {
 			status: K.TX_STATUS.INCIDENCIAS_RECIBIDAS
 		},
 		$set: {
-			sapResponse: sapResponse
+			sapResponse: respuestaSapTransaccion
 		}
 	}
 
-	L.xi(txId, ['Emitiendo BUFFER para evento ResponseFromSap'], 'txBuffer');
+	L.xi(txId, ['Emitiendo BUFFER para evento finLlamadaSap'], 'txBuffer');
 	iMongo.transaccion.grabarEnMemoria(data);
 }
 
-module.exports.errorConfirmacionPedido = function (req, status) {
+module.exports.errorConfirmacionPedido = (req, estado) => {
 
-	var reqData = {
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date(),
-			status: status,
+			status: estado,
 			iid: global.instanceID,
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			type: K.TX_TYPES.CONFIRMACION_PEDIDO,
@@ -105,22 +141,24 @@ module.exports.errorConfirmacionPedido = function (req, status) {
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
-	iMongo.transaccion.grabar(reqData);
-	L.yell(req.txId, K.TX_TYPES.CONFIRMACION_PEDIDO, status, [req.body]);
+	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.CONFIRMACION_PEDIDO, estado, [req.body]);
 }
 
-module.exports.confirmacionPedido = function (req, originalTxId, updatedTxStatus, extra) {
-	if (!extra) extra = {};
+module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, datosExtra) => {
 
-	var reqData = {
+	let txId = req.txId;
+	if (!datosExtra) datosExtra = {};
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date(),
 			status: K.TX_STATUS.OK,
 			iid: global.instanceID,
 			authenticatingUser: req.identificarUsuarioAutenticado(),
-			confirmingId: originalTxId,
+			confirmingId: txIdConfirmado,
 			type: K.TX_TYPES.CONFIRMACION_PEDIDO,
 			clientRequest: {
 				authentication: req.token,
@@ -135,30 +173,30 @@ module.exports.confirmacionPedido = function (req, originalTxId, updatedTxStatus
 		}
 	}
 
-	var updateData = {
+	let transaccionActualizacionConfirmada = {
 		$setOnInsert: {
-			_id: originalTxId,
+			_id: txIdConfirmado,
 			createdAt: new Date()
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: updatedTxStatus
+			status: estadoTransmisionConfirmada
 		},
 		$set: {
-			numerosPedidoSAP: extra.numerosPedidoSAP
+			numerosPedidoSAP: datosExtra.numerosPedidoSAP
 		},
 		$push:{
 			sapConfirms: {
-				txId: req.txId,
+				txId: txId,
 				timestamp: new Date(),
 				sapSystem: req.identificarUsuarioAutenticado()
 			}
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
-	iMongo.transaccion.grabar(reqData);
-	iMongo.transaccion.grabar(updateData);
+	L.xi(txId, ['Emitiendo COMMIT para evento ConfirmacionPedido'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	iMongo.transaccion.grabar(transaccionActualizacionConfirmada);
 
-	L.yell(originalTxId, K.TX_TYPES.CONFIRMACION_PEDIDO, updatedTxStatus, extra.numerosPedidoSAP);
+	L.yell(txIdConfirmado, K.TX_TYPES.CONFIRMACION_PEDIDO, estadoTransmisionConfirmada, datosExtra.numerosPedidoSAP);
 }

@@ -13,9 +13,12 @@ const ObjectID = iMongo.ObjectID;
 
 
 module.exports.inicioLogistica = (req, logistica) => {
-	var reqData = {
+
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$max: {
@@ -41,52 +44,55 @@ module.exports.inicioLogistica = (req, logistica) => {
 		}
 	};
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
-	iMongo.transaccion.grabar(reqData);
-	L.yell(req.txId, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), logistica.crc, req.body]);
+	L.xi(txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), logistica.crc, req.body]);
 }
 
-module.exports.finLogistica = (res, responseBody, status, extra) => {
+module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
-	if (!extra) extra = {}
+	let txId = res.txId;
+	if (!datosExtra) datosExtra = {}
 
-	var resData = {
+	let transaccion = {
 		$setOnInsert: {
-			_id: res.txId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: status
+			status: estadoFinal
 		},
 		$set: {
-			numeroLogistica: extra.numeroLogistica || null,
+			numeroLogistica: datosExtra.numeroLogistica || null,
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
-				body: responseBody
+				body: cuerpoRespuesta
 			}
 		}
 	}
 
-	L.xi(res.txId, ['Emitiendo COMMIT para evento finLogistica'], 'txCommit');
-	iMongo.transaccion.grabar(resData);
-	L.yell(res.txId, K.TX_TYPES.LOGISTICA, status, [responseBody]);
+	L.xi(txId, ['Emitiendo COMMIT para evento finLogistica'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [cuerpoRespuesta]);
 }
 
-module.exports.errorLogistica = (req, res, responseBody, status) => {
+module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
-	var data = {
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date(),
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
 			iid: global.instanceID,
 			modifiedAt: new Date(),
 			type: K.TX_TYPES.LOGISTICA,
-			status: status,
+			status: estadoFinal,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -101,25 +107,27 @@ module.exports.errorLogistica = (req, res, responseBody, status) => {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
-				body: responseBody
+				body: cuerpoRespuesta
 			}
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');
-	iMongo.transaccion.grabar(data);
-	L.yell(req.txId, K.TX_TYPES.LOGISTICA, status, [req.identificarUsuarioAutenticado(), responseBody]);
+	L.xi(txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 
-module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, idTxOriginal) => {
+module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 
-	var data = {
+	let txId = req.txId;
+
+	let transaccion = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date(),
 			type: K.TX_TYPES.LOGISTICA_DUPLICADA,
 			status: K.TX_STATUS.OK,
-			originalTx: idTxOriginal,
+			originalTx: txIdOriginal,
 			iid: global.instanceID,
 			clientRequest: {
 				authentication: req.token,
@@ -140,25 +148,25 @@ module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, idTxOriginal) =>
 		}
 	}
 
-	var dataUpdate = {
+	let transaccionActualizacionOriginal = {
 		$setOnInsert: {
-			_id: idTxOriginal,
+			_id: txIdOriginal,
 			createdAt: new Date()
 		},
 		$push: {
 			duplicates: {
-				_id: req.txId,
+				_id: txId,
 				timestamp: new Date()
 			}
 		}
 	}
 
-	iFlags.set(req.txId, K.FLAGS.DUPLICADOS);
-	iFlags.finaliza(res.txId, dataUpdate);
+	iFlags.set(txId, K.FLAGS.DUPLICADOS);
+	iFlags.finaliza(txId, transaccionActualizacionOriginal);
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento LogisticaDuplicado'], 'txCommit');
-	iMongo.transaccion.grabar(dataUpdate);
-	iMongo.transaccion.grabar(data);
+	L.xi(txId, ['Emitiendo COMMIT para evento LogisticaDuplicado'], 'txCommit');
+	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
+	iMongo.transaccion.grabar(transaccion);
 }
 
 module.exports.consultaLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {

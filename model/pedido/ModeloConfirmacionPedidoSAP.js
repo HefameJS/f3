@@ -4,13 +4,15 @@ const L = global.logger;
 const C = global.config;
 const K = global.constants;
 
-
+// Modelos
 const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 const ConfirmacionLineaPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionLineaPedidoSAP');
-
-const FieldChecker = require(BASE + 'util/fieldChecker');
 const CRC = require(BASE + 'model/CRC');
+
+// Helpers
+const FieldChecker = require(BASE + 'util/fieldChecker');
+
 
 
 
@@ -20,32 +22,33 @@ class ConfirmacionPedidoSAP {
 
 	constructor(req) {
 
-		var json = req.body;
+		let txId = req.txId;
+		let json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new ErrorFedicom();
-		FieldChecker.checkExists(json.numeropedido, fedicomError, 'SAP-ERR-001', 'No se indica el campo "numeropedido"');
-		FieldChecker.checkExists(json.codigocliente, fedicomError, 'SAP-ERR-002', 'No se indica el campo "codigocliente"');
-		FieldChecker.checkExists(json.numeropedidoorigen, fedicomError, 'SAP-ERR-003', 'No se indica el campo "numeropedidoorigen"')
-		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'SAP-ERR-004', 'No se indica el campo "lineas"');
-		FieldChecker.checkExists(json.crc, fedicomError, 'SAP-ERR-005', 'No se indica el campo "crc"');
+		let errorFedicom = new ErrorFedicom();
+		FieldChecker.checkExists(json.numeropedido, errorFedicom, 'SAP-ERR-001', 'No se indica el campo "numeropedido"');
+		FieldChecker.checkExists(json.codigocliente, errorFedicom, 'SAP-ERR-002', 'No se indica el campo "codigocliente"');
+		FieldChecker.checkExists(json.numeropedidoorigen, errorFedicom, 'SAP-ERR-003', 'No se indica el campo "numeropedidoorigen"')
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'SAP-ERR-004', 'No se indica el campo "lineas"');
+		FieldChecker.checkExists(json.crc, errorFedicom, 'SAP-ERR-005', 'No se indica el campo "crc"');
 
-		if (fedicomError.hasError()) {
-			L.xe(req.txId, ['La confirmación del pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
-			throw fedicomError;
+		if (errorFedicom.hasError()) {
+			L.xe(txId, ['La confirmación del pedido contiene errores. Se aborta el procesamiento del mismo', errorFedicom]);
+			throw errorFedicom;
 		}
 		// FIN DE SANEADO
 
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
 
-		var lineas = parseLines(json, req.txId);
+		let lineas = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 
 		// El CRC de SAP es el de 8 dígitos, regeneramos el de 24 dígitos
 		this.sap_crc = this.crc
 		this.crc = CRC.crear(this.codigocliente, this.numeropedidoorigen);
-		L.xd(req.txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC');
+		L.xd(txId, ['Se recalcula el CRC del pedido confirmado', this.crc], 'txCRC');
 
 	}
 
@@ -64,7 +67,7 @@ class ConfirmacionPedidoSAP {
 }
 
 
-const parseLines = (json, txId) => {
+const _analizarPosiciones = (txId, json) => {
 	var lineas = [];
 	function rellena(lineas) {
 		json.lineas.forEach(function (linea) {

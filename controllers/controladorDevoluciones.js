@@ -33,12 +33,12 @@ exports.crearDevolucion = function (req, res) {
 
 	let devolucion = null;
 
-	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
+	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
 		devolucion = new Devolucion(req);
 	} catch (excepcion) {
 		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
-		L.xe(req.txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.devoluciones.errorDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
@@ -62,15 +62,15 @@ exports.crearDevolucion = function (req, res) {
 		if (errorSap) {
 			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
 				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				L.xe(req.txId, ['Error al grabar la devolución', errorSap]);
+				L.xe(txId, ['Error al grabar la devolución', errorSap]);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 			}
 			else {
-				L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
+				L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-				iFlags.set(req.txId, K.FLAGS.NO_SAP)
+				iFlags.set(txId, K.FLAGS.NO_SAP)
 				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 			}
 			return;

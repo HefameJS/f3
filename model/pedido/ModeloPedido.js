@@ -25,28 +25,29 @@ class Pedido {
 
 	constructor(req) {
 
-		var json = req.body;
+		let txId = req.txId;
+		let json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new ErrorFedicom();
-		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
-		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
+		let errorFedicom = new ErrorFedicom();
+		FieldChecker.checkNotEmptyString(json.codigoCliente, errorFedicom, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
+		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
-			fedicomError.add('PED-ERR-002', 'Indique el "codigoCliente" si el @hefame al final', 400);
+			errorFedicom.add('PED-ERR-002', 'Indique el "codigoCliente" si el @hefame al final', 400);
 		}
 
-		if (fedicomError.hasError()) {
-			L.xe(req.txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', fedicomError]);
-			throw fedicomError;
+		if (errorFedicom.hasError()) {
+			L.xe(txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', errorFedicom]);
+			throw errorFedicom;
 		}
 
 		// SANEADO OBLIGATORIO DE LINEAS
-		var [lineas, sap_ignore_all] = parseLines(json, req.txId);
+		var [lineas, sap_ignore_all] = _analizarPosiciones(txId, json);
 		// Si todas las lineas serán ignoradas, no hay pedido
 		if (sap_ignore_all) {
-			L.xe(req.txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
+			L.xe(txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
 			throw new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.ERR_TODAS_LINEAS_ERROR, 'Existen errores en todas las líneas, el pedido no se procesa.', 400);
 		}
 
@@ -58,7 +59,7 @@ class Pedido {
 		// Si tiene mas de 10 dígitos, SAP da error 500 por lo que lo limpiamos
 		if (this.codigoCliente.length > 10) {
 			var codigoClienteNuevo = this.codigoCliente.substring(this.codigoCliente.length - 10);
-			L.xw(req.txId, ['Se arregla el codigo de cliente', this.codigoCliente, codigoClienteNuevo]);
+			L.xw(txId, ['Se arregla el codigo de cliente', this.codigoCliente, codigoClienteNuevo]);
 			this.codigoCliente = codigoClienteNuevo;
 		}
 
@@ -71,7 +72,7 @@ class Pedido {
 
 		// GENERACION DE CRC
 		this.generarCRC();
-		L.xd(req.txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
+		L.xd(txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 
 		// INCLUYE LA URL DE CONFIRMACION PARA SAP
 		this.sap_url_confirmacion = generaUrlConfirmacion();
@@ -178,7 +179,7 @@ class Pedido {
 
 
 
-const parseLines = (json, txId) => {
+const _analizarPosiciones = (txId, json) => {
 	var lineas = [];
 	var ordenes = [];
 	function rellena(lineas) {

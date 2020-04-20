@@ -54,7 +54,7 @@ class Logistica {
 		}
 
 		// SANEADO DE LINEAS
-		let [lineas, ignorarTodasLineas] = _procesarLineas(txId, json);
+		let [lineas, ignorarTodasLineas] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 		this.ignorarTodasLineas = ignorarTodasLineas;
 	
@@ -113,7 +113,7 @@ class Logistica {
 
 }
 
-const _procesarLineas = (txId, json) => {
+const _analizarPosiciones = (txId, json) => {
 	let lineas = [];
 	let ordenes = [];
 	let ignorarTodasLineas = true;

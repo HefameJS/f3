@@ -27,9 +27,10 @@ module.exports = function (app) {
 	app.use((errorExpress, req, res, next) => {
 		if (errorExpress) {
 			[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+			let txId = req.txId;
 
-			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
-			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
+			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.originIp);
+			L.xe(txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
 
 			let errorFedicom = new ErrorFedicom(errorExpress);
 			errorFedicom.enviarRespuestaDeError(res);
@@ -40,11 +41,11 @@ module.exports = function (app) {
 
 
 	app.use((req, res, next) => {
-
 		[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+		let txId = req.txId;
 
-		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.ip);
-		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');
+		L.i('** Recibiendo transmisión ' + txId + ' desde ' + req.ip);
+		L.xt(txId, 'Iniciando procesamiento de la transmisión');
 
 		next();
 	});
@@ -93,8 +94,9 @@ module.exports = function (app) {
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use((req, res, next) => {
-
-		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
+		let txId = req.txId;
+		
+		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		errorFedicom.enviarRespuestaDeError(res);
 

@@ -170,10 +170,10 @@ const verificaPermisos = (req, res, opciones) => {
 			if (req.body && req.body.authReq && req.body.authReq.username && req.body.authReq.domain) {
 				solicitudAutenticacion = req.body.authReq;
 				L.xi(txId, ['La solicitid simulada viene con una solicitud de autenticación', solicitudAutenticacion], 'txToken')
-				let newToken = generarToken(req.txId, solicitudAutenticacion, []);
+				let newToken = generarToken(txId, solicitudAutenticacion, []);
 				L.xd(txId, ['Se ha generado un token para la solicitud de autenticacion simulada', newToken], 'txToken');
 				req.headers['authorization'] = 'Bearer ' + newToken;
-				req.token = verificarToken(newToken, req.txId);
+				req.token = verificarToken(newToken, txId);
 			}
 
 			if (opciones.simulacionRequiereSolicitudAutenticacion && !solicitudAutenticacion) {
@@ -188,7 +188,7 @@ const verificaPermisos = (req, res, opciones) => {
 	}
 
 
-	L.xi(req.txId, ['El token transmitido resultó VALIDO', req.token.sub], 'txToken');
+	L.xi(txId, ['El token transmitido resultó VALIDO', req.token.sub], 'txToken');
 	return { ok: true };
 }
 
