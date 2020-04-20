@@ -16,12 +16,13 @@ module.exports.sap = require('./iEventosSap');
 module.exports.retransmisiones = require('./iEventosRetransmisiones');
 module.exports.logistica = require('./iEventosLogistica');
 
+module.exports.descartar = (req, res, responseBody, error) => {
 
-module.exports.emitDiscard = function (req, res, responseBody, error) {
+	let txId = req.txId;
 
-	var data = {
+	let data = {
 		$setOnInsert: {
-			_id: req.txId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$set: {
@@ -44,8 +45,9 @@ module.exports.emitDiscard = function (req, res, responseBody, error) {
 			}
 		}
 	}
-	L.xi(req.txId, ['Emitiendo COMMIT DISCARD para evento Discard'], 'txCommit');
+	L.xi(txId, ['Emitiendo COMMIT para evento DISCARD'], 'txCommit');
 	iMongo.transaccion.descartar(data);
+	
 }
 
 

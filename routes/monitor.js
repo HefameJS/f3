@@ -4,7 +4,10 @@ const BASE = global.BASE;
 const L = global.logger;
 //const K = global.constants;
 
+// Modelos
 const FedicomError = require(BASE + 'model/fedicomError');
+
+// Helpers
 const ExpressExtensions = require(BASE + 'util/expressExtensions');
 const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
@@ -21,29 +24,29 @@ module.exports = function (app) {
 	 * Detecta errores comunes en las peticiones entrantes tales como:
 	 *  - Errores en el parseo del JSON entrante.
 	 */
-	app.use(function (error, req, res, next) {
-		if (error) {
+	app.use((errorExpress, req, res, next) => {
+		if (errorExpress) {
 			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
 			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
-			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error]);
+			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
 
-			var fedicomError = new FedicomError(error);
-			fedicomError.send(res);
+			let errorFedicom = new FedicomError(errorExpress);
+			errorFedicom.send(res);
 		} else {
 			next();
 		}
 	});
 
 
-	app.use(function (req, res, next) {
+	app.use((req, res, next) => {
 
 		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
 
 		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.ip);
 		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');
 
-		return next();
+		next();
 	});
 
 
@@ -89,13 +92,12 @@ module.exports = function (app) {
 		.get(tryCatch(controllers.consultas.sqlite.getEstadoSQLite))
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
-	app.use(function (req, res, next) {
+	app.use((req, res, next) => {
 
 		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
-		var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
-		fedicomError.send(res);
+		let errorFedicom = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
+		errorFedicom.send(res);
 
-		return;
 	});
 
 };
