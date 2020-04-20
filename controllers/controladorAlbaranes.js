@@ -10,7 +10,7 @@ const iSap = require(BASE + 'interfaces/isap/iSap');
 
 // Modelos
 const CRC = require(BASE + 'model/CRC');
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const ConsultaAlbaran = require(BASE + '/model/albaran/ModeloConsultaAlbaran');
 const AlbaranSimple = require(BASE + '/model/albaran/ModeloAlbaranSimple');
 const AlbaranCompleto = require(BASE + '/model/albaran/ModeloAlbaranCompleto');
@@ -25,21 +25,21 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
         if (errorSap) {
             if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
                 L.xe(txId, ['Error al consultar el albarán PDF', errorSap]);
-                let fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
-                fedicomError.send(res);
+                let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+                errorFedicom.enviarRespuestaDeError(res);
                 return;
             }
             else {
                 // Cuando el albarán no existe, SAP devuelve un 503 
                 if (respuestaSap.statusCode === 503) {
                     L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
-                    let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-                    error.send(res);
+                    let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
+                    errorFedicom.enviarRespuestaDeError(res);
                     return;
                 }
                 L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán PDF', errorSap]);
-                var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
-                error.send(res);
+                let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
+                errorFedicom.enviarRespuestaDeError(res);
                 return;
             }
         }
@@ -52,13 +52,12 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
             
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=' + numAlbaran + '.pdf');
-            res.status(200);
-            res.send(buffer);
+            res.status(200).send(buffer);
         }
         else {
             L.xe(req.txId, ['Ocurrió un error al solicitar el albarán PDF', cuerpoSap]);
-            let fedicomError = new FedicomError('ALB-ERR-001', 'No se encontró el albarán', 404);
-            fedicomError.send(res);
+            let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'No se encontró el albarán', 404);
+            errorFedicom.enviarRespuestaDeError(res);
         }
 
     });
@@ -72,21 +71,21 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
         if (errorSap) {
             if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
                 L.xe(txId, ['Error al consultar albarán JSON', errorSap]);
-                let fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
-                fedicomError.send(res);
+                let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+                errorFedicom.enviarRespuestaDeError(res);
                 return;
             }
             else {
                 // Cuando el albarán no existe, SAP devuelve un 503 
                 if (respuestaSap.statusCode === 503) {
                     L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
-                    let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-                    error.send(res);
+                    let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
+                    errorFedicom.enviarRespuestaDeError(res);
                     return;
                 }
                 L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', errorSap]);
-                var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
-                error.send(res);
+                let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
+                errorFedicom.enviarRespuestaDeError(res);
                 return;
             }
         }
@@ -99,8 +98,8 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
             res.status(200).json(datosAlbaran);
         } else {
             L.xe(req.txId, ["SAP no ha devuelto albaranes", cuerpoSap]);
-            let error = new FedicomError('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-            error.send(res);
+            let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
+            errorFedicom.enviarRespuestaDeError(res);
         }
     }) 
 }
@@ -121,8 +120,8 @@ exports.consultaAlbaran = (req, res) => {
     // Saneado del número del albarán
     let numAlbaran = req.params.numeroAlbaran;
     if (!numAlbaran) {
-        var error = new FedicomError('ALB-ERR-003', 'El parámetro "numeroAlbaran" es obligatorio', 400);
-        error.send(res);
+        let errorFedicom = new ErrorFedicom('ALB-ERR-003', 'El parámetro "numeroAlbaran" es obligatorio', 400);
+        errorFedicom.enviarRespuestaDeError(res);
         return;
     }
     let numAlbaranSaneado = numAlbaran.padStart(10, '0');
@@ -147,8 +146,8 @@ exports.consultaAlbaran = (req, res) => {
         case 'PDF':
             return _consultaAlbaranPDF(req, res, numAlbaranSaneado);
         default:
-            let error = new FedicomError('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
-            error.send(res);
+            let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
+            errorFedicom.enviarRespuestaDeError(res);
             return;
     }
 
@@ -181,8 +180,8 @@ exports.listadoAlbaranes = (req, res) => {
     // #1 - Saneado del código del cliente
     let codigoCliente = req.query.codigoCliente
     if (!codigoCliente) {
-        var error = new FedicomError('ALB-ERR-002', 'El "codigoCliente" es inválido.', 400);
-        /*let responseBody =*/ error.send(res);
+        let errorFedicom = new ErrorFedicom('ALB-ERR-002', 'El "codigoCliente" es inválido.', 400);
+        /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
         return;
     }
     codigoCliente = codigoCliente.padStart(10, '0');
@@ -190,15 +189,15 @@ exports.listadoAlbaranes = (req, res) => {
     // #2 - Limpieza de offset y limit
     let limit = parseInt(req.query.limit || 50);
     if (limit > 50 || limit <= 0) {
-        let error = new FedicomError('ALB-ERR-008', 'El campo "limit" es inválido', 400);
-        /*let responseBody =*/ error.send(res);
+        let errorFedicom = new ErrorFedicom('ALB-ERR-008', 'El campo "limit" es inválido', 400);
+        /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
         return;
     }
 
     let offset = parseInt(req.query.offset || 0);
     if (offset < 0) {
-        let error = new FedicomError('ALB-ERR-007', 'El campo "offset" es inválido', 400);
-        /*let responseBody =*/ error.send(res);
+        let errorFedicom = new ErrorFedicom('ALB-ERR-007', 'El campo "offset" es inválido', 400);
+        /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
         return;
     }
 
@@ -225,8 +224,8 @@ exports.listadoAlbaranes = (req, res) => {
         // Comprobación de rango inferior a 1 año
         let diff = (fechaHasta.getTime() - fechaDesde.getTime()) / 1000 ;
         if (diff > 31622400) { // 366 dias * 24h * 60m * 60s
-            var error = new FedicomError('ALB-ERR-009', 'El intervalo entre el parámetro "fechaDesde" y "fechaHasta" no puede ser superior a un año', 400);
-            /*let responseBody =*/ error.send(res);
+            let errorFedicom = new ErrorFedicom('ALB-ERR-009', 'El intervalo entre el parámetro "fechaDesde" y "fechaHasta" no puede ser superior a un año', 400);
+            /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
             return;
         }
 
@@ -266,13 +265,13 @@ exports.listadoAlbaranes = (req, res) => {
         if (errorSap) {
             if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
                 L.xe(txId, ['Error al consultar el listado de albaranes', errorSap]);
-                var fedicomError = new FedicomError('HTTP-400', errorSap.code, 400);
-                fedicomError.send(res);
+                let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+                errorFedicom.enviarRespuestaDeError(res);
             }
             else {
                 L.xe(txId, ['Ocurrió un error al buscar albaranes en SAP', errorSap]);
-                var error = new FedicomError('ALB-ERR-999', 'Ocurrió un error en la búsqueda de albaranes', 500);
-                error.send(res);
+                let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda de albaranes', 500);
+                errorFedicom.enviarRespuestaDeError(res);
                 return;
             }
             return;

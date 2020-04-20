@@ -8,7 +8,7 @@ const K = global.constants;
 const crypto = require('crypto');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const LineaDevolucion = require(BASE + 'model/devolucion/ModeloLineaDevolucion');
 
 // Helpers
@@ -25,7 +25,7 @@ class Devolucion {
 		var json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new FedicomError();
+		var fedicomError = new ErrorFedicom();
 
 		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'DEV-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'DEV-ERR-003', 'El campo "lineas" no puede estar vacío');
@@ -102,7 +102,7 @@ class Devolucion {
 		// Comprobamos si SAP ha devuelto un error de "cliente desconocido"
 		if (respuestaSAP[0] && respuestaSAP[0].incidencias[0] && respuestaSAP[0].incidencias[0].descripcion === "Cliente desconocido") {
 			L.xw(txId, 'Se encontró un error de cliente desconocido en la respuesta de SAP')
-			let error = new FedicomError('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido')
+			let error = new ErrorFedicom('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido')
 			respuestaSAP = error.getErrors()
 			respuestaSAP.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
 			respuestaSAP.isRechazadoSap = () => true;

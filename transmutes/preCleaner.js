@@ -5,7 +5,7 @@ const C = global.config;
 const K = global.constants;
 
 
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const ERROR_CODE = K.CODIGOS_ERROR_FEDICOM.WARN_PROTOCOLO;
 const DEPURACION_ACTIVA = (C.depurar_transmisiones ? true : false);
 const iFlags = require(BASE + 'interfaces/iFlags');
@@ -22,14 +22,14 @@ const errorEncontrado = (txId, incidencias, mensaje) => {
  * Dado un objeto, hace comprobaciones de quen los campos sean correctos en funcion
  * del array de definiciones que se le pase.
  * 
- * En caso de encontrar errores, se devuelve un objeto FedicomError con incidencias.
+ * En caso de encontrar errores, se devuelve un objeto ErrorFedicom con incidencias.
  * 
  * @param {Object} json El objeto a tratar
  * @param {Array} definicionCampos array con la definicion de los campos válidos
  */
 const preClean = (txId, json, definicionCampos) => {
 
-    var incidencias = new FedicomError();
+    var incidencias = new ErrorFedicom();
 
     for (var campo in json) {
 

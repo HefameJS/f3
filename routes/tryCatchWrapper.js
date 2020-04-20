@@ -4,18 +4,18 @@
 const L = global.logger;
 //const K = global.constants;
 
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 const tryCatch = (funcionControlador) => {
 	let controlador = (req, res) => {
 		let txId = req.txId;
 		try {
 			funcionControlador(req, res);
-		} catch (exception) {
-			let fedicomError = FedicomError.fromException(txId, exception);
-			L.xf(txId, ['Ocurrió un error al ejecutar la petición', fedicomError])
-			fedicomError.send(res);
-			L.dump(exception, req)
+		} catch (excepcion) {
+			let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
+			L.xf(txId, ['Ocurrió un error al ejecutar la petición', errorFedicom])
+			errorFedicom.enviarRespuestaDeError(res);
+			L.dump(excepcion, req)
 			return;
 		}
 	}

@@ -2,13 +2,13 @@
 const BASE = global.BASE;
 const L = global.logger;
 
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class ConfirmacionLineaPedidoSAP {
 	constructor(json, txId) {
 
-		var errorPosicion = new FedicomError();
+		var errorPosicion = new ErrorFedicom();
 
 		// 001 - Control de codigo de artículo
 		if (json.sap_ignore) {

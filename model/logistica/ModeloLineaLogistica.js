@@ -5,7 +5,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 // Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
@@ -13,7 +13,7 @@ const FieldChecker = require(BASE + 'util/fieldChecker');
 class LineaLogistica {
 	constructor(txId, json, index) {
 
-		var errorPosicion = new FedicomError();
+		var errorPosicion = new ErrorFedicom();
 
 		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-LOG-ERR-001', 'El campo "orden" es inválido');
 		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-LOG-ERR-002', 'El campo "codigoArticulo" es obligatorio');

@@ -5,7 +5,7 @@ const C = global.config;
 const K = global.constants;
 
 
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 const ConfirmacionLineaPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionLineaPedidoSAP');
 
@@ -23,7 +23,7 @@ class ConfirmacionPedidoSAP {
 		var json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new FedicomError();
+		var fedicomError = new ErrorFedicom();
 		FieldChecker.checkExists(json.numeropedido, fedicomError, 'SAP-ERR-001', 'No se indica el campo "numeropedido"');
 		FieldChecker.checkExists(json.codigocliente, fedicomError, 'SAP-ERR-002', 'No se indica el campo "codigocliente"');
 		FieldChecker.checkExists(json.numeropedidoorigen, fedicomError, 'SAP-ERR-003', 'No se indica el campo "numeropedidoorigen"')

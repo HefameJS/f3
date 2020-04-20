@@ -11,7 +11,7 @@ const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 
 // Helpers
@@ -104,13 +104,13 @@ const retransmitirPedido = function (otxId, options, callback) {
         // Recreamos el pedido, tal y como vendría en la petición original
         // Es decir, hacemos pasar 'dbTx.clientRequest' por la variable 'req' original.
         // Para esto, necesitaremos que existan los campos 'body', 'txId' y 'token'
-        var pedido = null;
+        let pedido = null;
         try {
             dbTx.clientRequest.txId = dbTx._id;
             dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-            var pedido = new Pedido(dbTx.clientRequest);
-        } catch (fedicomError) {
-            fedicomError = FedicomError.fromException(rtxId, fedicomError);
+            pedido = new Pedido(dbTx.clientRequest);
+        } catch (excepcion) {
+            let fedicomError = ErrorFedicom.desdeExcepcion(rtxId, excepcion);
             L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
             emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
                 clientResponse: fedicomError.getErrors(),
@@ -140,7 +140,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
         let ctxId = null;
         if (options.regenerateCRC) {
-            var nuevoNPO = 'RTX' + pedido.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            let nuevoNPO = 'RTX' + pedido.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
             L.xd(rtxId, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido. [' + pedido.numeroPedidoOrigen + '] => [' + nuevoNPO + ']']);
             pedido.numeroPedidoOrigen = nuevoNPO;
             pedido.generarCRC();
@@ -175,7 +175,7 @@ const retransmitirPedido = function (otxId, options, callback) {
 
             if (sapError) {
                 if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                    var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+                    var fedicomError = new ErrorFedicom('HTTP-400', sapError.code, 400);
                     L.xe(rtxId, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
                         sapRequest: sapRequest,

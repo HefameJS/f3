@@ -8,7 +8,7 @@ const K = global.constants;
 const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 const jwt = require('jsonwebtoken');
 
@@ -39,7 +39,7 @@ const verificarToken = (token, txId) => {
 			meta: {
 				ok: false,
 				error: 'No se especifica token',
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		}
 	}
@@ -62,7 +62,7 @@ const verificarToken = (token, txId) => {
 				meta = {
 					ok: false,
 					error: 'Token caducado',
-					exception: new FedicomError('AUTH-001', 'Usuario no autentificado', 401)
+					exception: new ErrorFedicom('AUTH-001', 'Usuario no autentificado', 401)
 				}
 			} else {
 				// TOKEN OK
@@ -77,7 +77,7 @@ const verificarToken = (token, txId) => {
 			meta = {
 				ok: false,
 				error: 'Token incompleto',
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		}
 		decoded.meta = meta;
@@ -90,7 +90,7 @@ const verificarToken = (token, txId) => {
 			meta: {
 				ok: false,
 				error: err.message,
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		};
 	}
@@ -131,17 +131,17 @@ const verificaPermisos = (req, res, opciones) => {
 	req.token = verificarToken(req.token, txId);
 	if (req.token.meta.exception) {
 		L.xe(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
-		let responseBody = req.token.meta.exception.send(res);
-		return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.FALLO_AUTENTICACION  };
+		let cuerpoRespuesta = req.token.meta.exception.enviarRespuestaDeError(res);
+		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.FALLO_AUTENTICACION  };
 	}
 
 	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 	if (opciones.grupoRequerido) {
 		if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
 			L.xw(txId, ['El token no tiene el permiso necesario para realizar la consulta', opciones.grupoRequerido, req.token.perms], 'txToken');
-			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
-			let responseBody = error.send(res);
-			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO };
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
 		}
 	}
 
@@ -151,17 +151,17 @@ const verificaPermisos = (req, res, opciones) => {
 		// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza al petición
 		if (C.production === true && !opciones.admitirSimulacionesEnProduccion) {
 			L.xw(txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
-			var error = new FedicomError('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
-			var responseBody = error.send(res);
-			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO  };
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO  };
 		}
 
 		// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
 		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
 			L.xw(txId, ['El token no tiene los permisos necesarios para realizar una llamada simulada', req.token.perms], 'txToken');
-			let error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
-			let responseBody = error.send(res);
-			return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.NO_AUTORIZADO  };
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO  };
 		} else {
 			L.xi(txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
 
@@ -178,9 +178,9 @@ const verificaPermisos = (req, res, opciones) => {
 
 			if (opciones.simulacionRequiereSolicitudAutenticacion && !solicitudAutenticacion) {
 				L.xe(txId, ['No se incluye solicitud de autenticación y esta es obligatoria'], 'txToken');
-				let error = new FedicomError('AUTH-999', 'No se indica el usuario objetivo de la transmisión', 400);
-				let responseBody = error.send(res);
-				return { ok: false, respuesta: responseBody, motivo: K.TX_STATUS.PETICION_INCORRECTA };
+				let errorFedicom = new ErrorFedicom('AUTH-999', 'No se indica el usuario objetivo de la transmisión', 400);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.PETICION_INCORRECTA };
 			} 
 
 			return { ok: true, usuarioSimulador: req.token.sub, solicitudAutenticacion: solicitudAutenticacion };

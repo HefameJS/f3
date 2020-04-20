@@ -9,7 +9,7 @@ const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 
 /**
@@ -40,7 +40,7 @@ class SolicitudAutenticacion {
 			}
 
 		} else {
-			var error = new FedicomError();
+			var error = new ErrorFedicom();
 			if (!json.user) error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
 			if (!json.password) error.add('AUTH-004', 'El parámetro "password" es obligatorio', 400);
 			throw error;

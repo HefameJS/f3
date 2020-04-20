@@ -12,13 +12,13 @@ const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 
 
 
 // POST /pedido
-exports.crearPedido = function (req, res) {
+exports.crearPedido = (req, res) => {
 	let txId = req.txId;
 
 	L.xi(txId, ['Procesando transmisión como ENTRADA DE PEDIDO']);
@@ -35,11 +35,11 @@ exports.crearPedido = function (req, res) {
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
 		pedido = new Pedido(req);
-	} catch (exception) {
-		let fedicomError = FedicomError.fromException(txId, exception);
-		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError])
-		let responseBody = fedicomError.send(res);
-		iEventos.pedidos.errorPedido(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+	} catch (excepcion) {
+		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom])
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.pedidos.errorPedido(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
@@ -52,25 +52,25 @@ exports.crearPedido = function (req, res) {
 		else if (dbTx) {
 			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + txIdOriginal + ' con identico CRC', 'crc');
 			L.xi(txIdOriginal, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
-			let errorDuplicado = new FedicomError('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
-			let responseBody = errorDuplicado.send(res);
-			iEventos.pedidos.pedidoDuplicado(req, res, responseBody, txIdOriginal);
+			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
 			return
 		}
 
 		iEventos.pedidos.inicioPedido(req, pedido);
 		pedido.limpiarEntrada(req.txId);
 
-		iSap.realizarPedido(txId, pedido, (sapError, sapResponse) => {
-			if (sapError) {
-				if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-					let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-					L.xe(txId, ['Error al grabar el pedido', sapError]);
-					let responseBody = fedicomError.send(res);
-					iEventos.pedidos.finPedido(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		iSap.realizarPedido(txId, pedido, (errorSap, respuestaSap) => {
+			if (errorSap) {
+				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+					L.xe(txId, ['Error al grabar el pedido', errorSap]);
+					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+					iEventos.pedidos.finPedido(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 				}
 				else {
-					L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
+					L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorSap]);
 					pedido.simulaFaltas();
 					res.status(202).json(pedido);
 					iFlags.set(txId, K.FLAGS.NO_SAP);
@@ -80,12 +80,12 @@ exports.crearPedido = function (req, res) {
 				return;
 			}
 
-			let clientResponse = pedido.obtenerRespuestaCliente(txId, sapResponse.body);
-			let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
+			let respuestaCliente = pedido.obtenerRespuestaCliente(txId, respuestaSap.body);
+			let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = respuestaCliente.estadoTransmision();
 
-			let responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
-			res.status(responseHttpStatusCode).json(clientResponse);
-			iEventos.pedidos.finPedido(res, clientResponse, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
+			let responseHttpStatusCode = respuestaCliente.isRechazadoSap() ? 409 : 201;
+			res.status(responseHttpStatusCode).json(respuestaCliente);
+			iEventos.pedidos.finPedido(res, respuestaCliente, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
 		});
 
 	});
@@ -112,8 +112,8 @@ exports.consultaPedido = (req, res) => {
 	iMongo.consultaTx.porCRC(txId, numeroPedido, (errorMongo, dbTx) => {
 		if (errorMongo) {
 			L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);
-			let errorFedicom = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
-			let cuerpoRespuesta = errorFedicom.send(res);
+			let errorFedicom = new ErrorFedicom('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
@@ -126,8 +126,8 @@ exports.consultaPedido = (req, res) => {
 			res.status(200).json(cuerpoRespuestaOriginal);
 			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
-			let errorFedicom = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
-			let cuerpoRespuesta = errorFedicom.send(res);
+			let errorFedicom = new ErrorFedicom('PED-ERR-001', 'El pedido solicitado no existe', 404);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
@@ -135,13 +135,13 @@ exports.consultaPedido = (req, res) => {
 }
 
 // PUT /pedido
-exports.actualizarPedido = function (req, res) {
+exports.actualizarPedido = (req, res) => {
 
 	L.xi(req.txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);
 
-	let error = new FedicomError('PED-ERR-999', 'No se ha implementado el servicio de actualización de pedidos', 501);
-	/*let responseBody = */error.send(res);
+	let errorFedicom = new ErrorFedicom('PED-ERR-999', 'No se ha implementado el servicio de actualización de pedidos', 501);
+	/*let cuerpoRespuesta = */errorFedicom.enviarRespuestaDeError(res);
 
-	L.xw(req.txId, [error]);
+	L.xw(req.txId, [errorFedicom]);
 
 }

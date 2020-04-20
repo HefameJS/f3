@@ -8,7 +8,7 @@ const K = global.constants;
 const clone = require('clone');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const CRC = require(BASE + 'model/CRC');
 const LineaLogistica = require('./ModeloLineaLogistica');
 const DireccionLogistica = require('./ModeloDireccionLogistica');
@@ -26,7 +26,7 @@ class Logistica {
 		let json = req.body;
 
 		// SANEADO OBLIGATORIO
-		let fedicomError = new FedicomError();
+		let fedicomError = new ErrorFedicom();
 
 		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'LOG-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		FieldChecker.checkNotEmptyString(json.numeroLogisticaOrigen, fedicomError, 'LOG-ERR-003', 'El campo "numeroLogisticaOrigen" es obligatorio');

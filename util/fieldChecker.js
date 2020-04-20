@@ -8,7 +8,7 @@ module.exports =  {
 	/**
 	 * Comprueba que un valor dado exista y no sea null.
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */
@@ -23,7 +23,7 @@ module.exports =  {
 	/**
 	 * Comprueba que un valor dado exista y no sea null.
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */
@@ -38,7 +38,7 @@ module.exports =  {
 	/**
 	* Comprueba que un valor dado exista, sea un número y mayor que cero.
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -59,7 +59,7 @@ module.exports =  {
 	/**
 	* Comprueba que un valor dado exista, sea un número y mayor o igual que cero
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -73,7 +73,7 @@ module.exports =  {
 	* Comprueba que un valor sea un número y mayor que cero. 
 	* Si el valor no existe no se considera error.
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -92,7 +92,7 @@ module.exports =  {
 	* Comprueba que un valor sea un número y mayor o igual que cero.
 	* Si el valor no existe no se considera error.
 	* @param {*} field El valor a comprobar
-	* @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	* @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	* @param {string} errorCode El código de error que se introduce en caso de error
 	* @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -104,7 +104,7 @@ module.exports =  {
 	/**
 	* Comprueba que un valor exista y que sea un array no vacío.
 	* @param {*} field El valor a comprobar
-	* @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	* @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	* @param {string} errorCode El código de error que se introduce en caso de error
 	* @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -120,7 +120,7 @@ module.exports =  {
 	* Comprueba que un valor sea un array.
 	* Si el valor no existe no se considera error.
 	* @param {*} field El valor a comprobar
-	* @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	* @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	* @param {string} errorCode El código de error que se introduce en caso de error
 	* @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
@@ -136,7 +136,7 @@ module.exports =  {
 	/**
 	 * Comprueba que un valor dado exista y sea un string en formato Fedicom3 Date.
 	 * @param {*} field El valor a comprobar
-	 * @param {FedicomError} errorObject El objeto FedicomError donde insertar el error en caso de existir
+	 * @param {ErrorFedicom} errorObject El objeto ErrorFedicom donde insertar el error en caso de existir
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */

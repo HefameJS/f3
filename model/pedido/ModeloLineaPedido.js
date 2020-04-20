@@ -5,7 +5,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 // Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
@@ -16,7 +16,7 @@ class LineaPedido {
 		// SANEADO OBLIGATORIO
 
 
-		var errorPosicion = new FedicomError();
+		var errorPosicion = new ErrorFedicom();
 
 		// 001 - Control de codigo de artículo
 		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');

@@ -5,7 +5,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 // Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
@@ -16,7 +16,7 @@ class LineaDevolucion {
 
 		// Nota: Por ahora no vamos a hacer saneado
 
-		var errorPosicion = new FedicomError();
+		var errorPosicion = new ErrorFedicom();
 
 		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido');
 		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio');

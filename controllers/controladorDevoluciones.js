@@ -12,14 +12,16 @@ const iTokens = require(BASE + 'util/tokens');
 const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const Devolucion = require(BASE + 'model/devolucion/ModeloDevolucion');
 
 
 // POST /devoluciones
 exports.crearDevolucion = function (req, res) {
 
-	L.xi(req.txId, ['Procesando transmisión como CREACION DE DEVOLUCION']);
+	let txId = req.txId;
+
+	L.xi(txId, ['Procesando transmisión como CREACION DE DEVOLUCION']);
 
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, simulacionRequiereSolicitudAutenticacion: true });
@@ -29,55 +31,56 @@ exports.crearDevolucion = function (req, res) {
 	}
 
 
+	let devolucion = null;
 
 	L.xd(req.txId, ['Analizando el contenido de la transmisión']);
 	try {
-		var devolucion = new Devolucion(req);
-	} catch (fedicomError) {
-		fedicomError = FedicomError.fromException(req.txId, fedicomError);
-		L.xe(req.txId, ['Ocurrió un error al analizar la petición', fedicomError]);
-		var responseBody = fedicomError.send(res);
-		iEventos.devoluciones.errorDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		devolucion = new Devolucion(req);
+	} catch (excepcion) {
+		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
+		L.xe(req.txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.devoluciones.errorDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
 
 	if (!devolucion.contienteLineasValidas()) {
-		L.xd(req.txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
-		var responseBody = [devolucion.generarRespuestaExclusiones()];
-		res.status(400).json(responseBody);
-		iEventos.devoluciones.errorDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		L.xd(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
+		let cuerpoRespuesta = [devolucion.generarRespuestaExclusiones()];
+		res.status(400).json(cuerpoRespuesta);
+		iEventos.devoluciones.errorDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
-	L.xd(req.txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
+	L.xd(txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
 
 	iEventos.devoluciones.inicioDevolucion(req, devolucion);
-	devolucion.limpiarEntrada(req.txId);
-	iSap.realizarDevolucion(req.txId, devolucion, (sapError, sapResponse) => {
+	devolucion.limpiarEntrada(txId);
+	iSap.realizarDevolucion(txId, devolucion, (errorSap, respuestaSap) => {
 
-		if (sapError) {
-			if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-				L.xe(req.txId, ['Error al grabar la devolución', sapError]);
-				var responseBody = fedicomError.send(res);
-				iEventos.devoluciones.finDevolucion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		if (errorSap) {
+			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+				L.xe(req.txId, ['Error al grabar la devolución', errorSap]);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 			}
 			else {
-				L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', sapError]);
-				var fedicomError = new FedicomError('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
-				var responseBody = fedicomError.send(res)
+				L.xe(req.txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
+				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
 				iFlags.set(req.txId, K.FLAGS.NO_SAP)
-				iEventos.devoluciones.finDevolucion(res, responseBody, K.TX_STATUS.NO_SAP);
+				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 			}
 			return;
 		}
 
-		var clientResponse = devolucion.obtenerRespuestaCliente(req.txId, sapResponse.body);
-		var [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = clientResponse.estadoTransmision();
+		let respuestaCliente = devolucion.obtenerRespuestaCliente(txId, respuestaSap.body);
+		let [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
 
-		res.status(codigoRespuestaHttp).json(clientResponse);
-		iEventos.devoluciones.finDevolucion(res, clientResponse, estadoTransmision, { numerosDevolucion });
+		res.status(codigoRespuestaHttp).json(respuestaCliente);
+		iEventos.devoluciones.finDevolucion(res, respuestaCliente, estadoTransmision, { numerosDevolucion });
 
 	});
 }
@@ -91,8 +94,8 @@ exports.consultaDevolucion = (req, res) => {
 	let numeroDevolucion = (req.params ? req.params.numeroDevolucion : null) || (req.query ? req.query.numeroDevolucion : null);
 
 	if (!numeroDevolucion) {
-		let errorFedicom = new FedicomError('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
-		let cuerpoRespuesta = errorFedicom.send(res);
+		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
@@ -104,11 +107,11 @@ exports.consultaDevolucion = (req, res) => {
 		return;
 	}
 
-	iMongo.consultaTx.porNumeroDevolucion(txId, numeroDevolucion, function (errorMongo, dbTx) {
+	iMongo.consultaTx.porNumeroDevolucion(txId, numeroDevolucion, (errorMongo, dbTx) => {
 		if (errorMongo) {
-			let error = new FedicomError('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
-			let responseBody = error.send(res);
-			iEventos.devoluciones.consultaDevolucion(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
+			let error = new ErrorFedicom('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
+			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
+			iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
@@ -131,13 +134,13 @@ exports.consultaDevolucion = (req, res) => {
 				iEventos.devoluciones.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK);
 			} else {
 				L.xe(txId, ['No se encontró la devolución dentro de la transmisión.']);
-				let errorFedicom = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-				let cuerpoRespuesta = errorFedicom.send(res);
+				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 			}
 		} else {
-			let errorFedicom = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-			let cuerpoRespuesta = errorFedicom.send(res);
+			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});

@@ -5,7 +5,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 
 // Helpers
 const extensionesExpress = require(BASE + 'util/extensionesExpress');
@@ -31,8 +31,8 @@ module.exports = function (app) {
 			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
 			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
 
-			let errorFedicom = new FedicomError(errorExpress);
-			errorFedicom.send(res);
+			let errorFedicom = new ErrorFedicom(errorExpress);
+			errorFedicom.enviarRespuestaDeError(res);
 		} else {
 			next();
 		}
@@ -95,8 +95,8 @@ module.exports = function (app) {
 	app.use((req, res, next) => {
 
 		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
-		let errorFedicom = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
-		errorFedicom.send(res);
+		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
+		errorFedicom.enviarRespuestaDeError(res);
 
 	});
 

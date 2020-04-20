@@ -12,7 +12,7 @@ const HOSTNAME = require('os').hostname();
 const iFlags = require(BASE + 'interfaces/iFlags')
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const LineaPedido = require(BASE + 'model/pedido/ModeloLineaPedido');
 const CRC = require(BASE + 'model/CRC');
 
@@ -28,7 +28,7 @@ class Pedido {
 		var json = req.body;
 
 		// SANEADO OBLIGATORIO
-		var fedicomError = new FedicomError();
+		var fedicomError = new ErrorFedicom();
 		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
 		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, fedicomError, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
@@ -47,7 +47,7 @@ class Pedido {
 		// Si todas las lineas serán ignoradas, no hay pedido
 		if (sap_ignore_all) {
 			L.xe(req.txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
-			throw new FedicomError(K.CODIGOS_ERROR_FEDICOM.ERR_TODAS_LINEAS_ERROR, 'Existen errores en todas las líneas, el pedido no se procesa.', 400);
+			throw new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.ERR_TODAS_LINEAS_ERROR, 'Existen errores en todas las líneas, el pedido no se procesa.', 400);
 		}
 
 		// COPIA DE PROPIEDADES
@@ -129,7 +129,7 @@ class Pedido {
 	}
 
 	addIncidencia(code, descripcion) {
-		var incidencia = (code instanceof FedicomError) ? code : new FedicomError(code, descripcion);
+		var incidencia = (code instanceof ErrorFedicom) ? code : new ErrorFedicom(code, descripcion);
 
 		if (this.incidencias && this.incidencias.push) {
 			this.incidencias.push( incidencia.getErrors()[0] )
@@ -239,7 +239,7 @@ const converAlmacen = (codigoAlmacen) => {
 			case 19: /* Malaga nuevo */
 				return ['RG' + (codigoFedicom2 > 9 ? codigoFedicom2 : '0' + codigoFedicom2), null];
 			default:
-				return [null, new FedicomError(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado – Se le asigna su almacén habitual')]
+				return [null, new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado – Se le asigna su almacén habitual')]
 		}
 	} else {
 		return [codigoAlmacen, null];
@@ -264,7 +264,7 @@ const SaneadorPedidosSAP = {
 
 		// Si el número de incidencias varía, es que había incidencias a eliminar
 		if (cantidadIncidenciasAntes !== message.length) {
-			var errorBloqueo = new FedicomError(K.CODIGOS_ERROR_FEDICOM.ERR_BLOQUEO_SAP, 'No se pudo guardar el pedido. Contacte con su comercial.');
+			var errorBloqueo = new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.ERR_BLOQUEO_SAP, 'No se pudo guardar el pedido. Contacte con su comercial.');
 			message = message.concat(errorBloqueo.getErrors());
 		}
 

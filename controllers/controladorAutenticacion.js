@@ -12,7 +12,7 @@ const iFlags = require(BASE + 'interfaces/iFlags');
 const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 
 // Modelos
-const FedicomError = require(BASE + 'model/fedicomError');
+const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const SolicitudAutenticacion = require(BASE + 'model/autenticacion/ModeloSolicitudAutenticacion');
 
 
@@ -29,11 +29,11 @@ const autenticar = (req, res) => {
 	let solicitudAutenticacion = null;
 	try {
 		solicitudAutenticacion = new SolicitudAutenticacion(txId, req.body);
-	} catch (fedicomError) {
-		fedicomError = FedicomError.fromException(txId, fedicomError);
-		L.xe(txId, ['Ocurrió un error al analizar la petición', fedicomError]);
-		let responseBody = fedicomError.send(res);
-		iEventos.autenticacion.finAutenticacion(res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+	} catch (excepcion) {
+		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
+		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 	
@@ -46,9 +46,9 @@ const autenticar = (req, res) => {
 			return _autenticarContraLDAP(txId, solicitudAutenticacion, res);
 		default: {
 			L.xi(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.domain]);
-			let fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			let responseBody = fedicomError.send(res);
-			iEventos.autenticacion.finAutenticacion(res, responseBody, K.TX_STATUS.FALLO_AUTENTICACION);
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	}
 
@@ -59,9 +59,9 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 	iSap.autenticacion.verificarCredenciales(txId, solicitudAutenticacion, (sapError, sapResponse) => {
 		if (sapError) {
 			if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				let fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
+				let errorFedicom = new ErrorFedicom('HTTP-400', sapError.code, 400);
 				L.xe(txId, ['Error al autenticar al usuario', sapError]);
-				let cuerpoRespuesta = fedicomError.send(res);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 			}
 			else {
@@ -90,8 +90,8 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
 		} else {
 			// SAP INDICA QUE EL USUARIO NO ES VALIDO
-			var fedicomError = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			let cuerpoRespuesta = fedicomError.send(res);
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	});
@@ -102,8 +102,8 @@ const _autenticarContraLDAP = (txId, solicitudAutenticacion, res) => {
 	iLdap.autenticar(txId, solicitudAutenticacion, (errorLdap, groups) => {
 		if (errorLdap || !groups) {
 			L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
-			let error = new FedicomError('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			let cuerpoRespuesta = error.send(res);
+			let error = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
+			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 			return;
 		}
