@@ -17,13 +17,13 @@ const consultaSap = function (req, res) {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	let sapSysName = req.query.sapSystem || C.sap_systems.default;
+	let nombreSistemaSap = (req.query ? req.query.sapSystem : null) || C.sap_systems.default;
 
-	iSap.ping(sapSysName, (err, status, sapSystem) => {
-		if (!err) {
-			res.status(200).json({ ok: true, data: { available: status, info: { baseUrl: sapSystem.preCalculatedBaseUrl, name: sapSysName } } });
+	iSap.ping(nombreSistemaSap, (errorSap, estaConectado, sistemaSap) => {
+		if (!errorSap) {
+			res.status(200).json({ ok: true, data: { available: estaConectado, info: { baseUrl: sistemaSap.preCalculatedBaseUrl, name: nombreSistemaSap } } });
 		} else {
-			res.status(200).json({ ok: true, data: { available: status, error: err } });
+			res.status(200).json({ ok: true, data: { available: estaConectado, error: errorSap } });
 		}
 	});
 }

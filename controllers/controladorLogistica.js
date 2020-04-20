@@ -72,17 +72,17 @@ exports.crearLogistica = (req, res) => {
 
 		iEventos.logistica.inicioLogistica(req, logistica);
 		logistica.limpiarEntrada(txId);
-		iSap.logistica.realizarLogistica(txId, logistica, (errorLlamadaSap, respuestaSap) => {
+		iSap.logistica.realizarLogistica(txId, logistica, (errorSap, respuestaSap) => {
 
-			if (errorLlamadaSap) {
-				if (errorLlamadaSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-					let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.code, 400);
-					L.xe(txId, ['Error al grabar la devolución', errorLlamadaSap]);
+			if (errorSap) {
+				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+					L.xe(txId, ['Error al grabar la devolución', errorSap]);
 					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 					iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 				}
 				else {
-					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
+					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorSap]);
 					let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
 					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
 					iFlags.set(txId, K.FLAGS.NO_SAP)

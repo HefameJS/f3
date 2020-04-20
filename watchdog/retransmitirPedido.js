@@ -167,19 +167,17 @@ const retransmitirPedido = function (otxId, options, callback) {
         pedido.limpiarEntrada(ctxId || otxId);
         L.xi(rtxId, ['Transmitimos a SAP el pedido']);
 
+        iSap.retransmitirPedido(pedido, (errorSap, respuestaSap, solicitudASap) => {
 
+            respuestaSap = _construyeRespuestaSap(errorSap, respuestaSap);
 
-        iSap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
-
-            sapResponse = _construyeRespuestaSap(sapError, sapResponse);
-
-            if (sapError) {
-                if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                    var fedicomError = new ErrorFedicom('HTTP-400', sapError.code, 400);
+            if (errorSap) {
+                if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                    var fedicomError = new ErrorFedicom('HTTP-400', errorSap.code, 400);
                     L.xe(rtxId, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                        sapRequest: sapRequest,
-                        sapResponse: sapResponse,
+                        sapRequest: solicitudASap,
+                        sapResponse: respuestaSap,
                         clientResponse: _construyeRespuestaCliente(ctxId || otxId, 400, fedicomError.getErrors()),
                         status: K.TX_STATUS.PETICION_INCORRECTA
                     });
@@ -188,12 +186,12 @@ const retransmitirPedido = function (otxId, options, callback) {
                     return callback(null, rtxId, ctxId);
 
                 } else {
-                    L.xe(rtxId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
+                    L.xe(rtxId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorSap]);
                     pedido.simulaFaltas();
 
                     emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                        sapRequest: sapRequest,
-                        sapResponse: sapResponse,
+                        sapRequest: solicitudASap,
+                        sapResponse: respuestaSap,
                         clientResponse: _construyeRespuestaCliente(ctxId || otxId, 201, pedido),
                         status: K.TX_STATUS.NO_SAP
                     });
@@ -204,13 +202,13 @@ const retransmitirPedido = function (otxId, options, callback) {
                 }
             }
 
-            var clientResponse = pedido.obtenerRespuestaCliente(ctxId || otxId, sapResponse.body);
+            var clientResponse = pedido.obtenerRespuestaCliente(ctxId || otxId, respuestaSap.body);
             var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
             var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
 
             emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                sapRequest: sapRequest,
-                sapResponse: sapResponse,
+                sapRequest: solicitudASap,
+                sapResponse: respuestaSap,
                 clientResponse: _construyeRespuestaCliente(ctxId || otxId, responseHttpStatusCode, clientResponse),
                 status: estadoTransmision,
                 numerosPedidoSAP: numerosPedidoSAP,

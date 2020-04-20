@@ -56,16 +56,16 @@ const autenticar = (req, res) => {
 
 const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 	L.xi(txId, ['Se procede a comprobar en SAP las credenciales de la petición']);
-	iSap.autenticacion.verificarCredenciales(txId, solicitudAutenticacion, (sapError, sapResponse) => {
-		if (sapError) {
-			if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				let errorFedicom = new ErrorFedicom('HTTP-400', sapError.code, 400);
-				L.xe(txId, ['Error al autenticar al usuario', sapError]);
+	iSap.autenticacion.verificarCredenciales(txId, solicitudAutenticacion, (errorSap, respuestaSap) => {
+		if (errorSap) {
+			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+				L.xe(txId, ['Error al autenticar al usuario', errorSap]);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 			}
 			else {
-				L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', sapError]);
+				L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', errorSap]);
 				let token = solicitudAutenticacion.generarToken(txId);
 				let cuerpoRespuesta = { auth_token: token };
 				res.status(201).json(cuerpoRespuesta);
@@ -76,7 +76,7 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 			return;
 		}
 
-		if (sapResponse.body.username) {
+		if (respuestaSap.body.username) {
 			// AUTH OK POR SAP
 
 			let token = solicitudAutenticacion.generarToken(txId);
