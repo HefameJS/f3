@@ -83,65 +83,62 @@ exports.crearDevolucion = function (req, res) {
 }
 
 // GET /devoluciones/:numeroDevolucion
-exports.consultaDevolucion = function (req, res) {
+exports.consultaDevolucion = (req, res) => {
 
-	L.xi(req.txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
+	let txId = req.txId;
+	L.xi(txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
 
-	var numeroDevolucion = req.params.numeroDevolucion || req.query.numeroDevolucion;
+	let numeroDevolucion = (req.params ? req.params.numeroDevolucion : null) || (req.query ? req.query.numeroDevolucion : null);
 
 	if (!numeroDevolucion) {
-		var fedicomError = new FedicomError('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
-		var responseBody = fedicomError.send(res);
-		iEventos.devoluciones.emitErrorConsultarDevolucion(req, res, responseBody, K.TX_STATUS.PETICION_INCORRECTA);
+		let errorFedicom = new FedicomError('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
+		let cuerpoRespuesta = errorFedicom.send(res);
+		iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.devoluciones.emitErrorConsultarDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.devoluciones.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
-	iEventos.devoluciones.emitRequestConsultarDevolucion(req);
-	iMongo.consultaTx.porCRCDeConfirmacion(req.txId, numeroDevolucion, function (err, dbTx) {
-		if (err) {
-			var error = new FedicomError('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
-			var responseBody = error.send(res);
-			iEventos.devoluciones.emitErrorConsultarDevolucion(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
+	iMongo.consultaTx.porNumeroDevolucion(txId, numeroDevolucion, function (errorMongo, dbTx) {
+		if (errorMongo) {
+			let error = new FedicomError('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
+			let responseBody = error.send(res);
+			iEventos.devoluciones.consultaDevolucion(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
-		L.xi(req.txId, ['Se recupera la transmisión de la base de datos']);
+		L.xi(txId, ['Se ha recuperado la devolución de la base de datos']);
 
 		if (dbTx && dbTx.clientResponse) {
-			// TODO: Autorizacion
-			var originalBody = dbTx.clientResponse.body;
-			var documentoDevolucion = null;
+			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
+			let documentoDevolucion = null;
 
-			if (originalBody && originalBody.length) {
-				originalBody.some(function (doc) {
-					if (doc && doc.numeroDevolucion && doc.numeroDevolucion === numeroDevolucion) {
-						documentoDevolucion = doc;
-						return true;
-					}
-					return false;
+			if (cuerpoRespuestaOriginal && cuerpoRespuestaOriginal.find) {
+				// Las devoluciones devuelven arrays con varios documentos de devolución dentro,
+				// buscamos el que tiene el numero de devolución concreta que buscamos.
+				documentoDevolucion = cuerpoRespuestaOriginal.find( (devolucion) => {
+					return (devolucion && devolucion.numeroDevolucion === numeroDevolucion);
 				});
 			}
 
 			if (documentoDevolucion) {
 				res.status(200).json(documentoDevolucion);
-				iEventos.devoluciones.emitResponseConsultarDevolucion(res, documentoDevolucion, K.TX_STATUS.OK);
+				iEventos.devoluciones.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK);
 			} else {
-				L.xe(req.txId, ['No se encontró la devolución dentro de la transmisión.']);
-				var error = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-				var responseBody = error.send(res);
-				iEventos.devoluciones.emitErrorConsultarDevolucion(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
+				L.xe(txId, ['No se encontró la devolución dentro de la transmisión.']);
+				let errorFedicom = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+				let cuerpoRespuesta = errorFedicom.send(res);
+				iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 			}
 		} else {
-			var error = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-			var responseBody = error.send(res);
-			iEventos.devoluciones.emitErrorConsultarDevolucion(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			let errorFedicom = new FedicomError('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+			let cuerpoRespuesta = errorFedicom.send(res);
+			iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 
