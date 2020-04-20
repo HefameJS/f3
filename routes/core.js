@@ -11,7 +11,7 @@ const iEventos = require(BASE + 'interfaces/eventos/iEventos');
 const FedicomError = require(BASE + 'model/fedicomError');
 
 // Helpers
-const ExpressExtensions = require(BASE + 'util/expressExtensions');
+const extensionesExpress = require(BASE + 'util/extensionesExpress');
 const tryCatch = require('./tryCatchWrapper');
 
 
@@ -34,7 +34,7 @@ module.exports = (app) => {
 	app.use((errorExpress, req, res, next) => {
 		if (errorExpress) {
 
-			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+			[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
 
 			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
 			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
@@ -54,7 +54,7 @@ module.exports = (app) => {
 
 	app.use( (req, res, next) => {
 
-		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+		[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
 
 		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.originIp);
 		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');

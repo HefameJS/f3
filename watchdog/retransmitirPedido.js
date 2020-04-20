@@ -15,7 +15,7 @@ const FedicomError = require(BASE + 'model/fedicomError');
 const Pedido = require(BASE + 'model/pedido/ModeloPedido');
 
 // Helpers
-const expressExtensions = require(BASE + 'util/expressExtensions');
+const extensionesExpress = require(BASE + 'util/extensionesExpress');
 const emitRetransmision = iEventos.retransmisiones.emitRetransmision;
 
 
@@ -150,7 +150,7 @@ const retransmitirPedido = function (otxId, options, callback) {
             options.noActualizarOriginal = true;
 
             // Creamos un clon de la request y lo emitimos como un nuevo inicio de pedido
-            let req = expressExtensions.extendReqForRtx(dbTx.clientRequest);
+            let req = extensionesExpress.extenderSolicitudRetransmision(dbTx.clientRequest);
             req.body.numeroPedidoOrigen = nuevoNPO;
 
             ctxId = req.txId;
