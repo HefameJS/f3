@@ -15,63 +15,62 @@ const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
 
 const cacheTransacciones = new MemoryCache.Cache();
 
-const descartar = (data) => {
+const descartar = (transaccion) => {
 
-	var key = data['$setOnInsert']._id;
+	let txId = transaccion['$setOnInsert']._id;
 
 
 	if (MDB.colDiscard()) {
-		MDB.colDiscard().updateOne({ _id: key }, data, { upsert: true, w: 0 }, function (err, res) {
-			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', err], 'mdbCommitDiscard');
+		MDB.colDiscard().updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 }, function (errorMongo, res) {
+			if (errorMongo) {
+				L.xe(txId, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', errorMongo], 'mdbCommitDiscard');
 			} else {
 				//L.xd(key, ['COMMIT DISCARD OK'], 'mdbCommitDiscard');
 			}
 		});
 	}
 	else {
-		L.xf(key, ['ERROR AL HACER COMMIT DISCARD'], 'mdbCommitDiscard');
+		L.xf(txId, ['ERROR AL HACER COMMIT DISCARD'], 'mdbCommitDiscard');
 	}
 
 };
 
-const grabar = (data, noMerge) => {
+const grabar = (transaccion, noAgregarConCache) => {
 
-	var key = data['$setOnInsert']._id;
+	let txId = transaccion['$setOnInsert']._id;
 
-	var cachedData = cacheTransacciones.get(key);
-	if (cachedData && !noMerge) {
-		data = _unirConDatosDeCache(cachedData, data);
+	let transaccionEnCache = cacheTransacciones.get(txId);
+	if (transaccionEnCache && !noAgregarConCache) {
+		transaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
 	}
 
 	if (MDB.colTx()) {
-		MDB.colTx().updateOne({ _id: key }, data, { upsert: true }, (err, res) => {
-			if (err) {
-				L.xe(key, ['**** ERROR AL HACER COMMIT', err], 'mdbCommit');
-				iSQLite.grabarTransaccion(data);
+		MDB.colTx().updateOne({ _id: txId }, transaccion, { upsert: true }, (errorMongo, res) => {
+			if (errorMongo) {
+				L.xe(txId, ['**** ERROR AL HACER COMMIT', errorMongo], 'mdbCommit');
+				iSQLite.grabarTransaccion(transaccion);
 			}
 		});
 	}
 	else {
-		L.xf(key, ['ERROR AL HACER COMMIT', data], 'mdbCommit');
-		iSQLite.grabarTransaccion(data);
+		L.xf(txId, ['ERROR AL HACER COMMIT', transaccion], 'mdbCommit');
+		iSQLite.grabarTransaccion(transaccion);
 	}
 
-	if (cachedData) {
-		cacheTransacciones.del(key);
+	if (transaccionEnCache) {
+		cacheTransacciones.del(txId);
 	}
 
 };
 
-const grabarEnMemoria = (data) => {
+const grabarEnMemoria = (transaccion) => {
 
-	var key = data['$setOnInsert']._id;
-
-	var cachedData = cacheTransacciones.get(key);
-	var mergedData = _unirConDatosDeCache(cachedData, data);
-	cacheTransacciones.put(key, mergedData, 5000, /*onTimeout*/(key, value) => {
+	let txId = transaccion['$setOnInsert']._id;
+	let transaccionEnCache = cacheTransacciones.get(txId);
+	let nuevaTransaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
+	cacheTransacciones.put(txId, nuevaTransaccion, 5000, /*onTimeout*/(key, value) => {
 		L.xw(key, ['Atención: Se fuerza COMMIT por timeout'], 'mdbCommit');
-		grabar(value, false);
+		grabar(value);
 	});
 
 }
