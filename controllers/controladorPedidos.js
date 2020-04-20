@@ -94,43 +94,41 @@ exports.crearPedido = function (req, res) {
 
 // GET /pedido
 // GET /pedido/:numeroPedido
-exports.consultaPedido = function (req, res) {
+exports.consultaPedido = (req, res) => {
 
-	let txId = txId;
+	let txId = req.txId;
 
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE PEDIDO']);
 
 	// Comprobación del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.devoluciones.emitErrorConsultarPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.pedido.consultaPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
-	let numeroPedido = req.params.numeroPedido || req.query.numeroPedido;
-	iEventos.pedidos.emitRequestConsultarPedido(req);
-	iMongo.consultaTx.porCRC(txId, numeroPedido, function (err, dbTx) {
-		if (err) {
-			L.xe(txId, ['No se ha podido recuperar el pedido', err]);
-			var error = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
-			var responseBody = error.send(res);
-			iEventos.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
+	let numeroPedido = (req.params ? req.params.numeroPedido : null) || (req.query ? req.query.numeroPedido : null);
+	
+	iMongo.consultaTx.porCRC(txId, numeroPedido, (errorMongo, dbTx) => {
+		if (errorMongo) {
+			L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);
+			let errorFedicom = new FedicomError('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
+			let cuerpoRespuesta = errorFedicom.send(res);
+			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
-
-		L.xi(txId, ['Se recupera la transmisión de la base de datos', dbTx]);
-
+		L.xi(txId, ['Se ha recuperado el pedido de la base de datos']);
 
 		if (dbTx && dbTx.clientResponse) {
 			// TODO: Autorizacion
-			var originalBody = dbTx.clientResponse.body;
-			res.status(200).json(originalBody);
-			iEventos.pedidos.emitResponseConsultarPedido(res, originalBody, K.TX_STATUS.OK);
+			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
+			res.status(200).json(cuerpoRespuestaOriginal);
+			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
-			var error = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
-			var responseBody = error.send(res);
-			iEventos.pedidos.emitErrorConsultarPedido(req, res, responseBody, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			let errorFedicom = new FedicomError('PED-ERR-001', 'El pedido solicitado no existe', 404);
+			let cuerpoRespuesta = errorFedicom.send(res);
+			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 

@@ -12,105 +12,6 @@ const iFlags = require(BASE + 'interfaces/iFlags');
 const ObjectID = iMongo.ObjectID;
 
 
-module.exports.emitErrorConsultarPedido = function (req, res, responseBody, status) {
-
-	var data = {
-		$setOnInsert: {
-			_id: req.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: status
-		},
-		$set: {
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: K.TX_TYPES.CONSULTA_PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: responseBody
-			}
-		}
-	}
-
-	iFlags.finaliza(res.txId, data);
-
-	L.xi(req.txId, ['Emitiendo COMMIT para evento ErrorConsultarPedido'], 'txCommit');
-	iMongo.transaccion.grabar(data);
-}
-module.exports.emitRequestConsultarPedido = function(req) {
-	var reqData = {
-		$setOnInsert: {
-			_id: req.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: K.TX_STATUS.RECEPCIONADO
-		},
-		$set: {
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			iid: global.instanceID,
-			pedidoConsultado: req.query.numeroPedido || req.params.numeroPedido,
-			type: K.TX_TYPES.CONSULTA_PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-      		ip: req.originIp,
-      		protocol: req.protocol,
-      		method: req.method,
-      		url: req.originalUrl,
-      		route: req.route.path,
-      		headers: req.headers,
-      		body: req.body
-			}
-		}
-	};
-
-	L.xi(req.txId, ['Emitiendo COMMIT para evento RequestConsultarPedido'], 'txCommit');
-	iMongo.transaccion.grabarEnMemoria(reqData);
-}
-module.exports.emitResponseConsultarPedido = function (res, responseBody, status) {
-	var resData = {
-		$setOnInsert: {
-			_id: res.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: status
-		},
-		$set: {
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: responseBody
-			}
-		}
-	}
-
-	iFlags.finaliza(res.txId, resData);
-
-	L.xi(res.txId, ['Emitiendo COMMIT para evento ResponseConsultarPedido'], 'txCommit');
-	iMongo.transaccion.grabar(resData);
-}
-
-
 module.exports.inicioPedido = (req, pedido) => {
 	var reqData = {
 		$setOnInsert: {
@@ -259,4 +160,48 @@ module.exports.pedidoDuplicado = (req, res, responseBody, originalTxId) => {
 	L.xi(req.txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	iMongo.transaccion.grabar(dataUpdate);
 	iMongo.transaccion.grabar(data);
+}
+module.exports.consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
+
+	let txId = req.txId;
+	let numeroPedido = (req.query ? req.query.numeroPedido : null) || (req.params ? req.params.numeroPedido : null) || null;
+
+	let transaccion = {
+		$setOnInsert: {
+			_id: txId,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+			status: estadoFinal
+		},
+		$set: {
+			authenticatingUser: req.identificarUsuarioAutenticado(),
+			client: req.identificarClienteSap(),
+			iid: global.instanceID,
+			type: K.TX_TYPES.CONSULTA_PEDIDO,
+			pedidoConsultado: numeroPedido,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.originIp,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: cuerpoRespuesta
+			}
+		}
+	}
+
+	iFlags.finaliza(txId, transaccion);
+
+	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA PEDIDO'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
 }
