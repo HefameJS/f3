@@ -133,7 +133,7 @@ exports.consultaLogistica = (req, res) => {
 			// TODO: Autorizacion
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
 			res.status(200).json(cuerpoRespuestaOriginal);
-			iEventos.logistica.consultaLogistica(res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
+			iEventos.logistica.consultaLogistica(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
 			let error = new FedicomError('LOG-ERR-001', 'El pedido logístico solicitado no existe', 404);
 			let cuerpoRespuesta = error.send(res);

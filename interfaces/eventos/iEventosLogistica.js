@@ -161,21 +161,24 @@ module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, idTxOriginal) =>
 	iMongo.transaccion.grabar(data);
 }
 
-module.exports.consultaLogistica = function (req, res, cuerpoRespuesta, estadoFinal) {
+module.exports.consultaLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
-	let numeroLogistica = req.query.numeroLogistica || req.params.numeroLogistica || null;
+	let txId = req.txId;
+	let numeroLogistica = (req.query ? req.query.numeroLogistica : null) || (req.params ? req.params.numeroLogistica : null) || null;
 
-	var data = {
+	let transaccion = {
 		$setOnInsert: {
-			_id: res.txId,
+			_id: txId,
+			createdAt: new Date()
+		},
+		$max : {
+			status: estadoFinal,
+			modifiedAt: new Date()
 		},
 		$set: {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
-			createdAt: new Date(),
-			modifiedAt: new Date(),
 			type: K.TX_TYPES.CONSULTA_LOGISTICA,
-			status: estadoFinal,
 			numeroLogistica: numeroLogistica,
 			clientRequest: {
 				authentication: req.token,
@@ -195,6 +198,7 @@ module.exports.consultaLogistica = function (req, res, cuerpoRespuesta, estadoFi
 		}
 	}
 
-	L.xi(req.txId, ['Emitiendo COMMIT para evento consultaLogistica'], 'txCommit');
-	iMongo.transaccion.grabar(data);
+	L.xi(txId, ['Emitiendo COMMIT para evento consultaLogistica'], 'txCommit');
+	console.log(transaccion);
+	iMongo.transaccion.grabar(transaccion);
 }
