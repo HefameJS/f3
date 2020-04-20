@@ -49,7 +49,7 @@ exports.crearPedido = (req, res) => {
 		if (errorMongo) {
 			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', errorMongo], 'crc');
 		}
-		else if (dbTx) {
+		else if (txIdOriginal) {
 			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + txIdOriginal + ' con identico CRC', 'crc');
 			L.xi(txIdOriginal, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
 			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
