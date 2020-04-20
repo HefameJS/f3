@@ -106,7 +106,11 @@ module.exports = function (app) {
 		.get(tryCatch(controladores.retransmision.retransmitePedido));
 
 	app.route('/logistica')
-		.post(tryCatch(controladores.logistica.crearLogistica));
+		.post(tryCatch(controladores.logistica.crearLogistica))
+		.get(tryCatch(controladores.logistica.consultaLogistica));
+
+	app.route('/logistica/:numeroLogistica')
+		.get(tryCatch(controladores.logistica.consultaLogistica));
 
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */

@@ -99,3 +99,46 @@ exports.crearLogistica = function (req, res) {
 		});
 	});
 }
+
+
+// GET /logistica
+// GET /logistica/:numeroLogistica
+exports.consultaLogistica = (req, res) => {
+
+	let txId = req.txId;
+
+	L.xi(txId, ['Procesando transmisión como CONSULTA DE LOGISTICA']);
+
+	// Comprobación del estado del token
+	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
+	if (!estadoToken.ok) {
+		iEventos.logistica.consultaLogistica(req, res, estadoToken.respuesta, estadoToken.motivo);
+		return;
+	}
+
+	let numeroLogistica = req.params.numeroLogistica || req.query.numeroLogistica;
+	iEventos.pedidos.emitRequestConsultarPedido(req);
+	iMongo.consultaTx.porNumeroLogistica(txId, numeroLogistica, (errorMongo, dbTx) => {
+		if (errorMongo) {
+			L.xe(txId, ['No se ha podido recuperar el pedido de logística', errorMongo]);
+			let error = new FedicomError('LOG-ERR-005', 'El parámetro "numeroLogistica" es inválido', 400);
+			let responseBody = error.send(res);
+			iEventos.logistica.consultaLogistica(req, res, responseBody, K.TX_STATUS.CONSULTA.ERROR_DB);
+			return;
+		}
+
+		L.xi(txId, ['Se ha recuperado la transmisión de la base de datos']);
+
+		if (dbTx && dbTx.clientResponse) {
+			// TODO: Autorizacion
+			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
+			res.status(200).json(cuerpoRespuestaOriginal);
+			iEventos.logistica.consultaLogistica(res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
+		} else {
+			let error = new FedicomError('LOG-ERR-001', 'El pedido logístico solicitado no existe', 404);
+			let cuerpoRespuesta = error.send(res);
+			iEventos.logistica.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+		}
+	});
+
+}

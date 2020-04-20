@@ -161,22 +161,22 @@ module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, idTxOriginal) =>
 	iMongo.transaccion.grabar(data);
 }
 
-module.exports.consultaLogistica = function (req, res, responseBody, status) {
+module.exports.consultaLogistica = function (req, res, cuerpoRespuesta, estadoFinal) {
+
+	let numeroLogistica = req.query.numeroLogistica || req.params.numeroLogistica || null;
 
 	var data = {
 		$setOnInsert: {
 			_id: res.txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: status
 		},
 		$set: {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			iid: global.instanceID,
-			numeroLogistica: req.query.numeroLogistica || req.params.numeroLogistica || null,
+			createdAt: new Date(),
+			modifiedAt: new Date(),
 			type: K.TX_TYPES.CONSULTA_LOGISTICA,
+			status: estadoFinal,
+			numeroLogistica: numeroLogistica,
 			clientRequest: {
 				authentication: req.token,
 				ip: req.originIp,
@@ -190,7 +190,7 @@ module.exports.consultaLogistica = function (req, res, responseBody, status) {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
 				headers: res.getHeaders(),
-				body: responseBody
+				body: cuerpoRespuesta
 			}
 		}
 	}
