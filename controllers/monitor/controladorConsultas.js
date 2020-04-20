@@ -24,7 +24,6 @@ const consultaTransmisiones = function (req, res) {
 
 	iMongo.consultaTx.consulta(txId, query, (err, resultado) => {
 		if (err) {
-			console.log(err);
 			res.status(500).json({ ok: false, error: (err.error || err.message) });
 			return;
 		}

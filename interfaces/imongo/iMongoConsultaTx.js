@@ -31,7 +31,7 @@ const consulta = (consulta, callback) => {
 			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
 			else filter._id = new ObjectID(filter._id);
 		}
-	} catch (e) { console.log(e) }
+	} catch (e) { L.e(['Error al convertir IDs a ObjectID', e]) }
 
 	// Si el filtro indica el parámetro 'crc', lo transformamos a ObjectID antes de la consulta
 	try {
@@ -40,7 +40,7 @@ const consulta = (consulta, callback) => {
 			else if (filter.crc.$nin) filter.crc.$nin = filter.crc.$nin.map(id => new ObjectID(id))
 			else filter.crc = new ObjectID(filter.crc);
 		}
-	} catch (e) { console.log(e) }
+	} catch (e) { L.e(['Error al convertir CRC a ObjectID', e]) }
 
 	// Si filtro indica fechas, las convertimos a Date
 	try {
@@ -48,7 +48,7 @@ const consulta = (consulta, callback) => {
 			if (filter.createdAt.$gte) filter.createdAt.$gte = new Date(filter.createdAt.$gte)
 			if (filter.createdAt.$lte) filter.createdAt.$lte = new Date(filter.createdAt.$lte)
 		}
-	} catch (e) { console.log(e) }
+	} catch (e) { L.e(['Error al convertir fechas a Date', e]) }
 
 	// Por el momento, no se admiten '$or'
 	if (filter.$or && filter.$or.length === 0) delete filter.$or;
