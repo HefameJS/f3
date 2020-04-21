@@ -163,8 +163,13 @@ module.exports.pedidoDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 		}
 	}
 
-	iFlags.set(txId, K.FLAGS.DUPLICADOS);
-	iFlags.finaliza(txId, transaccionActualizacionOriginal);
+	// Establece flags que hubiera en la transaccion actual (la de type: K.TX_TYPES.PEDIDO_DUPLICADO)
+	iFlags.finaliza(txId, transaccion);
+
+	// Establece el flag 'DUPLICADOS' en la transaccion original
+	iFlags.set(txIdOriginal, K.FLAGS.DUPLICADOS);
+	iFlags.finaliza(txIdOriginal, transaccionActualizacionOriginal);
+	
 
 	L.xi(txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
@@ -208,8 +213,6 @@ module.exports.consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 			}
 		}
 	}
-
-	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA PEDIDO'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
