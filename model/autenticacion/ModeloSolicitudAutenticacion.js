@@ -24,6 +24,7 @@ const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
  *  - sapSystem - Fuerza el desvío de la petición al sistema SAP indicado
  */
 class SolicitudAutenticacion {
+
 	constructor(txId, json) {
 
 		this.domain = K.DOMINIOS.verificar(json.domain);
@@ -40,10 +41,10 @@ class SolicitudAutenticacion {
 			}
 
 		} else {
-			var error = new ErrorFedicom();
-			if (!json.user) error.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
-			if (!json.password) error.add('AUTH-004', 'El parámetro "password" es obligatorio', 400);
-			throw error;
+			let errorFedicom = new ErrorFedicom();
+			if (!json.user) errorFedicom.add('AUTH-003', 'El parámetro "user" es obligatorio', 400);
+			if (!json.password) errorFedicom.add('AUTH-004', 'El parámetro "password" es obligatorio', 400);
+			throw errorFedicom;
 		}
 
 
