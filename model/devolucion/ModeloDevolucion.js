@@ -5,7 +5,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Externo
-const crypto = require('crypto');
+const clone = require('clone');
 
 // Interfaces
 const iFlags = require(BASE + 'interfaces/iFlags');
@@ -54,7 +54,7 @@ class Devolucion {
 		var [lineas, lineasExcluidas, crc] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 		this.lineasExcluidas = lineasExcluidas;
-		this.crc = crc;
+		this.crc = CRC.crear(this.codigoCliente, crc);
 
 	}
 
@@ -95,19 +95,45 @@ class Devolucion {
 
 	}
 
-	obtenerRespuestaCliente(txId, respuestaSAP) {
+	obtenerRespuestaCliente(txId, respuestaSap) {
 
-		// Comprobamos si SAP ha devuelto un error de "cliente desconocido"
-		if (respuestaSAP[0] && respuestaSAP[0].incidencias[0] && respuestaSAP[0].incidencias[0].descripcion === "Cliente desconocido") {
-			L.xw(txId, 'Se encontró un error de cliente desconocido en la respuesta de SAP')
-			let error = new ErrorFedicom('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido')
-			respuestaSAP = error.getErrors()
-			respuestaSAP.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
-			respuestaSAP.isRechazadoSap = () => true;
-			return respuestaSAP;
-		}
+		let respuestaCliente = clone(respuestaSap);
 
-		respuestaSAP.forEach(devolucion => {
+		respuestaCliente.forEach(devolucion => {
+
+			// Hacemos un tratamiento especial de las cabeceras que devuelve SAP:
+			let incidenciaClienteDesconocido = false;
+
+			if (devolucion.incidencias && devolucion.incidencias.filter) {
+
+				devolucion.incidencias = devolucion.incidencias.filter( (incidenciaCabecera) => {
+					// Si aparece la incidencia 'Cliente desconocido', la suprimimos de la respuesta al cliente
+					// y al poner incidenciaClienteDesconocido a true. Esto hará que la devolución se marque como rechazada.
+					if (incidenciaCabecera && incidenciaCabecera.descripcion === "Cliente desconocido") {
+						incidenciaClienteDesconocido = true;
+						return false;
+					}
+					// Si aparece la incidencia 'Devolución duplicada', la suprimimos de la respuesta al cliente y levantamos el flag 'DUPLICADO_SAP'.
+					else if (incidenciaCabecera && incidenciaCabecera.descripcion === "Devolución duplicada") {
+						L.xi(txId, 'Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP')
+						iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
+						return false;
+					}
+					return true;
+
+				})
+			}
+
+			// Si aparece la incidencia de cliente desconocido, enviaremos el mensaje de rechazo y abortamos el resto del saneado
+			if (incidenciaClienteDesconocido) {
+				L.xw(txId, 'Se encontró la incidencia de "Cliente desconocido" en la respuesta de SAP - Devolución rechazada')
+				let errorFedicom = new ErrorFedicom('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido', 400)
+				respuestaCliente = errorFedicom.getErrors();
+				respuestaCliente.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
+				respuestaCliente.isRechazadoSap = () => true;
+				return respuestaCliente;
+			}
+
 			if (devolucion && devolucion.sap_punto_entrega) {
 				iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, devolucion.sap_punto_entrega);
 			}
@@ -121,17 +147,17 @@ class Devolucion {
 		// Si se excluyeron lineas, generamos una devolución sin número donde incluimos 
 		// las lineas que quedaron excluidas y el motivo
 		if (this.lineasExcluidas.length > 0) {
-			respuestaSAP.push(this.generarRespuestaExclusiones());
+			respuestaCliente.push(this.generarRespuestaExclusiones());
 			estado = K.TX_STATUS.DEVOLUCION.PARCIAL
 			iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL, true);
 		}
 
-		_estableceFlags(txId, respuestaSAP);
+		_estableceFlags(txId, respuestaCliente);
 
 
-		respuestaSAP.estadoTransmision = () => { return _obtenerEstadoDeRespuestaSap(respuestaSAP, estado) }
-		respuestaSAP.isRechazadoSap = () => false;
-		return respuestaSAP;
+		respuestaCliente.estadoTransmision = () => { return _obtenerEstadoDeRespuestaSap(respuestaCliente, estado) }
+		respuestaCliente.isRechazadoSap = () => false;
+		return respuestaCliente;
 	}
 
 
