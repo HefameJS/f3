@@ -9,7 +9,7 @@ const iTokens = require(BASE + 'util/tokens');
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 // Modelos
-const ReplicaSetStatus = require(BASE + 'model/monitor/replicaSetStatus')
+const EstadoReplicaSet = require(BASE + 'model/monitor/ModeloEstadoReplicaSet')
 
 // GET /status/mdb/col
 const getNombresColecciones = (req, res) => {
@@ -37,24 +37,24 @@ const getColeccion = (req, res) => {
 		return res.status(400).json({ ok: false, error: 'Debe especificar el nombre de la colección' });
 	}
 
-	var fullData = (req.query.full === 'true');
+	let consultarDatosExtendidos = (req.query.full === 'true');
 
-	iMongo.monitor.getColeccion(req.params.colName, (err, collStats) => {
-		if (err) {
-			L.e(['Error al obtener los datos de la colección', err]);
+	iMongo.monitor.getColeccion(req.params.colName, (errorMongo, datosColeccion) => {
+		if (errorMongo) {
+			L.e(['Error al obtener los datos de la colección', errorMongo]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener los datos de la colección' });
 		}
 
-		if (!fullData) {
-			if (collStats.wiredTiger) delete collStats.wiredTiger;
-			if (collStats.indexDetails) delete collStats.indexDetails;
+		if (!consultarDatosExtendidos) {
+			if (datosColeccion.wiredTiger) delete datosColeccion.wiredTiger;
+			if (datosColeccion.indexDetails) delete datosColeccion.indexDetails;
 		}
 
-		delete collStats['$clusterTime'];
-		delete collStats.ok;
-		delete collStats.operationTime;
+		delete datosColeccion['$clusterTime'];
+		delete datosColeccion.ok;
+		delete datosColeccion.operationTime;
 
-		return res.status(200).json({ ok: true, data: collStats });
+		return res.status(200).json({ ok: true, data: datosColeccion });
 
 	});
 }
@@ -65,17 +65,17 @@ const getDatabase = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getDatabase((err, dbStats) => {
-		if (err) {
-			L.e(['Error al obtener estadísticas de la base de datos', err]);
+	iMongo.monitor.getDatabase((errorMongo, estadisticasDb) => {
+		if (errorMongo) {
+			L.e(['Error al obtener estadísticas de la base de datos', errorMongo]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener estadísticas de la base de datos' });
 		}
 
-		delete dbStats['$clusterTime'];
-		delete dbStats.ok;
-		delete dbStats.operationTime;
+		delete estadisticasDb['$clusterTime'];
+		delete estadisticasDb.ok;
+		delete estadisticasDb.operationTime;
 
-		return res.status(200).json({ ok: true, data: dbStats });
+		return res.status(200).json({ ok: true, data: estadisticasDb });
 
 	});
 }
@@ -86,13 +86,13 @@ const getOperaciones = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getOperaciones((err, sessions) => {
-		if (err) {
-			L.e(['Error al obtener la lista de operaciones', err]);
+	iMongo.monitor.getOperaciones((errorMongo, sesiones) => {
+		if (errorMongo) {
+			L.e(['Error al obtener la lista de operaciones', errorMongo]);
 			return res.status(500).json({ ok: false, msg: 'Error al obtener la lista de operaciones' });
 		}
 
-		return res.status(200).json({ ok: true, data: sessions });
+		return res.status(200).json({ ok: true, data: sesiones });
 
 	});
 }
@@ -103,15 +103,15 @@ const getReplicaSet = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getReplicaSet((err, data) => {
-		if (err) {
-			L.e(['Error al obtener el estado del cluster', err]);
+	iMongo.monitor.getReplicaSet((errorMongo, datosReplicaSet) => {
+		if (errorMongo) {
+			L.e(['Error al obtener el estado del cluster', errorMongo]);
 			return res.status(500).json({ ok: false, msg: 'Error al obtener el estado del cluster' });
 		}
 
-		var rsStatus = new ReplicaSetStatus(data);
-		L.i(['Estado de mongodb', rsStatus]);
-		return res.status(200).json({ ok: true, data: rsStatus });
+		let estadoReplicaSet = new EstadoReplicaSet(datosReplicaSet);
+		L.i(['Estado de mongodb', estadoReplicaSet]);
+		return res.status(200).json({ ok: true, data: estadoReplicaSet });
 
 	});
 }
@@ -122,11 +122,11 @@ const getLogs = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	var logType = req.query.type ? req.query.type : 'global';
+	let tipoLog = req.query.type ? req.query.type : 'global';
 
-	iMongo.monitor.getLogs(logType, (err, logs) => {
-		if (err) {
-			L.e(['Error al obtener los logs', err]);
+	iMongo.monitor.getLogs(tipoLog, (errorMongo, logs) => {
+		if (errorMongo) {
+			L.e(['Error al obtener los logs', errorMongo]);
 			return res.status(500).json({ ok: false, error: 'Error al obtener los logs' });
 		}
 

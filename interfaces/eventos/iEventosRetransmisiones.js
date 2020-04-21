@@ -14,73 +14,74 @@ const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionPed
 
 
 
-module.exports.emitRetransmision = (rtxId, dbTx, options, rtxStatus, errorMessage, rtxResult) => {
-	L.xd(rtxId, ['Emitiendo evento emitRetransmision']);
+module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmision, estadoRetransmision, mensajeError, resultadoRetransmision) => {
 
-	var originalTxId = dbTx._id;
-	var estadoOriginal = dbTx.status;
-	var estadoNuevo = rtxResult && rtxResult.status ? rtxResult.status : null;
+	L.xd(txIdRetransmision, ['Emitiendo evento retransmitirPedido']);
 
-	var retransmissionData = {
-		_id: rtxId,
+	let txIdOriginal = dbTx._id;
+	let estadoOriginal = dbTx.status;
+	let estadoNuevo = resultadoRetransmision && resultadoRetransmision.status ? resultadoRetransmision.status : null;
+
+	let datosRetransmitidos = {
+		_id: txIdRetransmision,
 		timestamp: new Date(),
-		status: rtxStatus,
-		options: options
+		status: estadoRetransmision,
+		options: opcionesRetransmision
 	}
-	if (errorMessage) retransmissionData.errorMessage = errorMessage;
-	if (options.ctxId) retransmissionData.cloned = true;
-	if (!options.ctxId && rtxResult) retransmissionData.newValues = rtxResult;
+	if (mensajeError) datosRetransmitidos.errorMessage = mensajeError;
+	if (opcionesRetransmision.ctxId) datosRetransmitidos.cloned = true;
+	if (!opcionesRetransmision.ctxId && resultadoRetransmision) datosRetransmitidos.newValues = resultadoRetransmision;
 
-	var updateQuery = {
+	let transaccionDeActualizacion = {
 		$setOnInsert: {
-			_id: originalTxId
+			_id: txIdOriginal
 		},
 		$push: {
-			retransmissions: retransmissionData
+			retransmissions: datosRetransmitidos
 		}
 	}
 
 
-	if (options.ctxId) {
+	if (opcionesRetransmision.ctxId) {
 		// La retransmisión ha generado un clon.
-		module.exports.emitFinClonarPedido(originalTxId, options.ctxId, rtxResult)
-		iFlags.set(originalTxId, K.FLAGS.CLONADO);
+		module.exports.finClonarPedido(txIdOriginal, opcionesRetransmision.ctxId, resultadoRetransmision)
+		iFlags.set(txIdOriginal, K.FLAGS.CLONADO);
 	}
-	else if (!options.noActualizarOriginal && rtxResult) {
+	else if (!opcionesRetransmision.noActualizarOriginal && resultadoRetransmision) {
 		// ¿Debemos actualizar la transmisión original?
-		var [actualizar, advertencia] = _actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
+		let [actualizar, advertencia] = _actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
 		if (actualizar) {
-			updateQuery['$set'] = {modifiedAt: new Date()};
-			retransmissionData.oldValues = {};
+			transaccionDeActualizacion['$set'] = { modifiedAt: new Date() };
+			datosRetransmitidos.oldValues = {};
 
-			for(var campo in rtxResult) {
-				updateQuery['$set'][campo] = rtxResult[campo];
-				retransmissionData.oldValues[campo] = dbTx[campo];
+			for (let campo in resultadoRetransmision) {
+				transaccionDeActualizacion['$set'][campo] = resultadoRetransmision[campo];
+				datosRetransmitidos.oldValues[campo] = dbTx[campo];
 			}
 
 			if (advertencia) {
-				iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE_WARN);
-				L.xw(originalTxId, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
+				iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_UPDATE_WARN);
+				L.xw(txIdOriginal, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
 			} else {
-				iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_UPDATE);
+				iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_UPDATE);
 			}
 		} else {
 			// Si se habían establecido flags, las borramos, pues no queremos actualizar nada
 			// mas que añadir el flag de retransmision sin update
-			iFlags.del(originalTxId);
-			iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
+			iFlags.del(txIdOriginal);
+			iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_NO_UPDATE);
 		}
 
 	} else {
-		iFlags.set(originalTxId, K.FLAGS.RETRANSMISION_NO_UPDATE);
+		iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_NO_UPDATE);
 	}
 
-	
-	iFlags.finaliza(originalTxId, updateQuery);
 
-	iMongo.transaccion.grabar(updateQuery);
-	L.xi(originalTxId, ['Emitiendo COMMIT para evento Retransmit'], 'txCommit');
-	L.yell(originalTxId, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [rtxResult]);
+	iFlags.finaliza(txIdOriginal, transaccionDeActualizacion);
+
+	iMongo.transaccion.grabar(transaccionDeActualizacion);
+	L.xi(txIdOriginal, ['Emitiendo COMMIT para evento Retransmision'], 'txCommit');
+	L.yell(txIdOriginal, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [resultadoRetransmision]);
 }
 
 /**
@@ -123,13 +124,18 @@ const _actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
 };
 
 
+/**
+ * Este evento crea la transccion como RECEPCIONADA con el flag 'CLON'
+ * La posterior emisión de iEventos.retransmisiones.retransmitirPedido es la que completará
+ * el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente.
+ */
+module.exports.clonarPedido = (reqClonada, pedidoClonado) => {
 
-module.exports.emitInicioClonarPedido = (clonReq, pedido, otxId) => {
-	let ctxId = clonReq.txId;
+	let txId = reqClonada.txId;
 
-	var reqData = {
+	let transaccion = {
 		$setOnInsert: {
-			_id: ctxId,
+			_id: txId,
 			createdAt: new Date()
 		},
 		$max: {
@@ -137,50 +143,26 @@ module.exports.emitInicioClonarPedido = (clonReq, pedido, otxId) => {
 			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
-			
-			crc: new ObjectID(pedido.crc),
-			authenticatingUser: clonReq.identificarUsuarioAutenticado(),
-			client: clonReq.identificarClienteSap(),
+			crc: new ObjectID(pedidoClonado.crc),
+			authenticatingUser: reqClonada.identificarUsuarioAutenticado(),
+			client: reqClonada.identificarClienteSap(),
 			iid: global.instanceID,
 			type: K.TX_TYPES.PEDIDO,
 			clientRequest: {
-				authentication: clonReq.token,
+				authentication: reqClonada.token,
 				ip: 'RTX',
-				headers: clonReq.headers,
-				body: clonReq.body
+				headers: reqClonada.headers,
+				body: reqClonada.body
 			},
 		}
 	};
 
-	iFlags.set(ctxId, K.FLAGS.CLON);
-	iFlags.finaliza(ctxId, reqData);
+	iFlags.set(txId, K.FLAGS.CLON);
+	iFlags.finaliza(txId, transaccion);
 
-	L.xi(clonReq.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
-	iMongo.transaccion.grabar(reqData);
-	L.yell(clonReq.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [clonReq.identificarUsuarioAutenticado(), pedido.crc, clonReq.body]);
-}
-
-module.exports.emitFinClonarPedido = (oTxId, ctxId, rtxResult) => {
-
-	var resData = {
-		$setOnInsert: {
-			_id: ctxId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-		},
-		$set: {
-			...rtxResult,
-			originalTxId: new ObjectID(oTxId)
-		}
-	}
-
-	iFlags.finaliza(ctxId, resData);
-
-	L.xi(ctxId, ['Emitiendo COMMIT para evento FinClonarPedido'], 'txCommit');
-	iMongo.transaccion.grabar(resData);
-	L.yell(ctxId, K.TX_TYPES.PEDIDO, rtxResult.status, [rtxResult]);
+	L.xi(reqClonada.txId, ['Emitiendo COMMIT para evento clonarPedido'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(reqClonada.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [reqClonada.identificarUsuarioAutenticado(), pedidoClonado.crc, reqClonada.body]);
 }
 
 module.exports.emitStatusFix = (txId, newStatus) => {
@@ -225,7 +207,7 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 		$set: {
 			numerosPedidoSAP: numerosPedidoSAP
 		},
-		$push:{
+		$push: {
 			sapConfirms: {
 				txId: confirmId,
 				timestamp: confirmId.createdAt,

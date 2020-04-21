@@ -42,7 +42,7 @@ const finaliza = (txId, mdbQuery) => {
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
     
-    for (var flag in flags) {
+    for (let flag in flags) {
         mdbQuery.$set['flags.' + flag] = flags[flag];
     }
 }

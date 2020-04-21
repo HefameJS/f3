@@ -8,31 +8,31 @@ const C = global.config;
 const ActiveDirectory = require('activedirectory');
 const clone = require('clone');
 
-const autenticar = (txId, authReq, callback) => {
+const autenticar = (txId, solicitudAutenticacion, callback) => {
 
-    var ldapConfig = clone(C.ldap);
-    ldapConfig.baseDN = 'DC=hefame,DC=es';
-    ldapConfig.username = authReq.domain + '\\' + authReq.username;
-    ldapConfig.password = authReq.password;
+    let configuracionLdap = clone(C.ldap);
+    configuracionLdap.baseDN = 'DC=hefame,DC=es';
+    configuracionLdap.username = solicitudAutenticacion.domain + '\\' + solicitudAutenticacion.username;
+    configuracionLdap.password = solicitudAutenticacion.password;
 
-    var ad = new ActiveDirectory(ldapConfig);
+    let activeDirectory = new ActiveDirectory(configuracionLdap);
 
-    ad.authenticate(ldapConfig.username, ldapConfig.password, (authErr, authResult) => {
+    activeDirectory.authenticate(configuracionLdap.username, configuracionLdap.password, (authErr, authResult) => {
         if (authErr) {
             callback(authErr);
             return;
         }
 
-        ad.getGroupMembershipForUser(authReq.username, (ldapError, groups) => {
-            if (ldapError || !groups || !groups.forEach) {
-                callback(ldapError);
+        activeDirectory.getGroupMembershipForUser(solicitudAutenticacion.username, (errorLdap, gruposAd) => {
+            if (errorLdap || !gruposAd || !gruposAd.forEach) {
+                callback(errorLdap);
                 return;
             }
 
-            var grupos = [];
-            groups.forEach((group) => {
-                if (group.cn.startsWith('FED3_'))
-                    grupos.push(group.cn);
+            let grupos = [];
+            gruposAd.forEach((grupoAd) => {
+                if (grupoAd.cn && grupoAd.cn.startsWith('FED3_'))
+                    grupos.push(grupoAd.cn);
             });
 
             callback(null, grupos);

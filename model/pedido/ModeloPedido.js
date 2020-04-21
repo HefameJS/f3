@@ -106,7 +106,7 @@ class Pedido {
 	limpiarEntrada(txId) {
 
 		// LIMPIEZA DE LOS CAMPOS DE CABECERA
-		var incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.PEDIDOS.CABECERA);
+		let incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.PEDIDOS.CABECERA);
 		if (this.incidencias && this.incidencias.concat) {
 			this.incidencias.concat(incidenciasCabecera.getErrors());
 		} else {
@@ -116,7 +116,7 @@ class Pedido {
 		// LIMPIEZA DE LAS LINEAS
 		if (this.lineas && this.lineas.forEach) {
 			this.lineas.forEach((lineaPedido) => {
-				var incidenciasLinea = PreCleaner.clean(txId, lineaPedido, K.PRE_CLEAN.PEDIDOS.LINEAS);
+				let incidenciasLinea = PreCleaner.clean(txId, lineaPedido, K.PRE_CLEAN.PEDIDOS.LINEAS);
 				if (incidenciasLinea.hasError()) {
 					if (lineaPedido.incidencias && lineaPedido.incidencias.concat) {
 						lineaPedido.incidencias.concat(incidenciasLinea.getErrors());
@@ -129,8 +129,14 @@ class Pedido {
 
 	}
 
+	/**
+	 * Añade una incidencia a la cabecera del pedido.
+	 * Se puede indicar el (codigo, descripcion) del error, o pasar un único parametro con un objeto instancia de ErrorFedicom
+	 * @param {*} code 
+	 * @param {*} descripcion 
+	 */
 	addIncidencia(code, descripcion) {
-		var incidencia = (code instanceof ErrorFedicom) ? code : new ErrorFedicom(code, descripcion);
+		let incidencia = (code instanceof ErrorFedicom) ? code : new ErrorFedicom(code, descripcion);
 
 		if (this.incidencias && this.incidencias.push) {
 			this.incidencias.push(incidencia.getErrors()[0])
@@ -171,8 +177,8 @@ class Pedido {
 		return respuestaCliente;
 	}
 
-	static extraerPedidosAsociados(sapBody) {
-		return SaneadorPedidosSAP.extraerPedidosAsociados(sapBody);
+	static extraerPedidosAsociados(listaPedidosAsociadosSap) {
+		return SaneadorPedidosSAP.extraerPedidosAsociados(listaPedidosAsociadosSap);
 	}
 
 }
@@ -219,7 +225,7 @@ const _converAlmacen = (codigoAlmacen) => {
 
 	codigoAlmacen = codigoAlmacen.trim();
 	if (!codigoAlmacen.startsWith('RG')) {
-		var codigoFedicom2 = parseInt(codigoAlmacen);
+		let codigoFedicom2 = parseInt(codigoAlmacen);
 		switch (codigoFedicom2) {
 			case 2: return ['RG01', null];  // Santomera
 			case 5: return ['RG15', null]; // Barcelona viejo
@@ -254,78 +260,79 @@ const _generaUrlConfirmacion = () => {
  * va a dar realmente al cliente.
  */
 const SaneadorPedidosSAP = {
-	eliminaIncidenciasDeBloqueos: (message) => {
-		var cantidadIncidenciasAntes = message.length;
+	eliminaIncidenciasDeBloqueos: (respuestaCliente) => {
 
-		message = message.filter((item) => {
-			return !item || !item.codigo || !item.codigo.startsWith('SAP-IGN');
+		let cantidadIncidenciasAntes = respuestaCliente.length;
+
+		respuestaCliente = respuestaCliente.filter((incidencia) => {
+			return (incidencia && incidencia.codigo && !incidencia.codigo.startsWith('SAP-IGN'));
 		});
 
-		// Si el número de incidencias varía, es que había incidencias a eliminar
-		if (cantidadIncidenciasAntes !== message.length) {
-			var errorBloqueo = new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.ERR_BLOQUEO_SAP, 'No se pudo guardar el pedido. Contacte con su comercial.');
-			message = message.concat(errorBloqueo.getErrors());
+		// Si el número de incidencias varía, es que había incidencias SAP-IGN que han sido eliminadas,
+		// por tanto, agregamos la incidencia de error de bloqueo en SAP.
+		if (cantidadIncidenciasAntes !== respuestaCliente.length) {
+			let errorClienteBloqueadoSap = new ErrorFedicom(K.CODIGOS_ERROR_FEDICOM.ERR_BLOQUEO_SAP, 'No se pudo guardar el pedido. Contacte con su comercial.');
+			respuestaCliente = respuestaCliente.concat(errorClienteBloqueadoSap.getErrors());
 		}
 
-		return message;
+		return respuestaCliente;
 	},
-	sanearMayusculas: (message) => {
-		K.POST_CLEAN.PEDIDOS.replaceCab.forEach((field) => {
-			var fieldLowerCase = field.toLowerCase();
-			if (message[fieldLowerCase] !== undefined) {
-				message[field] = message[fieldLowerCase];
-				delete message[fieldLowerCase];
+	sanearMayusculas: (respuestaCliente) => {
+		K.POST_CLEAN.PEDIDOS.replaceCab.forEach((atributo) => {
+			let atributoMinusculas = atributo.toLowerCase();
+			if (respuestaCliente[atributoMinusculas] !== undefined) {
+				respuestaCliente[atributo] = respuestaCliente[atributoMinusculas];
+				delete respuestaCliente[atributoMinusculas];
 			}
 		});
 
-		if (message.lineas) {
-			message.lineas.forEach((linea) => {
-				K.POST_CLEAN.PEDIDOS.replacePos.forEach((field) => {
-					var fieldLowerCase = field.toLowerCase();
-					if (linea[fieldLowerCase] !== undefined) {
-						linea[field] = linea[fieldLowerCase];
-						delete linea[fieldLowerCase];
+		if (respuestaCliente.lineas) {
+			respuestaCliente.lineas.forEach((linea) => {
+				K.POST_CLEAN.PEDIDOS.replacePos.forEach((atributo) => {
+					let atributoMinusculas = atributo.toLowerCase();
+					if (linea[atributoMinusculas] !== undefined) {
+						linea[atributo] = linea[atributoMinusculas];
+						delete linea[atributoMinusculas];
 					}
 				});
 			});
 		}
-		return message;
+		return respuestaCliente;
 	},
-	eliminarCamposInnecesarios: (message) => {
+	eliminarCamposInnecesarios: (respuestaCliente) => {
 
-		K.POST_CLEAN.PEDIDOS.removeCab.forEach((field) => {
-			delete message[field];
+		K.POST_CLEAN.PEDIDOS.removeCab.forEach((atributo) => {
+			delete respuestaCliente[atributo];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabEmptyString.forEach((field) => {
-			if (message[field] === '') delete message[field];
+		K.POST_CLEAN.PEDIDOS.removeCabEmptyString.forEach((atributo) => {
+			if (respuestaCliente[atributo] === '') delete respuestaCliente[atributo];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabEmptyArray.forEach((field) => {
-			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+		K.POST_CLEAN.PEDIDOS.removeCabEmptyArray.forEach((atributo) => {
+			if (respuestaCliente[atributo] && typeof respuestaCliente[atributo].push === 'function' && respuestaCliente[atributo].length === 0) delete respuestaCliente[atributo];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabZeroValue.forEach((field) => {
-			if (message[field] === 0) delete message[field];
+		K.POST_CLEAN.PEDIDOS.removeCabZeroValue.forEach((atributo) => {
+			if (respuestaCliente[atributo] === 0) delete respuestaCliente[atributo];
+		});
+		K.POST_CLEAN.PEDIDOS.removeCabIfFalse.forEach((atributo) => {
+			if (respuestaCliente[atributo] === false) delete respuestaCliente[atributo];
 		});
 
-		K.POST_CLEAN.PEDIDOS.removeCabIfFalse.forEach((field) => {
-			if (message[field] === false) delete message[field];
-		});
-
-		if (message.lineas) {
-			message.lineas.forEach((linea) => {
-				K.POST_CLEAN.PEDIDOS.removePos.forEach((field) => {
-					delete linea[field];
+		if (respuestaCliente.lineas) {
+			respuestaCliente.lineas.forEach((linea) => {
+				K.POST_CLEAN.PEDIDOS.removePos.forEach((atributo) => {
+					delete linea[atributo];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosEmptyString.forEach((field) => {
-					if (linea[field] === '') delete linea[field];
+				K.POST_CLEAN.PEDIDOS.removePosEmptyString.forEach((atributo) => {
+					if (linea[atributo] === '') delete linea[atributo];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosEmptyArray.forEach((field) => {
-					if (linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
+				K.POST_CLEAN.PEDIDOS.removePosEmptyArray.forEach((atributo) => {
+					if (linea[atributo] && typeof linea[atributo].push === 'function' && linea[atributo].length === 0) delete linea[atributo];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosZeroValue.forEach((field) => {
-					if (linea[field] === 0) delete linea[field];
+				K.POST_CLEAN.PEDIDOS.removePosZeroValue.forEach((atributo) => {
+					if (linea[atributo] === 0) delete linea[atributo];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosIfFalse.forEach((field) => {
-					if (linea[field] === false) delete linea[field];
+				K.POST_CLEAN.PEDIDOS.removePosIfFalse.forEach((atributo) => {
+					if (linea[atributo] === false) delete linea[atributo];
 				});
 
 				if (linea.servicioDemorado) {
@@ -337,25 +344,23 @@ const SaneadorPedidosSAP = {
 
 			});
 		}
-		return message;
+		return respuestaCliente;
 	},
-	establecerNumeroPedido: (message, numeroPedidoOriginal) => {
-		message.numeroPedido = numeroPedidoOriginal;
-		return message;
+	establecerNumeroPedido: (respuestaCliente, crc) => {
+		respuestaCliente.numeroPedido = crc;
+		return respuestaCliente;
 	},
-	establecerFechaPedido: (message) => {
-		if (!message.fechaPedido)
-			message.fechaPedido = Date.toFedicomDateTime();
-		return message;
+	establecerFechaPedido: (respuestaCliente) => {
+		if (!respuestaCliente.fechaPedido)
+			respuestaCliente.fechaPedido = Date.toFedicomDateTime();
+		return respuestaCliente;
 	},
 	extraerPedidosAsociados: (pedidosAsociados) => {
 		if (!pedidosAsociados) return null;
 		if (!pedidosAsociados.forEach) return [pedidosAsociados];
-		var result = [];
-		pedidosAsociados.forEach((nPed) => {
-			if (nPed) result.push(nPed);
-		});
-		if (result.length > 0) return result;
+		// Eliminamos valores vacíos de la lista (SAP a veces mete un string vacío en el array)
+		pedidosAsociados = pedidosAsociados.filter( numeroPedidoSap => numeroPedidoSap ? true : false);
+		if (pedidosAsociados.length > 0) return pedidosAsociados;
 		return null;
 	},
 	/**
@@ -381,14 +386,14 @@ const SaneadorPedidosSAP = {
 }
 
 
-const _obtenerEstadoDeRespuestaSap = (sapBody) => {
+const _obtenerEstadoDeRespuestaSap = (respuestaSap) => {
 
-	var estadoTransmision = K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO;
-	var numeroPedidoAgrupado = (sapBody.numeropedido) ? sapBody.numeropedido : null;
-	var numerosPedidoSAP = SaneadorPedidosSAP.extraerPedidosAsociados(sapBody.sap_pedidosasociados);
+	let estadoTransmision = K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO;
+	let numeroPedidoAgrupado = (respuestaSap.numeropedido) ? respuestaSap.numeropedido : null;
+	let numerosPedidoSAP = SaneadorPedidosSAP.extraerPedidosAsociados(respuestaSap.sap_pedidosasociados);
 
 	// Si es un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados si o si
-	if (sapBody.sap_pedidoprocesado) {
+	if (respuestaSap.sap_pedidoprocesado) {
 		estadoTransmision = K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		if (numerosPedidoSAP) {
 			estadoTransmision = K.TX_STATUS.OK;

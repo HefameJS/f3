@@ -146,7 +146,7 @@ const retransmitirPedido = (pedido, callback) => {
 		body: pedido
 	});
 
-	var peticionASap = {
+	let peticionASap = {
 		timestamp: new Date(),
 		method: parametrosHttp.method,
 		headers: parametrosHttp.headers,

@@ -19,7 +19,7 @@ const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionPed
 
 // POST /confirmaPedido
 exports.confirmaPedido = (req, res) => {
-	var txId = req.txId;
+	let txId = req.txId;
 
 	L.xi(txId, ['Procesando transmisión de CONFIRMACION DE PEDIDO']);
 	

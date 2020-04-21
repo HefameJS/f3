@@ -14,8 +14,8 @@ global.instanceID += '-wd';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
-process.on('uncaughtException', (err) => {
-	L.dump(err)
+process.on('uncaughtException', (excepcionNoControlada) => {
+	L.dump(excepcionNoControlada)
 	process.exit(1)
 })
 
@@ -23,16 +23,15 @@ L.i('**** ARRANCANDO WATCHDOG FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID );
 
-var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-require('fs').writeFile(pidFile, process.pid, (err) => {
+let ficheroPID = (C.pid || '.') + '/' + process.title + '.pid';
+require('fs').writeFile(ficheroPID, process.pid, (err) => {
 	 if(err) {
 		  L.e(["Error al escribir el fichero del PID",err]);
 	 }
 });
 
-const mdbWatchdog = require(BASE + 'watchdog/mdb');
-const sqliteWatchdog = require(BASE + 'watchdog/sqlite');
 
-
+require(BASE + 'watchdog/mdb');
+require(BASE + 'watchdog/sqlite');
 require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

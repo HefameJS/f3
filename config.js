@@ -1,6 +1,6 @@
 'use strict';
 const BASE = global.BASE;
-var C = {};
+let C = {};
 //const L = global.logger;
 const K = global.constants;
 
@@ -202,17 +202,15 @@ C.sistemaSap = (sapsid) => {
 	return null;
 }
 
-C.urlConexionMongo = (servers, username, password, database, replicaSet) => {
-	var mc = C.mongodb;
-	servers = servers ? servers : mc.hosts;
-	username = username ? username : mc.username;
-	password = password ? password : mc.pwd;
-	database = database ? database : mc.database;
-	replicaSet = replicaSet ? replicaSet : mc.replicaset;
+C.urlConexionMongo = (servidores, usuario, password, db, replicaSet) => {
 
-	var servers = servers.join(',');
+	servidores = servidores ? servidores : C.mongodb.hosts;
+	usuario = usuario ? usuario : C.mongodb.username;
+	password = password ? password : C.mongodb.pwd;
+	db = db ? db : C.mongodb.database;
+	replicaSet = replicaSet ? replicaSet : C.mongodb.replicaset; 
 
-	var url = 'mongodb://' + username + ':' + password + '@' + servers + '/' + database + '?replicaSet=' + replicaSet;
+	let url = 'mongodb://' + usuario + ':' + password + '@' + servidores.join(',') + '/' + db + '?replicaSet=' + replicaSet;
 	return url;
 }
 

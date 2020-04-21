@@ -14,50 +14,50 @@ global.instanceID += '-mon';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
-process.on('uncaughtException', (err) => {
-	L.dump(err)
+process.on('uncaughtException', (excepcionNoControlada) => {
+	L.dump(excepcionNoControlada)
 	process.exit(1)
 })
 
 L.i('**** ARRANCANDO MONITOR FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
-L.i('*** ID de instancia: ' + global.instanceID );
+L.i('*** ID de instancia: ' + global.instanceID);
 
-var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-require('fs').writeFile(pidFile, process.pid, (err) => {
-	 if(err) {
-		  L.e(["Error al escribir el fichero del PID",err]);
-	 }
+const ficheroPID = (C.pid || '.') + '/' + process.title + '.pid';
+require('fs').writeFile(ficheroPID, process.pid, (err) => {
+	if (err) {
+		L.e(["Error al escribir el fichero del PID", err]);
+	}
 });
 
-const http = require('http');
-var httpConf = C.monitor.http;
+const HTTP = require('http');
+const configuracionHTTP = C.monitor.http;
 
 
-var app = require('express')();
-var cors = require('cors');
-app.use(cors({exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version']}));
+let app = require('express')();
+let cors = require('cors');
+app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));
 app.disable('x-powered-by');
 app.disable('etag');
-app.use(require('body-parser').json({extended: true}));
+app.use(require('body-parser').json({ extended: true }));
 app.use(require('express-bearer-token')());
 
 // Carga de rutas
-var routes = require(BASE + 'routes/monitor');
-routes(app);
+let rutasHTTP = require(BASE + 'routes/monitor');
+rutasHTTP(app);
 
 
 try {
-	var server = http.createServer(app).listen(httpConf.port, () => {
-		L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
+	HTTP.createServer(app).listen(configuracionHTTP.port, () => {
+		L.i("Servidor HTTP a la escucha en el puerto " + configuracionHTTP.port);
 	}).on('error', (err) => {
 		L.e("Ocurrió un error al arrancar el servicio HTTP");
 		L.e(err);
 		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 	});
-} catch (ex) {
+} catch (excepcionArranqueServidorHTTP) {
 	L.f("Ocurrió un error al arrancar el servicio HTTP");
-	L.f(ex);
+	L.f(excepcionArranqueServidorHTTP);
 	process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 }
 

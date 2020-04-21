@@ -10,7 +10,7 @@ const iRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos'
 
 // GET /status/proc
 const consultaProcesos = (req, res) => {
-	var txId = req.txId;
+	let txId = req.txId;
 
 	L.xi(txId, ['Consulta de procesos']);
 
@@ -19,14 +19,14 @@ const consultaProcesos = (req, res) => {
 	if (!estadoToken.ok) return;
 
 
-	var procType = req.query.type ? req.query.type : null;
-	var host = req.query.host ? req.query.host : null;
+	let tipoProceso = req.query.type ? req.query.type : null;
+	let host = req.query.host ? req.query.host : null;
 
 
-	iRegistroProcesos.consultaProcesos(procType, host, (err, procesos) => {
-		if (err) {
-			L.xe(txId, ['Error al obtener la lista de procesos', err]);
-			res.status(500).json({ ok: false, error: (err.error || err.message) });
+	iRegistroProcesos.consultaProcesos(tipoProceso, host, (errorRegistroProcesos, procesos) => {
+		if (errorRegistroProcesos) {
+			L.xe(txId, ['Error al obtener la lista de procesos', errorRegistroProcesos]);
+			res.status(500).json({ ok: false, error: (errorRegistroProcesos.error || errorRegistroProcesos.message) });
 			return;
 		}
 		L.xi(txId, ['Obtenida lista de procesos']);
