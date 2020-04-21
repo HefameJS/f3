@@ -62,7 +62,7 @@ class DestinoSap {
  * @param {*} callback
  */
 DestinoSap.desdeNombre = (nombreSistemaSap) => {
-  let datosConfiguracion = nombreSistemaSap ? C.getSapSystem(nombreSistemaSap) : C.getDefaultSapSystem();
+  let datosConfiguracion = nombreSistemaSap ? C.sistemaSap(nombreSistemaSap) : C.sistemaSapPorDefecto();
   if (!datosConfiguracion) {
     return null;
   }
@@ -71,7 +71,7 @@ DestinoSap.desdeNombre = (nombreSistemaSap) => {
 
 
 DestinoSap.porDefecto = () => {
-  let datosConfiguracion = C.getDefaultSapSystem();
+  let datosConfiguracion = C.sistemaSapPorDefecto();
   if (!datosConfiguracion) {
     return null;
   }

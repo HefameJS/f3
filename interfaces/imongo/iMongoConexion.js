@@ -30,7 +30,7 @@ let clienteDb;
 const conectar = () => {
 	if (clienteDb) return;
 
-	clienteDb = new MongoClient(C.getMongoUrl(), MONGODB_OPTIONS);
+	clienteDb = new MongoClient(C.urlConexionMongo(), MONGODB_OPTIONS);
 	clienteDb.connect()
 		.then((cliente) => {
 			clienteDb = cliente;
@@ -51,7 +51,7 @@ const conectar = () => {
 		})
 		.catch(error => {
 			clienteDb = null;
-			L.f(['*** Error en la conexión a de MongoDB ***', C.getMongoUrl(), error], 'mongodb')
+			L.f(['*** Error en la conexión a de MongoDB ***', C.urlConexionMongo(), error], 'mongodb')
 		});
 }
 
