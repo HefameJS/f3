@@ -14,7 +14,7 @@ global.instanceID += '-mon';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', (err) => {
 	L.dump(err)
 	process.exit(1)
 })
@@ -24,7 +24,7 @@ L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID );
 
 var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-require('fs').writeFile(pidFile, process.pid, function(err) {
+require('fs').writeFile(pidFile, process.pid, (err) => {
 	 if(err) {
 		  L.e(["Error al escribir el fichero del PID",err]);
 	 }
@@ -48,9 +48,9 @@ routes(app);
 
 
 try {
-	var server = http.createServer(app).listen(httpConf.port, function () {
+	var server = http.createServer(app).listen(httpConf.port, () => {
 		L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
-	}).on('error', function (err) {
+	}).on('error', (err) => {
 		L.e("Ocurrió un error al arrancar el servicio HTTP");
 		L.e(err);
 		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);

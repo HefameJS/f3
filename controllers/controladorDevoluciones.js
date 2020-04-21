@@ -17,7 +17,7 @@ const Devolucion = require(BASE + 'model/devolucion/ModeloDevolucion');
 
 
 // POST /devoluciones
-exports.crearDevolucion = function (req, res) {
+exports.crearDevolucion = (req, res) => {
 
 	let txId = req.txId;
 

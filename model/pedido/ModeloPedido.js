@@ -186,7 +186,7 @@ const _analizarPosiciones = (txId, json) => {
 
 		var sap_ignore_all = true;
 
-		json.lineas.forEach(function (linea) {
+		json.lineas.forEach((linea) => {
 			var lineaPedido = new LineaPedido(linea, txId);
 			lineas.push(lineaPedido);
 
@@ -202,7 +202,7 @@ const _analizarPosiciones = (txId, json) => {
 
 		// Rellenamos el orden.
 		var nextOrder = 1;
-		lineas.forEach(function (linea) {
+		lineas.forEach((linea) => {
 			if (!linea.orden) {
 				while (ordenes.includes(nextOrder)) {
 					nextOrder++;
@@ -281,8 +281,8 @@ const SaneadorPedidosSAP = {
 		});
 
 		if (message.lineas) {
-			message.lineas.forEach(function (linea) {
-				K.POST_CLEAN.PEDIDOS.replacePos.forEach(function (field) {
+			message.lineas.forEach((linea) => {
+				K.POST_CLEAN.PEDIDOS.replacePos.forEach((field) => {
 					var fieldLowerCase = field.toLowerCase();
 					if (linea[fieldLowerCase] !== undefined) {
 						linea[field] = linea[fieldLowerCase];
@@ -295,38 +295,38 @@ const SaneadorPedidosSAP = {
 	},
 	eliminarCamposInnecesarios: (message) => {
 
-		K.POST_CLEAN.PEDIDOS.removeCab.forEach(function (field) {
+		K.POST_CLEAN.PEDIDOS.removeCab.forEach((field) => {
 			delete message[field];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabEmptyString.forEach(function (field) {
+		K.POST_CLEAN.PEDIDOS.removeCabEmptyString.forEach((field) => {
 			if (message[field] === '') delete message[field];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabEmptyArray.forEach(function (field) {
+		K.POST_CLEAN.PEDIDOS.removeCabEmptyArray.forEach((field) => {
 			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
 		});
-		K.POST_CLEAN.PEDIDOS.removeCabZeroValue.forEach(function (field) {
+		K.POST_CLEAN.PEDIDOS.removeCabZeroValue.forEach((field) => {
 			if (message[field] === 0) delete message[field];
 		});
 
-		K.POST_CLEAN.PEDIDOS.removeCabIfFalse.forEach(function (field) {
+		K.POST_CLEAN.PEDIDOS.removeCabIfFalse.forEach((field) => {
 			if (message[field] === false) delete message[field];
 		});
 
 		if (message.lineas) {
-			message.lineas.forEach(function (linea) {
-				K.POST_CLEAN.PEDIDOS.removePos.forEach(function (field) {
+			message.lineas.forEach((linea) => {
+				K.POST_CLEAN.PEDIDOS.removePos.forEach((field) => {
 					delete linea[field];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosEmptyString.forEach(function (field) {
+				K.POST_CLEAN.PEDIDOS.removePosEmptyString.forEach((field) => {
 					if (linea[field] === '') delete linea[field];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosEmptyArray.forEach(function (field) {
+				K.POST_CLEAN.PEDIDOS.removePosEmptyArray.forEach((field) => {
 					if (linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosZeroValue.forEach(function (field) {
+				K.POST_CLEAN.PEDIDOS.removePosZeroValue.forEach((field) => {
 					if (linea[field] === 0) delete linea[field];
 				});
-				K.POST_CLEAN.PEDIDOS.removePosIfFalse.forEach(function (field) {
+				K.POST_CLEAN.PEDIDOS.removePosIfFalse.forEach((field) => {
 					if (linea[field] === false) delete linea[field];
 				});
 

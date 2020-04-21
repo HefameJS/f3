@@ -21,7 +21,7 @@ const descartar = (transaccion) => {
 
 
 	if (MDB.colDiscard()) {
-		MDB.colDiscard().updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 }, function (errorMongo, res) {
+		MDB.colDiscard().updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 }, (errorMongo, res) => {
 			if (errorMongo) {
 				L.xe(txId, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', errorMongo], 'mdbCommitDiscard');
 			} else {
@@ -89,7 +89,7 @@ const grabarDesdeSQLite = (transaccion, callback) => {
 
 
 	if (MDB.colTx()) {
-		MDB.colTx().updateOne({ _id: txId }, transaccion, { upsert: true }, function (err, resultado) {
+		MDB.colTx().updateOne({ _id: txId }, transaccion, { upsert: true }, (err, resultado) => {
 			if (err) {
 				L.xe(txId, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
 				callback(false);
@@ -146,20 +146,20 @@ const _transformarDatosSQLiteParaMDB = (transaccion) => {
 	if (transaccion['$push']) {
 		var push = transaccion['$push'];
 		if (push.retransmissions && push.retransmissions.length) {
-			push.retransmissions.forEach(function (o) {
+			push.retransmissions.forEach((o) => {
 				if (o._id) o._id = new ObjectID(o._id);
 				if (o.createdAt) o.createdAt = new Date(o.createdAt);
 				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
 			})
 		}
 		if (push.sapConfirms && push.sapConfirms.length) {
-			push.sapConfirms.forEach(function (o) {
+			push.sapConfirms.forEach((o) => {
 				if (o.txId) o.txId = new ObjectID(o.txId);
 				if (o.timestamp) o.timestamp = new Date(o.timestamp);
 			})
 		}
 		if (push.duplicates && push.duplicates.length) {
-			push.duplicates.forEach(function (o) {
+			push.duplicates.forEach((o) => {
 				if (o._id) o._id = new ObjectID(o._id);
 				if (o.createdAt) o.createdAt = new Date(o.createdAt);
 				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);

@@ -70,7 +70,7 @@ class ConfirmacionPedidoSAP {
 const _analizarPosiciones = (txId, json) => {
 	var lineas = [];
 	function rellena(lineas) {
-		json.lineas.forEach(function (linea) {
+		json.lineas.forEach((linea) => {
 			var lineaPedido = new ConfirmacionLineaPedidoSAP(linea, txId);
 			lineas.push(lineaPedido);
 		});

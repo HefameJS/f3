@@ -116,21 +116,21 @@ const getBalanceadores = (servidor, callback) => {
 
 	L.i(["Consultando balanceadores del servidor", servidor])
 
-	request(httpCallParams, function (callError, httpResponse, httpBody) {
+	request(httpCallParams, (errorLlamada, respuestaHttp, cuerpoHttp) => {
 
-		if (callError) {
-			callback(callError, null);
+		if (errorLlamada) {
+			callback(errorLlamada, null);
 			return;
 		}
 
-		if (httpResponse.statusCode !== 200) {
+		if (respuestaHttp.statusCode !== 200) {
 			callback({
-				errno: httpResponse.statusCode,
+				errno: respuestaHttp.statusCode,
 			}, null);
 			return;
 		}
 
-		callback(null, parseDataToBalanceadores(httpBody));
+		callback(null, parseDataToBalanceadores(cuerpoHttp));
 
 	});
 }
@@ -167,21 +167,21 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 
 	L.i(["Actualizando worker del balanceador del servidor", servidor, urlencoded])
 
-	request(httpCallParams, function (callError, httpResponse, httpBody) {
+	request(httpCallParams, (errorLlamada, respuestaHttp, cuerpoHttp) => {
 
-		if (callError) {
-			callback(callError, null);
+		if (errorLlamada) {
+			callback(errorLlamada, null);
 			return;
 		}
 
-		if (httpResponse.statusCode !== 200) {
+		if (respuestaHttp.statusCode !== 200) {
 			callback({
-				errno: httpResponse.statusCode,
+				errno: respuestaHttp.statusCode,
 			}, null);
 			return;
 		}
 
-		callback(null, parseDataToBalanceadores(httpBody));
+		callback(null, parseDataToBalanceadores(cuerpoHttp));
 
 	});
 }

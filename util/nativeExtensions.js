@@ -11,7 +11,9 @@ var dateFormat = require('dateformat');
  * Devuelve el timestamp actual
  */
 if (!Date.fedicomTimestamp) {
-	Date.fedicomTimestamp = function() { return new Date().getTime(); }
+	Date.fedicomTimestamp = () => { 
+		return new Date().getTime(); 
+	}
 }
 
 
@@ -29,7 +31,7 @@ dateFormat.masks.shortTime = 'HHMMss.l';
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  */
 if (!Date.toFedicomDate) {
-	Date.toFedicomDate = function (date) {
+	Date.toFedicomDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDate")
 	}
@@ -41,7 +43,7 @@ if (!Date.toFedicomDate) {
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  */
 if (!Date.toFedicomDateTime) {
-	Date.toFedicomDateTime = function (date) {
+	Date.toFedicomDateTime = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDateTime")
 	}
@@ -52,7 +54,7 @@ if (!Date.toFedicomDateTime) {
  * Construye un objeto Date a partir de un string en formato Fedicom3 Date.
  */
 if (!Date.fromFedicomDate) {
-	Date.fromFedicomDate = function (string) {
+	Date.fromFedicomDate = (string) => {
 		return Date.fromFedicomDateTime(string);
 	}
 }
@@ -62,7 +64,7 @@ if (!Date.fromFedicomDate) {
  * Construye un objeto Date a partir de un string en formato Fedicom3 DateTime.
  */
 if (!Date.fromFedicomDateTime) {
-	Date.fromFedicomDateTime = function (string) {
+	Date.fromFedicomDateTime = (string) => {
 		if (!string) return null;
 
 		var str = string.trim();
@@ -98,7 +100,7 @@ if (!Date.fromFedicomDateTime) {
  * Convierte un string en formato fecha SAP (yyyy-mm-dd) a formato Fedicom3
  */
 if (!Date.fromSAPtoFedicomDate) {
-	Date.fromSAPtoFedicomDate = function (sapDate) {
+	Date.fromSAPtoFedicomDate = (sapDate) => {
 		if (!sapDate) return null;
 
 		var dateParts = sapDate.split(/\-/g);
@@ -117,7 +119,7 @@ if (!Date.fromSAPtoFedicomDate) {
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  */
 if (!Date.toSapDate) {
-	Date.toSapDate = function (date) {
+	Date.toSapDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "sapDate")
 	}
@@ -128,7 +130,7 @@ if (!Date.toSapDate) {
  * Devuelve una representación del objeto Date en formato corto (yyyymmdd).
  */
 if (!Date.toShortDate) {
-	Date.toShortDate = function (date) {
+	Date.toShortDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortDate")
 	}
@@ -140,7 +142,7 @@ if (!Date.toShortDate) {
  * Devuelve una representación del objeto Date en formato corto (HHMMss.sss).
  */
 if (!Date.toShortTime) {
-	Date.toShortTime = function (date) {
+	Date.toShortTime = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortTime")
 	}

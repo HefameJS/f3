@@ -39,7 +39,7 @@ const LABS = [
 ];
 
 
-module.exports.getByLabCode = function(labCode) {
+module.exports.getByLabCode = (labCode) => {
 
     var labCodeN = labCode.substring(2);
 
@@ -51,7 +51,7 @@ module.exports.getByLabCode = function(labCode) {
 }
 
 
-module.exports.verify = function(authRequest) {
+module.exports.verify = (authRequest) => {
     var lab = module.exports.getByLabCode(authRequest.username);
     return lab && lab.passwd === authRequest.password;
 }

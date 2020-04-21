@@ -29,7 +29,7 @@ const grabarTransaccion = (transaccion) => {
 
 	// TODO: https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/ Para serializar correctamente objetos como ObjectIDs y Dates
 	// en vez de usar JSON.stringify()
-	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, key, JSON.stringify(transaccion), 0], function (err) {
+	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, key, JSON.stringify(transaccion), 0], (err) => {
 		if (err) {
 			L.xf(transaccion['$setOnInsert']._id, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
 			return;
@@ -78,7 +78,7 @@ const obtenerEntradas = (numeroFallosMaximo, callback) => {
 
 	if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
 
-	db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], function (err, rows) {
+	db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (err, rows) => {
 		if (err) {
 			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", err], 'sqlite');
 			return callback(err, null);
@@ -99,7 +99,7 @@ const obtenerEntradas = (numeroFallosMaximo, callback) => {
  * @param {*} callback 
  */
 const eliminarEntrada = (uid, callback) => {
-	db.run('DELETE FROM tx WHERE uid = ?', [uid], function (errorSQLite) {
+	db.run('DELETE FROM tx WHERE uid = ?', [uid], (errorSQLite) => {
 		if (errorSQLite) {
 			L.f(["*** Fallo al borrar la entrada de la base de datos de respaldo", errorSQLite], 'sqlite');
 			return callback(errorSQLite, 0);
@@ -115,10 +115,10 @@ const eliminarEntrada = (uid, callback) => {
  * @param {*} callback 
  */
 const incrementarNumeroDeIntentos = (uid, callback) => {
-	db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], function (err) {
-		if (err) {
-			L.f(["*** Fallo al incrementar el número de intentos para la entrada", err], 'sqlite');
-			return callback(err, 0);
+	db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], (errorSQLite) => {
+		if (errorSQLite) {
+			L.f(["*** Fallo al incrementar el número de intentos para la entrada", errorSQLite], 'sqlite');
+			return callback(errorSQLite, 0);
 
 		}
 		return callback(null, this.changes);

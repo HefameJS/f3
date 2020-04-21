@@ -14,7 +14,7 @@ global.instanceID += '-wd';
 global.config = require(BASE + 'config');
 global.logger = require(BASE + 'util/logger');
 
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', (err) => {
 	L.dump(err)
 	process.exit(1)
 })
@@ -24,7 +24,7 @@ L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID );
 
 var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-require('fs').writeFile(pidFile, process.pid, function(err) {
+require('fs').writeFile(pidFile, process.pid, (err) => {
 	 if(err) {
 		  L.e(["Error al escribir el fichero del PID",err]);
 	 }

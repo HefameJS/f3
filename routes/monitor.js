@@ -13,7 +13,7 @@ const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
 
 
-module.exports = function (app) {
+module.exports = (app) => {
 
 	var controllers = {
 		consultas: require(BASE + 'controllers/monitor/controladorConsultas')
@@ -95,7 +95,7 @@ module.exports = function (app) {
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use((req, res, next) => {
 		let txId = req.txId;
-		
+
 		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		errorFedicom.enviarRespuestaDeError(res);

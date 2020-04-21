@@ -42,7 +42,7 @@ const detenerIntervaloRegistro = () => {
  * Realiza una consulta a la tabla de control para determinar si el proceso
  * es el maestro de su tipo.
  * @param {*} tipoProceso 
- * @param {function} callback function (err, false)
+ * @param {function} callback (err, false)
  */
 const soyMaestro = (tipoProceso, callback) => {
 	obtenerProcesoMaestro(tipoProceso, (err, procesos) => {
@@ -200,7 +200,7 @@ const registrarProceso = () => {
  * Devuelve la información del proceso maestro para el tipo de 
  * proceso indidado
  * @param {*} tipoProceso 
- * @param {function} callback function (err, procesoMaestro)
+ * @param {function} callback (err, procesoMaestro) =>
  */
 const obtenerProcesoMaestro = (tipoProceso, callback) => {
 

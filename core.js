@@ -16,14 +16,14 @@ if (cluster.isMaster) {
 	L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 	L.i('*** ID master: ' + global.instanceID , 'cluster');
 
-	process.on('uncaughtException', function (err) {
+	process.on('uncaughtException', (err) => {
 		L.dump(err)
 		process.exit(1)
 	})
 
 
 	var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-	require('fs').writeFile(pidFile, process.pid, function(err) {
+	require('fs').writeFile(pidFile, process.pid, (err) => {
 	    if(err) {
 	        L.e(["Error al escribir el fichero del PID", err], 'cluster');
 	    }
@@ -41,7 +41,7 @@ if (cluster.isMaster) {
 	process.title = K.PROCESS_TITLES.CORE_WORKER + '-' + cluster.worker.id;
 	process.type = K.PROCESS_TYPES.CORE_WORKER;
 
-	process.on('uncaughtException', function (err) {
+	process.on('uncaughtException', (err) => {
 		L.dump(err)
 		process.exit(1)
 	})
@@ -65,9 +65,9 @@ if (cluster.isMaster) {
 	routes(app);
 
 	try {
-		var server = http.createServer(app).listen(httpConf.port, function() {
+		var server = http.createServer(app).listen(httpConf.port, () => {
 			L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
-		}).on('error', function(err) {
+		}).on('error', (err) => {
 			L.e("Ocurrió un error al arrancar el servicio HTTP");
 		   L.e(err);
 			process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
@@ -86,7 +86,7 @@ if (cluster.isMaster) {
 require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 
 
-cluster.on('exit', function (worker) {
+cluster.on('exit', (worker) => {
 
 	L.f(['**** Un worker ha muerto. Lo levantamos de entre los muertos', worker.id], 'cluster');
 

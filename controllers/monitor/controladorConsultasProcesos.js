@@ -9,7 +9,7 @@ const iTokens = require(BASE + 'util/tokens');
 const iRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos')
 
 // GET /status/proc
-const consultaProcesos = function (req, res) {
+const consultaProcesos = (req, res) => {
 	var txId = req.txId;
 
 	L.xi(txId, ['Consulta de procesos']);

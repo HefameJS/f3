@@ -142,7 +142,7 @@ const _analizarPosiciones = (txId, json) => {
 
 	function rellena(lineas) {
 
-		json.lineas.forEach(function (linea, i) {
+		json.lineas.forEach((linea, i) => {
 			var nuevaLinea = new LineaDevolucion(linea, txId, i);
 
 			// var hash = crypto.createHash('sha1');
@@ -167,7 +167,7 @@ const _analizarPosiciones = (txId, json) => {
 
 		// Rellenamos el orden en las lineas donde no viene.
 		var nextOrder = 1;
-		lineas.forEach(function (linea) {
+		lineas.forEach((linea) => {
 			if (!linea.orden) {
 				while (ordenes.includes(nextOrder)) {
 					nextOrder++;
@@ -189,7 +189,7 @@ const _analizarPosiciones = (txId, json) => {
  */
 const SaneadorDevolucionesSAP = {
 	sanearMayusculas: (message) => {
-		K.POST_CLEAN.DEVOLUCIONES.replaceCab.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.replaceCab.forEach((field) => {
 			var fieldLowerCase = field.toLowerCase();
 			if (message[fieldLowerCase] !== undefined) {
 				message[field] = message[fieldLowerCase];
@@ -198,8 +198,8 @@ const SaneadorDevolucionesSAP = {
 		});
 
 		if (message.lineas) {
-			message.lineas.forEach(function (linea) {
-				K.POST_CLEAN.DEVOLUCIONES.replacePos.forEach(function (field) {
+			message.lineas.forEach((linea) => {
+				K.POST_CLEAN.DEVOLUCIONES.replacePos.forEach((field) => {
 					var fieldLowerCase = field.toLowerCase();
 					if (linea[fieldLowerCase] !== undefined) {
 						linea[field] = linea[fieldLowerCase];
@@ -212,19 +212,19 @@ const SaneadorDevolucionesSAP = {
 
 	},
 	eliminarCamposInnecesarios: (message) => {
-		K.POST_CLEAN.DEVOLUCIONES.removeCab.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.removeCab.forEach((field) => {
 			delete message[field];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyString.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyString.forEach((field) => {
 			if (message[field] === '') delete message[field];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach((field) => {
 			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach((field) => {
 			if (message[field] === 0) delete message[field];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabIfFalse.forEach(function (field) {
+		K.POST_CLEAN.DEVOLUCIONES.removeCabIfFalse.forEach((field) => {
 			if (message[field] === false) delete message[field];
 		});
 
@@ -248,20 +248,20 @@ const SaneadorDevolucionesSAP = {
 		}
 
 		if (message.lineas && message.lineas.forEach) {
-			message.lineas.forEach(function (linea) {
-				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach(function (field) {
+			message.lineas.forEach((linea) => {
+				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach((field) => {
 					delete linea[field];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyString.forEach(function (field) {
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyString.forEach((field) => {
 					if (linea[field] === '') delete linea[field];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach(function (field) {
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach((field) => {
 					if (linea[field] && linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach(function (field) {
+				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach((field) => {
 					if (linea[field] === 0) delete linea[field];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach(function (field) {
+				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach((field) => {
 					if (linea[field] === false) delete linea[field];
 				});
 
@@ -298,7 +298,7 @@ const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 
 	let numerosDevolucion = [];
 	if (sapBody && sapBody.length > 0) {
-		sapBody.forEach(function (devolucion) {
+		sapBody.forEach((devolucion) => {
 			if (devolucion && devolucion.numeroDevolucion) {
 				numerosDevolucion.push(devolucion.numeroDevolucion);
 			}

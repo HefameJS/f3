@@ -9,7 +9,7 @@ const iTokens = require(BASE + 'util/tokens');
 const iSap = require(BASE + 'interfaces/isap/iSap');
 
 // GET /status/sap
-const consultaSap = function (req, res) {
+const consultaSap = (req, res) => {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta del estado de la comunicación con SAP']);

@@ -10,7 +10,7 @@ const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 
 
 // PUT /query
-const consultaTransmisiones = function (req, res) {
+const consultaTransmisiones = (req, res) => {
 
 	let txId = req.txId;
 

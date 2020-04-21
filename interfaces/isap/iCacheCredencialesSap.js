@@ -10,20 +10,20 @@ const fedicomCredentialsCache = new memCache.Cache();
 fedicomCredentialsCache.countStats(true);
 
 
-const checkUser = function( authReq ) {
-	var cachedPassword = fedicomCredentialsCache.get( authReq.username );
-	return  (cachedPassword && cachedPassword === authReq.password )
+const checkUser = (authReq) => {
+	var cachedPassword = fedicomCredentialsCache.get(authReq.username);
+	return (cachedPassword && cachedPassword === authReq.password)
 }
 
-const addUser = function( authReq ) {
+const addUser = (authReq) => {
 	fedicomCredentialsCache.put(authReq.username, authReq.password);
 }
 
-const stats = function () {
+const stats = () => {
 	var h = fedicomCredentialsCache.hits();
 	var m = fedicomCredentialsCache.misses();
 	var total = h + m;
-	var ratio = total ? (h*100)/total : 0;
+	var ratio = total ? (h * 100) / total : 0;
 
 	return {
 		hit: h,
@@ -33,7 +33,7 @@ const stats = function () {
 	};
 }
 
-const clear = function () {
+const clear = () => {
 	fedicomCredentialsCache.clear();
 }
 

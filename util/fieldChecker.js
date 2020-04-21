@@ -12,7 +12,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */
-	checkExists: function(field, errorObject, errorCode, errorDesc ) {
+	checkExists: (field, errorObject, errorCode, errorDesc ) => {
 		if (field === null || field === undefined) {
 			if (errorObject) errorObject.add(errorCode, errorDesc, 400);
 			return true;
@@ -27,7 +27,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */
-	checkNotEmptyString: function (field, errorObject, errorCode, errorDesc) {
+	checkNotEmptyString: (field, errorObject, errorCode, errorDesc) => {
 		if (field === null || field === undefined || typeof field !== 'string' || field === "") {
 			if (errorObject) errorObject.add(errorCode, errorDesc, 400);
 			return true;
@@ -42,7 +42,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
-	checkExistsAndPositive: function (field, errorObject, errorCode, errorDesc ) {
+	checkExistsAndPositive: (field, errorObject, errorCode, errorDesc ) => {
 		if (field) {
 			var asInt = Number(field);
 			if (!asInt || asInt <= 0 || asInt === Number.NaN || asInt === Number.NEGATIVE_INFINITY || asInt === Number.POSITIVE_INFINITY ) {
@@ -63,7 +63,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
-	checkExistsAndPositiveOrZero: function (field, errorObject, errorCode, errorDesc ) {
+	checkExistsAndPositiveOrZero: (field, errorObject, errorCode, errorDesc ) => {
 		if (field === 0) return false;
 		return this.checkExistsAndPositive(field, errorObject, errorCode, errorDesc);
 	},
@@ -77,7 +77,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
-	checkPositive: function (field, errorObject, errorCode, errorDesc ) {
+	checkPositive: (field, errorObject, errorCode, errorDesc ) => {
 		if (field || field === 0) {
 			var asInt = Number(field);
 			if (!asInt || asInt <= 0 || asInt === Number.NaN || asInt === Number.NEGATIVE_INFINITY || asInt === Number.POSITIVE_INFINITY ) {
@@ -96,7 +96,7 @@ module.exports =  {
 	* @param {string} errorCode El código de error que se introduce en caso de error
 	* @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	*/
-	checkPositiveOrZero: function (field, errorObject, errorCode, errorDesc ) {
+	checkPositiveOrZero: (field, errorObject, errorCode, errorDesc ) => {
 		if (field === 0) return false;
 		return this.checkPositive(field, errorObject, errorCode, errorDesc);
 	},
@@ -140,7 +140,7 @@ module.exports =  {
 	 * @param {string} errorCode El código de error que se introduce en caso de error
 	 * @param {string} errorDesc El mensaje de error que se introduce en caso de error
 	 */
-	checkExistsAndDate: function (field, errorObject, errorCode, errorDesc) {
+	checkExistsAndDate: (field, errorObject, errorCode, errorDesc) => {
 
 		var d = Date.fromFedicomDate(field);
 

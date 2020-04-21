@@ -41,7 +41,7 @@ const estadosRetransmitiblesForzando = [
  * @param {string} txId El ID de transmisión del pedido a retransmitir
  * @param {object} options Opciones de la retransmisión
  */
-const retransmitirPedido = function (otxId, options, callback) {
+const retransmitirPedido = (otxId, options, callback) => {
     if (!options) options = {};
 
     options.force = options.force ? options.force : false;
@@ -54,11 +54,11 @@ const retransmitirPedido = function (otxId, options, callback) {
 
     L.xi(rtxId, ['Retransmisión de pedido con ID ' + otxId, options]);
 
-    iMongo.consultaTx.porId(rtxId, otxId, function (err, dbTx) {
+    iMongo.consultaTx.porId(rtxId, otxId, (errorMongo, dbTx) => {
         // Comprobación de error en la búsqueda
-        if (err) {
+        if (errorMongo) {
             var errorMessage = 'Ocurrió un error al buscar la transmisión en la base de datos';
-            L.xe(rtxId, [errorMessage, err]);
+            L.xe(rtxId, [errorMessage, errorMongo]);
             return callback(errorMessage, rtxId);
         }
 

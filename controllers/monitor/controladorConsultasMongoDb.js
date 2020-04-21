@@ -17,18 +17,18 @@ const getNombresColecciones = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getNombresColecciones( (err, colecciones) => {
+	iMongo.monitor.getNombresColecciones((err, colecciones) => {
 		if (err) {
 			L.e(['Error al obtener la lista de colecciones', err]);
 			res.status(500).send({ ok: false, error: err });
 		} else {
-			res.status(200).send({ ok: true, data: colecciones });	
+			res.status(200).send({ ok: true, data: colecciones });
 		}
 	})
 }
 
 // GET /status/mdb/col/:colName
-const getColeccion = function (req, res) {
+const getColeccion = (req, res) => {
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
@@ -60,7 +60,7 @@ const getColeccion = function (req, res) {
 }
 
 // GET /status/mdb/db
-const getDatabase = function (req, res) {
+const getDatabase = (req, res) => {
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
@@ -81,7 +81,7 @@ const getDatabase = function (req, res) {
 }
 
 // GET /status/mdb/op
-const getOperaciones = function (req, res) {
+const getOperaciones = (req, res) => {
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
@@ -93,16 +93,16 @@ const getOperaciones = function (req, res) {
 		}
 
 		return res.status(200).json({ ok: true, data: sessions });
- 
+
 	});
 }
 
 // GET /status/mdb/rs
-const getReplicaSet = function (req, res) {
+const getReplicaSet = (req, res) => {
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
-	
+
 	iMongo.monitor.getReplicaSet((err, data) => {
 		if (err) {
 			L.e(['Error al obtener el estado del cluster', err]);
@@ -117,7 +117,7 @@ const getReplicaSet = function (req, res) {
 }
 
 // GET /status/mdb/log [?type=(global|rs|startupWarnings)]
-const getLogs = function (req, res) {
+const getLogs = (req, res) => {
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;

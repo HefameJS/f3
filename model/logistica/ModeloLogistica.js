@@ -129,7 +129,7 @@ const _analizarPosiciones = (txId, json) => {
 	})
 
 	let nextOrder = 1;
-	lineas.forEach(function (linea) {
+	lineas.forEach((linea) => {
 		if (!linea.orden) {
 			while (ordenes.includes(nextOrder)) {
 				nextOrder++;
@@ -172,8 +172,8 @@ const SaneadorLogisticaSAP = {
 
 
 		if (message.lineas) {
-			message.lineas.forEach(function (linea) {
-				K.POST_CLEAN.LOGISTICA.replacePos.forEach(function (field) {
+			message.lineas.forEach((linea) => {
+				K.POST_CLEAN.LOGISTICA.replacePos.forEach((field) => {
 					let fieldLowerCase = field.toLowerCase();
 					if (linea[fieldLowerCase] !== undefined) {
 						linea[field] = linea[fieldLowerCase];

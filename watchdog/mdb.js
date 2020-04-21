@@ -21,7 +21,7 @@ const configuracionWatchdowgMDB = C.watchdog.mdbwatch;
 var retransmissionsInProgress = 0;
 var retransmissionSearch = false;
 
-var interval = setInterval(function () {
+var interval = setInterval(() =>  {
 
 	// TODO: Interesante no hacer recovery de transmisiones si hay datos pendientes de escribir en SQLite
 	if (retransmissionsInProgress || retransmissionSearch) return;
@@ -45,7 +45,7 @@ var interval = setInterval(function () {
 
 					iSap.ping(null, (sapError, sapStatus) => {
 						if (sapStatus) {
-							candidatos.forEach(function (tx) {
+							candidatos.forEach((tx) => {
 
 								var txId = tx._id;
 
@@ -77,11 +77,11 @@ var interval = setInterval(function () {
 									 */
 									L.xi(txId, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
 									retransmissionsInProgress++;
-									var crc = tx.crc.toHexString().substr(0, 8);
-									iMongo.consultaTx.porCRCDeConfirmacion(crc, function (err, confirmacionPedido) {
+									let crc = tx.crc.toHexString().substr(0, 8);
+									iMongo.consultaTx.porCRCDeConfirmacion(crc, (errorMongo, confirmacionPedido) => {
 										// Error al consultar a MDB - Sigue habiendo problemas, nos estamos quietos por el momento
-										if (err) {
-											L.xi(txId, ['Error al buscar la confirmación del pedido - Abortamos recuperación', err], 'mdbwatch');
+										if (errorMongo) {
+											L.xi(txId, ['Error al buscar la confirmación del pedido - Abortamos recuperación', errorMongo], 'mdbwatch');
 											retransmissionsInProgress--;
 											return;
 										}
