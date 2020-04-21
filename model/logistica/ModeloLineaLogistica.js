@@ -11,21 +11,21 @@ const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
 const FieldChecker = require(BASE + 'util/fieldChecker');
 
 class LineaLogistica {
-	constructor(txId, json, index) {
+	constructor(txId, json) {
 
-		var errorPosicion = new ErrorFedicom();
+		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-LOG-ERR-001', 'El campo "orden" es inválido');
-		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-LOG-ERR-002', 'El campo "codigoArticulo" es obligatorio');
+		FieldChecker.checkPositive(json.orden, errorFedicom, 'LIN-LOG-ERR-001', 'El campo "orden" es inválido');
+		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-LOG-ERR-002', 'El campo "codigoArticulo" es obligatorio');
 		// FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-LOG-ERR-003', 'El campo "cantidad" es incorrecto');
 		
 		// COPIA DE PROPIEDADES
 		Object.assign(this, json);
 
 		// Si hay error, añadimos las incidencias a la linea y la marcamos para no procesar
-		if (errorPosicion.hasError()) {
+		if (errorFedicom.hasError()) {
 			this.sap_ignore = true;
-			this.incidencias = errorPosicion.getErrors();
+			this.incidencias = errorFedicom.getErrors();
 			L.xw(txId, ['Se ha descartado la línea de logística por errores en la misma.', this.incidencias]);
 		}
 
