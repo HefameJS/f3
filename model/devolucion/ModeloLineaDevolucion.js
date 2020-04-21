@@ -6,6 +6,7 @@ const L = global.logger;
 
 // Modelos
 const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const CRC = require(BASE + 'model/CRC');
 
 // Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
@@ -26,7 +27,7 @@ class LineaDevolucion {
 		// 004 y 005 - numeroAlbaran y fechaAlbaran
 		FieldChecker.checkNotEmptyString(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
 		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
-		
+
 
 		// Añadimos las incidencias a la linea y la marcamos para no procesar
 		if (errorPosicion.hasError()) {
@@ -41,25 +42,25 @@ class LineaDevolucion {
 		Object.assign(this, json);
 
 		// Generacion de CRC de línea
-		// this.generateCRC();
-		// L.xi(txId, ['Generado CRC de linea', this.crc], 'txCRC');
+		this.generateCRC();
+		L.xd(txId, ['Generado CRC de linea', this.crc], 'txCRC');
 
 	}
 
-	/*
+
 	generateCRC() {
-		var crc = '';
-		if (this.numeroAlbaran) crc += this.numeroAlbaran;
-		if (this.codigoArticulo) crc += this.codigoArticulo;
-		if (this.codigoMotivo) crc += this.codigoMotivo;
-		if (this.cantidad) crc += this.cantidad;
-		if (this.lote) crc += this.lote;
-		if (this.fechaCaducidad) crc += this.fechaCaducidad;
-		if (this.valeEstupefaciente) crc += this.valeEstupefaciente;
-		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(crc).digest('hex');
+		this.crc = CRC.crearParaLineaDevolucion(
+			this.codigoMotivo, 
+			this.numeroAlbaran, 
+			this.fechaAlbaran, 
+			this.codigoArticulo, 
+			this.cantidad, 
+			this.lote, 
+			this.fechaCaducidad, 
+			this.valeEstupefaciente
+		)
 	}
-	*/
+
 }
 
 

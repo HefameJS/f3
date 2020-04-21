@@ -7,9 +7,13 @@ const K = global.constants;
 // Externo
 const crypto = require('crypto');
 
+// Interfaces
+const iFlags = require(BASE + 'interfaces/iFlags');
+
 // Modelos
 const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const LineaDevolucion = require(BASE + 'model/devolucion/ModeloLineaDevolucion');
+const LineaDevolucion = require('./ModeloLineaDevolucion');
+const CRC = require(BASE + 'model/CRC');
 
 // Helpers
 const PreCleaner = require(BASE + 'transmutes/preCleaner');
@@ -47,18 +51,11 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-	var [lineas, lineasExcluidas/*, crc*/] = _analizarPosiciones(txId, json);
+		var [lineas, lineasExcluidas, crc] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
-		this.lineasExcluidas = lineasExcluidas
-	
-		// GENERACION DE CRC DESHABILITADA
-		/*
-		var timestamp = Math.floor(Date.fedicomTimestamp() / 10000); // Con esto redondeamos mas o menos a 100 segundos
-		var hash = crypto.createHash('sha1');
-		this.crc = hash.update(crc + this.codigoCliente + timestamp).digest('hex').substring(0, 24).toUpperCase();
-		L.xd(txId, ['Se asigna el siguiente CRC para la devolución', this.crc], 'txCRC');
-		*/
-		this.crc = crypto.createHash('sha1').update(Math.random()+"").digest('hex').substring(0, 24).toUpperCase();
+		this.lineasExcluidas = lineasExcluidas;
+		this.crc = crc;
+
 	}
 
 	contienteLineasValidas() {
@@ -111,9 +108,13 @@ class Devolucion {
 		}
 
 		respuestaSAP.forEach(devolucion => {
+			if (devolucion && devolucion.sap_punto_entrega) {
+				iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, devolucion.sap_punto_entrega);
+			}
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
+
 
 		let estado = K.TX_STATUS.OK;
 
@@ -122,11 +123,13 @@ class Devolucion {
 		if (this.lineasExcluidas.length > 0) {
 			respuestaSAP.push(this.generarRespuestaExclusiones());
 			estado = K.TX_STATUS.DEVOLUCION.PARCIAL
+			iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL, true);
 		}
 
+		_estableceFlags(txId, respuestaSAP);
 
 
-		respuestaSAP.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP, estado) }
+		respuestaSAP.estadoTransmision = () => { return _obtenerEstadoDeRespuestaSap(respuestaSAP, estado) }
 		respuestaSAP.isRechazadoSap = () => false;
 		return respuestaSAP;
 	}
@@ -135,51 +138,44 @@ class Devolucion {
 }
 
 const _analizarPosiciones = (txId, json) => {
-	var lineas = [];
-	var lineasExcluidas = [];
-	// var crc = '';
-	var ordenes = [];
+	let lineas = [];
+	let lineasExcluidas = [];
+	let crc = '';
+	let ordenes = [];
 
-	function rellena(lineas) {
+	json.lineas.forEach((linea, i) => {
+		let nuevaLinea = new LineaDevolucion(linea, txId, i);
 
-		json.lineas.forEach((linea, i) => {
-			var nuevaLinea = new LineaDevolucion(linea, txId, i);
+		crc = CRC.crear(crc, nuevaLinea.crc);
+		delete nuevaLinea.crc;
 
-			// var hash = crypto.createHash('sha1');
-			// crc = hash.update(crc + nuevaLinea.crc).digest('hex');
+		if (nuevaLinea.excluir) {
+			delete nuevaLinea.excluir;
+			lineasExcluidas.push(nuevaLinea);
+		} else {
+			lineas.push(nuevaLinea);
+		}
 
-			if (nuevaLinea.excluir) {
-				// delete nuevaLinea.crc;
-				delete nuevaLinea.excluir;
-				lineasExcluidas.push(nuevaLinea);
+		// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
+		if (nuevaLinea.orden) {
+			ordenes.push(parseInt(nuevaLinea.orden));
+		}
+	});
 
-			} else {
-				lineas.push(nuevaLinea);
+	// Rellenamos el orden en las lineas donde no viene.
+	let siguienteOrdinal = 1;
+	lineas.forEach((linea) => {
+		if (!linea.orden) {
+			while (ordenes.includes(siguienteOrdinal)) {
+				siguienteOrdinal++;
 			}
+			linea.orden = siguienteOrdinal;
+			siguienteOrdinal++;
+		}
+	});
 
+	return [lineas, lineasExcluidas, crc];
 
-			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
-			if (nuevaLinea.orden) {
-				ordenes.push(parseInt(nuevaLinea.orden));
-			}
-
-		});
-
-		// Rellenamos el orden en las lineas donde no viene.
-		var nextOrder = 1;
-		lineas.forEach((linea) => {
-			if (!linea.orden) {
-				while (ordenes.includes(nextOrder)) {
-					nextOrder++;
-				}
-				linea.orden = nextOrder;
-				nextOrder++;
-			}
-		});
-
-		return [lineas, lineasExcluidas/*, crc*/];
-	}
-	return rellena(lineas);
 }
 
 
@@ -273,7 +269,7 @@ const SaneadorDevolucionesSAP = {
 				*/
 				if (linea.incidencias && linea.incidencias.forEach) {
 					let incidenciasSaneadas = []
-					linea.incidencias.forEach( incidencia => {
+					linea.incidencias.forEach(incidencia => {
 						if (incidencia && incidencia.codigo && incidencia.descripcion) {
 							incidenciasSaneadas.push(incidencia);
 						}
@@ -291,7 +287,7 @@ const SaneadorDevolucionesSAP = {
 }
 
 
-const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
+const _obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 
 	let estadoTransmision = estado || K.TX_STATUS.OK;
 	let codigoHttpRespuesta = estadoTransmision === K.TX_STATUS.OK ? 201 : 206;
@@ -307,5 +303,84 @@ const obtenerEstadoDeRespuestaSap = (sapBody, estado) => {
 
 	return [estadoTransmision, numerosDevolucion, codigoHttpRespuesta];
 }
+
+
+/**
+ * Analiza la respuesta de la devolucion y establece las flags que se apliquen en función del contenido de la misma.
+ * 
+ * @param {*} txId Id de transmisión sobre el que se aplicarán las flags
+ * @param {*} respuestaDevoluciones 
+ */
+const _estableceFlags = (txId, respuestaDevoluciones) => {
+
+	if (respuestaDevoluciones && respuestaDevoluciones.forEach) {
+
+		let generaCodigoRecogida = false;
+
+		// Aclaraciones:
+		/**
+		 * Para el cálculo de: lineas, cantidad, lineasEstupe y cantidadEstupe se tienen en cuenta todas las líneas transmitidas,
+		 * independientemente de si la línea se excluye, tiene incidencias o lo que sea.
+		 * Para el cálculo de líneas/cantidades con incidencias, solo se tienen en cuenta aquellas líneas que NO fueron excluidas.
+		 */
+		let totales = {
+			lineas: 0,
+			lineasExcluidas: 0,
+			lineasIncidencias: 0,
+			lineasEstupe: 0,
+			cantidad: 0,
+			cantidadExcluida: 0,
+			cantidadIncidencias: 0,
+			cantidadEstupe: 0,
+			devoluciones: 0
+		}
+
+		respuestaDevoluciones.forEach(devolucion => {
+
+			if (devolucion && devolucion.lineas && devolucion.lineas.forEach) {
+
+				if (devolucion.numeroDevolucion) totales.devoluciones++;
+				if (devolucion.codigoRecogida) generaCodigoRecogida = true;
+
+				devolucion.lineas.forEach(linea => {
+					totales.lineas++;
+					if (linea.cantidad) totales.cantidad += linea.cantidad;
+
+					if (linea.valeEstupefaciente) {
+						totales.lineasEstupe++;
+						if (linea.cantidad) totales.cantidadEstupe += linea.cantidad;
+					}
+
+					// Si está en una devolución con numeroDevolucion, es que la devolución no ha sido excluida
+					// en este caso, miraremos si la linea tiene incidencias para contarlas
+					if (devolucion.numeroDevolucion) {
+						if (linea.incidencias && linea.incidencias.length) {
+							totales.lineasIncidencias++;
+							if (linea.cantidad) totales.cantidadIncidencias += linea.cantidad
+						}
+					// Si está en una devolución SIN numeroDevolucion, es que la línea ha sido excluida
+					// en este caso aumentamos el contador de lineas/cantidades excluidas
+					} else {
+						totales.lineasExcluidas++;
+						if (linea.cantidad) totales.cantidadExcluida += linea.cantidad;
+					}
+
+				});
+			}
+		});
+
+		if (totales.lineasEstupe) iFlags.set(txId, K.FLAGS.ESTUPEFACIENTE)
+		if (generaCodigoRecogida) iFlags.set(txId, K.FLAGS.GENERA_RECOGIDA);
+		iFlags.set(txId, K.FLAGS.TOTALES, totales);
+		
+
+
+	} else {
+		iFlags.set(txId, K.FLAGS.TOTALES, { lineas: 0 });
+	}
+
+}
+
+
 
 module.exports = Devolucion;

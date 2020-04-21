@@ -288,7 +288,7 @@ module.exports = {
             removePosIfFalse: ['servicioDemorado']
         },
         DEVOLUCIONES: {
-            removeCab: ['login', 'crc'],
+            removeCab: ['login', 'crc', 'sap_punto_entrega', 'sap_bloqueo_entrega', 'sap_create_logistic', 'sap_kunnr_code', 'sap_num_devo', 'sap_fecha_bapi'],
             removePos: ['sap_ignore'],
             replaceCab: ['numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'],
             replacePos: ['numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente', 'fechaCaducidad'],
@@ -420,7 +420,9 @@ module.exports = {
         VERSION: 'v',
         TOTALES: 's',
         TIPO: 't',
-        PUNTO_ENTREGA: 'pt'
+        PUNTO_ENTREGA: 'pt',
+        GENERA_RECOGIDA: 'logistica',
+        DEVOLUCION_PARCIAL: 'devParc'
     },
     TIPIFICADO_FALTAS: {
         "BAJA": "desconocido",

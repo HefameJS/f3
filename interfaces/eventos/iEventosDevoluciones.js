@@ -6,6 +6,7 @@ const K = global.constants;
 
 // Interfaces
 const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iFlags = require(BASE + 'interfaces/iFlags');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
@@ -71,6 +72,8 @@ module.exports.finDevolucion = (res, cuerpoRespuesta, estadoFinal, datosExtra) =
 		}
 	}
 
+	iFlags.finaliza(txId, transaccion);
+
 	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.yell(txId, K.TX_TYPES.DEVOLUCION, estadoFinal, [cuerpoRespuesta]);
@@ -107,6 +110,8 @@ module.exports.errorDevolucion = (req, res, cuerpoRespuesta, status) => {
 			}
 		}
 	}
+
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
