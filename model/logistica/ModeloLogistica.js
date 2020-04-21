@@ -58,7 +58,7 @@ class Logistica {
 		this.lineas = lineas;
 		this.ignorarTodasLineas = ignorarTodasLineas;
 	
-		// GENERACION DE CRC DESHABILITADA
+		// GENERACION DE CRC
 		this.generarCRC()
 	}
 
@@ -119,7 +119,7 @@ const _analizarPosiciones = (txId, json) => {
 	let ignorarTodasLineas = true;
 
 	json.lineas.forEach((linea, i) => {
-		let nuevaLinea = new LineaLogistica(txId, linea, i);
+		let nuevaLinea = new LineaLogistica(txId, linea);
 		lineas.push(nuevaLinea);
 		if (!nuevaLinea.sap_ignore) ignorarTodasLineas = false;
 

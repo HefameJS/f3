@@ -6,15 +6,12 @@ const K = global.constants;
 
 // Modelos
 const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const Pedido = require(BASE + 'model/pedido/ModeloPedido');
-const ConfirmacionLineaPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionLineaPedidoSAP');
+const Pedido = require('./ModeloPedido');
+const ConfirmacionLineaPedidoSAP = require('./ModeloConfirmacionLineaPedidoSAP');
 const CRC = require(BASE + 'model/CRC');
 
 // Helpers
 const FieldChecker = require(BASE + 'util/fieldChecker');
-
-
-
 
 
 
@@ -53,14 +50,14 @@ class ConfirmacionPedidoSAP {
 	}
 
 	obtenerEstado() {
-		var numerosPedidoSAP = Pedido.extraerPedidosAsociados(this.sap_pedidosasociados);
-		var estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+		let numerosPedidoSAP = Pedido.extraerPedidosAsociados(this.sap_pedidosasociados);
+		let estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		return [estadoTransmision, numerosPedidoSAP];
 	}
 
 	static obtenerEstadoDeConfirmacionSap(sapBody) {
-		var numerosPedidoSAP = Pedido.extraerPedidosAsociados(sapBody.sap_pedidosasociados);
-		var estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+		let numerosPedidoSAP = Pedido.extraerPedidosAsociados(sapBody.sap_pedidosasociados);
+		let estadoTransmision = numerosPedidoSAP ? K.TX_STATUS.OK : K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		return [estadoTransmision, numerosPedidoSAP];
 	}
 
@@ -68,15 +65,14 @@ class ConfirmacionPedidoSAP {
 
 
 const _analizarPosiciones = (txId, json) => {
-	var lineas = [];
-	function rellena(lineas) {
-		json.lineas.forEach((linea) => {
-			var lineaPedido = new ConfirmacionLineaPedidoSAP(linea, txId);
-			lineas.push(lineaPedido);
-		});
-		return lineas;
-	}
-	return rellena(lineas);
+	let lineas = [];
+
+	json.lineas.forEach((linea) => {
+		let lineaPedido = new ConfirmacionLineaPedidoSAP(txId, linea);
+		lineas.push(lineaPedido);
+	});
+	return lineas;
+
 }
 
 module.exports = ConfirmacionPedidoSAP;

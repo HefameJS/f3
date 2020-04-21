@@ -13,7 +13,7 @@ const iFlags = require(BASE + 'interfaces/iFlags')
 
 // Modelos
 const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const LineaPedido = require(BASE + 'model/pedido/ModeloLineaPedido');
+const LineaPedido = require('./ModeloLineaPedido');
 const CRC = require(BASE + 'model/CRC');
 
 // Helpers
@@ -44,7 +44,7 @@ class Pedido {
 		}
 
 		// SANEADO OBLIGATORIO DE LINEAS
-		var [lineas, sap_ignore_all] = _analizarPosiciones(txId, json);
+		let [lineas, sap_ignore_all] = _analizarPosiciones(txId, json);
 		// Si todas las lineas serán ignoradas, no hay pedido
 		if (sap_ignore_all) {
 			L.xe(txId, ['El pedido contiene errores en todas las líneas. Se aborta el procesamiento del mismo']);
@@ -58,8 +58,8 @@ class Pedido {
 		// LIMPIEZA DEL CODIGO DE CLIENTE
 		// Si tiene mas de 10 dígitos, SAP da error 500 por lo que lo limpiamos
 		if (this.codigoCliente.length > 10) {
-			var codigoClienteNuevo = this.codigoCliente.substring(this.codigoCliente.length - 10);
-			L.xw(txId, ['Se arregla el codigo de cliente', this.codigoCliente, codigoClienteNuevo]);
+			let codigoClienteNuevo = this.codigoCliente.substring(this.codigoCliente.length - 10);
+			L.xw(txId, ['Se trunca el codigo de cliente a 10 dígitos para que SAP no explote', this.codigoCliente, codigoClienteNuevo]);
 			this.codigoCliente = codigoClienteNuevo;
 		}
 
@@ -78,7 +78,7 @@ class Pedido {
 		this.sap_url_confirmacion = _generaUrlConfirmacion();
 
 		// ARREGLO DEL CODIGO DEL ALMACEN
-		var [codigoAlmacenServicioConvertido, errorAlmacen] = _converAlmacen(this.codigoAlmacenServicio);
+		let [codigoAlmacenServicioConvertido, errorAlmacen] = _converAlmacen(this.codigoAlmacenServicio);
 		delete this.codigoAlmacenServicio;
 		if (codigoAlmacenServicioConvertido) this.codigoAlmacenServicio = codigoAlmacenServicioConvertido;
 		if (errorAlmacen) this.addIncidencia(errorAlmacen)
@@ -186,7 +186,7 @@ const _analizarPosiciones = (txId, json) => {
 	let sap_ignore_all = true;
 
 	json.lineas.forEach((linea) => {
-		let lineaPedido = new LineaPedido(linea, txId);
+		let lineaPedido = new LineaPedido(txId, linea);
 		lineas.push(lineaPedido);
 
 		// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
