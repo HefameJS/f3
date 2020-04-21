@@ -75,10 +75,10 @@ class Pedido {
 		L.xd(txId, ['Se asigna el siguiente CRC para el pedido', this.crc], 'txCRC')
 
 		// INCLUYE LA URL DE CONFIRMACION PARA SAP
-		this.sap_url_confirmacion = generaUrlConfirmacion();
+		this.sap_url_confirmacion = _generaUrlConfirmacion();
 
 		// ARREGLO DEL CODIGO DEL ALMACEN
-		var [codigoAlmacenServicioConvertido, errorAlmacen] = converAlmacen(this.codigoAlmacenServicio);
+		var [codigoAlmacenServicioConvertido, errorAlmacen] = _converAlmacen(this.codigoAlmacenServicio);
 		delete this.codigoAlmacenServicio;
 		if (codigoAlmacenServicioConvertido) this.codigoAlmacenServicio = codigoAlmacenServicioConvertido;
 		if (errorAlmacen) this.addIncidencia(errorAlmacen)
@@ -89,9 +89,9 @@ class Pedido {
 	}
 
 	simulaFaltas() {
-		var fedicomError = { codigo: 'PED-WARN-001', descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información'};
+		var fedicomError = { codigo: 'PED-WARN-001', descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información' };
 		if (this.incidencias && this.incidencias.push) {
-			this.incidencias.push( fedicomError );
+			this.incidencias.push(fedicomError);
 		} else {
 			this.incidencias = [fedicomError];
 		}
@@ -133,42 +133,42 @@ class Pedido {
 		var incidencia = (code instanceof ErrorFedicom) ? code : new ErrorFedicom(code, descripcion);
 
 		if (this.incidencias && this.incidencias.push) {
-			this.incidencias.push( incidencia.getErrors()[0] )
+			this.incidencias.push(incidencia.getErrors()[0])
 		} else {
 			this.incidencias = incidencia.getErrors();
 		}
 	}
 
-	obtenerRespuestaCliente( txId, respuestaSAP ) {
-		
-		var clon = clone(respuestaSAP);
+	obtenerRespuestaCliente(txId, respuestaSAP) {
+
+		let respuestaCliente = clone(respuestaSAP);
 
 		// Si la respuesta de SAP es un array, no hay que sanearlo
-		if (Array.isArray(clon)) {
-			clon = SaneadorPedidosSAP.eliminaIncidenciasDeBloqueos(clon);
-			clon.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, null, null] }
-			clon.isRechazadoSap = () => true;
-			return clon;
+		if (Array.isArray(respuestaCliente)) {
+			respuestaCliente = SaneadorPedidosSAP.eliminaIncidenciasDeBloqueos(respuestaCliente);
+			respuestaCliente.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, null, null] }
+			respuestaCliente.isRechazadoSap = () => true;
+			return respuestaCliente;
 		}
 
 		// Si la respuesta lleva el valor del punto de entrega del cliente, generamos flag
-		if (clon && clon.sap_punto_entrega) {
-			iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, clon.sap_punto_entrega);
+		if (respuestaCliente && respuestaCliente.sap_punto_entrega) {
+			iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, respuestaCliente.sap_punto_entrega);
 		}
 
-		clon = SaneadorPedidosSAP.sanearMayusculas(clon);
-		clon = SaneadorPedidosSAP.establecerNumeroPedido(clon, this.crc);
-		clon = SaneadorPedidosSAP.establecerFechaPedido(clon);
-		clon = SaneadorPedidosSAP.eliminarCamposInnecesarios(clon);
-		clon = SaneadorPedidosSAP.eliminarInicidenciaPedidoDuplicado(txId, clon);
-		
-		clon.estadoTransmision = () => { return obtenerEstadoDeRespuestaSap(respuestaSAP) }
-		clon.isRechazadoSap = () => false;
+		respuestaCliente = SaneadorPedidosSAP.sanearMayusculas(respuestaCliente);
+		respuestaCliente = SaneadorPedidosSAP.establecerNumeroPedido(respuestaCliente, this.crc);
+		respuestaCliente = SaneadorPedidosSAP.establecerFechaPedido(respuestaCliente);
+		respuestaCliente = SaneadorPedidosSAP.eliminarCamposInnecesarios(respuestaCliente);
+		respuestaCliente = SaneadorPedidosSAP.eliminarInicidenciaPedidoDuplicado(txId, respuestaCliente);
+
+		respuestaCliente.estadoTransmision = () => { return _obtenerEstadoDeRespuestaSap(respuestaSAP) }
+		respuestaCliente.isRechazadoSap = () => false;
 
 		// Establecemos FLAGS
-		_estableceFlags(txId, clon);
-		
-		return clon;
+		_estableceFlags(txId, respuestaCliente);
+
+		return respuestaCliente;
 	}
 
 	static extraerPedidosAsociados(sapBody) {
@@ -180,50 +180,48 @@ class Pedido {
 
 
 const _analizarPosiciones = (txId, json) => {
-	var lineas = [];
-	var ordenes = [];
-	function rellena(lineas) {
+	let lineas = [];
+	let ordenes = [];
 
-		var sap_ignore_all = true;
+	let sap_ignore_all = true;
 
-		json.lineas.forEach((linea) => {
-			var lineaPedido = new LineaPedido(linea, txId);
-			lineas.push(lineaPedido);
+	json.lineas.forEach((linea) => {
+		let lineaPedido = new LineaPedido(linea, txId);
+		lineas.push(lineaPedido);
 
-			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
-			if (lineaPedido.orden) {
-				ordenes.push(parseInt(lineaPedido.orden));
+		// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
+		if (lineaPedido.orden) {
+			ordenes.push(parseInt(lineaPedido.orden));
+		}
+
+		if (!lineaPedido.sap_ignore) {
+			sap_ignore_all = false;
+		}
+	});
+
+	// Rellenamos el orden.
+	let siguienteOrdinal = 1;
+	lineas.forEach((linea) => {
+		if (!linea.orden) {
+			while (ordenes.includes(siguienteOrdinal)) {
+				siguienteOrdinal++;
 			}
+			linea.orden = siguienteOrdinal;
+			siguienteOrdinal++;
+		}
+	});
+	return [lineas, sap_ignore_all];
 
-			if (!lineaPedido.sap_ignore) {
-				sap_ignore_all = false;
-			}
-		});
-
-		// Rellenamos el orden.
-		var nextOrder = 1;
-		lineas.forEach((linea) => {
-			if (!linea.orden) {
-				while (ordenes.includes(nextOrder)) {
-					nextOrder++;
-				}
-				linea.orden = nextOrder;
-				nextOrder++;
-			}
-		});
-		return [lineas, sap_ignore_all];
-	}
-	return rellena(lineas);
 }
 
-const converAlmacen = (codigoAlmacen) => {
+const _converAlmacen = (codigoAlmacen) => {
 	if (!codigoAlmacen || !codigoAlmacen.trim) return [null, null];
 
 	codigoAlmacen = codigoAlmacen.trim();
 	if (!codigoAlmacen.startsWith('RG')) {
 		var codigoFedicom2 = parseInt(codigoAlmacen);
 		switch (codigoFedicom2) {
-			case 2:  return ['RG01', null];  // Santomera
+			case 2: return ['RG01', null];  // Santomera
 			case 5: return ['RG15', null]; // Barcelona viejo
 			case 9: return ['RG19', null]; // Málaga viejo
 			case 13: return ['RG04', null]; // Madrid viejo
@@ -247,7 +245,7 @@ const converAlmacen = (codigoAlmacen) => {
 	}
 }
 
-const generaUrlConfirmacion = () => {
+const _generaUrlConfirmacion = () => {
 	return 'http://' + HOSTNAME + '.hefame.es:' + C.http.port + '/confirmaPedido';
 }
 
@@ -258,7 +256,7 @@ const generaUrlConfirmacion = () => {
 const SaneadorPedidosSAP = {
 	eliminaIncidenciasDeBloqueos: (message) => {
 		var cantidadIncidenciasAntes = message.length;
-		
+
 		message = message.filter((item) => {
 			return !item || !item.codigo || !item.codigo.startsWith('SAP-IGN');
 		});
@@ -341,7 +339,7 @@ const SaneadorPedidosSAP = {
 		}
 		return message;
 	},
-	establecerNumeroPedido:  (message, numeroPedidoOriginal) => {
+	establecerNumeroPedido: (message, numeroPedidoOriginal) => {
 		message.numeroPedido = numeroPedidoOriginal;
 		return message;
 	},
@@ -367,7 +365,7 @@ const SaneadorPedidosSAP = {
 	eliminarInicidenciaPedidoDuplicado: (txId, respuestaSAP) => {
 		if (respuestaSAP.incidencias && respuestaSAP.incidencias.forEach) {
 			let incidenciasSaneadas = [];
-			respuestaSAP.incidencias.forEach ( incidencia => {
+			respuestaSAP.incidencias.forEach(incidencia => {
 				if (incidencia) {
 					if (incidencia.codigo && incidencia.descripcion) {
 						incidenciasSaneadas.push(incidencia);
@@ -383,7 +381,7 @@ const SaneadorPedidosSAP = {
 }
 
 
-const obtenerEstadoDeRespuestaSap = (sapBody) => {
+const _obtenerEstadoDeRespuestaSap = (sapBody) => {
 
 	var estadoTransmision = K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO;
 	var numeroPedidoAgrupado = (sapBody.numeropedido) ? sapBody.numeropedido : null;
@@ -395,8 +393,8 @@ const obtenerEstadoDeRespuestaSap = (sapBody) => {
 		if (numerosPedidoSAP) {
 			estadoTransmision = K.TX_STATUS.OK;
 		}
-	}  
-	return [ estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP || [] ];
+	}
+	return [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP || []];
 }
 
 /**
@@ -465,7 +463,7 @@ const _estableceFlags = (txId, respuestaPedido) => {
 	} else {
 		iFlags.set(txId, K.FLAGS.TOTALES, { lineas: 0 });
 	}
-	
+
 }
 
 /**
@@ -473,16 +471,16 @@ const _estableceFlags = (txId, respuestaPedido) => {
  * grupos generalizados (estupe|stock|noPermitido|suministro|desconocido)
  * @param {*} incidencias 
  */
-const _analizaMotivosFalta  = (incidencias) => {
-	if (!incidencias || ! incidencias.forEach ) return {}
+const _analizaMotivosFalta = (incidencias) => {
+	if (!incidencias || !incidencias.forEach) return {}
 
 	let tipos = {};
-	incidencias.forEach( incidencia => {
+	incidencias.forEach(incidencia => {
 		if (incidencia.descripcion) {
 			let tipoFalta = K.TIPIFICADO_FALTAS[incidencia.descripcion];
 			if (tipoFalta) tipos[tipoFalta] = true;
 		}
-	} )
+	})
 	return tipos;
 }
 
