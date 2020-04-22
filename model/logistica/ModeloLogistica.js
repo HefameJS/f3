@@ -75,7 +75,7 @@ class Logistica {
 	limpiarEntrada(txId) {
 
 		// LIMPIEZA DE LOS CAMPOS DE CABECERA
-		var incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.LOGISTICA.CABECERA);
+		let incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.LOGISTICA.CABECERA);
 		if (this.incidencias && this.incidencias.concat) {
 			this.incidencias.concat(incidenciasCabecera.getErrors());
 		} else {
@@ -85,7 +85,7 @@ class Logistica {
 		// LIMPIEZA DE LAS LINEAS
 		if (this.lineas && this.lineas.forEach) {
 			this.lineas.forEach((lineaLogistica) => {
-				var incidenciasLinea = PreCleaner.clean(txId, lineaLogistica, K.PRE_CLEAN.LOGISTICA.LINEAS);
+				let incidenciasLinea = PreCleaner.clean(txId, lineaLogistica, K.PRE_CLEAN.LOGISTICA.LINEAS);
 				if (incidenciasLinea.hasError()) {
 					if (lineaLogistica.incidencias && lineaLogistica.incidencias.concat) {
 						lineaLogistica.incidencias.concat(incidenciasLinea.getErrors());
@@ -148,87 +148,87 @@ const _analizarPosiciones = (txId, json) => {
  * va a dar realmente al cliente.
  */
 const SaneadorLogisticaSAP = {
-	sanearMayusculas: (message) => {
-		K.POST_CLEAN.LOGISTICA.replaceCab.forEach(field => {
-			let fieldLowerCase = field.toLowerCase();
-			if (message[fieldLowerCase] !== undefined) {
-				message[field] = message[fieldLowerCase];
-				delete message[fieldLowerCase];
+	sanearMayusculas: (respuestaCliente) => {
+		K.POST_CLEAN.LOGISTICA.replaceCab.forEach(nombreCampo => {
+			let nombreCampoMinusculas = nombreCampo.toLowerCase();
+			if (respuestaCliente[nombreCampoMinusculas] !== undefined) {
+				respuestaCliente[nombreCampo] = respuestaCliente[nombreCampoMinusculas];
+				delete respuestaCliente[nombreCampoMinusculas];
 			}
 		});
 
 		// Saneado de las mayúsculas en las direcciones de origen y destino
-		K.POST_CLEAN.LOGISTICA.replaceDireccionLogistica.forEach(field => {
-			let fieldLowerCase = field.toLowerCase();
-			if (message.origen[fieldLowerCase] !== undefined) {
-				message.origen[field] = message.origen[fieldLowerCase];
-				delete message.origen[fieldLowerCase];
+		K.POST_CLEAN.LOGISTICA.replaceDireccionLogistica.forEach(nombreCampo => {
+			let nombreCampoMinusculas = nombreCampo.toLowerCase();
+			if (respuestaCliente.origen[nombreCampoMinusculas] !== undefined) {
+				respuestaCliente.origen[nombreCampo] = respuestaCliente.origen[nombreCampoMinusculas];
+				delete respuestaCliente.origen[nombreCampoMinusculas];
 			}
-			if (message.destino[fieldLowerCase] !== undefined) {
-				message.destino[field] = message.destino[fieldLowerCase];
-				delete message.destino[fieldLowerCase];
+			if (respuestaCliente.destino[nombreCampoMinusculas] !== undefined) {
+				respuestaCliente.destino[nombreCampo] = respuestaCliente.destino[nombreCampoMinusculas];
+				delete respuestaCliente.destino[nombreCampoMinusculas];
 			}
 		})
 
 
-		if (message.lineas) {
-			message.lineas.forEach((linea) => {
-				K.POST_CLEAN.LOGISTICA.replacePos.forEach((field) => {
-					let fieldLowerCase = field.toLowerCase();
-					if (linea[fieldLowerCase] !== undefined) {
-						linea[field] = linea[fieldLowerCase];
-						delete linea[fieldLowerCase];
+		if (respuestaCliente.lineas) {
+			respuestaCliente.lineas.forEach((linea) => {
+				K.POST_CLEAN.LOGISTICA.replacePos.forEach((nombreCampo) => {
+					let nombreCampoMinusculas = nombreCampo.toLowerCase();
+					if (linea[nombreCampoMinusculas] !== undefined) {
+						linea[nombreCampo] = linea[nombreCampoMinusculas];
+						delete linea[nombreCampoMinusculas];
 					}
 				});
 			});
 		}
-		return message;
+		return respuestaCliente;
 
 	},
-	eliminarCamposInnecesarios: (message) => {
-		K.POST_CLEAN.LOGISTICA.removeCab.forEach(field => {
-			delete message[field];
+	eliminarCamposInnecesarios: (respuestaCliente) => {
+		K.POST_CLEAN.LOGISTICA.removeCab.forEach(campo => {
+			delete respuestaCliente[campo];
 		});
-		K.POST_CLEAN.LOGISTICA.removeCabEmptyString.forEach(field => {
-			if (message[field] === '') delete message[field];
+		K.POST_CLEAN.LOGISTICA.removeCabEmptyString.forEach(campo => {
+			if (respuestaCliente[campo] === '') delete respuestaCliente[campo];
 		});
-		K.POST_CLEAN.LOGISTICA.removeCabEmptyArray.forEach(field => {
-			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+		K.POST_CLEAN.LOGISTICA.removeCabEmptyArray.forEach(campo => {
+			if (respuestaCliente[campo] && typeof respuestaCliente[campo].push === 'function' && respuestaCliente[campo].length === 0) delete respuestaCliente[campo];
 		});
-		K.POST_CLEAN.LOGISTICA.removeCabZeroValue.forEach(field => {
-			if (message[field] === 0) delete message[field];
+		K.POST_CLEAN.LOGISTICA.removeCabZeroValue.forEach(campo => {
+			if (respuestaCliente[campo] === 0) delete respuestaCliente[campo];
 		});
-		K.POST_CLEAN.LOGISTICA.removeCabIfFalse.forEach(field => {
-			if (message[field] === false) delete message[field];
+		K.POST_CLEAN.LOGISTICA.removeCabIfFalse.forEach(campo => {
+			if (respuestaCliente[campo] === false) delete respuestaCliente[campo];
 		});
 
 		// Limpieza de campos vacíos en las direcciones de origen y destino
 		K.POST_CLEAN.LOGISTICA.removeDireccionLogisticaEmptyString.forEach(field => {
-			if (message.origen[field] === '') delete message.origen[field];
-			if (message.destino[field] === '') delete message.destino[field];
+			if (respuestaCliente.origen[field] === '') delete respuestaCliente.origen[field];
+			if (respuestaCliente.destino[field] === '') delete respuestaCliente.destino[field];
 		});
 
-		if (message.lineas && message.lineas.forEach) {
-			message.lineas.forEach( linea => {
-				K.POST_CLEAN.LOGISTICA.removePos.forEach(field => {
-					delete linea[field];
+		if (respuestaCliente.lineas && respuestaCliente.lineas.forEach) {
+			respuestaCliente.lineas.forEach( linea => {
+				K.POST_CLEAN.LOGISTICA.removePos.forEach(campo => {
+					delete linea[campo];
 				});
-				K.POST_CLEAN.LOGISTICA.removePosEmptyString.forEach(field => {
-					if (linea[field] === '') delete linea[field];
+				K.POST_CLEAN.LOGISTICA.removePosEmptyString.forEach(campo => {
+					if (linea[campo] === '') delete linea[campo];
 				});
-				K.POST_CLEAN.LOGISTICA.removePosEmptyArray.forEach(field => {
-					if (linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
+				K.POST_CLEAN.LOGISTICA.removePosEmptyArray.forEach(campo => {
+					if (linea[campo] && typeof linea[campo].push === 'function' && linea[campo].length === 0) delete linea[campo];
 				});
-				K.POST_CLEAN.LOGISTICA.removePosZeroValue.forEach(field => {
-					if (linea[field] === 0) delete linea[field];
+				K.POST_CLEAN.LOGISTICA.removePosZeroValue.forEach(campo => {
+					if (linea[campo] === 0) delete linea[campo];
 				});
-				K.POST_CLEAN.LOGISTICA.removePosIfFalse.forEach(field => {
-					if (linea[field] === false) delete linea[field];
+				K.POST_CLEAN.LOGISTICA.removePosIfFalse.forEach(campo => {
+					if (linea[campo] === false) delete linea[campo];
 				});
 
 			});
 		}
-		return message;
+		return respuestaCliente;
 	}
 }
 

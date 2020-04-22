@@ -20,7 +20,7 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 
 	// Salvo que se indique, buscaremos si tenemos los datos del cliente en la cache de credenciales
 	if (!solicitudAutenticacion.noCache) {
-		var resultadoCache = iCacheCredencialesSap.check(solicitudAutenticacion);
+		let resultadoCache = iCacheCredencialesSap.chequearSolicitud(solicitudAutenticacion);
 		if (resultadoCache) {
 			L.xd(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache');
 
@@ -39,7 +39,7 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 		return;
 	}
 
-	var parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zverify_fedi_credentials',
 		body: solicitudAutenticacion
 	});
@@ -69,7 +69,7 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 
 		// Solo si SAP responde con el nombre del usuario guardamos la entrada en caché
 		if (!solicitudAutenticacion.noCache && cuerpoSap.username && cuerpoSap.username.length > 0) {
-			iCacheCredencialesSap.add(solicitudAutenticacion);
+			iCacheCredencialesSap.agregarEntrada(solicitudAutenticacion);
 		}
 
 		callback(null, respuestaSap);

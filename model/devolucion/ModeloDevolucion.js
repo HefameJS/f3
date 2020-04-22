@@ -51,7 +51,7 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-		var [lineas, lineasExcluidas, crc] = _analizarPosiciones(txId, json);
+		let [lineas, lineasExcluidas, crc] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 		this.lineasExcluidas = lineasExcluidas;
 		this.crc = CRC.crear(this.codigoCliente, crc);
@@ -72,7 +72,7 @@ class Devolucion {
 	limpiarEntrada(txId) {
 
 		// LIMPIEZA DE LOS CAMPOS DE CABECERA
-		var incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.DEVOLUCIONES.CABECERA);
+		let incidenciasCabecera = PreCleaner.clean(txId, this, K.PRE_CLEAN.DEVOLUCIONES.CABECERA);
 		if (this.incidencias && this.incidencias.concat) {
 			this.incidencias.concat(incidenciasCabecera.getErrors());
 		} else {
@@ -82,7 +82,7 @@ class Devolucion {
 		// LIMPIEZA DE LAS LINEAS
 		if (this.lineas && this.lineas.forEach) {
 			this.lineas.forEach((lineaDevolucion) => {
-				var incidenciasLinea = PreCleaner.clean(txId, lineaDevolucion, K.PRE_CLEAN.DEVOLUCIONES.LINEAS);
+				let incidenciasLinea = PreCleaner.clean(txId, lineaDevolucion, K.PRE_CLEAN.DEVOLUCIONES.LINEAS);
 				if (incidenciasLinea.hasError()) {
 					if (lineaDevolucion.incidencias && lineaDevolucion.incidencias.concat) {
 						lineaDevolucion.incidencias.concat(incidenciasLinea.getErrors());
@@ -106,7 +106,7 @@ class Devolucion {
 
 			if (devolucion.incidencias && devolucion.incidencias.filter) {
 
-				devolucion.incidencias = devolucion.incidencias.filter( (incidenciaCabecera) => {
+				devolucion.incidencias = devolucion.incidencias.filter((incidenciaCabecera) => {
 					// Si aparece la incidencia 'Cliente desconocido', la suprimimos de la respuesta al cliente
 					// y al poner incidenciaClienteDesconocido a true. Esto hará que la devolución se marque como rechazada.
 					if (incidenciaCabecera && incidenciaCabecera.descripcion === "Cliente desconocido") {
@@ -210,89 +210,93 @@ const _analizarPosiciones = (txId, json) => {
  * va a dar realmente al cliente.
  */
 const SaneadorDevolucionesSAP = {
-	sanearMayusculas: (message) => {
-		K.POST_CLEAN.DEVOLUCIONES.replaceCab.forEach((field) => {
-			var fieldLowerCase = field.toLowerCase();
-			if (message[fieldLowerCase] !== undefined) {
-				message[field] = message[fieldLowerCase];
-				delete message[fieldLowerCase];
+	sanearMayusculas: (devolucion) => {
+		K.POST_CLEAN.DEVOLUCIONES.replaceCab.forEach((nombreCampo) => {
+			let nombreCampoMinusculas = nombreCampo.toLowerCase();
+			if (devolucion[nombreCampoMinusculas] !== undefined) {
+				devolucion[nombreCampo] = devolucion[nombreCampoMinusculas];
+				delete devolucion[nombreCampoMinusculas];
 			}
 		});
 
-		if (message.lineas) {
-			message.lineas.forEach((linea) => {
-				K.POST_CLEAN.DEVOLUCIONES.replacePos.forEach((field) => {
-					var fieldLowerCase = field.toLowerCase();
-					if (linea[fieldLowerCase] !== undefined) {
-						linea[field] = linea[fieldLowerCase];
-						delete linea[fieldLowerCase];
+		if (devolucion.lineas) {
+			devolucion.lineas.forEach((linea) => {
+				K.POST_CLEAN.DEVOLUCIONES.replacePos.forEach((nombreCampo) => {
+					let nombreCampoMinusculas = nombreCampo.toLowerCase();
+					if (linea[nombreCampoMinusculas] !== undefined) {
+						linea[nombreCampo] = linea[nombreCampoMinusculas];
+						delete linea[nombreCampoMinusculas];
 					}
 				});
 			});
 		}
-		return message;
+		return devolucion;
 
 	},
-	eliminarCamposInnecesarios: (message) => {
-		K.POST_CLEAN.DEVOLUCIONES.removeCab.forEach((field) => {
-			delete message[field];
+	eliminarCamposInnecesarios: (devolucion) => {
+		K.POST_CLEAN.DEVOLUCIONES.removeCab.forEach((campo) => {
+			delete devolucion[campo];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyString.forEach((field) => {
-			if (message[field] === '') delete message[field];
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyString.forEach((campo) => {
+			if (devolucion[campo] === '') delete devolucion[campo];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach((field) => {
-			if (message[field] && typeof message[field].push === 'function' && message[field].length === 0) delete message[field];
+		K.POST_CLEAN.DEVOLUCIONES.removeCabEmptyArray.forEach((campo) => {
+			if (devolucion[campo] && typeof devolucion[campo].push === 'function' && devolucion[campo].length === 0) delete devolucion[campo];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach((field) => {
-			if (message[field] === 0) delete message[field];
+		K.POST_CLEAN.DEVOLUCIONES.removeCabZeroValue.forEach((campo) => {
+			if (devolucion[campo] === 0) delete devolucion[campo];
 		});
-		K.POST_CLEAN.DEVOLUCIONES.removeCabIfFalse.forEach((field) => {
-			if (message[field] === false) delete message[field];
+		K.POST_CLEAN.DEVOLUCIONES.removeCabIfFalse.forEach((campo) => {
+			if (devolucion[campo] === false) delete devolucion[campo];
 		});
 
-		// Limpieza de incidencias si vienen con algún campo vacío
-		/* Por ejemplo, si se manda un CN6+1, SAP responde: {
-			"codigo": "LIN-DEV-WARN-999",
-			"descripcion": ""
-		}
-		*/
-		if (message.incidencias && message.incidencias.forEach) {
+
+		/**
+		 * Limpieza de incidencias si vienen con algún campo vacío
+		 * Por ejemplo, si se manda un CN6+1, SAP responde: {
+		 * 		"codigo": "LIN-DEV-WARN-999",
+		 * 		"descripcion": ""
+		 * }
+		 */
+		if (devolucion.incidencias && devolucion.incidencias.forEach) {
 			let incidenciasSaneadas = []
-			message.incidencias.forEach(incidencia => {
+			devolucion.incidencias.forEach(incidencia => {
 				if (incidencia && incidencia.codigo && incidencia.descripcion) {
 					incidenciasSaneadas.push(incidencia);
 				}
 			})
 			if (incidenciasSaneadas.length > 0)
-				message.incidencias = incidenciasSaneadas;
+				devolucion.incidencias = incidenciasSaneadas;
 			else
-				delete message.incidencias;
+				delete devolucion.incidencias;
 		}
 
-		if (message.lineas && message.lineas.forEach) {
-			message.lineas.forEach((linea) => {
-				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach((field) => {
-					delete linea[field];
+
+		if (devolucion.lineas && devolucion.lineas.forEach) {
+			devolucion.lineas.forEach((linea) => {
+				K.POST_CLEAN.DEVOLUCIONES.removePos.forEach((campo) => {
+					delete linea[campo];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyString.forEach((field) => {
-					if (linea[field] === '') delete linea[field];
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyString.forEach((campo) => {
+					if (linea[campo] === '') delete linea[campo];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach((field) => {
-					if (linea[field] && linea[field] && typeof linea[field].push === 'function' && linea[field].length === 0) delete linea[field];
+				K.POST_CLEAN.DEVOLUCIONES.removePosEmptyArray.forEach((campo) => {
+					if (linea[campo] && typeof linea[campo].push === 'function' && linea[campo].length === 0) delete linea[campo];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach((field) => {
-					if (linea[field] === 0) delete linea[field];
+				K.POST_CLEAN.DEVOLUCIONES.removePosZeroValue.forEach((campo) => {
+					if (linea[campo] === 0) delete linea[campo];
 				});
-				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach((field) => {
-					if (linea[field] === false) delete linea[field];
+				K.POST_CLEAN.DEVOLUCIONES.removePosIfFalse.forEach((campo) => {
+					if (linea[campo] === false) delete linea[campo];
 				});
 
-				// Limpieza de incidencias si vienen con algún campo vacío
-				/* Por ejemplo, si se manda un CN6+1, SAP responde: {
-					"codigo": "LIN-DEV-WARN-999",
-					"descripcion": ""
-				}
-				*/
+				/**
+				 * Limpieza de incidencias si vienen con algún campo vacío
+				 * Por ejemplo, si se manda un CN6+1, SAP responde: {
+				 * 		"codigo": "LIN-DEV-WARN-999",
+				 * 		"descripcion": ""
+				 * }
+				 */
 				if (linea.incidencias && linea.incidencias.forEach) {
 					let incidenciasSaneadas = []
 					linea.incidencias.forEach(incidencia => {
@@ -308,7 +312,7 @@ const SaneadorDevolucionesSAP = {
 				}
 			});
 		}
-		return message;
+		return devolucion;
 	}
 }
 
@@ -384,8 +388,8 @@ const _estableceFlags = (txId, respuestaDevoluciones) => {
 							totales.lineasIncidencias++;
 							if (linea.cantidad) totales.cantidadIncidencias += linea.cantidad
 						}
-					// Si está en una devolución SIN numeroDevolucion, es que la línea ha sido excluida
-					// en este caso aumentamos el contador de lineas/cantidades excluidas
+						// Si está en una devolución SIN numeroDevolucion, es que la línea ha sido excluida
+						// en este caso aumentamos el contador de lineas/cantidades excluidas
 					} else {
 						totales.lineasExcluidas++;
 						if (linea.cantidad) totales.cantidadExcluida += linea.cantidad;
@@ -398,7 +402,7 @@ const _estableceFlags = (txId, respuestaDevoluciones) => {
 		if (totales.lineasEstupe) iFlags.set(txId, K.FLAGS.ESTUPEFACIENTE)
 		if (generaCodigoRecogida) iFlags.set(txId, K.FLAGS.GENERA_RECOGIDA);
 		iFlags.set(txId, K.FLAGS.TOTALES, totales);
-		
+
 
 
 	} else {

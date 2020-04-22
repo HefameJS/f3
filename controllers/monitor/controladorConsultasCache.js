@@ -17,7 +17,7 @@ const getEstadoCacheCredenciales = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	res.status(200).json(iCacheCredencialesSap.stats());
+	res.status(200).json(iCacheCredencialesSap.estadisticas());
 
 }
 

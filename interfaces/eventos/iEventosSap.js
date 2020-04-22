@@ -98,7 +98,7 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 		}
 	}
 
-	var data = {
+	let transaccion = {
 		$setOnInsert: {
 			_id: txId,
 			createdAt: new Date()
@@ -113,7 +113,7 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 	}
 
 	L.xi(txId, ['Emitiendo BUFFER para evento finLlamadaSap'], 'txBuffer');
-	iMongo.transaccion.grabarEnMemoria(data);
+	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
 module.exports.errorConfirmacionPedido = (req, estado) => {

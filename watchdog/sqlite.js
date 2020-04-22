@@ -9,20 +9,21 @@ const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
 
 
-var operationInProgress = false;
-var rowsOnTheFly = 0;
+let hayOperacionesEnProceso = false;
+let numeroOperacionesEnEjecucion = 0;
 const intentosMaximosDeEnvio = C.watchdog.sqlite.maxRetries || 10;
 
-var interval = setInterval(() => {
+/*let interval = */
+setInterval(() => {
 
-	if (operationInProgress || rowsOnTheFly) return;
+	if (hayOperacionesEnProceso || numeroOperacionesEnEjecucion) return;
 
-	operationInProgress = true;
+	hayOperacionesEnProceso = true;
 
 	iSQLite.contarEntradas(intentosMaximosDeEnvio, (errorSQLite, numeroEntradas) => {
 		if (errorSQLite) {
 			L.e(['Error al contar el número de entradas en base de datos de respaldo', errorSQLite], 'sqlitewatch');
-			operationInProgress = false;
+			hayOperacionesEnProceso = false;
 			return;
 		}
 
@@ -31,7 +32,7 @@ var interval = setInterval(() => {
 
 			iMongo.chequeaConexion((conectado) => {
 				if (!conectado) {
-					operationInProgress = false;
+					hayOperacionesEnProceso = false;
 					L.w(['Aún no se ha restaurado la conexión con MongoDB'], 'sqlitewatch');
 					return;
 				}
@@ -39,22 +40,22 @@ var interval = setInterval(() => {
 				iSQLite.obtenerEntradas(intentosMaximosDeEnvio, (errorSQLite, entradas) => {
 					if (errorSQLite) {
 						L.f(['error al obtener las entradas de la base de datos de respaldo', errorSQLite], 'sqlitewatch');
-						operationInProgress = false;
+						hayOperacionesEnProceso = false;
 						return;
 					}
 
-					rowsOnTheFly = entradas.length;
+					numeroOperacionesEnEjecucion = entradas.length;
 
 					entradas.forEach((row) => {
 
 						iMongo.transaccion.grabarDesdeSQLite(JSON.parse(row.data), (exito) => {
 							if (exito) {
 								iSQLite.eliminarEntrada(row.uid, (errorSQLite, numeroEntradasBorradas) => {
-									rowsOnTheFly--;
+									numeroOperacionesEnEjecucion--;
 								});
 							} else {
 								iSQLite.incrementarNumeroDeIntentos(row.uid, () => { });
-								rowsOnTheFly--;
+								numeroOperacionesEnEjecucion--;
 								// Log de cuando una entrada agota el número de transmisiones
 								if (row.retryCount === intentosMaximosDeEnvio - 1) {
 									row.retryCount++;
@@ -66,13 +67,13 @@ var interval = setInterval(() => {
 						});
 
 					});
-					operationInProgress = false;
+					hayOperacionesEnProceso = false;
 
 				});
 			});
 		} else {
 			L.t('No se encontraron entradas en la base de datos de respaldo', 'sqlitewatch');
-			operationInProgress = false;
+			hayOperacionesEnProceso = false;
 		}
 
 	});

@@ -10,8 +10,8 @@ const iMongo = require(BASE + 'interfaces/imongo/iMongo');
 const cluster = require('cluster');
 const OS = require('os')
 
-var idIntervalo = null;
-var vecesGanadoMaestro = {}
+let idIntervalo = null;
+let vecesGanadoMaestro = {}
 
 
 

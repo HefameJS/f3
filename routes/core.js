@@ -17,7 +17,7 @@ const tryCatch = require('./tryCatchWrapper');
 
 module.exports = (app) => {
 
-	var controladores = {
+	const controladores = {
 		autenticacion: require(BASE + 'controllers/controladorAutenticacion'),
 		pedidos: require(BASE + 'controllers/controladorPedidos'),
 		devoluciones: require(BASE + 'controllers/controladorDevoluciones'),

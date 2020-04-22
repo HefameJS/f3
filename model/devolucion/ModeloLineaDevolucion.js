@@ -17,23 +17,23 @@ class LineaDevolucion {
 
 		// Nota: Por ahora no vamos a hacer saneado
 
-		var errorPosicion = new ErrorFedicom();
+		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkPositive(json.orden, errorPosicion, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido');
-		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorPosicion, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio');
-		FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-PED-ERR-004', 'El campo "cantidad" es incorrecto');
-		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorPosicion, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio');
+		FieldChecker.checkPositive(json.orden, errorFedicom, 'LIN-DEV-ERR-999', 'El campo "orden" es inválido');
+		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio');
+		FieldChecker.checkExistsAndPositive(json.cantidad, errorFedicom, 'LIN-PED-ERR-004', 'El campo "cantidad" es incorrecto');
+		FieldChecker.checkExistsAndPositive(json.codigoMotivo, errorFedicom, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio');
 
 		// 004 y 005 - numeroAlbaran y fechaAlbaran
-		FieldChecker.checkNotEmptyString(json.numeroAlbaran, errorPosicion, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
-		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorPosicion, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
+		FieldChecker.checkNotEmptyString(json.numeroAlbaran, errorFedicom, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
+		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorFedicom, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
 
 
 		// Añadimos las incidencias a la linea y la marcamos para no procesar
-		if (errorPosicion.hasError()) {
-			L.xw(txId, ['Se ha detectado un error en una línea de devolución.', errorPosicion]);
+		if (errorFedicom.hasError()) {
+			L.xw(txId, ['Se ha detectado un error en una línea de devolución.', errorFedicom]);
 			this.excluir = true;
-			this.incidencias = errorPosicion.getErrors()
+			this.incidencias = errorFedicom.getErrors()
 		}
 
 		// FIN DEL SANEADO

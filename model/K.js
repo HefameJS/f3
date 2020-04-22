@@ -377,13 +377,13 @@ module.exports = {
     },
     DOMINIOS: {
         verificar: (dominio) => {
-            var DOMINIOS = module.exports.DOMINIOS;
+            let DOMINIOS = module.exports.DOMINIOS;
 
             if (dominio) {
-                for (var domainIdx in DOMINIOS) {
-                    if (DOMINIOS[domainIdx].toUpperCase) {
-                        if (DOMINIOS[domainIdx].toUpperCase() === dominio.toUpperCase())
-                            return DOMINIOS[domainIdx];
+                for (let idDominio in DOMINIOS) {
+                    if (DOMINIOS[idDominio].toUpperCase) {
+                        if (DOMINIOS[idDominio].toUpperCase() === dominio.toUpperCase())
+                            return DOMINIOS[idDominio];
                     }
                 }
             }
@@ -393,8 +393,7 @@ module.exports = {
         TRANSFER: 'transfer_laboratorio',
         HEFAME: 'HEFAME',
         EMPLEADO: 'empleado',
-        FMASONLINE: 'F+Online',
-        APIKEY: 'APIKEY' // DEPRECAR
+        FMASONLINE: 'F+Online'
     },
     FLAGS: {
         SQLITE: 'sqlite',

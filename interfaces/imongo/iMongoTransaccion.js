@@ -123,43 +123,43 @@ module.exports = {
  */
 const _transformarDatosSQLiteParaMDB = (transaccion) => {
 	if (transaccion['$setOnInsert']) {
-		var setOI = transaccion['$setOnInsert'];
-		if (setOI._id) setOI._id = new ObjectID(setOI._id);
-		if (setOI.originalTx) setOI.originalTx = new ObjectID(setOI.originalTx);
-		if (setOI.confirmingId) setOI.originalTx = new ObjectID(setOI.originalTx);
-		if (setOI.createdAt) setOI.createdAt = new Date(setOI.createdAt);
+		let txSetOnInsert = transaccion['$setOnInsert'];
+		if (txSetOnInsert._id) txSetOnInsert._id = new ObjectID(txSetOnInsert._id);
+		if (txSetOnInsert.originalTx) txSetOnInsert.originalTx = new ObjectID(txSetOnInsert.originalTx);
+		if (txSetOnInsert.confirmingId) txSetOnInsert.originalTx = new ObjectID(txSetOnInsert.originalTx);
+		if (txSetOnInsert.createdAt) txSetOnInsert.createdAt = new Date(txSetOnInsert.createdAt);
 	}
 
 	if (transaccion['$max']) {
-		var max = transaccion['$max'];
-		if (max.modifiedAt) max.modifiedAt = new Date(max.modifiedAt);
+		let txMax = transaccion['$max'];
+		if (txMax.modifiedAt) txMax.modifiedAt = new Date(txMax.modifiedAt);
 	}
 
 	if (transaccion['$set']) {
-		var set = transaccion['$set'];
-		if (set.crc) set.crc = new ObjectID(set.crc);
-		if (set.sapRequest && set.sapRequest.timestamp) set.sapRequest.timestamp = new Date(set.sapRequest.timestamp);
-		if (set.sapResponse && set.sapResponse.timestamp) set.sapResponse.timestamp = new Date(set.sapResponse.timestamp);
-		if (set.clientResponse && set.clientResponse.timestamp) set.clientResponse.timestamp = new Date(set.clientResponse.timestamp);
+		let txSet = transaccion['$set'];
+		if (txSet.crc) txSet.crc = new ObjectID(txSet.crc);
+		if (txSet.sapRequest && txSet.sapRequest.timestamp) txSet.sapRequest.timestamp = new Date(txSet.sapRequest.timestamp);
+		if (txSet.sapResponse && txSet.sapResponse.timestamp) txSet.sapResponse.timestamp = new Date(txSet.sapResponse.timestamp);
+		if (txSet.clientResponse && txSet.clientResponse.timestamp) txSet.clientResponse.timestamp = new Date(txSet.clientResponse.timestamp);
 	}
 
 	if (transaccion['$push']) {
-		var push = transaccion['$push'];
-		if (push.retransmissions && push.retransmissions.length) {
-			push.retransmissions.forEach((o) => {
+		let txPush = transaccion['$push'];
+		if (txPush.retransmissions && txPush.retransmissions.length) {
+			txPush.retransmissions.forEach((o) => {
 				if (o._id) o._id = new ObjectID(o._id);
 				if (o.createdAt) o.createdAt = new Date(o.createdAt);
 				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
 			})
 		}
-		if (push.sapConfirms && push.sapConfirms.length) {
-			push.sapConfirms.forEach((o) => {
+		if (txPush.sapConfirms && txPush.sapConfirms.length) {
+			txPush.sapConfirms.forEach((o) => {
 				if (o.txId) o.txId = new ObjectID(o.txId);
 				if (o.timestamp) o.timestamp = new Date(o.timestamp);
 			})
 		}
-		if (push.duplicates && push.duplicates.length) {
-			push.duplicates.forEach((o) => {
+		if (txPush.duplicates && txPush.duplicates.length) {
+			txPush.duplicates.forEach((o) => {
 				if (o._id) o._id = new ObjectID(o._id);
 				if (o.createdAt) o.createdAt = new Date(o.createdAt);
 				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);

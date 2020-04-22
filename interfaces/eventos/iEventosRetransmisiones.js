@@ -165,39 +165,39 @@ module.exports.clonarPedido = (reqClonada, pedidoClonado) => {
 	L.yell(reqClonada.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [reqClonada.identificarUsuarioAutenticado(), pedidoClonado.crc, reqClonada.body]);
 }
 
-module.exports.emitStatusFix = (txId, newStatus) => {
+module.exports.cambioEstado = (txId, nuevoEstado) => {
 
 	if (txId) {
-		var dataUpdate = {
+		let transaccion = {
 			$setOnInsert: {
 				_id: txId,
 				createdAt: new Date()
 			},
 			$max: {
-				status: newStatus,
+				status: nuevoEstado,
 				modifiedAt: new Date()
 			}
 		};
 
 		//Flags.set(txId, K.FLAGS.WATCHDOG);
-		iFlags.finaliza(txId, dataUpdate);
+		iFlags.finaliza(txId, transaccion);
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
-		iMongo.transaccion.grabar(dataUpdate);
-		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, newStatus, ['StatusFix']);
+		iMongo.transaccion.grabar(transaccion);
+		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, nuevoEstado, ['StatusFix']);
 	}
 }
 
-module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
+module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionSap) => {
 
-	var confirmacionSap = confirmTx.clientRequest.body;
-	var confirmId = confirmTx._id;
+	let cuerpoConfirmacionSap = dbTxConfirmacionSap.clientRequest.body;
+	let txIdConfirmacionSap = dbTxConfirmacionSap._id;
 
-	var [estadoTransmision, numerosPedidoSAP] = ConfirmacionPedidoSAP.obtenerEstadoDeConfirmacionSap(confirmacionSap);
+	let [estadoTransmision, numerosPedidoSAP] = ConfirmacionPedidoSAP.obtenerEstadoDeConfirmacionSap(cuerpoConfirmacionSap);
 
-	var updateData = {
+	let transaccion = {
 		$setOnInsert: {
-			_id: originalTxId,
+			_id: txIdConfirmada,
 			createdAt: new Date()
 		},
 		$max: {
@@ -209,37 +209,36 @@ module.exports.emitRecoverConfirmacionPedido = (originalTxId, confirmTx) => {
 		},
 		$push: {
 			sapConfirms: {
-				txId: confirmId,
-				timestamp: confirmId.createdAt,
-				sapSystem: confirmTx.authenticatingUser
+				txId: txIdConfirmacionSap,
+				timestamp: txIdConfirmacionSap.createdAt,
+				sapSystem: dbTxConfirmacionSap.authenticatingUser
 			}
 		}
 	}
 
-	//Flags.set(originalTxId, K.FLAGS.WATCHDOG);
-	iFlags.finaliza(originalTxId, updateData);
+	iFlags.finaliza(txIdConfirmada, transaccion);
 
-	L.xi(originalTxId, ['Emitiendo COMMIT para evento RecoverConfirmacionPedido'], 'txCommit');
-	iMongo.transaccion.grabar(updateData);
-	L.yell(originalTxId, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
+	L.xi(txIdConfirmada, ['Emitiendo COMMIT para evento asociarConfirmacionConPedido'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.yell(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
 	/**
 	 * Dejamos constancia en la propia transmisión de confirmación de que se ha actualizado
 	 * Lo normal es que previamente estuviera en estado K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO
-	 * y no tenga el valor de 'confirmingId'
+	 * y no tenga el valor establecido 'confirmingId'
 	 */
-	var commitConfirmacionSap = {
+	let transaccionConfirmacionSap = {
 		$setOnInsert: {
-			_id: confirmId,
+			_id: txIdConfirmacionSap,
 			createdAt: new Date()
 		},
 		$set: {
 			modifiedAt: new Date(),
 			status: K.TX_STATUS.OK,
-			confirmingId: originalTxId,
+			confirmingId: txIdConfirmada,
 		}
 	}
-	L.xi(confirmId, ['Se ha asociado esta confirmación con el pedido que confirma', originalTxId], 'txCommit');
-	iMongo.transaccion.grabar(commitConfirmacionSap);
+	L.xi(txIdConfirmacionSap, ['Se ha asociado esta confirmación con el pedido que confirma', txIdConfirmada], 'txCommit');
+	iMongo.transaccion.grabar(transaccionConfirmacionSap);
 
 }

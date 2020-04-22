@@ -106,7 +106,7 @@ const parseDataToBalanceadores = (data) => {
 
 const getBalanceadores = (servidor, callback) => {
 
-	var httpCallParams = {
+	let parametrosLlamada = {
 		followAllRedirects: true,
 		uri: servidor + '/balancer-manager',
 		headers: {
@@ -116,7 +116,7 @@ const getBalanceadores = (servidor, callback) => {
 
 	L.i(["Consultando balanceadores del servidor", servidor])
 
-	request(httpCallParams, (errorLlamada, respuestaHttp, cuerpoHttp) => {
+	request(parametrosLlamada, (errorLlamada, respuestaHttp, cuerpoHttp) => {
 
 		if (errorLlamada) {
 			callback(errorLlamada, null);
@@ -141,7 +141,7 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 	if (!estado) estador = {}
 	if (!loadFactor) loadFactor = "1"
 
-	var urlencoded = new URLSearchParams();
+	let urlencoded = new URLSearchParams();
 	urlencoded.append("w_lf", loadFactor);
 	//urlencoded.append("w_ls", "0");
 	//urlencoded.append("w_wr", "");
@@ -155,7 +155,7 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 	urlencoded.append("b", balanceador);
 	urlencoded.append("nonce", nonce);
 
-	var httpCallParams = {
+	let parametrosLlamada = {
 		followAllRedirects: true,
 		uri: servidor + '/balancer-manager',
 		method: 'POST',
@@ -167,7 +167,7 @@ const actualizarWorker = (servidor, balanceador, worker, nonce, estado, loadFact
 
 	L.i(["Actualizando worker del balanceador del servidor", servidor, urlencoded])
 
-	request(httpCallParams, (errorLlamada, respuestaHttp, cuerpoHttp) => {
+	request(parametrosLlamada, (errorLlamada, respuestaHttp, cuerpoHttp) => {
 
 		if (errorLlamada) {
 			callback(errorLlamada, null);

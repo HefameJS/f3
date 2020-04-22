@@ -19,10 +19,10 @@ const getReplicaSet = (callback) => {
 
 }
 
-const getColeccion = (collectionName, callback) => {
+const getColeccion = (nombreColeccion, callback) => {
 	let db = MDB.db();
 	if (db) {
-		db.command({ collStats: collectionName }, callback);
+		db.command({ collStats: nombreColeccion }, callback);
 	}
 	else {
 		callback({ error: 'No conectado a MongoDB' }, null)
@@ -30,22 +30,25 @@ const getColeccion = (collectionName, callback) => {
 }
 
 
-const getNombresColecciones = (cb) => {
+const getNombresColecciones = (callback) => {
 	let db = MDB.db();
 	if (db) {
 		db.command({ listCollections: 1, nameOnly: true }, (err, data) => {
 			if (err) {
-				return cb(err, null);
+				callback(err, null);
+				return;
 			}
 
 			if (data && data.cursor && data.cursor.firstBatch) {
-				var collections = [];
+				let collections = [];
 				data.cursor.firstBatch.forEach(element => {
 					collections.push(element.name);
 				});
-				return cb(false, collections);
+				callback(false, collections);
+				return;
 			}
-			return cb('data.cursor.firstBatch no existe', null);
+			callback('data.cursor.firstBatch no existe', null);
+			return;
 		});
 	}
 	else {
@@ -53,25 +56,27 @@ const getNombresColecciones = (cb) => {
 	}
 }
 
-const getDatabase = (cb) => {
+const getDatabase = (callback) => {
 	let db = MDB.db();
 	if (db) {
-		db.command({ dbStats: 1 }, cb);
+		db.command({ dbStats: 1 }, callback);
 	}
 	else {
 		callback({ error: 'No conectado a MongoDB' }, null)
 	}
 }
 
-const getOperaciones = (cb) => {
+const getOperaciones = (callback) => {
 	let db = MDB.db('admin');
 	if (db) {
 		db.executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
 			if (err) {
-				return cb(err, null);
+				callback(err, null);
+				return;
 			}
 
-			return cb(false, operations.inprog);
+			callback(false, operations.inprog);
+			return;
 		});
 	}
 	else {
@@ -80,10 +85,10 @@ const getOperaciones = (cb) => {
 }
 
 
-const getLogs = (logType, cb) => {
+const getLogs = (tipoLog, callback) => {
 	let db = MDB.db('admin');
 	if (db) {
-		db.executeDbAdminCommand({ getLog: logType }, cb);
+		db.executeDbAdminCommand({ getLog: tipoLog }, callback);
 	}
 	else {
 		callback({ error: 'No conectado a MongoDB' }, null)

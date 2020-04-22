@@ -89,11 +89,11 @@ class Pedido {
 	}
 
 	simulaFaltas() {
-		var fedicomError = { codigo: 'PED-WARN-001', descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información' };
+		let errorFedicom = { codigo: 'PED-WARN-001', descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información' };
 		if (this.incidencias && this.incidencias.push) {
-			this.incidencias.push(fedicomError);
+			this.incidencias.push(errorFedicom);
 		} else {
-			this.incidencias = [fedicomError];
+			this.incidencias = [errorFedicom];
 		}
 		this.fechaPedido = Date.toFedicomDateTime();
 		this.numeroPedido = this.crc;

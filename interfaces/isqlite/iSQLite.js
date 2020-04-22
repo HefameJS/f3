@@ -24,17 +24,18 @@ const db = new sqlite3.Database(C.sqlite.db_path, (err) => {
  */
 const grabarTransaccion = (transaccion) => {
 
-	var uid = (new ObjectID()).toHexString();
-	var key = transaccion['$setOnInsert']._id.toHexString();
+	let uid = (new ObjectID()).toHexString();
+	let txId = transaccion['$setOnInsert']._id.toHexString();
+	let txIdHexadecimal = txId.toHexString();
 
 	// TODO: https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/ Para serializar correctamente objetos como ObjectIDs y Dates
 	// en vez de usar JSON.stringify()
-	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, key, JSON.stringify(transaccion), 0], (err) => {
+	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, JSON.stringify(transaccion), 0], (err) => {
 		if (err) {
-			L.xf(transaccion['$setOnInsert']._id, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
+			L.xf(txId, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
 			return;
 		}
-		L.xw(transaccion['$setOnInsert']._id, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
+		L.xw(txId, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
 	});
 
 }

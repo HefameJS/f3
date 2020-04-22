@@ -4,42 +4,44 @@
 //const L = global.logger;
 //const K = global.constants;
 
-
-const memCache = require('memory-cache');
-const fedicomCredentialsCache = new memCache.Cache();
-fedicomCredentialsCache.countStats(true);
+// Externos
+const memoryCache = require('memory-cache');
 
 
-const checkUser = (authReq) => {
-	var cachedPassword = fedicomCredentialsCache.get(authReq.username);
-	return (cachedPassword && cachedPassword === authReq.password)
+const cacheCredencialesFedicom = new memoryCache.Cache();
+cacheCredencialesFedicom.countStats(true);
+
+
+const chequearSolicitud = (solicitudAutenticacion) => {
+	let passwordEnCache = cacheCredencialesFedicom.get(solicitudAutenticacion.username);
+	return (passwordEnCache && passwordEnCache === solicitudAutenticacion.password)
 }
 
-const addUser = (authReq) => {
-	fedicomCredentialsCache.put(authReq.username, authReq.password);
+const agregarEntrada = (solicitudAutenticacion) => {
+	cacheCredencialesFedicom.put(solicitudAutenticacion.username, solicitudAutenticacion.password);
 }
 
-const stats = () => {
-	var h = fedicomCredentialsCache.hits();
-	var m = fedicomCredentialsCache.misses();
-	var total = h + m;
-	var ratio = total ? (h * 100) / total : 0;
+const estadisticas = () => {
+	let aciertos = cacheCredencialesFedicom.hits();
+	let fallos = cacheCredencialesFedicom.misses();
+	let total = aciertos + fallos;
+	let ratio = total ? (aciertos * 100) / total : 0;
 
 	return {
-		hit: h,
-		miss: m,
-		entries: fedicomCredentialsCache.size(),
+		hit: aciertos,
+		miss: fallos,
+		entries: cacheCredencialesFedicom.size(),
 		hitRatio: ratio
 	};
 }
 
 const clear = () => {
-	fedicomCredentialsCache.clear();
+	cacheCredencialesFedicom.clear();
 }
 
 
 module.exports = {
-	check: checkUser,
-	add: addUser,
-	stats: stats
+	chequearSolicitud,
+	agregarEntrada,
+	estadisticas
 }

@@ -15,7 +15,7 @@ const tryCatch = require(BASE + 'routes/tryCatchWrapper');
 
 module.exports = (app) => {
 
-	var controllers = {
+	const controladores = {
 		consultas: require(BASE + 'controllers/monitor/controladorConsultas')
 
 	}
@@ -54,43 +54,43 @@ module.exports = (app) => {
 
 	/* RUTAS */
 	app.route('/query')
-		.put(tryCatch(controllers.consultas.consultaTransmisiones))
+		.put(tryCatch(controladores.consultas.consultaTransmisiones))
 
 	app.route('/status/proc')
-		.get(tryCatch(controllers.consultas.procesos.consultaProcesos))
+		.get(tryCatch(controladores.consultas.procesos.consultaProcesos))
 
 	app.route('/status/sap')
-		.get(tryCatch(controllers.consultas.sap.consultaSap))
+		.get(tryCatch(controladores.consultas.sap.consultaSap))
 
 
 	app.route('/status/mdb/col')
-		.get(tryCatch(controllers.consultas.mongodb.getNombresColecciones))
+		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones))
 
 	app.route('/status/mdb/col/:colName')
-		.get(tryCatch(controllers.consultas.mongodb.getColeccion))
+		.get(tryCatch(controladores.consultas.mongodb.getColeccion))
 
 	app.route('/status/mdb/db')
-		.get(tryCatch(controllers.consultas.mongodb.getDatabase))
+		.get(tryCatch(controladores.consultas.mongodb.getDatabase))
 
 	app.route('/status/mdb/op')
-		.get(tryCatch(controllers.consultas.mongodb.getOperaciones))
+		.get(tryCatch(controladores.consultas.mongodb.getOperaciones))
 
 	app.route('/status/mdb/rs')
-		.get(tryCatch(controllers.consultas.mongodb.getReplicaSet))
+		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet))
 
 	app.route('/status/mdb/log')
-		.get(tryCatch(controllers.consultas.mongodb.getLogs))
+		.get(tryCatch(controladores.consultas.mongodb.getLogs))
 
 
 	app.route('/status/apache/balanceadores')
-		.get(tryCatch(controllers.consultas.apache.consultaBalanceadorApache))
-		.put(tryCatch(controllers.consultas.apache.actualizaBalanceadorApache))
+		.get(tryCatch(controladores.consultas.apache.consultaBalanceadorApache))
+		.put(tryCatch(controladores.consultas.apache.actualizaBalanceadorApache))
 
 	app.route('/status/cache/credenciales')
-		.get(tryCatch(controllers.consultas.cache.getEstadoCacheCredenciales))
+		.get(tryCatch(controladores.consultas.cache.getEstadoCacheCredenciales))
 
 	app.route('/status/sqlite')
-		.get(tryCatch(controllers.consultas.sqlite.getEstadoSQLite))
+		.get(tryCatch(controladores.consultas.sqlite.getEstadoSQLite))
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use((req, res, next) => {

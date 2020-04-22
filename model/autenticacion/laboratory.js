@@ -41,9 +41,9 @@ const LABS = [
 
 module.exports.getByLabCode = (labCode) => {
 
-    var labCodeN = labCode.substring(2);
+    let labCodeN = labCode.substring(2);
 
-    for (var lab in LABS) {
+    for (let lab in LABS) {
         if (LABS[lab].code === labCodeN)
             return LABS[lab];
     }
@@ -52,6 +52,6 @@ module.exports.getByLabCode = (labCode) => {
 
 
 module.exports.verify = (authRequest) => {
-    var lab = module.exports.getByLabCode(authRequest.username);
+    let lab = module.exports.getByLabCode(authRequest.username);
     return lab && lab.passwd === authRequest.password;
 }

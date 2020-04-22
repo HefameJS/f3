@@ -4,9 +4,10 @@
 //const L = global.logger;
 const K = global.constants;
 
-var MongoDB = require('mongodb');
+// Externas
+const MongoDB = require('mongodb');
 const clone = require('clone');
-var ObjectID = MongoDB.ObjectID;
+const ObjectID = MongoDB.ObjectID;
 
 /**
  * Identifica al usuario que está autenticandose en la petición.

@@ -1,7 +1,7 @@
 'use strict';
 // const BASE = global.BASE;
 const C = global.config;
-var L = {};
+let L = {};
 const K = global.constants;
 
 const fs = require('fs');
@@ -18,83 +18,74 @@ const FATAL = 'DIE'
 const EVENT = 'EVT'
 
 
-const getLogFile = (timestamp, dump) => {
+const _obtenerFicheroLog = (timestamp, esParaDump) => {
 	let fecha = Date.toShortDate(timestamp)
-	if (dump) fecha += '.' + Date.toShortTime(timestamp)
-	return logDir + '/' + fecha + '-' + process.title + '-' + process.pid + (dump ? '.dump' : '.log')
+	if (esParaDump) fecha += '.' + Date.toShortTime(timestamp)
+	return logDir + '/' + fecha + '-' + process.title + '-' + process.pid + (esParaDump ? '.dump' : '.log')
 }
 
-const grabarLog = (event) => {
+const grabarLog = (evento) => {
 
-	let txId = event.tx
-	let categoria = event.categoria.padStart(15)
+	let txId = evento.tx
+	let categoria = evento.categoria.padStart(15)
 
-	let hora = Date.toShortTime(event.timestamp)
-	
-	let message = (txId ? txId + '|' : '') + hora + '|' + event.level + '|' + categoria + '|' + JSON.stringify(event.datos)
+	let hora = Date.toShortTime(evento.timestamp)
 
-	fs.appendFile(getLogFile(event.timestamp), message + '\n', (err) => {
+	let mensaje = (txId ? txId + '|' : '') + hora + '|' + evento.level + '|' + categoria + '|' + JSON.stringify(evento.datos)
+
+	fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
 		if (err) {
-			console.log(message)
-			console.log('###',err)
+			console.log(mensaje)
+			console.log('###', err)
 		}
 	})
 
 	if (C.logconsole) {
-		console.log(message)
+		console.log(mensaje)
 	}
 
 }
 
-const logGeneral = (datos, level, categoria) => {
+const logGeneral = (datos, nivel, categoria) => {
 	if (!Array.isArray(datos)) datos = [datos];
 
-	var event = {
+	let evento = {
 		categoria: categoria || 'server',
-		level: level || INFO,
+		level: nivel || INFO,
 		datos: datos,
 		timestamp: new Date()
 	}
-	grabarLog(event);
+	grabarLog(evento);
 };
 
-const logTransmision = (id, datos, level, categoria) => {
+const logTransmision = (txId, datos, nivel, categoria) => {
 	if (!Array.isArray(datos)) datos = [datos];
 
-	var event = {
-		tx: id,
+	let evento = {
+		tx: txId,
 		categoria: categoria || 'tx',
-		level: level || 5000,
+		level: nivel || 5000,
 		datos: datos,
 		timestamp: new Date()
 	};
-	grabarLog(event);
+	grabarLog(evento);
 };
-/*
-const saneaEstructuraDeCommit = (datos) => {
-	return {
-		setOnInsert: datos['$setOnInsert'],
-		max: datos['$max'],
-		set: datos['$set'],
-		push: datos['$push']
-	}
-}
-*/
+
+
 const logEvento = (txId, txType, txStat, datos) => {
-	/*
 	if (!Array.isArray(datos)) datos = [datos];
 
-	var event = {
+	let evento = {
 		tx: txId,
 		categoria: 'evento',
 		level: EVENT,
 		txType: txType,
 		txStatus: txStat,
-		datos: [txType, txStat, ...datos],
+		datos: datos,
 		timestamp: new Date()
 	};
-	*/
-	// grabarLog(event);
+	
+	grabarLog(evento);
 }
 
 
@@ -106,13 +97,13 @@ const dump = (err, req) => {
 
 	if (req) {
 		message += '\n\nPETICIÓN HTTP\n=============\n'
-		message += 'IP: ' + req.ip + ' (' + req.protocol +  ')\n'
+		message += 'IP: ' + req.ip + ' (' + req.protocol + ')\n'
 		message += req.method + ' ' + req.originalUrl + ' HTTP/' + req.httpVersion + '\n'
 		message += util.inspect(req.headers) + '\n\n',
-		message += util.inspect(req.body)
+			message += util.inspect(req.body)
 	}
 
-	fs.appendFileSync(getLogFile(new Date(), true), message, (err) => {
+	fs.appendFileSync(_obtenerFicheroLog(new Date(), true), message, (err) => {
 		if (err) {
 			console.error(message)
 			console.error('###', err)
@@ -120,42 +111,40 @@ const dump = (err, req) => {
 	})
 
 	if (C.logconsole) {
-		console.log('DUMP GENERADO: ' + getLogFile(new Date(), true))
+		console.log('DUMP GENERADO: ' + _obtenerFicheroLog(new Date(), true))
 		console.log(message)
 	}
-	
+
 }
 
 
-var generaCategoriaLog = (categoria) => categoria;
-
+let _generaCategoriaLog = (categoria) => categoria;
 switch (process.title) {
 	case K.PROCESS_TITLES.WATCHDOG:
-		generaCategoriaLog = (categoria) => categoria ? 'wd-' + categoria : 'watchdog';
+		_generaCategoriaLog = (categoria) => categoria ? 'wd-' + categoria : 'watchdog';
 		break;
 	case K.PROCESS_TITLES.MONITOR:
-		generaCategoriaLog = (categoria) => categoria ? 'mon-' + categoria : 'monitor';
+		_generaCategoriaLog = (categoria) => categoria ? 'mon-' + categoria : 'monitor';
 		break;
 }
 
 
 
 L = {
-	t: (datos, categoria) => logGeneral(datos, TRACE, generaCategoriaLog(categoria)),
-	d: (datos, categoria) => logGeneral(datos, DEBUG, generaCategoriaLog(categoria)),
-	i: (datos, categoria) => logGeneral(datos, INFO, generaCategoriaLog(categoria)),
-	w: (datos, categoria) => logGeneral(datos, WARN, generaCategoriaLog(categoria)),
-	e: (datos, categoria) => logGeneral(datos, ERROR, generaCategoriaLog(categoria)),
-	f: (datos, categoria) => logGeneral(datos, FATAL, generaCategoriaLog(categoria)),
-	xt: (id, datos, categoria) => logTransmision(id, datos, TRACE, generaCategoriaLog(categoria)),
-	xd: (id, datos, categoria) => logTransmision(id, datos, DEBUG, generaCategoriaLog(categoria)),
-	xi: (id, datos, categoria) => logTransmision(id, datos, INFO, generaCategoriaLog(categoria)),
-	xw: (id, datos, categoria) => logTransmision(id, datos, WARN, generaCategoriaLog(categoria)),
-	xe: (id, datos, categoria) => logTransmision(id, datos, ERROR, generaCategoriaLog(categoria)),
-	xf: (id, datos, categoria) => logTransmision(id, datos, FATAL, generaCategoriaLog(categoria)),
+	t: (datos, categoria) => logGeneral(datos, TRACE, _generaCategoriaLog(categoria)),
+	d: (datos, categoria) => logGeneral(datos, DEBUG, _generaCategoriaLog(categoria)),
+	i: (datos, categoria) => logGeneral(datos, INFO, _generaCategoriaLog(categoria)),
+	w: (datos, categoria) => logGeneral(datos, WARN, _generaCategoriaLog(categoria)),
+	e: (datos, categoria) => logGeneral(datos, ERROR, _generaCategoriaLog(categoria)),
+	f: (datos, categoria) => logGeneral(datos, FATAL, _generaCategoriaLog(categoria)),
+	xt: (id, datos, categoria) => logTransmision(id, datos, TRACE, _generaCategoriaLog(categoria)),
+	xd: (id, datos, categoria) => logTransmision(id, datos, DEBUG, _generaCategoriaLog(categoria)),
+	xi: (id, datos, categoria) => logTransmision(id, datos, INFO, _generaCategoriaLog(categoria)),
+	xw: (id, datos, categoria) => logTransmision(id, datos, WARN, _generaCategoriaLog(categoria)),
+	xe: (id, datos, categoria) => logTransmision(id, datos, ERROR, _generaCategoriaLog(categoria)),
+	xf: (id, datos, categoria) => logTransmision(id, datos, FATAL, _generaCategoriaLog(categoria)),
 	yell: logEvento,
 	dump: dump
-	/*saneaCommit: saneaEstructuraDeCommit*/
 };
 
 
