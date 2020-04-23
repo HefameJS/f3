@@ -44,7 +44,7 @@ module.exports.inicioDevolucion = (req, devolucion) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabarEnMemoria(transaccion);
-	L.yell(txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
+	L.evento(txId, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), devolucion.crc, req.body]);
 }
 module.exports.finDevolucion = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
@@ -75,7 +75,7 @@ module.exports.finDevolucion = (res, cuerpoRespuesta, estadoFinal, datosExtra) =
 
 	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.DEVOLUCION, estadoFinal, [cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.DEVOLUCION, estadoFinal, [cuerpoRespuesta]);
 }
 module.exports.errorDevolucion = (req, res, cuerpoRespuesta, status) => {
 
@@ -114,7 +114,7 @@ module.exports.errorDevolucion = (req, res, cuerpoRespuesta, status) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 module.exports.devolucionDuplicada = (req, res, cuerpoRespuesta, txIdOriginal) => {
 

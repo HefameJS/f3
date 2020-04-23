@@ -45,7 +45,7 @@ module.exports.inicioLogistica = (req, logistica) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), logistica.crc, req.body]);
+	L.evento(txId, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), logistica.crc, req.body]);
 }
 
 module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
@@ -75,7 +75,7 @@ module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) =>
 
 	L.xi(txId, ['Emitiendo COMMIT para evento finLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [cuerpoRespuesta]);
 }
 
 module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
@@ -113,7 +113,7 @@ module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.LOGISTICA, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 
 module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {

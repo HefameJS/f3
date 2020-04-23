@@ -80,7 +80,7 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 
 	iMongo.transaccion.grabar(transaccionDeActualizacion);
 	L.xi(txIdOriginal, ['Emitiendo COMMIT para evento Retransmision'], 'txCommit');
-	L.yell(txIdOriginal, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [resultadoRetransmision]);
+	L.evento(txIdOriginal, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [resultadoRetransmision]);
 }
 
 /**
@@ -161,7 +161,7 @@ module.exports.clonarPedido = (reqClonada, pedidoClonado) => {
 
 	L.xi(reqClonada.txId, ['Emitiendo COMMIT para evento clonarPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(reqClonada.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [reqClonada.identificarUsuarioAutenticado(), pedidoClonado.crc, reqClonada.body]);
+	L.evento(reqClonada.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [reqClonada.identificarUsuarioAutenticado(), pedidoClonado.crc, reqClonada.body]);
 }
 
 module.exports.cambioEstado = (txId, nuevoEstado) => {
@@ -183,7 +183,7 @@ module.exports.cambioEstado = (txId, nuevoEstado) => {
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
 		iMongo.transaccion.grabar(transaccion);
-		L.yell(txId, K.TX_TYPES.ARREGLO_ESTADO, nuevoEstado, ['StatusFix']);
+		L.evento(txId, K.TX_TYPES.ARREGLO_ESTADO, nuevoEstado, ['StatusFix']);
 	}
 }
 
@@ -219,7 +219,7 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 
 	L.xi(txIdConfirmada, ['Emitiendo COMMIT para evento asociarConfirmacionConPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
+	L.evento(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
 
 	/**
 	 * Dejamos constancia en la propia transmisión de confirmación de que se ha actualizado

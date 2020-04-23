@@ -142,7 +142,7 @@ L = {
 	xw: (id, datos, categoria) => logTransmision(id, datos, WARN, _generaCategoriaLog(categoria)),
 	xe: (id, datos, categoria) => logTransmision(id, datos, ERROR, _generaCategoriaLog(categoria)),
 	xf: (id, datos, categoria) => logTransmision(id, datos, FATAL, _generaCategoriaLog(categoria)),
-	yell: logEvento,
+	evento: logEvento,
 	dump: dump
 };
 

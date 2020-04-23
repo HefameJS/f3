@@ -45,7 +45,7 @@ module.exports.inicioPedido = (req, pedido) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
+	L.evento(txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
 }
 module.exports.finPedido = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
@@ -77,7 +77,7 @@ module.exports.finPedido = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.PEDIDO, estadoFinal, [cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.PEDIDO, estadoFinal, [cuerpoRespuesta]);
 }
 module.exports.errorPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 
@@ -116,7 +116,7 @@ module.exports.errorPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.PEDIDO, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.PEDIDO, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 module.exports.pedidoDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 

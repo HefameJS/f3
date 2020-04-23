@@ -142,7 +142,7 @@ module.exports.errorConfirmacionPedido = (req, estado) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.yell(txId, K.TX_TYPES.CONFIRMACION_PEDIDO, estado, [req.body]);
+	L.evento(txId, K.TX_TYPES.CONFIRMACION_PEDIDO, estado, [req.body]);
 }
 
 module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, datosExtra) => {
@@ -197,5 +197,5 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 	iMongo.transaccion.grabar(transaccion);
 	iMongo.transaccion.grabar(transaccionActualizacionConfirmada);
 
-	L.yell(txIdConfirmado, K.TX_TYPES.CONFIRMACION_PEDIDO, estadoTransmisionConfirmada, datosExtra.numerosPedidoSAP);
+	L.evento(txIdConfirmado, K.TX_TYPES.CONFIRMACION_PEDIDO, estadoTransmisionConfirmada, datosExtra.numerosPedidoSAP);
 }
