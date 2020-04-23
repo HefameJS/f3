@@ -1,10 +1,9 @@
 'use strict';
-//const BASE = global.BASE;
-//const C = global.config;
+////const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 const tryCatch = (funcionControlador) => {
 	let controlador = (req, res) => {

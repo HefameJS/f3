@@ -1,11 +1,10 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 const iSapComun = require('./iSapComun');
-const DestinoSap = require(BASE + 'model/ModeloDestinoSap');
+const DestinoSap = require('model/ModeloDestinoSap');
 
 const request = require('request');
 

@@ -1,5 +1,4 @@
 'use strict';
-// const BASE = global.BASE;
 const C = global.config;
 let L = {};
 const K = global.constants;

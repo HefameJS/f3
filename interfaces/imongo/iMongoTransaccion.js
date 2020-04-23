@@ -1,6 +1,5 @@
 'use strict';
-//const BASE = global.BASE;
-//const C = global.config;
+////const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -10,7 +9,7 @@ const ObjectID = require('mongodb').ObjectID;
 
 // Interfaces
 const MDB = require('./iMongoConexion');
-const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
+const iSQLite = require('interfaces/isqlite/iSQLite');
 
 
 const cacheTransacciones = new MemoryCache.Cache();

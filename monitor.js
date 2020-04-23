@@ -1,6 +1,7 @@
 'use strict';
-require('./globals');
-const BASE = global.BASE;
+require('app-module-path').addPath(__dirname);
+
+require('globals');
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -11,8 +12,8 @@ process.type = K.PROCESS_TYPES.MONITOR;
 
 
 global.instanceID += '-mon';
-global.config = require(BASE + 'config');
-global.logger = require(BASE + 'util/logger');
+global.config = require('config');
+global.logger = require('util/logger');
 
 process.on('uncaughtException', (excepcionNoControlada) => {
 	L.dump(excepcionNoControlada)
@@ -43,7 +44,7 @@ app.use(require('body-parser').json({ extended: true }));
 app.use(require('express-bearer-token')());
 
 // Carga de rutas
-let rutasHTTP = require(BASE + 'routes/monitor');
+let rutasHTTP = require('routes/monitor');
 rutasHTTP(app);
 
 
@@ -62,5 +63,5 @@ try {
 }
 
 
-require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
+require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

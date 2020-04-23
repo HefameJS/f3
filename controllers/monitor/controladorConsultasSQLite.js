@@ -1,12 +1,11 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iSQLite = require(BASE + 'interfaces/isqlite/iSQLite');
+const iTokens = require('util/tokens');
+const iSQLite = require('interfaces/isqlite/iSQLite');
 
 // GET /status/sqlite
 const getEstadoSQLite = (req, res) => {

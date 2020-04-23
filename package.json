@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "activedirectory": "^0.7.2",
+    "app-module-path": "^2.2.0",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
     "dateformat": "^3.0.3",

@@ -1,15 +1,14 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 //const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iFlags = require(BASE + 'interfaces/iFlags');
+const iTokens = require('util/tokens');
+const iFlags = require('interfaces/iFlags');
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 
 /**

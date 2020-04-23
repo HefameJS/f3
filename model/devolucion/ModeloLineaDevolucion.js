@@ -1,15 +1,14 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const CRC = require(BASE + 'model/CRC');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const CRC = require('model/CRC');
 
 // Helpers
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const FieldChecker = require('util/fieldChecker');
 
 class LineaDevolucion {
 	constructor(json, txId, index) {

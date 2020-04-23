@@ -1,21 +1,20 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
-const iSap = require(BASE + 'interfaces/isap/iSap');
-const iEventos = require(BASE + 'interfaces/eventos/iEventos');
+const iMongo = require('interfaces/imongo/iMongo');
+const iSap = require('interfaces/isap/iSap');
+const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const Pedido = require(BASE + 'model/pedido/ModeloPedido');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const Pedido = require('model/pedido/ModeloPedido');
 
 // Helpers
-const extensionesExpress = require(BASE + 'util/extensionesExpress');
+const extensionesExpress = require('util/extensionesExpress');
 
 
 const estadosRetransmitibles = [

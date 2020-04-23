@@ -1,30 +1,29 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iEventos = require(BASE + 'interfaces/eventos/iEventos');
+const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 // Helpers
-const extensionesExpress = require(BASE + 'util/extensionesExpress');
+const extensionesExpress = require('util/extensionesExpress');
 const tryCatch = require('./tryCatchWrapper');
 
 
 module.exports = (app) => {
 
 	const controladores = {
-		autenticacion: require(BASE + 'controllers/controladorAutenticacion'),
-		pedidos: require(BASE + 'controllers/controladorPedidos'),
-		devoluciones: require(BASE + 'controllers/controladorDevoluciones'),
-		albaranes: require(BASE + 'controllers/controladorAlbaranes'),
-		logistica: require(BASE + 'controllers/controladorLogistica'),
-		confirmacionPedido: require(BASE + 'controllers/controladorConfirmacionPedido'),
-		retransmision: require(BASE + 'controllers/controladorRetransmision'),
+		autenticacion: require('controllers/controladorAutenticacion'),
+		pedidos: require('controllers/controladorPedidos'),
+		devoluciones: require('controllers/controladorDevoluciones'),
+		albaranes: require('controllers/controladorAlbaranes'),
+		logistica: require('controllers/controladorLogistica'),
+		confirmacionPedido: require('controllers/controladorConfirmacionPedido'),
+		retransmision: require('controllers/controladorRetransmision'),
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.

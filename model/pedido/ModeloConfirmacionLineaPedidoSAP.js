@@ -1,9 +1,8 @@
 'use strict';
-const BASE = global.BASE;
 const L = global.logger;
 
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const FieldChecker = require('util/fieldChecker');
 
 class ConfirmacionLineaPedidoSAP {
 	constructor(txId, json) {

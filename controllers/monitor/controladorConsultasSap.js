@@ -1,12 +1,11 @@
 'use strict';
-//const BASE = global.BASE;
-const C = global.config;
+//const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iSap = require(BASE + 'interfaces/isap/iSap');
+const iTokens = require('util/tokens');
+const iSap = require('interfaces/isap/iSap');
 
 // GET /status/sap
 const consultaSap = (req, res) => {

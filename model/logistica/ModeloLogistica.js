@@ -1,5 +1,4 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -8,15 +7,15 @@ const K = global.constants;
 const clone = require('clone');
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const CRC = require(BASE + 'model/CRC');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const CRC = require('model/CRC');
 const LineaLogistica = require('./ModeloLineaLogistica');
 const DireccionLogistica = require('./ModeloDireccionLogistica');
 
 
 // Helpers
-const PreCleaner = require(BASE + 'transmutes/preCleaner');
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const PreCleaner = require('transmutes/preCleaner');
+const FieldChecker = require('util/fieldChecker');
 
 class Logistica {
 

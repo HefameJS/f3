@@ -1,19 +1,18 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iSap = require(BASE + 'interfaces/isap/iSap');
+const iTokens = require('util/tokens');
+const iSap = require('interfaces/isap/iSap');
 
 // Modelos
-const CRC = require(BASE + 'model/CRC');
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const ConsultaAlbaran = require(BASE + '/model/albaran/ModeloConsultaAlbaran');
-const AlbaranSimple = require(BASE + '/model/albaran/ModeloAlbaranSimple');
-const AlbaranCompleto = require(BASE + '/model/albaran/ModeloAlbaranCompleto');
+const CRC = require('model/CRC');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const ConsultaAlbaran = require('model/albaran/ModeloConsultaAlbaran');
+const AlbaranSimple = require('model/albaran/ModeloAlbaranSimple');
+const AlbaranCompleto = require('model/albaran/ModeloAlbaranCompleto');
 
 
 

@@ -1,12 +1,11 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iCacheCredencialesSap = require(BASE + 'interfaces/isap/iCacheCredencialesSap');
+const iTokens = require('util/tokens');
+const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
 
 // GET /status/cache/credenciales
 const getEstadoCacheCredenciales = (req, res) => {

@@ -1,12 +1,11 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iTokens = require('util/tokens');
+const iMongo = require('interfaces/imongo/iMongo');
 
 
 // PUT /query
@@ -34,10 +33,10 @@ const consultaTransmisiones = (req, res) => {
 
 module.exports = {
 	consultaTransmisiones,
-	sap: require(BASE + 'controllers/monitor/controladorConsultasSap'),
-	procesos: require(BASE + 'controllers/monitor/controladorConsultasProcesos'),
-	mongodb: require(BASE + 'controllers/monitor/controladorConsultasMongoDb'),
-	apache: require(BASE + 'controllers/monitor/controladorConsultasApache'),
-	cache: require(BASE + 'controllers/monitor/controladorConsultasCache'),
-	sqlite: require(BASE + 'controllers/monitor/controladorConsultasSQLite')
+	sap: require('controllers/monitor/controladorConsultasSap'),
+	procesos: require('controllers/monitor/controladorConsultasProcesos'),
+	mongodb: require('controllers/monitor/controladorConsultasMongoDb'),
+	apache: require('controllers/monitor/controladorConsultasApache'),
+	cache: require('controllers/monitor/controladorConsultasCache'),
+	sqlite: require('controllers/monitor/controladorConsultasSQLite')
 }

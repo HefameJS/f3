@@ -1,12 +1,11 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iRegistroProcesos = require(BASE + 'interfaces/procesos/iRegistroProcesos')
+const iTokens = require('util/tokens');
+const iRegistroProcesos = require('interfaces/procesos/iRegistroProcesos')
 
 // GET /status/proc
 const consultaProcesos = (req, res) => {

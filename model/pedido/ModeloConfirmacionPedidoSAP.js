@@ -1,17 +1,16 @@
 'use strict';
-const BASE = global.BASE;
 const L = global.logger;
 const C = global.config;
 const K = global.constants;
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 const Pedido = require('./ModeloPedido');
 const ConfirmacionLineaPedidoSAP = require('./ModeloConfirmacionLineaPedidoSAP');
-const CRC = require(BASE + 'model/CRC');
+const CRC = require('model/CRC');
 
 // Helpers
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const FieldChecker = require('util/fieldChecker');
 
 
 

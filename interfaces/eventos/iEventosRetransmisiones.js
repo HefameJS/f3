@@ -1,16 +1,15 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
-const iFlags = require(BASE + 'interfaces/iFlags');
+const iMongo = require('interfaces/imongo/iMongo');
+const iFlags = require('interfaces/iFlags');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
-const ConfirmacionPedidoSAP = require(BASE + 'model/pedido/ModeloConfirmacionPedidoSAP');
+const ConfirmacionPedidoSAP = require('model/pedido/ModeloConfirmacionPedidoSAP');
 
 
 

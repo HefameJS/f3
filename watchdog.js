@@ -1,6 +1,7 @@
 'use strict';
-require('./globals');
-const BASE = global.BASE;
+require('app-module-path').addPath(__dirname);
+
+require('globals');
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -11,8 +12,8 @@ process.title = K.PROCESS_TITLES.WATCHDOG;
 process.type = K.PROCESS_TYPES.WATCHDOG;
 
 global.instanceID += '-wd';
-global.config = require(BASE + 'config');
-global.logger = require(BASE + 'util/logger');
+global.config = require('config');
+global.logger = require('util/logger');
 
 process.on('uncaughtException', (excepcionNoControlada) => {
 	L.dump(excepcionNoControlada)
@@ -31,7 +32,7 @@ require('fs').writeFile(ficheroPID, process.pid, (err) => {
 });
 
 
-require(BASE + 'watchdog/mdb');
-require(BASE + 'watchdog/sqlite');
-require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
+require('watchdog/mdb');
+require('watchdog/sqlite');
+require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

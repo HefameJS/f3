@@ -1,5 +1,4 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -8,8 +7,8 @@ const K = global.constants;
 const clone = require('clone');
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
-const iFlags = require(BASE + 'interfaces/iFlags');
+const iMongo = require('interfaces/imongo/iMongo');
+const iFlags = require('interfaces/iFlags');
 
 
 module.exports.inicioAutenticacion = (req) => {

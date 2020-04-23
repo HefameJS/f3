@@ -1,5 +1,4 @@
 'use strict';
-const BASE = global.BASE;
 let C = {};
 //const L = global.logger;
 const K = global.constants;
@@ -148,7 +147,7 @@ const _verificadorConfiguracion = {
 };
 
 
-const FICHERO_CONFIGURACION = process.env.F3_CONFIG_FILE || BASE + 'config.json';
+const FICHERO_CONFIGURACION = process.env.F3_CONFIG_FILE || 'config.json';
 try {
 	C = require(FICHERO_CONFIGURACION);
 

@@ -1,5 +1,4 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -9,16 +8,16 @@ const clone = require('clone');
 const HOSTNAME = require('os').hostname();
 
 // Interfaces
-const iFlags = require(BASE + 'interfaces/iFlags')
+const iFlags = require('interfaces/iFlags')
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 const LineaPedido = require('./ModeloLineaPedido');
-const CRC = require(BASE + 'model/CRC');
+const CRC = require('model/CRC');
 
 // Helpers
-const PreCleaner = require(BASE + 'transmutes/preCleaner');
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const PreCleaner = require('transmutes/preCleaner');
+const FieldChecker = require('util/fieldChecker');
 
 
 class Pedido {

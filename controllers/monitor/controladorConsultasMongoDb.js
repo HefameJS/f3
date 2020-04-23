@@ -1,15 +1,14 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iTokens = require('util/tokens');
+const iMongo = require('interfaces/imongo/iMongo');
 
 // Modelos
-const EstadoReplicaSet = require(BASE + 'model/monitor/ModeloEstadoReplicaSet')
+const EstadoReplicaSet = require('model/monitor/ModeloEstadoReplicaSet')
 
 // GET /status/mdb/col
 const getNombresColecciones = (req, res) => {

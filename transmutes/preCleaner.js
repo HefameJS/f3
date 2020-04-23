@@ -1,14 +1,13 @@
 'use strict';
-const BASE = global.BASE;
 const L = global.logger;
 const C = global.config;
 const K = global.constants;
 
 // Interfaces
-const iFlags = require(BASE + 'interfaces/iFlags');
+const iFlags = require('interfaces/iFlags');
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 const CODIGO_ERROR_PROTOCOLO = K.CODIGOS_ERROR_FEDICOM.WARN_PROTOCOLO;
 const DEPURACION_ACTIVA = (C.depurar_transmisiones ? true : false);

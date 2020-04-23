@@ -1,6 +1,7 @@
 'use strict';
-require('./globals');
-const BASE = global.BASE;
+require('app-module-path').addPath(__dirname);
+
+require('globals');
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
@@ -61,7 +62,7 @@ if (cluster.isMaster) {
 	app.use(require('express-bearer-token')());
 
 	// Carga de rutas
-	let rutasHTTP = require(BASE + 'routes/core');
+	let rutasHTTP = require('routes/core');
 	rutasHTTP(app);
 
 	try {
@@ -83,7 +84,7 @@ if (cluster.isMaster) {
 
 
 
-require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
+require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 
 
 cluster.on('exit', (worker) => {

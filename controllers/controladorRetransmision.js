@@ -1,14 +1,13 @@
 'use strict';
-const BASE = global.BASE;
 const L = global.logger;
 //const C = global.config;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
+const iTokens = require('util/tokens');
 
 // Helpers
-const retransmitirPedido = require(BASE + 'watchdog/retransmitirPedido').retransmitirPedido;
+const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;
 
 // GET /retransmitir/:txId
 exports.retransmitePedido = (req, res) => {

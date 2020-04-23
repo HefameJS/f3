@@ -1,22 +1,21 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 // Helpers
-const extensionesExpress = require(BASE + 'util/extensionesExpress');
-const tryCatch = require(BASE + 'routes/tryCatchWrapper');
+const extensionesExpress = require('util/extensionesExpress');
+const tryCatch = require('routes/tryCatchWrapper');
 
 
 
 module.exports = (app) => {
 
 	const controladores = {
-		consultas: require(BASE + 'controllers/monitor/controladorConsultas')
+		consultas: require('controllers/monitor/controladorConsultas')
 
 	}
 

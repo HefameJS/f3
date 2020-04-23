@@ -1,19 +1,18 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iSap = require(BASE + 'interfaces/isap/iSap');
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
-const iEventos = require(BASE + 'interfaces/eventos/iEventos');
-const iTokens = require(BASE + 'util/tokens');
-const iFlags = require(BASE + 'interfaces/iFlags');
+const iSap = require('interfaces/isap/iSap');
+const iMongo = require('interfaces/imongo/iMongo');
+const iEventos = require('interfaces/eventos/iEventos');
+const iTokens = require('util/tokens');
+const iFlags = require('interfaces/iFlags');
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
-const Pedido = require(BASE + 'model/pedido/ModeloPedido');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const Pedido = require('model/pedido/ModeloPedido');
 
 
 

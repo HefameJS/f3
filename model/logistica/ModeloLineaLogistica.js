@@ -1,14 +1,13 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Modelos
-const ErrorFedicom = require(BASE + 'model/ModeloErrorFedicom');
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 // Helpers
-const FieldChecker = require(BASE + 'util/fieldChecker');
+const FieldChecker = require('util/fieldChecker');
 
 class LineaLogistica {
 	constructor(txId, json) {

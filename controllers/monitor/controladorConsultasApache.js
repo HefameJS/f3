@@ -1,12 +1,11 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require(BASE + 'util/tokens');
-const iApache = require(BASE + 'interfaces/apache/iapache');
+const iTokens = require('util/tokens');
+const iApache = require('interfaces/apache/iapache');
 
 // GET /status/apache/balanceadores
 const consultaBalanceadorApache = (req, res) => {

@@ -1,11 +1,10 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iMongo = require(BASE + 'interfaces/imongo/iMongo');
+const iMongo = require('interfaces/imongo/iMongo');
 
 
 
