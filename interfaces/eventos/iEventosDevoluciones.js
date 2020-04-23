@@ -116,6 +116,62 @@ module.exports.errorDevolucion = (req, res, cuerpoRespuesta, status) => {
 	iMongo.transaccion.grabar(transaccion);
 	L.yell(txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
+module.exports.devolucionDuplicada = (req, res, cuerpoRespuesta, txIdOriginal) => {
+
+	let txId = req.txId;
+
+	let transaccion = {
+		$setOnInsert: {
+			_id: txId,
+			createdAt: new Date(),
+			type: K.TX_TYPES.DEVOLUCION_DUPLICADA,
+			status: K.TX_STATUS.OK,
+			originalTx: txIdOriginal,
+			iid: global.instanceID,
+			clientRequest: {
+				authentication: req.token,
+				ip: req.originIp,
+				protocol: req.protocol,
+				method: req.method,
+				url: req.originalUrl,
+				route: req.route.path,
+				headers: req.headers,
+				body: req.body
+			},
+			clientResponse: {
+				timestamp: new Date(),
+				statusCode: res.statusCode,
+				headers: res.getHeaders(),
+				body: cuerpoRespuesta
+			},
+		}
+	}
+
+	let transaccionActualizacionOriginal = {
+		$setOnInsert: {
+			_id: txIdOriginal,
+			createdAt: new Date()
+		},
+		$push: {
+			duplicates: {
+				_id: txId,
+				timestamp: new Date()
+			}
+		}
+	}
+
+	// Establece flags que hubiera en la transaccion actual (la de type: K.TX_TYPES.PEDIDO_DUPLICADO)
+	iFlags.finaliza(txId, transaccion);
+
+	// Establece el flag 'DUPLICADOS' en la transaccion original
+	iFlags.set(txIdOriginal, K.FLAGS.DUPLICADOS);
+	iFlags.finaliza(txIdOriginal, transaccionActualizacionOriginal);
+
+
+	L.xi(txId, ['Emitiendo COMMIT para evento DevolucionDuplicada'], 'txCommit');
+	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
+	iMongo.transaccion.grabar(transaccion);
+}
 module.exports.consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let txId = req.txId;

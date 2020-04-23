@@ -52,36 +52,60 @@ exports.crearDevolucion = (req, res) => {
 		return;
 	}
 
-	L.xd(txId, ['El contenido de la transmisión es una devolución correcta', devolucion]);
+	L.xd(txId, ['El contenido de la transmisión es una devolución correcta']);
 
-	iEventos.devoluciones.inicioDevolucion(req, devolucion);
-	devolucion.limpiarEntrada(txId);
-	iSap.realizarDevolucion(txId, devolucion, (errorSap, respuestaSap) => {
+	iMongo.consultaTx.porCRC(txId, devolucion.crc, (errorMongo, txDevolucionDuplicada) => {
+		if (errorMongo) {
+			L.xe(txId, ['Ocurrió un error al comprobar si la devolución es duplicada - se asume que no lo es', errorMongo]);
+		} else if (txDevolucionDuplicada && txDevolucionDuplicada.clientResponse && txDevolucionDuplicada.clientResponse.body) {
+			let txIdOriginal = txDevolucionDuplicada._id;
+			let respuestaCliente = txDevolucionDuplicada.clientResponse.body;
+			L.xw(txId, ['Se ha detectado la transmisión como un duplicada', txIdOriginal]);
 
-		if (errorSap) {
-			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				L.xe(txId, ['Error al grabar la devolución', errorSap]);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-			}
-			else {
-				L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
-				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-				iFlags.set(txId, K.FLAGS.NO_SAP)
-				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-			}
+			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'La devolución ya estaba registrada en el sistema')
+			respuestaCliente.forEach(devolucionOriginal => {
+				if (!devolucionOriginal.incidencias || !devolucionOriginal.incidencias.push) devolucionOriginal.incidencias = [];
+				devolucionOriginal.incidencias = devolucionOriginal.incidencias.concat(errorFedicom.getErrors());
+			});
+
+			res.status(200).send(respuestaCliente);
+			iEventos.devoluciones.devolucionDuplicada(req, res, respuestaCliente, txIdOriginal);
 			return;
 		}
 
-		let respuestaCliente = devolucion.obtenerRespuestaCliente(txId, respuestaSap.body);
-		let [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
+		iEventos.devoluciones.inicioDevolucion(req, devolucion);
+		devolucion.limpiarEntrada(txId);
+		iSap.realizarDevolucion(txId, devolucion, (errorSap, respuestaSap) => {
 
-		res.status(codigoRespuestaHttp).json(respuestaCliente);
-		iEventos.devoluciones.finDevolucion(res, respuestaCliente, estadoTransmision, { numerosDevolucion });
+			if (errorSap) {
+				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+					let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+					L.xe(txId, ['Error al grabar la devolución', errorSap]);
+					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+					iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+				}
+				else {
+					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
+					let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
+					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
+					iFlags.set(txId, K.FLAGS.NO_SAP)
+					iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+				}
+				return;
+			}
 
-	});
+			let respuestaCliente = devolucion.obtenerRespuestaCliente(txId, respuestaSap.body);
+			let [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
+
+			res.status(codigoRespuestaHttp).json(respuestaCliente);
+			iEventos.devoluciones.finDevolucion(res, respuestaCliente, estadoTransmision, { numerosDevolucion });
+
+		});
+
+
+	})
+
+
 }
 
 // GET /devoluciones/:numeroDevolucion
@@ -123,7 +147,7 @@ exports.consultaDevolucion = (req, res) => {
 			if (cuerpoRespuestaOriginal && cuerpoRespuestaOriginal.find) {
 				// Las devoluciones devuelven arrays con varios documentos de devolución dentro,
 				// buscamos el que tiene el numero de devolución concreta que buscamos.
-				documentoDevolucion = cuerpoRespuestaOriginal.find( (devolucion) => {
+				documentoDevolucion = cuerpoRespuestaOriginal.find((devolucion) => {
 					return (devolucion && devolucion.numeroDevolucion === numeroDevolucion);
 				});
 			}
