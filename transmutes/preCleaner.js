@@ -1,6 +1,6 @@
 'use strict';
-const L = global.logger;
 const C = global.config;
+const L = global.logger;
 const K = global.constants;
 
 // Interfaces
