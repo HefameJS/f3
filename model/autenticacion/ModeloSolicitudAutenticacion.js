@@ -1,6 +1,6 @@
 'use strict';
 //const C = global.config;
-//const L = global.logger;
+const L = global.logger;
 const K = global.constants;
 
 // Interfaces
@@ -9,6 +9,7 @@ const iFlags = require('interfaces/iFlags');
 
 // Modelos
 const ErrorFedicom = require('model/ModeloErrorFedicom');
+const DominioAutenticacion = require('./ModeloDominioAutenticacion');DominioAutenticacion
 
 
 /**
@@ -26,17 +27,25 @@ class SolicitudAutenticacion {
 
 	constructor(txId, json) {
 
-		this.domain = K.DOMINIOS.verificar(json.domain);
+		this.domain = DominioAutenticacion.nombreDominioValidado(txId, json.domain);
 
+		L.xd(txId, ['Nombre de dominio validado', this.domain]);
+		
 		if (json.user && json.password) {
 			this.username = json.user.trim();
 			this.password = json.password.trim();
 
-			// Comprobación de si es TRANSFER o no
-			// en funcion de si el nombre del usuario empieza por TR, TG o TP
-			if (this.username.search(/^T[RGP]/) === 0) {
-				this.domain = K.DOMINIOS.TRANSFER;
-				iFlags.set(txId, K.FLAGS.TRANSFER);
+			// Comprobación de si es TRANSFER o no en funcion de si el nombre del usuario empieza por TR, TG o TP
+			// Pero OJO, porque si empieza por T pero no es ninguno de los anteriores, SAP igualmente lo da como bueno
+			// y se genera un token en el dominio FEDICOM para el usuario TRANSFER.
+			// Notese que si el dominio de la solicitud no es FEDICOM, esto no aplica (Por ejemplo, dominio HEFAME).
+			if (this.username.charAt(0) === 'T' && this.domain === K.DOMINIOS.FEDICOM) {
+				if (this.username.search(/^T[RGP]/) === 0) {
+					this.domain = K.DOMINIOS.TRANSFER;
+					iFlags.set(txId, K.FLAGS.TRANSFER);
+				} else {
+					throw new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
+				}
 			}
 
 		} else {
@@ -48,7 +57,11 @@ class SolicitudAutenticacion {
 
 
 		// COPIA DE PROPIEDADES
-		Object.assign(this, json);
+		// Object.assign(this, json);
+		if (json.noCache) this.noCache = json.noCache;
+		if (json.debug) this.debug = json.debug;
+		if (json.sapSystem) this.sapSystem = json.sapSystem;
+
 	}
 
 	generarToken(txId, perms) {

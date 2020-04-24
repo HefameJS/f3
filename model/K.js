@@ -359,24 +359,14 @@ module.exports = {
         DEAD: 99
     },
     DOMINIOS: {
-        verificar: (dominio) => {
-            let DOMINIOS = module.exports.DOMINIOS;
-
-            if (dominio) {
-                for (let idDominio in DOMINIOS) {
-                    if (DOMINIOS[idDominio].toUpperCase) {
-                        if (DOMINIOS[idDominio].toUpperCase() === dominio.toUpperCase())
-                            return DOMINIOS[idDominio];
-                    }
-                }
-            }
-            return DOMINIOS.FEDICOM;
-        },
         FEDICOM: 'FEDICOM',
         TRANSFER: 'transfer_laboratorio',
         HEFAME: 'HEFAME',
         EMPLEADO: 'empleado',
-        FMASONLINE: 'F+Online'
+        FMASONLINE: 'FMAS',
+        PORTAL_HEFAME: 'PORTAL_HEFAME',
+        SAP_BACKGROUND: 'SAP_BG'
+
     },
     FLAGS: {
         SQLITE: 'sqlite',
