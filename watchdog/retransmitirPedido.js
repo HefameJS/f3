@@ -158,8 +158,9 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
 
             // Este evento crea la transccion como RECEPCIONADA.
             // La posterior emisión de iEventos.retransmisiones.retransmitirPedido es la que completará
-            // el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente.
-            iEventos.retransmisiones.clonarPedido(req, pedido);
+            // el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente mediante la
+            // llamada a finClonarPedido.
+            iEventos.retransmisiones.inicioClonarPedido(req, pedido);
         }
 
 

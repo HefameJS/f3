@@ -42,8 +42,10 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 
 
 	if (opcionesRetransmision.ctxId) {
-		// La retransmisión ha generado un clon.
-		module.exports.finClonarPedido(txIdOriginal, opcionesRetransmision.ctxId, resultadoRetransmision)
+		// La retransmisión ha generado un clon del pedido, lo actualizamos con los datos del resultado
+		module.exports.finClonarPedido(txIdOriginal, opcionesRetransmision.ctxId, resultadoRetransmision);
+
+		// Marcamos la transmisión original como que ha sido clonada
 		iFlags.set(txIdOriginal, K.FLAGS.CLONADO);
 	}
 	else if (!opcionesRetransmision.noActualizarOriginal && resultadoRetransmision) {
@@ -128,7 +130,7 @@ const _actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
  * La posterior emisión de iEventos.retransmisiones.retransmitirPedido es la que completará
  * el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente.
  */
-module.exports.clonarPedido = (reqClonada, pedidoClonado) => {
+module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 
 	let txId = reqClonada.txId;
 
@@ -159,9 +161,33 @@ module.exports.clonarPedido = (reqClonada, pedidoClonado) => {
 	iFlags.set(txId, K.FLAGS.CLON);
 	iFlags.finaliza(txId, transaccion);
 
-	L.xi(reqClonada.txId, ['Emitiendo COMMIT para evento clonarPedido'], 'txCommit');
+	L.xi(reqClonada.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(reqClonada.txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [reqClonada.identificarUsuarioAutenticado(), pedidoClonado.crc, reqClonada.body]);
+}
+
+
+module.exports.finClonarPedido = (txIdOriginal, txIdClonado, resultadoRetransmision) => {
+
+	let transaccion = {
+		$setOnInsert: {
+			_id: txIdClonado,
+			createdAt: new Date()
+		},
+		$max: {
+			modifiedAt: new Date(),
+		},
+		$set: {
+			...resultadoRetransmision,
+			originalTxId: new ObjectID(txIdOriginal)
+		}
+	}
+
+	iFlags.finaliza(txIdClonado, transaccion);
+
+	L.xi(txIdClonado, ['Emitiendo COMMIT para evento FinClonarPedido'], 'txCommit');
+	iMongo.transaccion.grabar(transaccion);
+	L.evento(txIdClonado, K.TX_TYPES.PEDIDO, resultadoRetransmision.status, [resultadoRetransmision]);
 }
 
 module.exports.cambioEstado = (txId, nuevoEstado) => {
