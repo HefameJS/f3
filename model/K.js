@@ -186,6 +186,7 @@ module.exports = {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
                 codigoArticulo: { ignore: true },
                 sap_ignore: { ignore: true },
+                ordenLineaAlbaran: { ignore: true },
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 descripcionArticulo: { remove: true },
