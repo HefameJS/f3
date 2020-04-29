@@ -7,7 +7,7 @@ C_RESET="\e[0m"
 
 
 
-mostar_ayuda() {
+mostrar_ayuda() {
   echo "Uso: $0 (<accion> [<opciones>]) | -h"
   echo ""
   echo "    -h  Muestra esta ayuda"
@@ -30,8 +30,11 @@ mostar_ayuda() {
   echo "    --actualizar-git -u"
   echo "        Actualiza la aplicacion desde el repositorio GIT."
   echo ""
+  echo "    --actualizar-npm -n"
+  echo "        Realiza una instalación límpia de las dependencias NodeJS."
+  echo ""
   echo "    --limpiar-log -l"
-  echo "        Elimina los logs del directorio de logs. Esto NO eliminar� los ficheros de DUMP."
+  echo "        Elimina los logs del directorio de logs. Esto NO elimina los ficheros de DUMP."
   echo ""
   echo "    --limpiar-sqlite -s"
   echo "        Purga la base de datos auxiliar SQLite."
@@ -42,7 +45,7 @@ mostar_ayuda() {
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]
 then
-  mostar_ayuda
+  mostrar_ayuda
   exit 0
 fi
 
@@ -227,7 +230,7 @@ status() {
 
 if [ $MOSTRAR_AYUDA == 'yes' ]
 then
-  mostar_ayuda
+  mostrar_ayuda
   exit 0
 fi
 
