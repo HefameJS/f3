@@ -5,8 +5,11 @@
 
 
 /**
+ * ****** DEPRECATED *******
  * Esta clase representa un albarán simplificado.
- * Se utiliza en la respuesta de la búsqueda de albaranes.
+ * En versiones anteriores del concentrador se utilizaba en la respuesta de la búsqueda de albaranes.
+ * Pero desde el 29/04/2020 se pasó a utilizar la clase AlbaranCompleto tambien para esta búsqueda.
+ * Esta clase la dejo por si en el futuro fuera útil ver el mapeo del servicio.
  */
 
 

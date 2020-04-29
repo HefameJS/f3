@@ -3,6 +3,9 @@
 const L = global.logger;
 const K = global.constants;
 
+// Externos
+const locks = require('locks');
+
 // Interfaces
 const iTokens = require('util/tokens');
 const iSap = require('interfaces/isap/iSap');
@@ -11,7 +14,6 @@ const iSap = require('interfaces/isap/iSap');
 const CRC = require('model/CRC');
 const ErrorFedicom = require('model/ModeloErrorFedicom');
 const ConsultaAlbaran = require('model/albaran/ModeloConsultaAlbaran');
-const AlbaranSimple = require('model/albaran/ModeloAlbaranSimple');
 const AlbaranCompleto = require('model/albaran/ModeloAlbaranCompleto');
 
 
@@ -280,20 +282,79 @@ exports.listadoAlbaranes = (req, res) => {
         let cuerpoSap = respuestaSap.body;
 
         if (cuerpoSap && cuerpoSap.tot_rec >= 0 && cuerpoSap.t_data && cuerpoSap.t_data.forEach ) {
-            let listaAlbaranesSimples = [];
+
+            let listaNumerosAlbaran = [];
             cuerpoSap.t_data.forEach( datosAlbaran => {
-                listaAlbaranesSimples.push(new AlbaranSimple(datosAlbaran))
+                listaNumerosAlbaran.push(datosAlbaran.proforma);
             })
 
             res.setHeader('X-Total-Count', cuerpoSap.tot_rec);
-            res.status(200).json(listaAlbaranesSimples);
+            _recopilarAlbaranesJSON(req, res, listaNumerosAlbaran);
+
         } else {
+
             L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap])
             res.setHeader('X-Total-Count', 0);
             res.status(200).json([]);
+
         }
     });
 
 }
 
+
+
+const _recopilarAlbaranesJSON = (req, res, listaNumerosAlbaran) => {
+
+    let txId = req.txId;
+
+    let mutex = locks.createMutex();
+
+    let albararanesRecopilados = [];
+    let numeroPeticionesEnCurso = listaNumerosAlbaran.length;
+
+    const _consultaAlbaranFinalizada = (albaran) => {
+        
+        if (albaran) {
+            albararanesRecopilados.push(albaran)
+        }
+
+        // El decremento de peticiones en curso debe hacerse en exclusión mutua (MutEx).
+        // o podría darse el caso de que algún albaran quedara fuera.
+        mutex.lock(() => {
+            numeroPeticionesEnCurso--;
+            if (!numeroPeticionesEnCurso) {
+                res.status(200).json(albararanesRecopilados);
+            }
+            mutex.unlock();
+        });
+
+
+    }
+
+    L.xt(txId, ['Se van a realizar multiples llamadas para recopilar los albaranes', listaNumerosAlbaran.length, listaNumerosAlbaran], 'recopilaAlb');
+
+    listaNumerosAlbaran.forEach( numeroAlbaran => {
+
+        iSap.albaranes.consultaAlbaranJSON(txId, numeroAlbaran, (errorSap, respuestaSap) => {
+
+            if (errorSap) {
+                L.xe(txId, ['Error al consultar albarán JSON', errorSap], 'recopilaAlb');
+                _consultaAlbaranFinalizada(null);
+            }
+
+            let cuerpoSap = respuestaSap.body;
+
+            if (cuerpoSap && cuerpoSap.t_pos) {
+                let datosAlbaran = new AlbaranCompleto(cuerpoSap);
+                _consultaAlbaranFinalizada(datosAlbaran);
+                
+            } else {
+                L.xe(txId, ['SAP no ha devuelto el albarán', errorSap], 'recopilaAlb');
+                _consultaAlbaranFinalizada(null);
+            }
+        })
+    })
+
+}
 

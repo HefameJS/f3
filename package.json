@@ -26,6 +26,7 @@
     "express": "^4.17.1",
     "express-bearer-token": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
+    "locks": "^0.2.2",
     "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
     "mongodb": "^3.5.2",
     "os": "^0.1.1",

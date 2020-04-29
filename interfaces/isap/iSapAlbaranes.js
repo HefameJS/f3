@@ -22,8 +22,6 @@ exports.consultaAlbaranJSON = (txId, numeroAlbaran, callback) => {
 		method: 'GET'
 	});
 
-	L.xd(txId, ['Enviando a SAP consulta de albarán', parametrosHttp]);
-
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
 		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
@@ -100,7 +98,6 @@ exports.listadoAlbaranes = (txId, consultaAlbaran, callback) => {
 		method: 'GET'
 	});
 
-	L.xd(txId, ['Enviando a SAP consulta de listado de albaranes', parametrosHttp]);
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
