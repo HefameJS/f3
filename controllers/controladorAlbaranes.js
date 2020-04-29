@@ -50,7 +50,7 @@ const _consultaAlbaranPDF = (req, res, numAlbaran) => {
         if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
             L.xi(txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
             let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
-            
+
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename=' + numAlbaran + '.pdf');
             res.status(200).send(buffer);
@@ -68,7 +68,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
     let txId = req.txId;
 
     iSap.albaranes.consultaAlbaranJSON(txId, numAlbaran, (errorSap, respuestaSap) => {
-        
+
         if (errorSap) {
             if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
                 L.xe(txId, ['Error al consultar albarán JSON', errorSap]);
@@ -92,7 +92,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
         }
 
         let cuerpoSap = respuestaSap.body;
-        
+
         if (cuerpoSap && cuerpoSap.t_pos) {
             let datosAlbaran = new AlbaranCompleto(cuerpoSap)
             if (asArray) datosAlbaran = [datosAlbaran]
@@ -102,7 +102,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
             let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
             errorFedicom.enviarRespuestaDeError(res);
         }
-    }) 
+    })
 }
 
 // GET /albaranes/:numeroAlbaran
@@ -161,7 +161,7 @@ exports.listadoAlbaranes = (req, res) => {
     let txId = req.txId;
 
     L.xi(txId, ['Procesando transmisión como BÚSQUEDA DE ALBARAN']);
-    
+
     // Verificación del token del usuario
     let estadoToken = iTokens.verificaPermisos(req, res, {
         admitirSimulaciones: true,
@@ -224,7 +224,7 @@ exports.listadoAlbaranes = (req, res) => {
         }
 
         // Comprobación de rango inferior a 1 año
-        let diff = (fechaHasta.getTime() - fechaDesde.getTime()) / 1000 ;
+        let diff = (fechaHasta.getTime() - fechaDesde.getTime()) / 1000;
         if (diff > 31622400) { // 366 dias * 24h * 60m * 60s
             let errorFedicom = new ErrorFedicom('ALB-ERR-009', 'El intervalo entre el parámetro "fechaDesde" y "fechaHasta" no puede ser superior a un año', 400);
             /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
@@ -239,8 +239,8 @@ exports.listadoAlbaranes = (req, res) => {
 
     let consulta = new ConsultaAlbaran(codigoCliente)
     consulta.setLimit(limit)
-            .setOffset(offset)
-            .setFechas(fechaDesde, fechaHasta);
+        .setOffset(offset)
+        .setFechas(fechaDesde, fechaHasta);
 
 
 
@@ -253,7 +253,7 @@ exports.listadoAlbaranes = (req, res) => {
         let codigoClienteOrigen = parseInt(codigoCliente.slice(-5));
         consulta.setCrc(CRC.crear(codigoClienteOrigen, numeroPedidoOrigen))
     }
-    
+
     // #5 - El cliente filtra por numeroPedido (de distribuidor)
     // En este caso, nos pasan el CRC del pedido
     let numeroPedido = req.query.numeroPedido;
@@ -261,7 +261,7 @@ exports.listadoAlbaranes = (req, res) => {
         consulta.setCrc(numeroPedido)
     }
 
-    L.xd(txId, ['Buscando en SAP albaranes con filtro', consulta.toQueryString()]);
+    L.xd(txId, ['Buscando en SAP albaranes con filtro', consulta.toQueryString()], 'recopilaAlb');
 
     iSap.albaranes.listadoAlbaranes(txId, consulta, (errorSap, respuestaSap) => {
         if (errorSap) {
@@ -278,22 +278,24 @@ exports.listadoAlbaranes = (req, res) => {
             }
             return;
         }
-        
+
         let cuerpoSap = respuestaSap.body;
 
-        if (cuerpoSap && cuerpoSap.tot_rec >= 0 && cuerpoSap.t_data && cuerpoSap.t_data.forEach ) {
+        if (cuerpoSap && cuerpoSap.tot_rec >= 0 && cuerpoSap.t_data && cuerpoSap.t_data.forEach) {
 
             let listaNumerosAlbaran = [];
-            cuerpoSap.t_data.forEach( datosAlbaran => {
+            cuerpoSap.t_data.forEach(datosAlbaran => {
                 listaNumerosAlbaran.push(datosAlbaran.proforma);
             })
+
+            L.xi(txId, ["SAP ha devuelto albaranes", listaNumerosAlbaran.length, cuerpoSap.tot_rec], 'recopilaAlb');
 
             res.setHeader('X-Total-Count', cuerpoSap.tot_rec);
             _recopilarAlbaranesJSON(req, res, listaNumerosAlbaran);
 
         } else {
 
-            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap])
+            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap], 'recopilaAlb')
             res.setHeader('X-Total-Count', 0);
             res.status(200).json([]);
 
@@ -313,8 +315,8 @@ const _recopilarAlbaranesJSON = (req, res, listaNumerosAlbaran) => {
     let albararanesRecopilados = [];
     let numeroPeticionesEnCurso = listaNumerosAlbaran.length;
 
-    const _consultaAlbaranFinalizada = (albaran) => {
-        
+    const _consultaAlbaranFinalizada = (numeroAlbaran, albaran) => {
+
         if (albaran) {
             albararanesRecopilados.push(albaran)
         }
@@ -323,7 +325,9 @@ const _recopilarAlbaranesJSON = (req, res, listaNumerosAlbaran) => {
         // o podría darse el caso de que algún albaran quedara fuera.
         mutex.lock(() => {
             numeroPeticionesEnCurso--;
+            L.xt(txId, ['Se decrementa el numero de peticiones en curso', numeroPeticionesEnCurso, numeroAlbaran, albaran ? true : false], 'recopilaAlb');
             if (!numeroPeticionesEnCurso) {
+                L.xt(txId, ['Se devuelve la lista de albaranes recopilados', albararanesRecopilados.length, listaNumerosAlbaran.length], 'recopilaAlb');
                 res.status(200).json(albararanesRecopilados);
             }
             mutex.unlock();
@@ -334,24 +338,29 @@ const _recopilarAlbaranesJSON = (req, res, listaNumerosAlbaran) => {
 
     L.xt(txId, ['Se van a realizar multiples llamadas para recopilar los albaranes', listaNumerosAlbaran.length, listaNumerosAlbaran], 'recopilaAlb');
 
-    listaNumerosAlbaran.forEach( numeroAlbaran => {
+    listaNumerosAlbaran.forEach(numeroAlbaran => {
+
+        L.xt(txId, ['Realizando llamada para obtener el albarán', numeroAlbaran], 'recopilaAlb');
 
         iSap.albaranes.consultaAlbaranJSON(txId, numeroAlbaran, (errorSap, respuestaSap) => {
 
+            L.xt(txId, ['Finaliza llamada para obtener el albarán', numeroAlbaran], 'recopilaAlb');
+
             if (errorSap) {
-                L.xe(txId, ['Error al consultar albarán JSON', errorSap], 'recopilaAlb');
-                _consultaAlbaranFinalizada(null);
-            }
+                L.xe(txId, ['Error al consultar albarán JSON', numeroAlbaran, errorSap], 'recopilaAlb');
+                _consultaAlbaranFinalizada(numeroAlbaran, null);
 
-            let cuerpoSap = respuestaSap.body;
-
-            if (cuerpoSap && cuerpoSap.t_pos) {
-                let datosAlbaran = new AlbaranCompleto(cuerpoSap);
-                _consultaAlbaranFinalizada(datosAlbaran);
-                
             } else {
-                L.xe(txId, ['SAP no ha devuelto el albarán', errorSap], 'recopilaAlb');
-                _consultaAlbaranFinalizada(null);
+                let cuerpoSap = respuestaSap.body;
+
+                if (cuerpoSap && cuerpoSap.t_pos) {
+                    L.xt(txId, ['Se obtuvo el albarán', numeroAlbaran], 'recopilaAlb');
+                    let datosAlbaran = new AlbaranCompleto(cuerpoSap);
+                    _consultaAlbaranFinalizada(numeroAlbaran, datosAlbaran);
+                } else {
+                    L.xe(txId, ['SAP no ha devuelto el albarán', numeroAlbaran, errorSap], 'recopilaAlb');
+                    _consultaAlbaranFinalizada(numeroAlbaran, null);
+                }
             }
         })
     })
