@@ -1,7 +1,7 @@
 'use strict';
-const C = global.config;
+//const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 // Externas
 const request = require('request');
