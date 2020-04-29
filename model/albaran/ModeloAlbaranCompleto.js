@@ -37,7 +37,7 @@ class AlbaranCompleto {
 
 		this.impuestos = cab.t_impuestos.map(impuesto => {
 			return {
-				tipo: impuesto.tipo,
+				tipo: impuesto.tipo.replace(/\s/g, ''),
 				porcentaje: impuesto.porcentaje,
 				base: impuesto.base,
 				importe: impuesto.importe,
@@ -114,7 +114,7 @@ class LineaAlbaran {
 		this.precioNeto = pos.precio_neto;
 		this.precioAlbaran = pos.precio_alb;
 		if (pos.imp_porcent > 0) this.impuesto = {
-			tipo: pos.imp_tipo,
+			tipo: pos.imp_tipo.replace(/\s/g, ' '),
 			porcentaje: pos.imp_porcent,
 			base: pos.imp_base,
 			importe: pos.imp_importe,
