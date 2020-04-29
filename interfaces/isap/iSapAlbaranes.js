@@ -21,6 +21,7 @@ exports.consultaAlbaranJSON = (txId, numeroAlbaran, callback) => {
 		path: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
 		method: 'GET'
 	});
+	parametrosHttp.timeout = 20000;
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
@@ -57,8 +58,9 @@ exports.consultaAlbaranPDF = (txId, numeroAlbaran, callback) => {
 
 	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		path: '/api/zsf_get_document/proforma/' + numeroAlbaran,
-		method: 'GET'
+		method: 'GET',
 	});
+	parametrosHttp.timeout = 10000;
 
 	L.xd(txId, ['Enviando a SAP consulta de albarán PDF', parametrosHttp]);
 
@@ -97,6 +99,7 @@ exports.listadoAlbaranes = (txId, consultaAlbaran, callback) => {
 		path: '/api/zsd_orderlist_api/query/?query=' + consultaAlbaran.toQueryString(),
 		method: 'GET'
 	});
+	parametrosHttp.timeout = 30000;
 
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
