@@ -18,7 +18,6 @@ const descartar = (transaccion) => {
 
 	let txId = transaccion['$setOnInsert']._id;
 
-
 	if (MDB.colDiscard()) {
 		MDB.colDiscard().updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 }, (errorMongo, res) => {
 			if (errorMongo) {
@@ -76,10 +75,6 @@ const grabarEnMemoria = (transaccion) => {
 
 const grabarDesdeSQLite = (transaccion, callback) => {
 	
-	// Como estamos serializando mal en iSQLite.grabar() tenemos que hacer esta ñapa.
- 	// TODO: https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/ Para serializar correctamente objetos como ObjectIDs y Dates
-	_transformarDatosSQLiteParaMDB(transaccion);
-
 	let txId = transaccion['$setOnInsert']._id;
 
 	// Establecemos la bandera SQLite en la transaccion.
@@ -113,62 +108,6 @@ module.exports = {
 }
 
 
-
-
-/**
- * Como estamos serializando mal en iSQLite.grabar() tenemos que hacer esta ñapa.
- * TODO: https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/ Para serializar correctamente objetos como ObjectIDs y Dates
- * @param {*} transaccion 
- */
-const _transformarDatosSQLiteParaMDB = (transaccion) => {
-	if (transaccion['$setOnInsert']) {
-		let txSetOnInsert = transaccion['$setOnInsert'];
-		if (txSetOnInsert._id) txSetOnInsert._id = new ObjectID(txSetOnInsert._id);
-		if (txSetOnInsert.originalTx) txSetOnInsert.originalTx = new ObjectID(txSetOnInsert.originalTx);
-		if (txSetOnInsert.confirmingId) txSetOnInsert.originalTx = new ObjectID(txSetOnInsert.originalTx);
-		if (txSetOnInsert.createdAt) txSetOnInsert.createdAt = new Date(txSetOnInsert.createdAt);
-	}
-
-	if (transaccion['$max']) {
-		let txMax = transaccion['$max'];
-		if (txMax.modifiedAt) txMax.modifiedAt = new Date(txMax.modifiedAt);
-	}
-
-	if (transaccion['$set']) {
-		let txSet = transaccion['$set'];
-		if (txSet.crc) txSet.crc = new ObjectID(txSet.crc);
-		if (txSet.sapRequest && txSet.sapRequest.timestamp) txSet.sapRequest.timestamp = new Date(txSet.sapRequest.timestamp);
-		if (txSet.sapResponse && txSet.sapResponse.timestamp) txSet.sapResponse.timestamp = new Date(txSet.sapResponse.timestamp);
-		if (txSet.clientResponse && txSet.clientResponse.timestamp) txSet.clientResponse.timestamp = new Date(txSet.clientResponse.timestamp);
-	}
-
-	if (transaccion['$push']) {
-		let txPush = transaccion['$push'];
-		if (txPush.retransmissions && txPush.retransmissions.length) {
-			txPush.retransmissions.forEach((o) => {
-				if (o._id) o._id = new ObjectID(o._id);
-				if (o.createdAt) o.createdAt = new Date(o.createdAt);
-				if (o.oldClientResponse && o.oldClientResponse.timestamp) o.oldClientResponse.timestamp = new Date(o.oldClientResponse.timestamp);
-			})
-		}
-		if (txPush.sapConfirms && txPush.sapConfirms.length) {
-			txPush.sapConfirms.forEach((o) => {
-				if (o.txId) o.txId = new ObjectID(o.txId);
-				if (o.timestamp) o.timestamp = new Date(o.timestamp);
-			})
-		}
-		if (txPush.duplicates && txPush.duplicates.length) {
-			txPush.duplicates.forEach((o) => {
-				if (o._id) o._id = new ObjectID(o._id);
-				if (o.createdAt) o.createdAt = new Date(o.createdAt);
-				if (o.originalTx) o.originalTx = new ObjectID(o.originalTx);
-				if (o.clientResponse && o.clientResponse.timestamp) o.clientResponse.timestamp = new Date(o.clientResponse.timestamp);
-			})
-		}
-	}
-
-	return transaccion;
-}
 
 /**
  * Une dos transacciones en una sola.

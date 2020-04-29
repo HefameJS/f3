@@ -4,6 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Externo
+const { EJSON } = require('bson');
 const ObjectID = require('mongodb').ObjectID;
 const sqlite3 = require('sqlite3').verbose();
 
@@ -24,12 +25,16 @@ const db = new sqlite3.Database(C.sqlite.db_path, (err) => {
 const grabarTransaccion = (transaccion) => {
 
 	let uid = (new ObjectID()).toHexString();
-	let txId = transaccion['$setOnInsert']._id.toHexString();
+	let txId = transaccion['$setOnInsert']._id;
 	let txIdHexadecimal = txId.toHexString();
 
-	// TODO: https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/ Para serializar correctamente objetos como ObjectIDs y Dates
-	// en vez de usar JSON.stringify()
-	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, JSON.stringify(transaccion), 0], (err) => {
+
+	// Para serializar correctamente objetos como ObjectIDs y Dates
+	// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
+	// https://www.npmjs.com/package/bson
+	let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
+
+	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], (err) => {
 		if (err) {
 			L.xf(txId, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
 			return;
@@ -78,16 +83,22 @@ const obtenerEntradas = (numeroFallosMaximo, callback) => {
 
 	if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
 
-	db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (err, rows) => {
-		if (err) {
-			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", err], 'sqlite');
-			return callback(err, null);
+	db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (errorSQLite, entradas) => {
+		if (errorSQLite) {
+			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+			return callback(errorSQLite, null);
 		}
 
-		if (rows && rows.length) {
-			return callback(null, rows);
+		if (entradas && entradas.length) {
+			// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
+			// los convertimos de vuelta a BSON
+			let entradasSaneadas = entradas.map( entrada => {
+				entrada.data = EJSON.parse(entrada.data, {relaxed: false});
+				return entrada;
+			});
+			return callback(null, entradasSaneadas);
 		}
-		L.e(['Se devuelve lista de entradas vacía', rows], 'sqlite');
+		L.e(['Se devuelve lista de entradas vacía', entradas], 'sqlite');
 		return callback(null, []);
 
 	});

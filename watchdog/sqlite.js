@@ -47,7 +47,7 @@ setInterval(() => {
 
 					entradas.forEach((row) => {
 
-						iMongo.transaccion.grabarDesdeSQLite(JSON.parse(row.data), (exito) => {
+						iMongo.transaccion.grabarDesdeSQLite(row.data, (exito) => {
 							if (exito) {
 								iSQLite.eliminarEntrada(row.uid, (errorSQLite, numeroEntradasBorradas) => {
 									numeroOperacionesEnEjecucion--;
