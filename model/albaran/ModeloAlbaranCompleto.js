@@ -150,7 +150,7 @@ class Impuesto {
 	}
 
 	sumar(impuesto) {
-		this.base += impuesto.base;
+		this.base = Math.round((this.base + impuesto.base) * 100) / 100;
 		this.importe = Math.round(this.base * (this.porcentaje / 100) * 100) / 100;
 		this.importeRecargo = Math.round(this.base * (this.porcentajeRecargo / 100) * 100) / 100;
 	}
