@@ -1,5 +1,5 @@
 'use strict';
-const C = global.config;
+//const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
@@ -21,7 +21,7 @@ const consultaTransmisiones = (req, res) => {
 	
 	let query = req.body;
 
-	iMongo.consultaTx.consulta(txId, query, (err, resultado) => {
+	iMongo.consultaTx.consultaOld(txId, query, (err, resultado) => {
 		if (err) {
 			res.status(500).json({ ok: false, error: (err.error || err.message) });
 			return;
@@ -33,6 +33,7 @@ const consultaTransmisiones = (req, res) => {
 
 module.exports = {
 	consultaTransmisiones,
+	transmisiones: require('controllers/monitor/controladorConsultasTransmisiones'),
 	sap: require('controllers/monitor/controladorConsultasSap'),
 	procesos: require('controllers/monitor/controladorConsultasProcesos'),
 	mongodb: require('controllers/monitor/controladorConsultasMongoDb'),

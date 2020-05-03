@@ -16,7 +16,6 @@ module.exports = (app) => {
 
 	const controladores = {
 		consultas: require('controllers/monitor/controladorConsultas')
-
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -53,7 +52,10 @@ module.exports = (app) => {
 
 	/* RUTAS */
 	app.route('/query')
-		.put(tryCatch(controladores.consultas.consultaTransmisiones))
+		.put(tryCatch(controladores.consultas.consultaTransmisiones));
+
+	app.route('/consulta')
+		.put(tryCatch(controladores.consultas.transmisiones.consulta));
 
 	app.route('/status/proc')
 		.get(tryCatch(controladores.consultas.procesos.consultaProcesos))

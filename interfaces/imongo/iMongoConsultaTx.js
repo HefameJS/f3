@@ -3,6 +3,9 @@
 const L = global.logger;
 const K = global.constants;
 
+// Externas
+const { EJSON } = require('bson');
+
 
 // Interfaces
 const MDB = require('./iMongoConexion');
@@ -14,7 +17,7 @@ const ObjectID = require('mongodb').ObjectID;
  * @param {*} consulta 
  * @param {*} callback 
  */
-const consulta = (txId, consulta, callback) => {
+const consultaOld = (txId, consulta, callback) => {
 
 	let filter = consulta.filter || {};
 	let projection = consulta.projection || null;
@@ -79,8 +82,49 @@ const consulta = (txId, consulta, callback) => {
 	} else {
 		callback({ error: "No conectado a MongoDB" }, null);
 	}
+}
+
+const consulta = (txId, consulta, callback) => {
+
+	let filtro = consulta.filter || {};
+	let proyeccion = consulta.projection || null;
+	let orden = consulta.sort || null;
+	let skip = consulta.skip || 0;
+	let limit = Math.min(consulta.limit || 100, 100);
+
+	let filtroMongo = EJSON.deserialize(filtro, { relaxed: false });
 
 
+	// Por el momento, no se admiten '$or'
+	if (filtro.$or && filtro.$or.length === 0) delete filtro.$or;
+
+	if (MDB.colTx()) {
+		let cursor = MDB.colTx().find(filtroMongo);
+		if (proyeccion) cursor.project(proyeccion);
+		if (orden) cursor.sort(orden);
+		if (skip) cursor.skip(skip);
+		if (limit) cursor.limit(limit);
+
+		cursor.count(false, (errorMongoCount, count) => {
+			if (errorMongoCount) return callback(errorMongoCount, null);
+
+			cursor.toArray((errorMongoToArray, result) => {
+				if (errorMongoToArray) return callback(errorMongoToArray, null);
+
+				return callback(null, {
+					data: result,
+					size: result.length,
+					limit: limit,
+					skip: skip,
+					total: count
+				});
+
+			});
+		});
+
+	} else {
+		callback({ error: "No conectado a MongoDB" }, null);
+	}
 }
 
 /**
@@ -234,6 +278,7 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 
 
 module.exports = {
+	consultaOld,
 	consulta,
 
 	porId,
