@@ -33,11 +33,41 @@ const consultaProcesos = (req, res) => {
 		return;
 
 	} )
-
-	
 }
 
 
+// GET /procesos ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
+const listadoProcesos = (req, res) => {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de procesos']);
+
+	// Verificación del token del usuario
+	let estadoToken = iTokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
+
+	let tipoProceso = req.query.tipo ? req.query.tipo : null;
+	let servidor = req.query.servidor ? req.query.servidor : null;
+
+	iRegistroProcesos.consultaProcesos(tipoProceso, servidor, (errorRegistroProcesos, procesos) => {
+		if (errorRegistroProcesos) {
+			L.xe(txId, ['Error al obtener la lista de procesos', errorRegistroProcesos]);
+			res.status(500).json({ ok: false, error: (errorRegistroProcesos.error || errorRegistroProcesos.message) });
+			return;
+		}
+		L.xi(txId, ['Obtenida lista de procesos']);
+		res.status(200).json({ ok: true, data: procesos });
+		return;
+
+	})
+
+
+}
+
+
+
 module.exports = {
+	listadoProcesos,
 	consultaProcesos // GET /status/proc
 }

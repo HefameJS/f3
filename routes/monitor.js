@@ -51,27 +51,30 @@ module.exports = (app) => {
 
 	/* RUTAS NUEVAS v1 */
 
+	// Consulta de transmisiones
 	app.route('/v1/transmisiones')
-		.put(tryCatch(controladores.consultas.transmisiones.consulta));
+		.put(tryCatch(controladores.consultas.transmisiones.consultaTransmisiones));
 
+
+	// Consulta de balanceadores de carga HTTP
 	app.route('/v1/balanceadores')
-		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores))
+		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
+
 	app.route('/v1/balanceadores/:servidor')
-		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
+		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))	
 		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
 	
+
+	// Consulta de procesos registrados
+	app.route('/v1/procesos')
+		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
 	
-	
 
 
 
-	/* RUTAS */
+	/* RUTAS ANTIGUAS */
 	app.route('/query')
 		.put(tryCatch(controladores.consultas.consultaTransmisiones));
-
-	
-	app.route('/status/proc')
-		.get(tryCatch(controladores.consultas.procesos.consultaProcesos))
 
 	app.route('/status/sap')
 		.get(tryCatch(controladores.consultas.sap.consultaSap))
@@ -95,10 +98,6 @@ module.exports = (app) => {
 	app.route('/status/mdb/log')
 		.get(tryCatch(controladores.consultas.mongodb.getLogs))
 
-
-	app.route('/status/apache/balanceadores')
-		.get(tryCatch(controladores.consultas.apache.consultaBalanceadorApache))
-		.put(tryCatch(controladores.consultas.apache.actualizaBalanceadorApache))
 
 	app.route('/status/cache/credenciales')
 		.get(tryCatch(controladores.consultas.cache.getEstadoCacheCredenciales))

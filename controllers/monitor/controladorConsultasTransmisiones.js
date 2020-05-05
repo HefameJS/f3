@@ -9,7 +9,7 @@ const iMongo = require('interfaces/imongo/iMongo');
 
 
 // PUT /consulta
-const consulta = (req, res) => {
+const consultaTransmisiones = (req, res) => {
 
 	let txId = req.txId;
 
@@ -33,6 +33,6 @@ const consulta = (req, res) => {
 
 
 module.exports = {
-	consulta
+	consultaTransmisiones
 }
 
