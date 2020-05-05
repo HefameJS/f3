@@ -72,9 +72,6 @@ const listadoBalanceadores = (req, res) => {
 	});
 }
 
-
-
-
 // GET /balanceadores/:servidor
 const consultaBalanceador = (req, res) => {
 
@@ -129,8 +126,19 @@ const consultaBalanceador = (req, res) => {
 
 }
 
-
 // PUT /balanceadores/:servidor
+/**
+	{
+		balanceador: "sapt01", 
+		worker: "http://sap1t01:8000", 
+		nonce: "xxx", 
+		estado: {
+			stop: false, 
+			standby: false
+		}, 
+		peso: 1
+	}
+ */
 const actualizaBalanceador = (req, res) => {
 
 	let txId = req.txId;
