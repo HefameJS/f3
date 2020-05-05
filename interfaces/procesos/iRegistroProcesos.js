@@ -21,10 +21,10 @@ let vecesGanadoMaestro = {}
 const iniciarIntervaloRegistro = () => {
 	if (idIntervalo) return;
 
-	setTimeout(limpiarLocales, K.PROCESS_REGISTER_INTERVAL / 2);
+	setTimeout(_limpiarLocales, K.PROCESS_REGISTER_INTERVAL / 2);
 
 	idIntervalo = setInterval(() => {
-		registrarProceso()
+		_registrarProceso()
 	}, K.PROCESS_REGISTER_INTERVAL)
 
 }
@@ -44,7 +44,7 @@ const detenerIntervaloRegistro = () => {
  * @param {function} callback (err, false)
  */
 const soyMaestro = (tipoProceso, callback) => {
-	obtenerProcesoMaestro(tipoProceso, (err, procesos) => {
+	_obtenerProcesoMaestro(tipoProceso, (err, procesos) => {
 		if (err) {
 			callback(err, false)
 			return;
@@ -82,7 +82,7 @@ const soyMaestro = (tipoProceso, callback) => {
 
 					if (candidato.host === OS.hostname()) {
 						L.i(['Yo soy el candidato con mayor prioridad, me postulo como próximo maestro'])
-						asumirMaestro(tipoProceso)
+						_asumirMaestro(tipoProceso)
 						callback(null, false)
 						return;
 					} else {
@@ -98,43 +98,35 @@ const soyMaestro = (tipoProceso, callback) => {
 				}
 			}
 		}
-
-
-
-
 	})
 }
 
 /**
  * Obtiene la lista de procesos del tipo indicado.
  * @param {*} tipoProceso 
+ * @param {*} host
  * @param {*} callback 
  */
 const consultaProcesos = (tipoProceso, host, callback) => {
-	let filtro = {
-		$or: [
-			{priority: { $exists: false }}, 
-			{priority: { $gte: 0 }}
-		] 
-	}
+	let filtro = {};
 
-	if (tipoProceso) filtro.type = tipoProceso
-	if (host) filtro.host = host
-
+	if (tipoProceso) filtro.type = tipoProceso;
+	if (host) filtro.host = host;
 
 	let control = iMongo.colControl();
 	if (control) {
-		control.find(filtro).toArray()
-			.then(res => {
-				callback(null, res)
-			})
-			.catch(err => {
-				L.e(['Error al obtener la lista de procesos', err]);
-				callback(err, null)
-			})
+		control.find(filtro).toArray((errorMongo, res) => {
+			if (errorMongo) {
+				L.e(['Error al obtener la lista de procesos', errorMongo]);
+				callback(errorMongo, null);	
+				return;
+			}
+			callback(null, res);
+		});
+						
 	} else {
 		L.e(['Error al obtener la lista de procesos. No conectado a MDB']);
-		callback({ error: 'No conectado a MDB' }, null)
+		callback({ error: 'No conectado a MDB' }, null);
 	}
 }
 
@@ -150,7 +142,7 @@ module.exports = {
 /**
  * Registra el proceso actual en la tabla de control
  */
-const registrarProceso = () => {
+const _registrarProceso = () => {
 	let filtro = {
 		pid: process.pid,
 		host: OS.hostname()
@@ -201,7 +193,7 @@ const registrarProceso = () => {
  * @param {*} tipoProceso 
  * @param {function} callback (err, procesoMaestro) =>
  */
-const obtenerProcesoMaestro = (tipoProceso, callback) => {
+const _obtenerProcesoMaestro = (tipoProceso, callback) => {
 
 	let filtro = {
 		type: tipoProceso,
@@ -232,7 +224,7 @@ const obtenerProcesoMaestro = (tipoProceso, callback) => {
  * Hacer que el proceso lance una petición a la tabla de control
  * para hacerse maestro. 
  */
-const asumirMaestro = (tipoProceso) => {
+const _asumirMaestro = (tipoProceso) => {
 
 	let filtro = {
 		type: tipoProceso,
@@ -259,7 +251,7 @@ const asumirMaestro = (tipoProceso) => {
  * Elimina la información de registro de otros procesos del mismo tipo que el proceso
  * actual en el host del proceso actual.
  */
-const limpiarLocales = () => {
+const _limpiarLocales = () => {
 	if (process.type === K.PROCESS_TYPES.CORE_WORKER) return;
 
 	let filtro = {
@@ -276,7 +268,7 @@ const limpiarLocales = () => {
 		control.deleteMany(filtro, { w: 0 })
 			.then(res => {
 				L.t(['Limpiados registros de proceso anteriores', filtro], 'procRegister');
-				registrarProceso()
+				_registrarProceso()
 			})
 			.catch(err => {
 				L.e(['Error al borrar el registro de procesos', err, filtro], 'procRegister');

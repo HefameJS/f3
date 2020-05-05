@@ -37,6 +37,7 @@ module.exports = {
 	sap: require('controllers/monitor/controladorConsultasSap'),
 	procesos: require('controllers/monitor/controladorConsultasProcesos'),
 	mongodb: require('controllers/monitor/controladorConsultasMongoDb'),
+	balanceadores: require('controllers/monitor/controladorConsultasBalanceadores'),
 	apache: require('controllers/monitor/controladorConsultasApache'),
 	cache: require('controllers/monitor/controladorConsultasCache'),
 	sqlite: require('controllers/monitor/controladorConsultasSQLite')

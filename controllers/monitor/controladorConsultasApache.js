@@ -17,7 +17,7 @@ const consultaBalanceadorApache = (req, res) => {
 	let secure = req.query.https === 'no' ? false : true;
 	servidor = (secure ? 'https' : 'http') + '://' + servidor + '.hefame.es'
 
-	iApache.getBalanceadores(servidor, (err, balanceadores) => {
+	iApache.consultaBalanceador(servidor, (err, balanceadores) => {
 		if (err) {
 			L.e(['Error al consultar los balanceadores', err]);
 			res.status(500).json({ ok: false, error: err });
@@ -26,6 +26,8 @@ const consultaBalanceadorApache = (req, res) => {
 		}
 	})
 }
+
+
 
 // PUT /status/apache/balanceadores
 const actualizaBalanceadorApache = (req, res) => {

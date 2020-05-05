@@ -49,14 +49,27 @@ module.exports = (app) => {
 	});
 
 
+	/* RUTAS NUEVAS v1 */
+
+	app.route('/v1/transmisiones')
+		.put(tryCatch(controladores.consultas.transmisiones.consulta));
+
+	app.route('/v1/balanceadores')
+		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores))
+	app.route('/v1/balanceadores/:servidor')
+		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
+		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
+	
+	
+	
+
+
 
 	/* RUTAS */
 	app.route('/query')
 		.put(tryCatch(controladores.consultas.consultaTransmisiones));
 
-	app.route('/consulta')
-		.put(tryCatch(controladores.consultas.transmisiones.consulta));
-
+	
 	app.route('/status/proc')
 		.get(tryCatch(controladores.consultas.procesos.consultaProcesos))
 

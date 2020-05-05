@@ -303,7 +303,7 @@ module.exports = {
         },
     },
     PROTOCOL_VERSION: '3.4.0',
-    SERVER_VERSION: '0.9.5',
+    SERVER_VERSION: '0.9.9',
     TX_VERSION: 902,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
@@ -351,7 +351,8 @@ module.exports = {
         CORE_MASTER: 'core-master',
         CORE_WORKER: 'core-worker',
         WATCHDOG: 'watchdog',
-        MONITOR: 'monitor'
+        MONITOR: 'monitor',
+        BALANCEADOR: 'balanceador'
     },
     PROCESS_REGISTER_INTERVAL: 10000,
     PROCESS_STATUS: {
