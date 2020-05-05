@@ -9,7 +9,7 @@ const iApache = require('interfaces/apache/iapache');
 const iRegistroProcesos = require('interfaces/procesos/iRegistroProcesos');
 
 
-// GET /balanceadores
+// GET /balanceadores ? [servidor=f3dev1] & [tipo=sap|fedicom]
 const listadoBalanceadores = (req, res) => {
 
 	let txId = req.txId;
@@ -20,9 +20,9 @@ const listadoBalanceadores = (req, res) => {
 	if (!estadoToken.ok) return;
 
 	let subtipoBalanceador = req.query.tipo || null;
-	let host  = req.query.host || null;
+	let servidor = req.query.servidor || null;
 
-	iRegistroProcesos.consultaProcesos(K.PROCESS_TYPES.BALANCEADOR, host, (errorConsultaProcesos, balanceadores) => {
+	iRegistroProcesos.consultaProcesos(K.PROCESS_TYPES.BALANCEADOR, servidor, (errorConsultaProcesos, balanceadores) => {
 		if (errorConsultaProcesos) {
 			L.xe(txId, ['Ocurrió un error al consultar la lista de procesos de tipo balanceador', errorConsultaProcesos]);
 			res.status(500).json({ ok: false, error: 'No se pudo obtener la información de los balanceadores' });
