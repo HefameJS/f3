@@ -82,6 +82,11 @@ module.exports = (app) => {
 	app.route('/v1/mongodb/logs')
 		.get(tryCatch(controladores.consultas.mongodb.getLogs)) // ? [tipo = (global | rs | startupWarnings)]
 
+	// SQLite
+	app.route('/v1/sqlite')
+		.put(tryCatch(controladores.consultas.sqlite.consultaRegistros));
+	app.route('/v1/sqlite/recuento')
+		.get(tryCatch(controladores.consultas.sqlite.recuentoRegistros));
 
 
 	/* RUTAS ANTIGUAS */
@@ -95,8 +100,7 @@ module.exports = (app) => {
 	app.route('/status/cache/credenciales')
 		.get(tryCatch(controladores.consultas.cache.getEstadoCacheCredenciales))
 
-	app.route('/status/sqlite')
-		.get(tryCatch(controladores.consultas.sqlite.getEstadoSQLite))
+
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use((req, res, next) => {

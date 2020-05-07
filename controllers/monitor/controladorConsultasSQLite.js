@@ -7,42 +7,64 @@ const L = global.logger;
 const iTokens = require('util/tokens');
 const iSQLite = require('interfaces/isqlite/iSQLite');
 
-// GET /status/sqlite
-const getEstadoSQLite = (req, res) => {
+
+
+// PUT /sqlite
+const consultaRegistros = (req, res) => {
 
 	let txId = req.txId;
-	L.xi(txId, ['Consulta del estado de la base de datos SQLite']);
+	L.xi(txId, ['Consulta de registros de SQLite']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iSQLite.contarEntradas(null, (err, numRows) => {
+	let opcionesConsulta = req.body || {};
 
-		if (err) {
-			L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', err])
-			return res.status(500).send({ ok: false, msg: err });
+	iSQLite.consultaRegistros(opcionesConsulta, (errorSQLite, registros) => {
+
+		if (errorSQLite) {
+			L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
+			return res.status(500).send({ ok: false, msg: errorSQLite });
 		}
 
-		iSQLite.contarEntradas(C.watchdog.sqlite.maxRetries || 10, (err, pendingRows) => {
-
-			if (err) {
-				L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', err])
-				return res.status(500).send({ ok: false, msg: err });
-			}
-
-			res.status(200).json({
-				ok: true,
-				data: {
-					registrosTotales: numRows,
-					registrosActivos: pendingRows
-				}
-			});
+		res.status(200).json({
+			ok: true,
+			data: registros
 		});
 
 	});
 
 }
 
+// GET /sqlite/recuento
+const recuentoRegistros = (req, res) => {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta del recuento de entradas de la base de datos SQLite']);
+
+	let estadoToken = iTokens.verificaPermisos(req, res);
+	if (!estadoToken.ok) return;
+
+	iSQLite.recuentoRegistros((errorSQLite, recuento) => {
+
+		if (errorSQLite) {
+			L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', errorSQLite])
+			return res.status(500).send({ ok: false, msg: errorSQLite });
+		}
+
+		res.status(200).json({
+			ok: true,
+			data: recuento
+		});
+
+	});
+
+}
+
+
+
+
 module.exports = {
-	getEstadoSQLite
+	consultaRegistros,
+	recuentoRegistros
 }

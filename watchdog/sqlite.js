@@ -19,7 +19,7 @@ setInterval(() => {
 
 	hayOperacionesEnProceso = true;
 
-	iSQLite.contarEntradas(intentosMaximosDeEnvio, (errorSQLite, numeroEntradas) => {
+	iSQLite.numeroEntradasPendientes( (errorSQLite, numeroEntradas) => {
 		if (errorSQLite) {
 			L.e(['Error al contar el número de entradas en base de datos de respaldo', errorSQLite], 'sqlitewatch');
 			hayOperacionesEnProceso = false;

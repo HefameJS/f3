@@ -45,17 +45,14 @@ const grabarTransaccion = (transaccion) => {
 }
 
 /**
- * Devuelve el número de entradas que hay en la base de datos.
- * Si se indica un número de fallos positivo, se cuentan solo aquellas que se han intentado salvar en MongoDB y han fallado
- * menos de las veces indicadas. Este parámetro es útil para ver cuales NO han fallado y son candidatas a grabar.
+ * Devuelve el número de entradas que hay en la base de datos y que están pendientes de ser enviadas.
+ * Solo se cuentan aquellas que se han intentado salvar en MongoDB y han fallado menos de las veces indicadas en C.watchdog.sqlite.maxRetries (por defecto 10). 
  * @param {*} numeroFallosMaximo 
  * @param {*} callback 
  */
-const contarEntradas = (numeroFallosMaximo, callback) => {
+const numeroEntradasPendientes = (callback) => {
 
-	if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
-
-	db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (errorSQLite, resultados) => {
+	db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.watchdog.sqlite.maxRetries || 10], (errorSQLite, resultados) => {
 		if (errorSQLite) {
 			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
 			return callback(errorSQLite, null);
@@ -118,6 +115,7 @@ const eliminarEntrada = (uid, callback) => {
 		return callback(null, this.changes);
 	});
 }
+
 /**
  * Actualiza en la base de datos la entrada con el UID indicado para aumentar su campo 'retryCount' en uno.
  * Cuando este valor alcanza el umbral configurado en 'C.watchdog.sqlite.maxRetries', se deja de intentar pasar
@@ -136,12 +134,98 @@ const incrementarNumeroDeIntentos = (uid, callback) => {
 	});
 }
 
+/**
+ * Genera un recuento del número de entradas que hay en la base de datos agrupadas por el numero de veces que han sido intentadas enviar a MongoDB
+ * @param {*} callback 
+ */
+const recuentoRegistros = (callback) => {
+
+	db.all('SELECT retryCount AS intentos, count(*) as cantidad FROM tx GROUP BY retryCount ORDER BY intentos', [], (errorSQLite, resultados) => {
+		if (errorSQLite) {
+			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+			return callback(errorSQLite, null);
+		}
+		
+		return callback(null, resultados);
+	});
+}
+
+
+/**
+ * Permite realizar una consulta de las entradas de la base de datos.
+ * Admite como opciones un objeto con los siguientes campos para modificar los filtros/orden/paginacion:
+ * - where:
+ * 		Acepta un objeto con el trozo de sentencia SQL y los valores a asignar a los condicionales, ejemplo:
+ * 		{
+ * 			sql: 'WHERE retryCount >= ? AND txid = ?',
+ * 			valores: [10, "5eb3bd86acfc103c8ca8b1ed"]
+ * 		}
+ * - orderby:
+ * 		Acepta un string con la sentencia SQL. Por ejemplo
+ * 			'ORDER BY retryCount DESC'
+ * - limit:
+ * 		Numerico - El límite máximo de registros a retornar. 
+  * - offset:
+ * 		Numerico - El número de registro a partir del cual retornar resultados.
+ * 
+ * Ejemplo completo
+ * {
+ * 		where: {
+ *			sql: 'WHERE retryCount >= ? AND txid = ?',
+ * 			valores: [10, "5eb3bd86acfc103c8ca8b1ed"]
+ * 		},
+ * 		orderby: 'ORDER BY retryCount DESC',
+ * 		limit: 50,
+ * 		offset: 150
+ * }
+ * @param {*} where 
+ * @param {*} callback 
+ */
+const consultaRegistros = (opciones, callback) => {
+
+	let sql = 'SELECT uid, txid, data as transaccion, retryCount as intentos FROM tx';
+	let valores = []
+
+	if (opciones.where) {
+		sql += ' ' + opciones.where.sql;
+		valores = opciones.where.valores;
+	}
+	if (opciones.orderby) 		sql += ' ' + opciones.orderby
+	if (opciones.limit) 		sql += ' LIMIT ' + opciones.limit;
+	if (opciones.offset) 		sql += ' OFFSET ' + opciones.offset;
+	
+	L.t(['Consulta SQLite', sql, valores], 'sqlite');
+
+
+	db.all(sql, valores, (errorSQLite, entradas) => {
+		if (errorSQLite) {
+			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+			return callback(errorSQLite, null);
+		}
+
+		if (entradas && entradas.length) {
+			// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
+			// los convertimos de vuelta a BSON
+			let entradasSaneadas = entradas.map(entrada => {
+				entrada.transaccion = EJSON.parse(entrada.transaccion, { relaxed: false });
+				return entrada;
+			});
+			return callback(null, entradasSaneadas);
+		}
+		L.e(['Se devuelve lista de entradas vacía', entradas], 'sqlite');
+		return callback(null, []);
+
+	});
+}
+
 module.exports = {
 	grabarTransaccion,
-	contarEntradas,
+	numeroEntradasPendientes,
 	obtenerEntradas,
 	eliminarEntrada,
-	incrementarNumeroDeIntentos
+	incrementarNumeroDeIntentos,
+	recuentoRegistros,
+	consultaRegistros
 }
 
 
