@@ -98,8 +98,8 @@ const dump = (err, req) => {
 		message += '\n\nPETICIÓN HTTP\n=============\n'
 		message += 'IP: ' + req.ip + ' (' + req.protocol + ')\n'
 		message += req.method + ' ' + req.originalUrl + ' HTTP/' + req.httpVersion + '\n'
-		message += util.inspect(req.headers) + '\n\n',
-			message += util.inspect(req.body)
+		message += util.inspect(req.headers) + '\n\n'
+		message += util.inspect(req.body)
 	}
 
 	fs.appendFileSync(_obtenerFicheroLog(new Date(), true), message, (err) => {
