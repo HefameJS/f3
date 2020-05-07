@@ -64,39 +64,32 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))	
 		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
 	
-
 	// Consulta de procesos registrados
 	app.route('/v1/procesos')
 		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
 	
+	// MongoDB
+	app.route('/v1/mongodb/colecciones')
+		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones))
+	app.route('/v1/mongodb/colecciones/:colName')
+		.get(tryCatch(controladores.consultas.mongodb.getColeccion)); // ? [datosExtendidos=true]
+	app.route('/v1/mongodb/database')
+		.get(tryCatch(controladores.consultas.mongodb.getDatabase))
+	app.route('/v1/mongodb/operaciones')
+		.get(tryCatch(controladores.consultas.mongodb.getOperaciones))
+	app.route('/v1/mongodb/replicaSet')
+		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet))
+	app.route('/v1/mongodb/logs')
+		.get(tryCatch(controladores.consultas.mongodb.getLogs)) // ? [tipo = (global | rs | startupWarnings)]
 
 
 
 	/* RUTAS ANTIGUAS */
-	app.route('/query')
-		.put(tryCatch(controladores.consultas.consultaTransmisiones));
 
 	app.route('/status/sap')
 		.get(tryCatch(controladores.consultas.sap.consultaSap))
 
 
-	app.route('/status/mdb/col')
-		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones))
-
-	app.route('/status/mdb/col/:colName')
-		.get(tryCatch(controladores.consultas.mongodb.getColeccion))
-
-	app.route('/status/mdb/db')
-		.get(tryCatch(controladores.consultas.mongodb.getDatabase))
-
-	app.route('/status/mdb/op')
-		.get(tryCatch(controladores.consultas.mongodb.getOperaciones))
-
-	app.route('/status/mdb/rs')
-		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet))
-
-	app.route('/status/mdb/log')
-		.get(tryCatch(controladores.consultas.mongodb.getLogs))
 
 
 	app.route('/status/cache/credenciales')
