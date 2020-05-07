@@ -11,10 +11,6 @@ process.title = K.PROCESS_TITLES.MONITOR;
 process.type = K.PROCESS_TYPES.MONITOR;
 
 
-global.instanceID += '-mon';
-global.config = require('config');
-global.logger = require('util/logger');
-
 process.on('uncaughtException', (excepcionNoControlada) => {
 	L.dump(excepcionNoControlada)
 	process.exit(1)
