@@ -33,7 +33,7 @@ const ping = (nombreSistemaSap, callback) => {
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, false);
+			callback(errorComunicacion, false, destinoSap.prefijoRuta);
 			return;
 		}
 
@@ -42,11 +42,11 @@ const ping = (nombreSistemaSap, callback) => {
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: respuestaSap.statusCode,
 				code: respuestaSap.statusMessage
-			}, false);
+			}, false, destinoSap.prefijoRuta);
 			return;
 		}
 
-		callback(null, true, nombreSistemaSap);
+		callback(null, true, destinoSap.prefijoRuta);
 
 	});
 }

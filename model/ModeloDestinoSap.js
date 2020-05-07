@@ -7,7 +7,8 @@ const C = global.config;
 const crypto = require('crypto');
 
 class DestinoSap {
-  constructor(json) {
+  constructor(json, nombreSistema) {
+    this.nombre = nombreSistema;
     this.host = json.host;
     this.port = json.port;
     this.https = json.https;
@@ -65,6 +66,23 @@ class DestinoSap {
     };
   }
 
+
+  /**
+   * Devuelve una copia de los datos del sistema, donde se elimina información sensible.
+   * Para motivos de monitorizacion únicamente.
+   */
+  describirSistema() {
+    return {
+      nombre: this.nombre,
+      direccion: this.host,
+      puerto: this.port,
+      https: this.https,
+      prefijo: this.prefix,
+      urlBase: this.prefijoRuta,
+      sistemaPorDefecto: (this.nombre === C.sap_systems.default)
+    }
+  }
+
 }
 
 /**
@@ -81,7 +99,7 @@ DestinoSap.desdeNombre = (nombreSistemaSap) => {
   if (!datosConfiguracion) {
     return null;
   }
-  return new DestinoSap(datosConfiguracion);
+  return new DestinoSap(datosConfiguracion, nombreSistemaSap);
 }
 
 
@@ -90,7 +108,7 @@ DestinoSap.porDefecto = () => {
   if (!datosConfiguracion) {
     return null;
   }
-  return new DestinoSap(datosConfiguracion);
+  return new DestinoSap(datosConfiguracion, C.sap_systems.default);
 }
 
 module.exports = DestinoSap;

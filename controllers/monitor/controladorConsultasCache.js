@@ -8,7 +8,7 @@ const iTokens = require('util/tokens');
 const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
 
 // GET /status/cache/credenciales
-const getEstadoCacheCredenciales = (req, res) => {
+const consultaCacheCredenciales = (req, res) => {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta del estado de la caché de credenciales']);
@@ -21,5 +21,5 @@ const getEstadoCacheCredenciales = (req, res) => {
 }
 
 module.exports = {
-	getEstadoCacheCredenciales
+	consultaCacheCredenciales
 }

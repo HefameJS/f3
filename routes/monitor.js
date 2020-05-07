@@ -61,26 +61,26 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
 
 	app.route('/v1/balanceadores/:servidor')
-		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))	
+		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
 		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
-	
+
 	// Consulta de procesos registrados
 	app.route('/v1/procesos')
 		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
-	
+
 	// MongoDB
 	app.route('/v1/mongodb/colecciones')
-		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones))
+		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones));
 	app.route('/v1/mongodb/colecciones/:colName')
 		.get(tryCatch(controladores.consultas.mongodb.getColeccion)); // ? [datosExtendidos=true]
 	app.route('/v1/mongodb/database')
-		.get(tryCatch(controladores.consultas.mongodb.getDatabase))
+		.get(tryCatch(controladores.consultas.mongodb.getDatabase));
 	app.route('/v1/mongodb/operaciones')
-		.get(tryCatch(controladores.consultas.mongodb.getOperaciones))
+		.get(tryCatch(controladores.consultas.mongodb.getOperaciones));
 	app.route('/v1/mongodb/replicaSet')
-		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet))
+		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet));
 	app.route('/v1/mongodb/logs')
-		.get(tryCatch(controladores.consultas.mongodb.getLogs)) // ? [tipo = (global | rs | startupWarnings)]
+		.get(tryCatch(controladores.consultas.mongodb.getLogs)); // ? [tipo = (global | rs | startupWarnings)]
 
 	// SQLite
 	app.route('/v1/sqlite')
@@ -89,16 +89,18 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.sqlite.recuentoRegistros));
 
 
-	/* RUTAS ANTIGUAS */
+	// SAP
+	app.route('/v1/sap/conexion')
+		.get(tryCatch(controladores.consultas.sap.pruebaConexion)); // ? [nombreSistemaSap = <nombreSistema>]
+	app.route('/v1/sap/sistemas')
+		.get(tryCatch(controladores.consultas.sap.consultaSistemas));
+	app.route('/v1/sap/sistemas/:nombreSistema')
+		.get(tryCatch(controladores.consultas.sap.consultaSistema));
 
-	app.route('/status/sap')
-		.get(tryCatch(controladores.consultas.sap.consultaSap))
 
-
-
-
-	app.route('/status/cache/credenciales')
-		.get(tryCatch(controladores.consultas.cache.getEstadoCacheCredenciales))
+	// Cache de credenciales Fedicom
+	app.route('/v1/cache/credenciales')
+		.get(tryCatch(controladores.consultas.cache.consultaCacheCredenciales));
 
 
 
