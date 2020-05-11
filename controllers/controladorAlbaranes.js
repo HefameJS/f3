@@ -3,9 +3,6 @@
 const L = global.logger;
 const K = global.constants;
 
-// Externos
-const locks = require('locks');
-
 // Interfaces
 const iTokens = require('util/tokens');
 const iSap = require('interfaces/isap/iSap');
@@ -14,7 +11,7 @@ const iSap = require('interfaces/isap/iSap');
 const CRC = require('model/CRC');
 const ErrorFedicom = require('model/ModeloErrorFedicom');
 const ConsultaAlbaran = require('model/albaran/ModeloConsultaAlbaran');
-const AlbaranCompleto = require('model/albaran/ModeloAlbaranCompleto');
+const Albaran = require('model/albaran/ModeloAlbaran');
 
 
 
@@ -94,7 +91,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
         let cuerpoSap = respuestaSap.body;
 
         if (cuerpoSap && cuerpoSap.t_pos) {
-            let datosAlbaran = new AlbaranCompleto(cuerpoSap)
+            let datosAlbaran = new Albaran(cuerpoSap)
             if (asArray) datosAlbaran = [datosAlbaran]
             res.status(200).json(datosAlbaran);
         } else {
@@ -155,6 +152,7 @@ exports.consultaAlbaran = (req, res) => {
 
 }
 
+
 // GET /albaranes
 exports.listadoAlbaranes = (req, res) => {
 
@@ -213,8 +211,9 @@ exports.listadoAlbaranes = (req, res) => {
         fechaDesde = fechaHasta = Date.toSapDate(fechaAlbaran);
     } else {
 
-        fechaDesde = Date.fromFedicomDate(req.query.fechaDesde) || new Date()
-        fechaHasta = Date.fromFedicomDate(req.query.fechaHasta) || new Date()
+        // Si no se especifica alguna de las fechas, se utiliza el día actual
+        fechaDesde = Date.fromFedicomDate(req.query.fechaDesde) || new Date();
+        fechaHasta = Date.fromFedicomDate(req.query.fechaHasta) || new Date();
 
         // Si hay que invertir las fechas
         if (fechaDesde.getTime() > fechaHasta.getTime()) {
@@ -250,8 +249,9 @@ exports.listadoAlbaranes = (req, res) => {
     if (numeroPedidoOrigen) {
         // El codigo de cliente con el que se crean los pedidos es el corto, por lo que deberemos
         // convertir el que nos viene a corto para generar el mismo CRC
-        let codigoClienteOrigen = parseInt(codigoCliente.slice(-5));
-        consulta.setCrc(CRC.crear(codigoClienteOrigen, numeroPedidoOrigen))
+        let codigoClienteOrigen = parseInt(codigoCliente.slice(-5)) ;
+        let crc = CRC.crear(codigoClienteOrigen, numeroPedidoOrigen);
+        consulta.setNumeroPedidoOrigen(numeroPedidoOrigen, crc);
     }
 
     // #5 - El cliente filtra por numeroPedido (de distribuidor)
@@ -283,19 +283,17 @@ exports.listadoAlbaranes = (req, res) => {
 
         if (cuerpoSap && cuerpoSap.tot_rec >= 0 && cuerpoSap.t_data && cuerpoSap.t_data.forEach) {
 
-            let listaNumerosAlbaran = [];
-            cuerpoSap.t_data.forEach(datosAlbaran => {
-                listaNumerosAlbaran.push(datosAlbaran.proforma);
-            })
+            L.xi(txId, ["SAP ha devuelto albaranes", cuerpoSap.t_data.length]);
 
-            L.xi(txId, ["SAP ha devuelto albaranes", listaNumerosAlbaran.length, cuerpoSap.tot_rec], 'recopilaAlb');
+            let albaranesSimples = cuerpoSap.t_data.map( albaranSap => new Albaran(albaranSap));
+
 
             res.setHeader('X-Total-Count', cuerpoSap.tot_rec);
-            _recopilarAlbaranesJSON(req, res, listaNumerosAlbaran);
+            res.status(200).send(albaranesSimples);
 
         } else {
 
-            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap], 'recopilaAlb')
+            L.xe(txId, ["SAP no ha devuelto albaranes", cuerpoSap])
             res.setHeader('X-Total-Count', 0);
             res.status(200).json([]);
 
@@ -303,67 +301,3 @@ exports.listadoAlbaranes = (req, res) => {
     });
 
 }
-
-
-
-const _recopilarAlbaranesJSON = (req, res, listaNumerosAlbaran) => {
-
-    let txId = req.txId;
-
-    let mutex = locks.createMutex();
-
-    let albararanesRecopilados = [];
-    let numeroPeticionesEnCurso = listaNumerosAlbaran.length;
-
-    const _consultaAlbaranFinalizada = (numeroAlbaran, albaran) => {
-
-        if (albaran) {
-            albararanesRecopilados.push(albaran)
-        }
-
-        // El decremento de peticiones en curso debe hacerse en exclusión mutua (MutEx).
-        // o podría darse el caso de que algún albaran quedara fuera.
-        mutex.lock(() => {
-            numeroPeticionesEnCurso--;
-            L.xt(txId, ['Se decrementa el numero de peticiones en curso', numeroPeticionesEnCurso, numeroAlbaran, albaran ? true : false], 'recopilaAlb');
-            if (!numeroPeticionesEnCurso) {
-                L.xt(txId, ['Se devuelve la lista de albaranes recopilados', albararanesRecopilados.length, listaNumerosAlbaran.length], 'recopilaAlb');
-                res.status(200).json(albararanesRecopilados);
-            }
-            mutex.unlock();
-        });
-
-
-    }
-
-    L.xt(txId, ['Se van a realizar multiples llamadas para recopilar los albaranes', listaNumerosAlbaran.length, listaNumerosAlbaran], 'recopilaAlb');
-
-    listaNumerosAlbaran.forEach(numeroAlbaran => {
-
-        L.xt(txId, ['Realizando llamada para obtener el albarán', numeroAlbaran], 'recopilaAlb');
-
-        iSap.albaranes.consultaAlbaranJSON(txId, numeroAlbaran, (errorSap, respuestaSap) => {
-
-            L.xt(txId, ['Finaliza llamada para obtener el albarán', numeroAlbaran], 'recopilaAlb');
-
-            if (errorSap) {
-                L.xe(txId, ['Error al consultar albarán JSON', numeroAlbaran, errorSap], 'recopilaAlb');
-                _consultaAlbaranFinalizada(numeroAlbaran, null);
-
-            } else {
-                let cuerpoSap = respuestaSap.body;
-
-                if (cuerpoSap && cuerpoSap.t_pos) {
-                    L.xt(txId, ['Se obtuvo el albarán', numeroAlbaran], 'recopilaAlb');
-                    let datosAlbaran = new AlbaranCompleto(cuerpoSap);
-                    _consultaAlbaranFinalizada(numeroAlbaran, datosAlbaran);
-                } else {
-                    L.xe(txId, ['SAP no ha devuelto el albarán', numeroAlbaran, errorSap], 'recopilaAlb');
-                    _consultaAlbaranFinalizada(numeroAlbaran, null);
-                }
-            }
-        })
-    })
-
-}
-

@@ -96,7 +96,7 @@ exports.listadoAlbaranes = (txId, consultaAlbaran, callback) => {
 	}
 
 	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_orderlist_api/query/?query=' + consultaAlbaran.toQueryString(),
+		path: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
 		method: 'GET'
 	});
 	parametrosHttp.timeout = 30000;

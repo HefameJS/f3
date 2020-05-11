@@ -8,12 +8,40 @@ const clone = require('clone');
 
 
 /**
- * Esta clase representa un albarán simplificado.
- * Se utiliza en la respuesta de la búsqueda de albaranes.
+ * Los datos del albarán llegan de manera distinta de SAP en función de si estos datos se obtuvieron de la llamada para listar albaranes
+ * o de la llamada para obtener la información de un único albarán. Esta función unifica ambos modelos para que el objeto de albarán se 
+ * construya de la misma manera, independientemente del origen.
+ * @param {*} cab 
  */
-class AlbaranCompleto {
+const _unificacionAtributosSap = (cab) => {
+	if (cab.proforma) {
+
+		cab.albaran = cab.proforma;
+		cab.fecha_imp = cab.erdat;
+		if (cab.factura) cab.numero_factura = cab.factura;
+		if (cab.factura && cab.fe_fact) cab.fecha_factura = cab.fe_fact;
+		cab.cod_almacen = cab.yy_centro;
+		cab.almacen = undefined;
+		cab.numero_entrega = cab.order_del;
+		cab.operador = cab.bsark;
+		cab.ruta = cab.yylzone;
+
+		cab.numero_pedido = cab.vbeln;
+		cab.clase = cab.konda;
+	}
+	return cab;
+}
+
+
+/**
+ * Esta clase representa un albarán.
+ * Se utiliza para convertir los albaranes tal como vienen de SAP a una estructura en formato Fedicom v3.
+ */
+class Albaran {
 	constructor(cab) {
 		//this.original = cab;
+
+		cab = _unificacionAtributosSap(cab);
 
 		this.codigoCliente = cab.kunnr;
 		this.numeroAlbaran = cab.albaran;
@@ -24,15 +52,15 @@ class AlbaranCompleto {
 		this.descripcionAlmacen = cab.almacen;
 		this.reparto = cab.numero_entrega;
 		this.operador = cab.operador;
-		this.ruta = cab.ruta + ' - ' + cab.denom_ruta;
+		this.ruta = cab.ruta + (cab.denom_ruta ? ' - ' + cab.denom_ruta : '');
 		this.observaciones = cab.estado;
 
 		this.pedidos = [
 			{
 				numeroPedido: cab.numero_pedido,
-				tipoPedido: cab.clase + ' - ' + cab.clase_pedido,
+				tipoPedido: cab.clase + (cab.clase_pedido ? ' - ' + cab.clase_pedido : ''),
 				aplazamiento: undefined,
-				canal: undefined
+				canal: (cab.vtweg || undefined)
 			}
 		];
 
@@ -158,4 +186,4 @@ class Impuesto {
 }
 
 
-module.exports = AlbaranCompleto;
+module.exports = Albaran;

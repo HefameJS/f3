@@ -53,13 +53,22 @@ class ConsultaAlbaran {
 	}
 
 	setFechas(inicio, fin) {
-		this.campos['r_erdat'] = new FiltroCampo('I', 'BT', inicio, fin);
+		this.campos['r_erdat'] = new FiltroCampo('I', 'BT', inicio || '19000101', fin || '29990101');
 		return this;
 	}
 
-	setCrc(crc) {
+	setNumeroPedidoOrigen(numeroPedidoOrigen, crc) {
 		if (crc && crc.length >= 8) {
-			crc  = crc.substring(0, 8)
+			crc = crc.substring(0, 8)
+			numeroPedidoOrigen = numeroPedidoOrigen.padEnd(12, ' ');
+			this.campos['r_bstkd'] = new FiltroCampo('I', 'EQ', numeroPedidoOrigen + crc);
+		}
+		return this;
+	}
+
+	setCrc(numeroPedido) {
+		if (numeroPedido && numeroPedido.length >= 8) {
+			let crc = numeroPedido.substring(0, 8)
 			this.campos['r_bstkd'] = new FiltroCampo('I', 'CP', '*' + crc);
 		}
 		return this;
