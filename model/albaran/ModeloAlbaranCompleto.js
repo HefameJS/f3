@@ -117,18 +117,18 @@ class LineaAlbaran {
 		this.precioAlbaran = posicion.precio_alb;
 		if (posicion.imp_porcent > 0) this.impuesto = new Impuesto(posicion);
 
-		if (posicion.des_importe > 0) this.descuento = {
+		if (posicion.des_importe > 0) this.descuento = [{
 			tipo: posicion.des_tipo,
 			descripcion: posicion.des_descrp,
 			porcentaje: posicion.des_porcent,
 			importe: Math.round((this.precioAlbaran * this.cantidadServida) * posicion.des_porcent) / 100
-		}
-		if (posicion.carg_importe > 0) this.cargo = {
+		}]
+		if (posicion.carg_importe > 0) this.cargo = [{
 			tipo: posicion.carg_tipo,
 			descripcion: posicion.carg_descrp,
 			porcentaje: posicion.carg_porcent,
 			importe: Math.round((this.precioAlbaran * this.cantidadServida) * posicion.carg_porcent) / 100
-		}
+		}]
 
 		//this.observaciones = undefined;
 		if (posicion.t_incidencias && posicion.t_incidencias.length) this.incidencias = posicion.t_incidencias;
