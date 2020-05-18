@@ -12,6 +12,18 @@ const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 
 // PUT /consulta
+/**
+ * {
+ * 		"filtro": {
+ * 			"_id": { "$oid": "5EC290F44783DB681D4E5E04" }
+ * 		},
+ * 		"proyeccion": {"authenticatingUser": 1},
+ *  	"orden": {},
+ * 		"skip": 0,
+ * 		"limite": 10
+ * }
+ * NOTA: El campo filtro espera un objeto EJSON
+ */
 const consultaTransmisiones = (req, res) => {
 
 	let txId = req.txId;
@@ -26,7 +38,8 @@ const consultaTransmisiones = (req, res) => {
 
 	iMongo.consultaTx.consulta(txId, consulta, (errorMongo, resultado) => {
 		if (errorMongo) {
-			ErrorFedicom.generarYEnviarErrorMonitor(res, errorMongo.error || errorMongo.message);
+			L.e(['Ocurrió un error al realizar la consulta a mongoDB', errorMongo])
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al realizar la consulta');
 			return;
 		}
 		res.status(200).json(resultado);
