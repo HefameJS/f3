@@ -32,6 +32,7 @@ const realizarLlamadaInterna = (destino, ruta, callback) => {
 	let parametrosLlamada = {
 		followAllRedirects: true,
 		uri: 'http://' + destino + ':5001' + ruta,
+		json: true,
 		headers: {
 			Authorization: 'Bearer ' + iTokens.generarTokenInterFedicom()
 		}
@@ -88,14 +89,17 @@ const realizarLlamadaMultiple = (ruta, callback) => {
 
 			respuestasAlglomeradas[destino] = {}
 
-			if (error === null) {
-				respuestasAlglomeradas[destino].ok = true;
-				respuestasAlglomeradas[destino].data = respuesta.body;
-			} else {
+			if (error) {
 				respuestasAlglomeradas[destino].ok = false;
-				respuestasAlglomeradas[destino].error = error;
+				
+				if (respuesta.body) respuestasAlglomeradas[destino].error = respuesta.body;
+				else respuestasAlglomeradas[destino].error = error;
+			} else {
+				respuestasAlglomeradas[destino].ok = respuesta.body.ok;
+				if (respuesta.body.data) respuestasAlglomeradas[destino].data = respuesta.body.data;
+				if (respuesta.body.error) respuestasAlglomeradas[destino].data = respuesta.body.error;
 			}
-			
+
 
 			mutex.lock(() => {
 				respuestasPendientes--;
