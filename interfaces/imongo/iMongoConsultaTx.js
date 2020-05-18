@@ -12,85 +12,14 @@ const MDB = require('./iMongoConexion');
 const ObjectID = require('mongodb').ObjectID;
 
 
-/**
- * 
- * @param {*} consulta 
- * @param {*} callback 
- */
-const consultaOld = (txId, consulta, callback) => {
-
-	let filter = consulta.filter || {};
-	let projection = consulta.projection || null;
-	let sort = consulta.sort || null;
-	let skip = consulta.skip || 0;
-	let limit = consulta.limit || 100;
-	limit = Math.min(limit, 100);
-
-	// Si el filtro indica el parámetro '_id', lo transformamos a ObjectID antes de la consulta
-	try {
-		if (filter._id) {
-			if (filter._id.$in) filter._id.$in = filter._id.$in.map(id => new ObjectID(id))
-			else if (filter._id.$nin) filter._id.$nin = filter._id.$nin.map(id => new ObjectID(id))
-			else filter._id = new ObjectID(filter._id);
-		}
-	} catch (e) { L.xe(txId, ['Error al convertir IDs a ObjectID', e]) }
-
-	// Si el filtro indica el parámetro 'crc', lo transformamos a ObjectID antes de la consulta
-	try {
-		if (filter.crc) {
-			if (filter.crc.$in) filter.crc.$in = filter.crc.$in.map(id => new ObjectID(id))
-			else if (filter.crc.$nin) filter.crc.$nin = filter.crc.$nin.map(id => new ObjectID(id))
-			else filter.crc = new ObjectID(filter.crc);
-		}
-	} catch (e) { L.xe(txId, ['Error al convertir CRC a ObjectID', e]) }
-
-	// Si filtro indica fechas, las convertimos a Date
-	try {
-		if (filter.createdAt) {
-			if (filter.createdAt.$gte) filter.createdAt.$gte = new Date(filter.createdAt.$gte)
-			if (filter.createdAt.$lte) filter.createdAt.$lte = new Date(filter.createdAt.$lte)
-		}
-	} catch (e) { L.xe(txId, ['Error al convertir fechas a Date', e]) }
-
-	// Por el momento, no se admiten '$or'
-	if (filter.$or && filter.$or.length === 0) delete filter.$or;
-
-	if (MDB.colTx()) {
-		let cursor = MDB.colTx().find(filter);
-		if (projection) cursor.project(projection);
-		if (sort) cursor.sort(sort);
-		if (skip) cursor.skip(skip);
-		if (limit) cursor.limit(limit);
-
-		cursor.count(false, (errorCount, count) => {
-			if (errorCount) return callback(errorCount, null);
-
-			cursor.toArray((errorToArray, result) => {
-				if (errorToArray) return callback(errorToArray, null);
-
-				return callback(null, {
-					data: result,
-					size: result.length,
-					limit: limit,
-					skip: skip,
-					total: count
-				});
-
-			});
-		});
-
-	} else {
-		callback({ error: "No conectado a MongoDB" }, null);
-	}
-}
 
 const consulta = (txId, consulta, callback) => {
 
-	let filtro = consulta.filter || {};
-	let proyeccion = consulta.projection || null;
-	let orden = consulta.sort || null;
+	let filtro = consulta.filtro || {};
+	let proyeccion = consulta.proyeccion || null;
+	let orden = consulta.orden || null;
 	let skip = consulta.skip || 0;
-	let limit = Math.min(consulta.limit || 100, 100);
+	let limite = Math.min(consulta.limite || 100, 100);
 
 	let filtroMongo = {}
 	try {
@@ -110,18 +39,17 @@ const consulta = (txId, consulta, callback) => {
 		if (proyeccion) cursor.project(proyeccion);
 		if (orden) cursor.sort(orden);
 		if (skip) cursor.skip(skip);
-		if (limit) cursor.limit(limit);
+		if (limite) cursor.limit(limite);
 
 		cursor.count(false, (errorMongoCount, count) => {
 			if (errorMongoCount) return callback(errorMongoCount, null);
 
-			cursor.toArray((errorMongoToArray, result) => {
+			cursor.toArray((errorMongoToArray, resultados) => {
 				if (errorMongoToArray) return callback(errorMongoToArray, null);
 
 				return callback(null, {
-					data: result,
-					size: result.length,
-					limit: limit,
+					resultados: resultados,
+					limite: limite,
 					skip: skip,
 					total: count
 				});
@@ -130,7 +58,7 @@ const consulta = (txId, consulta, callback) => {
 		});
 
 	} else {
-		callback({ error: "No conectado a MongoDB" }, null);
+		callback(new Error('No conectado a MongoDB'), null);
 	}
 }
 
@@ -202,7 +130,7 @@ const duplicadoDeCRC = (txId, crc, callback) => {
 			return;
 		});
 	} else {
-		callback({ error: "No conectado a MongoDB" }, null);
+		callback(new Error('No conectado a MongoDB'), null);
 	}
 };
 
@@ -246,7 +174,7 @@ const porCRCDeConfirmacion = (crc, callback) => {
 		MDB.colTx().findOne(filtro, callback);
 	} else {
 		L.e(['Error al localizar la transmisión'], 'mongodb');
-		callback({ error: "No conectado a MongoDB" }, null);
+		callback(new Error('No conectado a MongoDB'), null);
 	}
 };
 
@@ -278,14 +206,13 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 		MDB.colTx().find(consulta).limit(limite).toArray(callback);
 	} else {
 		L.e(['Error al buscar candidatos a retransmitir. No está conectado a mongodb'], 'mongodb');
-		callback({ error: "No conectado a MongoDB" }, null);
+		callback(new Error('No conectado a MongoDB'), null);
 	}
 }
 
 
 
 module.exports = {
-	consultaOld,
 	consulta,
 
 	porId,
@@ -307,6 +234,6 @@ const _consultaUnaTransmision = (txId, filtro, callback) => {
 		MDB.colTx().findOne(filtro, callback);
 	} else {
 		L.xe(txId, ['Error al localizar la transmisión'], 'mongodb');
-		callback({ error: "No conectado a MongoDB" }, null);
+		callback(new Error('No conectado a MongoDB'), null);
 	}
 }

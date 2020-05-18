@@ -7,6 +7,9 @@ const L = global.logger;
 const iTokens = require('util/tokens');
 const iMongo = require('interfaces/imongo/iMongo');
 
+// Modelos
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+
 
 // PUT /consulta
 const consultaTransmisiones = (req, res) => {
@@ -19,14 +22,14 @@ const consultaTransmisiones = (req, res) => {
 	if (!estadoToken.ok) return;
 
 
-	let query = req.body;
+	let consulta = req.body;
 
-	iMongo.consultaTx.consulta(txId, query, (errorMongo, resultado) => {
+	iMongo.consultaTx.consulta(txId, consulta, (errorMongo, resultado) => {
 		if (errorMongo) {
-			res.status(500).json({ ok: false, error: (errorMongo.error || errorMongo.message) });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, errorMongo.error || errorMongo.message);
 			return;
 		}
-		res.status(200).json({ ok: true, ...resultado });
+		res.status(200).json(resultado);
 	});
 
 }
