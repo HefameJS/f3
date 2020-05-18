@@ -7,9 +7,22 @@ const L = global.logger;
 const iTokens = require('util/tokens');
 const iSQLite = require('interfaces/isqlite/iSQLite');
 
+// Modelos
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 
 // PUT /sqlite
+/**
+ * {
+ * 		where: {
+ *			sql: 'WHERE retryCount >= ? AND txid = ?',
+ * 			valores: [10, "5eb3bd86acfc103c8ca8b1ed"]
+ * 		},
+ * 		orderby: 'ORDER BY retryCount DESC',
+ * 		limit: 50,
+ * 		offset: 150
+ * }
+ */
 const consultaRegistros = (req, res) => {
 
 	let txId = req.txId;
@@ -24,13 +37,11 @@ const consultaRegistros = (req, res) => {
 
 		if (errorSQLite) {
 			L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
-			return res.status(500).send({ ok: false, msg: errorSQLite });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar los registros de SQLite');
+			return;
 		}
 
-		res.status(200).json({
-			ok: true,
-			data: registros
-		});
+		res.status(200).json(registros);
 
 	});
 
@@ -49,13 +60,10 @@ const recuentoRegistros = (req, res) => {
 
 		if (errorSQLite) {
 			L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', errorSQLite])
-			return res.status(500).send({ ok: false, msg: errorSQLite });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar el estado de SQLite');
 		}
 
-		res.status(200).json({
-			ok: true,
-			data: recuento
-		});
+		res.status(200).json(recuento);
 
 	});
 
