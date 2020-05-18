@@ -103,6 +103,13 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.cache.consultaCacheCredenciales));
 
 
+	// Cache de credenciales Fedicom
+	app.route('/v1/dumps')
+		.get(tryCatch(controladores.consultas.dumps.listadoDumps));
+
+	app.route('/v1/dumps/:idDump')
+		.get(tryCatch(controladores.consultas.dumps.consultaDump));
+
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
 	app.use((req, res, next) => {
