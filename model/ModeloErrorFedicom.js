@@ -101,6 +101,29 @@ class ErrorFedicom {
     L.xt(txId, ['Se convirtió una excepción en un ErrorFedicom', errorToLog, excepcion]);
     return new ErrorFedicom(codigoErrorFedicom, 'Error interno del servidor - ' + txId, 500);
   }
+
+  /**
+   * Este método provee un atajo para enviar un único codigo de error Fedicom al cliente.
+   * @param {*} expressRes El objeto de respuesta HTTP de express
+   * @param {*} codigo El código del error Fedicom (i.e. AUTH-004, LIN-PED-ERR-001, etc...)
+   * @param {*} descripcion El texto descriptivo del error
+   * @param {*} codigoRespuestaHTTP El código de respuesta HTTP asociado al error
+   */
+  static generarYEnviarError(expressRes, codigo, descripcion, codigoRespuestaHTTP) {
+    let errorFedicom = new ErrorFedicom(codigo, descripcion, codigoRespuestaHTTP);
+    return errorFedicom.enviarRespuestaDeError(expressRes);
+  }
+
+  /**
+   * Genera y envía un error fedicom para las respuestas erroneas que da el proceso monitor.
+   * 
+   * @param {*} expressRes 
+   * @param {*} descripcion 
+   * @param {*} codigoRespuestaHTTP 
+   */
+  static generarYEnviarErrorMonitor(expressRes, descripcion, codigoRespuestaHTTP) {
+    return ErrorFedicom.generarYEnviarError(expressRes, 'MONITOR-ERR-999', descripcion, codigoRespuestaHTTP || 500);
+  }
 }
 
 module.exports = ErrorFedicom;
