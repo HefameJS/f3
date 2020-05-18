@@ -367,7 +367,8 @@ module.exports = {
         EMPLEADO: 'empleado',
         FMASONLINE: 'FMAS',
         PORTAL_HEFAME: 'PORTAL_HEFAME',
-        SAP_BACKGROUND: 'SAP_BG'
+        SAP_BACKGROUND: 'SAP_BG',
+        INTERFEDICOM: 'INTERFEDICOM'
 
     },
     FLAGS: {

@@ -27,6 +27,17 @@ const generarToken = (txId, authReq, perms) => {
 	return token;
 }
 
+const generarTokenInterFedicom = () => {
+	let jwtData = {
+		sub: global.instanceID,
+		aud: K.DOMINIOS.INTERFEDICOM,
+		exp: Math.ceil(Date.fedicomTimestamp() / 1000) + (60 * (C.jwt.token_lifetime_minutes || 30)),
+	};
+
+	let token = jwt.sign(jwtData, C.jwt.token_signing_key);
+	L.i(['Generado JWT Interfedicom', token, jwtData], 'jwt');
+	return token;
+}
 
 const verificarToken = (token, txId) => {
 
@@ -134,6 +145,20 @@ const verificaPermisos = (req, res, opciones) => {
 		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.FALLO_AUTENTICACION  };
 	}
 
+	// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
+	if (req.token.aud === K.DOMINIOS.INTERFEDICOM) {
+		if (process.type === K.PROCESS_TYPES.MONITOR) {
+			// TODO: Falta hacer control de admision por IP (req.originIp)
+			L.xi(txId, ['Se acepta el token INTERFEDICOM'],'txToken')
+			return { ok: true };
+		}
+		
+		L.xw(txId, ['El token es del dominio INTERFEDICOM y no se admite para este tipo de consulta'], 'txToken');
+		let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
+	}
+
 	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 	if (opciones.grupoRequerido) {
 		if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
@@ -194,6 +219,7 @@ const verificaPermisos = (req, res, opciones) => {
 
 module.exports = {
 	generarToken,
+	generarTokenInterFedicom,
 	verificarToken,
 	verificaPermisos
 }
