@@ -92,7 +92,14 @@ const consulta = (txId, consulta, callback) => {
 	let skip = consulta.skip || 0;
 	let limit = Math.min(consulta.limit || 100, 100);
 
-	let filtroMongo = EJSON.deserialize(filtro, { relaxed: false });
+	let filtroMongo = {}
+	try {
+		filtroMongo = EJSON.deserialize(filtro, { relaxed: false });
+	} catch (errorDeserializadoEJSON) {
+		L.e(['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
+		callback(new Error('La consulta no es válida: ' + errorDeserializadoEJSON.message), null);
+		return;
+	}
 
 
 	// Por el momento, no se admiten '$or'
