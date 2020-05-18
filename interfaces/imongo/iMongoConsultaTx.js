@@ -26,7 +26,7 @@ const consulta = (txId, consulta, callback) => {
 		filtroMongo = EJSON.deserialize(filtro, { relaxed: false });
 	} catch (errorDeserializadoEJSON) {
 		L.e(['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
-		callback(new Error('La consulta no es válida: ' + errorDeserializadoEJSON.message), null);
+		callback(new Error('La consulta no es válida'), null);
 		return;
 	}
 
