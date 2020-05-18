@@ -63,7 +63,7 @@ const numeroEntradasPendientes = (callback) => {
 		}
 
 		L.e(['Error en la respuesta', resultados], 'sqlite');
-		return callback('Error al contar las líneas', null);
+		return callback(new Error('Error al contar las líneas'), null);
 
 	});
 }
@@ -160,9 +160,9 @@ const recuentoRegistros = (callback) => {
  * 			sql: 'WHERE retryCount >= ? AND txid = ?',
  * 			valores: [10, "5eb3bd86acfc103c8ca8b1ed"]
  * 		}
- * - orderby:
- * 		Acepta un string con la sentencia SQL. Por ejemplo
- * 			'ORDER BY retryCount DESC'
+ * - orden:
+ * 		Acepta un string con la sentencia SQL que irá detrás de ORDER BY. Por ejemplo
+ * 			'retryCount DESC'
  * - limit:
  * 		Numerico - El límite máximo de registros a retornar. 
   * - offset:
@@ -170,51 +170,67 @@ const recuentoRegistros = (callback) => {
  * 
  * Ejemplo completo
  * {
- * 		where: {
+ * 		filtro: {
  *			sql: 'WHERE retryCount >= ? AND txid = ?',
  * 			valores: [10, "5eb3bd86acfc103c8ca8b1ed"]
  * 		},
- * 		orderby: 'ORDER BY retryCount DESC',
- * 		limit: 50,
- * 		offset: 150
+ * 		orden: 'retryCount DESC',
+ * 		limite: 50,
+ * 		skip: 150
  * }
- * @param {*} where 
+ * @param {*} opciones 
  * @param {*} callback 
  */
 const consultaRegistros = (opciones, callback) => {
 
 	let sql = 'SELECT uid, txid, data as transaccion, retryCount as intentos FROM tx';
+	let sqlContador = 'SELECT count(*) as count FROM tx';
 	let valores = []
 
-	if (opciones.where) {
-		sql += ' ' + opciones.where.sql;
-		valores = opciones.where.valores;
+	let limite = Math.min(opciones.limite || 50, 50);
+	let skip = Math.max(opciones.skip || 0, 0);
+
+	if (opciones.filtro) {
+		sql += ' ' + opciones.filtro.sql;
+		sqlContador += ' ' + opciones.filtro.sql;
+		valores = opciones.filtro.valores;
 	}
-	if (opciones.orderby) 		sql += ' ' + opciones.orderby
-	if (opciones.limit) 		sql += ' LIMIT ' + opciones.limit;
-	if (opciones.offset) 		sql += ' OFFSET ' + opciones.offset;
+	if (opciones.orden) sql += ' ORDER BY ' + opciones.orden
+	sql += ' LIMIT ' + limite;
+	sql += ' OFFSET ' + skip;
 	
 	L.t(['Consulta SQLite', sql, valores], 'sqlite');
 
 
-	db.all(sql, valores, (errorSQLite, entradas) => {
-		if (errorSQLite) {
-			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+	db.get(sqlContador, valores, (errorContadorSQLite, filaNumeroEntradas) => {
+		if (errorContadorSQLite) {
+			L.f(['Fallo al contar el número de entradas en la base de datos', errorContadorSQLite], 'sqlite');
 			return callback(errorSQLite, null);
 		}
+		let numeroEntradas = filaNumeroEntradas.count;
 
-		if (entradas && entradas.length) {
-			// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
-			// los convertimos de vuelta a BSON
-			let entradasSaneadas = entradas.map(entrada => {
-				entrada.transaccion = EJSON.parse(entrada.transaccion, { relaxed: false });
-				return entrada;
-			});
-			return callback(null, entradasSaneadas);
-		}
-		L.e(['Se devuelve lista de entradas vacía', entradas], 'sqlite');
-		return callback(null, []);
+		db.all(sql, valores, (errorSQLite, entradas) => {
+			if (errorSQLite) {
+				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+				return callback(errorSQLite, null);
+			}
 
+			if (entradas) {
+				// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
+				// los convertimos de vuelta a BSON
+				let entradasSaneadas = entradas.map(entrada => {
+					entrada.transaccion = EJSON.parse(entrada.transaccion, { relaxed: false });
+					return entrada;
+				});
+				return callback(null, {
+					resultados: entradasSaneadas,
+					limite: limite,
+					skip: skip,
+					total: numeroEntradas
+				});
+			}
+
+		});
 	});
 }
 
