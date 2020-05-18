@@ -18,6 +18,7 @@ const _unificacionAtributosSap = (cab) => {
 
 		cab.albaran = cab.proforma;
 		cab.fecha_imp = cab.erdat;
+		cab.hora_imp = cab.abhov;
 		if (cab.factura) cab.numero_factura = cab.factura;
 		if (cab.factura && cab.fe_fact) cab.fecha_factura = cab.fe_fact;
 		cab.cod_almacen = cab.yy_centro;
@@ -46,6 +47,7 @@ class Albaran {
 		this.codigoCliente = cab.kunnr;
 		this.numeroAlbaran = cab.albaran;
 		this.fechaAlbaran = Date.fromSAPtoFedicomDate(cab.fecha_imp) || undefined;
+		this.horaAlbaran = cab.hora_imp;
 		if (cab.numero_factura) this.numeroFactura = cab.numero_factura;
 		if (cab.numero_factura && this.fecha_factura) this.fechaFactura = Date.fromSAPtoFedicomDate(cab.fecha_factura) || undefined;
 		this.codigoAlmacen = cab.cod_almacen;
