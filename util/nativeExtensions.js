@@ -125,7 +125,7 @@ if (!Date.fromSAPtoFedicomDate) {
 
 
 /**
- * Date.toFedicomDate(date)
+ * Date.toSapDate(date)
  * Devuelve una representación del objeto Date en formato SAP (yyyymmdd).
  * Si no se especifica la fecha de entrada, se asume el instante actual.
  * 

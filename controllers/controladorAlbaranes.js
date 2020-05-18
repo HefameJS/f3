@@ -211,11 +211,12 @@ exports.listadoAlbaranes = (req, res) => {
         fechaDesde = fechaHasta = Date.toSapDate(fechaAlbaran);
     } else {
 
-        // Si no se especifica alguna de las fechas, se utiliza el día actual
-        fechaDesde = Date.fromFedicomDate(req.query.fechaDesde) || new Date();
+        // Si no se especifica la fechaHasta, se establece la fecha máxima el momento actual.
         fechaHasta = Date.fromFedicomDate(req.query.fechaHasta) || new Date();
+        // Si no se especifica la fechaDesde, se establece a un año atrás, desde la fechaHasta.
+        fechaDesde = Date.fromFedicomDate(req.query.fechaDesde) || new Date(new Date(fechaHasta).setFullYear(fechaHasta.getFullYear() - 1));
 
-        // Si hay que invertir las fechas
+        // Si hay que invertir las fechas ....
         if (fechaDesde.getTime() > fechaHasta.getTime()) {
             let tmp = fechaDesde;
             fechaDesde = fechaHasta;
@@ -229,9 +230,6 @@ exports.listadoAlbaranes = (req, res) => {
             /*let responseBody =*/ errorFedicom.enviarRespuestaDeError(res);
             return;
         }
-
-        fechaDesde = Date.toSapDate(fechaDesde)
-        fechaHasta = Date.toSapDate(fechaHasta)
     }
 
 

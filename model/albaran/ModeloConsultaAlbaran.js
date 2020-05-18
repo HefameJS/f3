@@ -53,7 +53,16 @@ class ConsultaAlbaran {
 	}
 
 	setFechas(inicio, fin) {
-		this.campos['r_erdat'] = new FiltroCampo('I', 'BT', inicio || '19000101', fin || '29990101');
+
+		if (!fin) {
+			fin = new Date();
+		}
+
+		if (!inicio) {
+			inicio = new Date(new Date(fin).setFullYear(fin.getFullYear() - 1))
+		}
+		
+		this.campos['r_erdat'] = new FiltroCampo('I', 'BT', Date.toSapDate(inicio), Date.toSapDate(fin));
 		return this;
 	}
 
