@@ -1,10 +1,11 @@
 'use strict';
-const C = global.config;
+//const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
 const iTokens = require('util/tokens');
+const iMonitor = require('interfaces/ifedicom/iMonitor');
 const iSQLite = require('interfaces/isqlite/iSQLite');
 
 // Modelos
@@ -33,17 +34,32 @@ const consultaRegistros = (req, res) => {
 
 	let opcionesConsulta = req.body || {};
 
-	iSQLite.consultaRegistros(opcionesConsulta, (errorSQLite, registros) => {
+	if (req.query.servidor === 'local') {
 
-		if (errorSQLite) {
-			L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar los registros de SQLite');
-			return;
-		}
+		iSQLite.consultaRegistros(opcionesConsulta, (errorSQLite, registros) => {
 
-		res.status(200).json(registros);
+			if (errorSQLite) {
+				L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
+				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar los registros de SQLite');
+				return;
+			}
 
-	});
+			res.status(200).json(registros);
+
+		});
+
+	} else {
+
+		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/sqlite?servidor=local', {method: 'PUT', body: req.body}, (errorLlamada, respuestasRemotas) => {
+			if (errorLlamada) {
+				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada]);
+				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+				return;
+			}
+			res.status(200).send(respuestasRemotas);
+		})
+
+	}
 
 }
 
@@ -56,16 +72,31 @@ const recuentoRegistros = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iSQLite.recuentoRegistros((errorSQLite, recuento) => {
 
-		if (errorSQLite) {
-			L.xe(txId, ['Ocurrió un error al consultar el estado de SQLite', errorSQLite])
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar el estado de SQLite');
-		}
+	if (req.query.servidor === 'local') {
+		iSQLite.recuentoRegistros((errorSQLite, recuento) => {
 
-		res.status(200).json(recuento);
+			if (errorSQLite) {
+				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorSQLite])
+				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+			}
 
-	});
+			res.status(200).json(recuento);
+
+		});
+	}
+	else {
+
+		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/sqlite/recuento?servidor=local', (errorLlamada, respuestasRemotas) => {
+			if (errorLlamada) {
+				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada]);
+				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+				return;
+			}
+			res.status(200).send(respuestasRemotas);
+		})
+
+	}
 
 }
 
