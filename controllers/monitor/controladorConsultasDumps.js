@@ -39,7 +39,7 @@ const listadoDumps = (req, res) => {
 
 	} else {
 
-		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/dumps?servidor=local&local=si', (errorLlamada, respuestasRemotas) => {
+		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/dumps?servidor=local', (errorLlamada, respuestasRemotas) => {
 			if (errorLlamada) {
 				L.xe(txId, ['Ocurrió un error al obtener la lista de dumps', errorLlamada]);
 				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de dumps');
