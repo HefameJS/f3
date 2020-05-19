@@ -98,12 +98,7 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.sap.consultaSistema));
 
 
-	// Cache de credenciales Fedicom
-	app.route('/v1/cache/credenciales')
-		.get(tryCatch(controladores.consultas.cache.consultaCacheCredenciales));
-
-
-	// Cache de credenciales Fedicom
+	// Dumps de procesos
 	app.route('/v1/dumps')
 		.get(tryCatch(controladores.consultas.dumps.listadoDumps));
 
