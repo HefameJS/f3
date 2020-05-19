@@ -9,6 +9,7 @@ const iMongo = require('interfaces/imongo/iMongo');
 
 // Modelos
 const EstadoReplicaSet = require('model/monitor/ModeloEstadoReplicaSet')
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 // GET /mongodb/colecciones
 const getNombresColecciones = (req, res) => {
@@ -19,9 +20,9 @@ const getNombresColecciones = (req, res) => {
 	iMongo.monitor.getNombresColecciones((errorMongo, colecciones) => {
 		if (errorMongo) {
 			L.e(['Error al obtener la lista de colecciones', errorMongo]);
-			res.status(500).send({ ok: false, error: 'Error al obtener la lista de colecciones' });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de colecciones');
 		} else {
-			res.status(200).send({ ok: true, data: colecciones });
+			res.status(200).send(colecciones);
 		}
 	})
 }
@@ -33,7 +34,8 @@ const getColeccion = (req, res) => {
 	if (!estadoToken.ok) return;
 
 	if (!req.params.colName) {
-		return res.status(400).json({ ok: false, error: 'Debe especificar el nombre de la colección' });
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Debe especificar el nombre de la colección', 400);
+		return;
 	}
 
 	let consultarDatosExtendidos = (req.query.datosExtendidos === 'true');
@@ -41,7 +43,8 @@ const getColeccion = (req, res) => {
 	iMongo.monitor.getColeccion(req.params.colName, (errorMongo, datosColeccion) => {
 		if (errorMongo) {
 			L.e(['Error al obtener los datos de la colección', errorMongo]);
-			return res.status(500).json({ ok: false, error: 'Error al obtener los datos de la colección' });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los datos de la colección');
+			return;
 		}
 
 		if (!consultarDatosExtendidos) {
@@ -53,7 +56,7 @@ const getColeccion = (req, res) => {
 		delete datosColeccion.ok;
 		delete datosColeccion.operationTime;
 
-		return res.status(200).json({ ok: true, data: datosColeccion });
+		return res.status(200).json(datosColeccion);
 
 	});
 }
@@ -67,14 +70,15 @@ const getDatabase = (req, res) => {
 	iMongo.monitor.getDatabase((errorMongo, estadisticasDb) => {
 		if (errorMongo) {
 			L.e(['Error al obtener estadísticas de la base de datos', errorMongo]);
-			return res.status(500).json({ ok: false, error: 'Error al obtener estadísticas de la base de datos' });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener estadísticas de la base de datos');
+			return;
 		}
 
 		delete estadisticasDb['$clusterTime'];
 		delete estadisticasDb.ok;
 		delete estadisticasDb.operationTime;
 
-		return res.status(200).json({ ok: true, data: estadisticasDb });
+		return res.status(200).json(estadisticasDb);
 
 	});
 }
@@ -88,10 +92,11 @@ const getOperaciones = (req, res) => {
 	iMongo.monitor.getOperaciones((errorMongo, operaciones) => {
 		if (errorMongo) {
 			L.e(['Error al obtener la lista de operaciones', errorMongo]);
-			return res.status(500).json({ ok: false, msg: 'Error al obtener la lista de operaciones' });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de operaciones');
+			return;
 		}
 
-		return res.status(200).json({ ok: true, data: operaciones });
+		return res.status(200).json(operaciones);
 
 	});
 }
@@ -104,12 +109,13 @@ const getReplicaSet = (req, res) => {
 
 	iMongo.monitor.getReplicaSet((errorMongo, datosReplicaSet) => {
 		if (errorMongo) {
-			L.e(['Error al obtener el estado del cluster', errorMongo]);
-			return res.status(500).json({ ok: false, msg: 'Error al obtener el estado del cluster' });
+			L.e(['Error al obtener el estado del clúster', errorMongo]);
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener el estado del clúster');
+			return;
 		}
 
 		let estadoReplicaSet = new EstadoReplicaSet(datosReplicaSet);
-		return res.status(200).json({ ok: true, data: estadoReplicaSet });
+		return res.status(200).json( estadoReplicaSet );
 
 	});
 }
@@ -125,13 +131,15 @@ const getLogs = (req, res) => {
 	iMongo.monitor.getLogs(tipoLog, (errorMongo, logs) => {
 		if (errorMongo) {
 			L.e(['Error al obtener los logs', errorMongo]);
-			return res.status(500).json({ ok: false, error: 'Error al obtener los logs' });
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los logs');
+			return;
 		}
 
 		delete logs['$clusterTime'];
 		delete logs.ok;
 		delete logs.operationTime;
-		return res.status(200).json({ ok: true, data: logs });
+
+		return res.status(200).json(logs);
 
 	});
 }
