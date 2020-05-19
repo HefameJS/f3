@@ -7,6 +7,7 @@ const L = global.logger;
 const { EJSON } = require('bson');
 const ObjectID = require('mongodb').ObjectID;
 const sqlite3 = require('sqlite3').verbose();
+const lock = require('locks');
 
 const db = new sqlite3.Database(C.sqlite.db_path, (err) => {
 	if (err) {
@@ -89,8 +90,8 @@ const obtenerEntradas = (numeroFallosMaximo, callback) => {
 		if (entradas && entradas.length) {
 			// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
 			// los convertimos de vuelta a BSON
-			let entradasSaneadas = entradas.map( entrada => {
-				entrada.data = EJSON.parse(entrada.data, {relaxed: false});
+			let entradasSaneadas = entradas.map(entrada => {
+				entrada.data = EJSON.parse(entrada.data, { relaxed: false });
 				return entrada;
 			});
 			return callback(null, entradasSaneadas);
@@ -140,13 +141,40 @@ const incrementarNumeroDeIntentos = (uid, callback) => {
  */
 const recuentoRegistros = (callback) => {
 
-	db.all('SELECT retryCount AS intentos, count(*) as cantidad FROM tx GROUP BY retryCount ORDER BY intentos', [], (errorSQLite, resultados) => {
-		if (errorSQLite) {
-			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
-			return callback(errorSQLite, null);
+	let umbralIntentosMaximos = C.watchdog.sqlite.maxRetries || 10;
+
+	let respuesta = { pendientes: 0, totales: 0, umbral: umbralIntentosMaximos };
+	let errorPendiente = null;
+	let peticionesPendientes = 2;
+	let mutex = lock.createMutex();
+
+	const funcionAgrupacion = (error, tipo, cantidad) => {
+
+		console.log('agrupacion', error, tipo, cantidad);
+		if (error) {
+			errorPendiente = error;
+		} else {
+			respuesta[tipo] = cantidad;
 		}
-		
-		return callback(null, resultados);
+
+		mutex.lock(() => {
+			
+			peticionesPendientes--;
+			console.log('peticionesPendientes', peticionesPendientes, respuesta);
+			if (peticionesPendientes === 0) {
+				callback(errorPendiente, respuesta);
+			}
+			mutex.unlock();
+		})
+
+	}
+
+	db.get('SELECT count(*) as cantidad FROM tx', [], (errorSQLite, resultados) => {
+		funcionAgrupacion(errorSQLite, 'totales', resultados.cantidad);
+	});
+
+	db.get('SELECT count(*) as cantidad FROM tx WHERE retryCount < ?', [umbralIntentosMaximos], (errorSQLite, resultados) => {
+		funcionAgrupacion(errorSQLite, 'pendientes', resultados.cantidad);
 	});
 }
 
@@ -198,7 +226,7 @@ const consultaRegistros = (opciones, callback) => {
 	if (opciones.orden) sql += ' ORDER BY ' + opciones.orden
 	sql += ' LIMIT ' + limite;
 	sql += ' OFFSET ' + skip;
-	
+
 	L.t(['Consulta SQLite', sql, valores], 'sqlite');
 
 
