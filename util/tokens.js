@@ -45,10 +45,10 @@ const generarTokenInterFedicom = () => {
 
 const verificarToken = (token, txId) => {
 
-	L.xd(txId, ['Analizando token', token], 'txToken');
+	if (txId) L.xd(txId, ['Analizando token', token], 'txToken');
 
 	if (!token) {
-		L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
+		if (txId) L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
 		return {
 			meta: {
 				ok: false,
@@ -63,7 +63,7 @@ const verificarToken = (token, txId) => {
 
 		// Comprobacion para levantar el flag de transfer
 		if (decoded.sub && decoded.sub.search(/^T[RGP]/) === 0) {
-			iFlags.set(txId, K.FLAGS.TRANSFER);
+			if (txId) iFlags.set(txId, K.FLAGS.TRANSFER);
 		}
 
 		let meta = {};
@@ -71,7 +71,7 @@ const verificarToken = (token, txId) => {
 		if (decoded.exp) {
 			let diff = (Date.fedicomTimestamp() / 1000) - decoded.exp;
 			if (diff > ((C.jwt.token_validation_skew_clock_seconds || 10))) {
-				L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
+				if (txId) L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
 				// TOKEN CADUCADO
 				meta = {
 					ok: false,
@@ -87,7 +87,7 @@ const verificarToken = (token, txId) => {
 			}
 		} else {
 			// ¿No contiene campo 'exp'? ESTO ES UN FAKE
-			L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
+			if (txId) L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
 			meta = {
 				ok: false,
 				error: 'Token incompleto',
@@ -99,7 +99,7 @@ const verificarToken = (token, txId) => {
 
 	} catch (err) {
 
-		L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
+		if (txId) L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
 		return {
 			meta: {
 				ok: false,
