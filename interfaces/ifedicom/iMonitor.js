@@ -27,19 +27,19 @@ const _ampliaRespuestaMonitor = (repuestaMonitor, cuerpoMonitor) => {
 }
 
 const _obtenerTokenIntermonitor = () => {
-	
-		if (!tokenIntermonitor) {
-			tokenIntermonitor = iTokens.generarTokenInterFedicom();
-			return tokenIntermonitor;
-		}
 
-		let estadoToken = iTokens.verificarToken(tokenIntermonitor);
-		if (!estadoToken.meta.ok) {
-			tokenIntermonitor = iTokens.generarTokenInterFedicom();
-			return tokenIntermonitor;
-		} else {
-			return tokenIntermonitor;
-		}
+	if (!tokenIntermonitor) {
+		tokenIntermonitor = iTokens.generarTokenInterFedicom();
+		return tokenIntermonitor;
+	}
+
+	let estadoToken = iTokens.verificarToken(tokenIntermonitor);
+	if (!estadoToken.meta.ok) {
+		tokenIntermonitor = iTokens.generarTokenInterFedicom();
+		return tokenIntermonitor;
+	} else {
+		return tokenIntermonitor;
+	}
 
 }
 _obtenerTokenIntermonitor();
@@ -50,16 +50,18 @@ _obtenerTokenIntermonitor();
  * @param {*} ruta 
  * @param {*} callback 
  */
-const _realizarLlamadaAMonitor = (destino, ruta, callback) => {
+const _realizarLlamadaAMonitor = (destino, ruta, opciones, callback) => {
 
-	let parametrosLlamada = {
-		followAllRedirects: true,
-		uri: 'http://' + destino + ':5001' + ruta,
-		json: true,
-		headers: {
-			Authorization: 'Bearer ' + _obtenerTokenIntermonitor()
-		}
+	let parametrosLlamada = opciones;
+
+	parametrosLlamada.followAllRedirects = true;
+	parametrosLlamada.uri = 'http://' + destino + ':5001' + ruta;
+	parametrosLlamada.json = true;
+	parametrosLlamada.headers = {
+		...parametrosLlamada.headers,
+		Authorization: 'Bearer ' + _obtenerTokenIntermonitor(),
 	}
+
 
 	L.e(['Realizando llamada a monitor remoto', parametrosLlamada], 'iMonitor');
 
@@ -96,7 +98,7 @@ const _realizarLlamadaAMonitor = (destino, ruta, callback) => {
  * @param {*} ruta 
  * @param {*} callback 
  */
-const _llamadaAMultiplesDestinos = (destinos, ruta, callback) => {
+const _llamadaAMultiplesDestinos = (destinos, ruta, opciones, callback) => {
 
 
 	L.d(['Se procede a realizar la llamada a multiples destinos', destinos, ruta]);
@@ -135,7 +137,7 @@ const _llamadaAMultiplesDestinos = (destinos, ruta, callback) => {
 	}
 
 	destinos.forEach(destino => {
-		_realizarLlamadaAMonitor(destino, ruta, (errorLlamada, respuestaLlamada) => {
+		_realizarLlamadaAMonitor(destino, ruta, opciones, (errorLlamada, respuestaLlamada) => {
 			funcionAlglomeradora(destino, errorLlamada, respuestaLlamada);
 		})
 	});
@@ -148,18 +150,24 @@ const _llamadaAMultiplesDestinos = (destinos, ruta, callback) => {
  * Si no se indica ningún destino, se busca en el registro de procesos todos los procesos de tipo monitor.
  * @param {*} destinos 
  * @param {*} ruta 
+ * @param {*} opciones
  * @param {*} callback 
  */
-const realizarLlamadaMultiple = (destinos, ruta, callback) => {
+const realizarLlamadaMultiple = (destinos, ruta, opciones, callback) => {
+
+	if (typeof opciones === 'function') {
+		callback = opciones;
+		opciones = {};
+	}
 
 
 	if (destinos && destinos.forEach && destinos.length > 0) {
 		// Destinos es un array con al menos una posicion.
-		_llamadaAMultiplesDestinos(destinos, ruta, callback);
+		_llamadaAMultiplesDestinos(destinos, ruta, opciones, callback);
 		return;
 	} else if (destinos) {
 		// Destinos no es vacío, pero no es un array,
-		_llamadaAMultiplesDestinos([destinos], ruta, callback);
+		_llamadaAMultiplesDestinos([destinos], ruta, opciones, callback);
 		return;
 	} else {
 
@@ -172,7 +180,7 @@ const realizarLlamadaMultiple = (destinos, ruta, callback) => {
 
 			let destinos = procesos.map(proceso => proceso.host);
 			if (destinos && destinos.forEach && destinos.length > 0) {
-				_llamadaAMultiplesDestinos(destinos, ruta, callback);
+				_llamadaAMultiplesDestinos(destinos, ruta, opciones, callback);
 				return;
 			} else {
 				L.e(['No se obtuvieron procesos de tipo monitor'])
