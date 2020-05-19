@@ -3,13 +3,17 @@ const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
+// Externas
+const jwt = require('jsonwebtoken');
+
 // Interfaces
 const iFlags = require('interfaces/iFlags');
 
 // Modelos
 const ErrorFedicom = require('model/ModeloErrorFedicom');
 
-const jwt = require('jsonwebtoken');
+
+
 
 const generarToken = (txId, authReq, perms) => {
 	
