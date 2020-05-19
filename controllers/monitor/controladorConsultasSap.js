@@ -3,9 +3,6 @@ const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
-// Externas
-const clone = require('clone');
-
 // Interfaces
 const iTokens = require('util/tokens');
 const iSap = require('interfaces/isap/iSap');
