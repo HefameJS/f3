@@ -4,31 +4,25 @@ const L = global.logger;
 const K = global.constants;
 
 // Externas
-const OS = require('os')
+const OS = require('os');
 const FS = require('fs');
-
-// Interfaces
-const iMonitor = require('interfaces/ifedicom/iMonitor');
 
 class Dump {
 
 	constructor(nombreFicheroDump) {
 
-		let host = null;
+		let servidor = null;
 
 		if (nombreFicheroDump.indexOf('@') > 0) {
 			let trozosNombre = nombreFicheroDump.split('@', 2);
-			host = trozosNombre[0]
+			servidor = trozosNombre[0]
 			nombreFicheroDump = trozosNombre[1];
 		} else {
-			host = OS.hostname();
+			servidor = OS.hostname();
 		}
 
-		
-
-
-		this.id = host + '@' + nombreFicheroDump;
-		this.host = host;
+		this.id = servidor + '@' + nombreFicheroDump;
+		this.servidor = servidor;
 		this.fichero = nombreFicheroDump;
 		this.hora = nombreFicheroDump.substring(0, 19);
 		let idProceso = nombreFicheroDump.substring(20, nombreFicheroDump.length - 5);
@@ -50,7 +44,8 @@ class Dump {
 	 */
 	leerContenidoFichero(callback) {
 
-		let callbackLlamada = (error, contenido) => {
+		L.i(['Consultando el contenido del fichero local']);
+		FS.readFile(C.logdir + '/' + this.fichero, (error, contenido) => {
 			if (error) {
 				callback(error);
 				this.contenido = null;
@@ -58,34 +53,11 @@ class Dump {
 			}
 			this.contenido = contenido.toString();
 			callback(null, contenido);
-		}
-
-		if (this.host === OS.hostname()) {
-			L.i(['Consultando el contenido del fichero local']);
-			FS.readFile(C.logdir + '/' + this.fichero, callbackLlamada)
-		}
-		else {
-			L.i(['Consultando el contenido del fichero en remoto']);
-			_consultarContenidoFicheroRemoto(this.fichero, this.host, callbackLlamada)
-		}
+		})
+		
 	}
 
 }
-
-
-const _consultarContenidoFicheroRemoto = (fichero, host, callback) => {
-
-	iMonitor.realizarLlamadaInterna(host, '/v1/dumps/' + fichero, (errorLlamada, respuesta) => {
-		if (errorLlamada) {
-			callback(errorLlamada, null)
-			return;
-		}
-
-		callback(null, respuesta.body.contenido);
-	} )
-
-}
-
 
 
 Dump.listadoDumpsLocales = (callback) => {
@@ -107,19 +79,6 @@ Dump.listadoDumpsLocales = (callback) => {
 
 }
 
-
-Dump.listadoDumps = (callback) => {
-
-	iMonitor.realizarLlamadaMultiple('/v1/dumps?local=si', (errorLlamada, respuestasRemotas) => {
-		if (errorLlamada) {
-			callback(errorLlamada, null);
-			return;
-		}
-		callback(null, respuestasRemotas);
-	})
-	
-
-}
 
 
 module.exports = Dump;
