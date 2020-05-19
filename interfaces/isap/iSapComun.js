@@ -10,7 +10,7 @@ const K = global.constants;
  * y una propiedad que indica si hubo error en la respuesta de SAP (codigo respuesta HTTP distinto de 2xx)
  */
 const ampliaRespuestaSap = (repuestaSap, cuerpoSap) => {
-	if (!repuestaSap) repuestaSap = {};
+	if (!repuestaSap) repuestaSap = { statusCode: -1, statusMessage: 'Respuesta de llamada a SAP nula' };
 	repuestaSap.body = cuerpoSap;
 	repuestaSap.errorSap = Math.floor(repuestaSap.statusCode / 100) !== 2;
 	return repuestaSap;

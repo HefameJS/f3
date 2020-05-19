@@ -20,7 +20,7 @@ let tokenIntermonitor = null;
  * y una propiedad que indica si hubo error en la respuesta (codigo respuesta HTTP distinto de 2xx)
  */
 const _ampliaRespuestaMonitor = (repuestaMonitor, cuerpoMonitor) => {
-	if (!repuestaMonitor) repuestaMonitor = {};
+	if (!repuestaMonitor) repuestaMonitor = { statusCode: -1, statusMessage: 'Respuesta de llamada InterMonitor nula' };
 	repuestaMonitor.body = cuerpoMonitor;
 	repuestaMonitor.error = Math.floor(repuestaMonitor.statusCode / 100) !== 2;
 	return repuestaMonitor;
