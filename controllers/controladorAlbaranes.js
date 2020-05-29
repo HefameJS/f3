@@ -208,7 +208,7 @@ exports.listadoAlbaranes = (req, res) => {
     let fechaAlbaran = Date.fromFedicomDate(req.query.fechaAlbaran);
     let fechaDesde, fechaHasta;
     if (fechaAlbaran) {
-        fechaDesde = fechaHasta = Date.toSapDate(fechaAlbaran);
+        fechaDesde = fechaHasta = fechaAlbaran;
     } else {
 
         // Si no se especifica la fechaHasta, se establece la fecha máxima el momento actual.
