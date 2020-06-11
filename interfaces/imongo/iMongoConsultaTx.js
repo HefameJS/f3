@@ -15,11 +15,13 @@ const ObjectID = require('mongodb').ObjectID;
 
 const consulta = (txId, consulta, callback) => {
 
+	L.xi(txId, consulta);
+
 	let filtro = consulta.filtro || {};
 	let proyeccion = consulta.proyeccion || null;
 	let orden = consulta.orden || null;
 	let skip = consulta.skip || 0;
-	let limite = Math.min(consulta.limite || 100, 100);
+	let limite = Math.min(consulta.limite || 50, 50);
 
 	let filtroMongo = {}
 	try {
@@ -31,9 +33,12 @@ const consulta = (txId, consulta, callback) => {
 	}
 
 
-	// Por el momento, no se admiten '$or'
-	if (filtro.$or && filtro.$or.length === 0) delete filtro.$or;
+	// No se admiten '$or' vacíos, mongo peta
+	if (filtroMongo.$or && filtroMongo.$or.length === 0) {
+		delete filtroMongo.$or;
+	}
 
+	
 	if (MDB.colTx()) {
 		let cursor = MDB.colTx().find(filtroMongo);
 		if (proyeccion) cursor.project(proyeccion);
