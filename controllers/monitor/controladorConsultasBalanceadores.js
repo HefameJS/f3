@@ -123,7 +123,7 @@ const consultaBalanceador = (req, res) => {
 
 		iApache.consultaBalanceador(balanceador.url, (errorApache, datosBalanceador) => {
 			if (errorApache) {
-				L.e(['Error al consultar el balanceador', errorApache]);
+				L.e(['Error al consultar el balanceador', balanceador, errorApache.message]);
 				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al consultar el balanceador: ' + errorApache.message);
 			} else {
 				balanceador.ok = true;
