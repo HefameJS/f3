@@ -53,7 +53,7 @@ const listadoBalanceadores = (req, res) => {
 
 		const funcionAgregacion = (balanceador, errorConsultaBalanceador, datosBalanceo) => {
 			if (errorConsultaBalanceador) {
-				L.xe(txId, ['Error al consultar el balanceador', balanceador, errorConsultaBalanceador]);
+				L.xe(txId, ['Error al consultar el balanceador', balanceador, errorConsultaBalanceador.message]);
 				balanceador.ok = false;
 				balanceador.error = 'Error al consultar el balanceador: ' + errorConsultaBalanceador.message;
 				datosBalanceadores.push(balanceador);
