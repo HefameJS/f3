@@ -1,86 +1,110 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
-const FedicomError = require(BASE + 'model/fedicomError');
-const ExpressExtensions = require(BASE + 'util/expressExtensions');
-const tryCatch = require(BASE + 'routes/tryCatchWrapper');
+// Modelos
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+
+// Helpers
+const extensionesExpress = require('util/extensionesExpress');
+const tryCatch = require('routes/tryCatchWrapper');
 
 
 
-module.exports = function (app) {
+module.exports = (app) => {
 
-	var controllers = {
-		consultas: require(BASE + 'controllers/monitor/consultas')
-
+	const controladores = {
+		consultas: require('controllers/monitor/controladorConsultas')
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	 * Detecta errores comunes en las peticiones entrantes tales como:
 	 *  - Errores en el parseo del JSON entrante.
 	 */
-	app.use(function (error, req, res, next) {
-		if (error) {
-			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+	app.use((errorExpress, req, res, next) => {
+		if (errorExpress) {
+			[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+			let txId = req.txId;
 
-			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
-			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error]);
+			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.originIp);
+			L.xe(txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
 
-			var fedicomError = new FedicomError(error);
-			fedicomError.send(res);
+			let errorFedicom = new ErrorFedicom(errorExpress);
+			errorFedicom.enviarRespuestaDeError(res);
 		} else {
 			next();
 		}
 	});
 
 
-	app.use(function (req, res, next) {
+	app.use((req, res, next) => {
+		[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+		let txId = req.txId;
 
-		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+		L.i('** Recibiendo transmisión ' + txId + ' desde ' + req.ip);
+		L.xt(txId, 'Iniciando procesamiento de la transmisión');
 
-		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.ip);
-		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');
-
-		return next();
+		next();
 	});
 
 
+	/* RUTAS NUEVAS v1 */
 
-	/* RUTAS */
-	app.route('/query')
-		.put(tryCatch(controllers.consultas.consultaTX))
-
-	app.route('/status/proc')
-		.get(tryCatch(controllers.consultas.procesos.consultaProcesos))
-
-	app.route('/status/sap')
-		.get(tryCatch(controllers.consultas.consultaSap))
+	// Consulta de transmisiones
+	app.route('/v1/transmisiones')
+		.put(tryCatch(controladores.consultas.transmisiones.consultaTransmisiones));
 
 
-	app.route('/status/mdb/col')
-		.get(tryCatch(controllers.consultas.mongodb.getNombresColecciones))
+	// Consulta de balanceadores de carga HTTP
+	app.route('/v1/balanceadores')
+		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
 
-	app.route('/status/mdb/col/:colName')
-		.get(tryCatch(controllers.consultas.mongodb.getColeccion))
+	app.route('/v1/balanceadores/:servidor')
+		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
+		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
 
-	app.route('/status/mdb/db')
-		.get(tryCatch(controllers.consultas.mongodb.getDatabase))
+	// Consulta de procesos registrados
+	app.route('/v1/procesos')
+		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
 
-	app.route('/status/mdb/op')
-		.get(tryCatch(controllers.consultas.mongodb.getOperaciones))
+	// MongoDB
+	app.route('/v1/mongodb/colecciones')
+		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones));
+	app.route('/v1/mongodb/colecciones/:colName')
+		.get(tryCatch(controladores.consultas.mongodb.getColeccion)); // ? [datosExtendidos=true]
+	app.route('/v1/mongodb/database')
+		.get(tryCatch(controladores.consultas.mongodb.getDatabase));
+	app.route('/v1/mongodb/operaciones')
+		.get(tryCatch(controladores.consultas.mongodb.getOperaciones));
+	app.route('/v1/mongodb/replicaSet')
+		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet));
+	app.route('/v1/mongodb/logs')
+		.get(tryCatch(controladores.consultas.mongodb.getLogs)); // ? [tipo = (global | rs | startupWarnings)]
 
-	app.route('/status/mdb/rs')
-		.get(tryCatch(controllers.consultas.mongodb.getReplicaSet))
+	// SQLite
+	app.route('/v1/sqlite')
+		.put(tryCatch(controladores.consultas.sqlite.consultaRegistros));
+	app.route('/v1/sqlite/recuento')
+		.get(tryCatch(controladores.consultas.sqlite.recuentoRegistros));
 
-	app.route('/status/mdb/log')
-		.get(tryCatch(controllers.consultas.mongodb.getLogs))
+
+	// SAP
+	app.route('/v1/sap/conexion')
+		.get(tryCatch(controladores.consultas.sap.pruebaConexion)); // ? [nombreSistemaSap = <nombreSistema>]
+	app.route('/v1/sap/sistemas')
+		.get(tryCatch(controladores.consultas.sap.consultaSistemas));
+	app.route('/v1/sap/sistemas/:nombreSistema')
+		.get(tryCatch(controladores.consultas.sap.consultaSistema));
 
 
-	app.route('/status/apache/balanceadores')
-		.get(tryCatch(controllers.consultas.apache.consultaBalanceadorApache))
-		.put(tryCatch(controllers.consultas.apache.actualizaBalanceadorApache))
+	// Dumps de procesos
+	app.route('/v1/dumps')
+		.get(tryCatch(controladores.consultas.dumps.listadoDumps));
+
+	app.route('/v1/dumps/:idDump')
+		.get(tryCatch(controladores.consultas.dumps.consultaDump));
+
 
 
 	app.route('/status/sqlite')
@@ -92,13 +116,13 @@ module.exports = function (app) {
 
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
-	app.use(function (req, res, next) {
+	app.use((req, res, next) => {
+		let txId = req.txId;
 
-		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
-		var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
-		fedicomError.send(res);
+		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
+		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
+		errorFedicom.enviarRespuestaDeError(res);
 
-		return;
 	});
 
 };

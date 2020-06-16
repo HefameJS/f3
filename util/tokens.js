@@ -1,17 +1,23 @@
 'use strict';
-const BASE = global.BASE;
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const FedicomError = require(BASE + 'model/fedicomError');
-const Flags = require(BASE + 'interfaces/cache/flags');
+// Externas
+const jwt = require('jsonwebtoken');
+
+// Interfaces
+const iFlags = require('interfaces/iFlags');
+
+// Modelos
+const ErrorFedicom = require('model/ModeloErrorFedicom');
 
 
 
-const generateJWT = (txId, authReq, perms) => {
-	var jwt = require('jsonwebtoken');
-	var jwtData = {
+
+const generarToken = (txId, authReq, perms) => {
+	
+	let jwtData = {
 		sub: authReq.username,
 		aud: authReq.domain,
 		exp: Math.ceil(Date.fedicomTimestamp() / 1000) + (60 * (C.jwt.token_lifetime_minutes || 30)),
@@ -20,46 +26,57 @@ const generateJWT = (txId, authReq, perms) => {
 
 	if (perms && perms.forEach) jwtData.perms = perms
 
-	var token = jwt.sign(jwtData, C.jwt.token_signing_key);
+	let token = jwt.sign(jwtData, C.jwt.token_signing_key);
 	L.xi(txId, ['Generado JWT', token, jwtData], 'jwt');
 	return token;
 }
 
-const verifyJWT = (token, txId) => {
+const generarTokenInterFedicom = () => {
+	let jwtData = {
+		sub: global.instanceID,
+		aud: K.DOMINIOS.INTERFEDICOM,
+		exp: Math.ceil(Date.fedicomTimestamp() / 1000) + (60 * (C.jwt.token_lifetime_minutes || 30)),
+	};
 
-	L.xd(txId, ['Analizando token', token], 'txToken');
+	let token = jwt.sign(jwtData, C.jwt.token_signing_key);
+	L.i(['Generado JWT Interfedicom', token, jwtData], 'jwt');
+	return token;
+}
+
+const verificarToken = (token, txId) => {
+
+	if (txId) L.xd(txId, ['Analizando token', token], 'txToken');
 
 	if (!token) {
-		L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
+		if (txId) L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
 		return {
 			meta: {
 				ok: false,
 				error: 'No se especifica token',
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		}
 	}
 
-	var jwt = require('jsonwebtoken');
 	try {
-		var decoded = jwt.verify(token, C.jwt.token_signing_key);
+		let decoded = jwt.verify(token, C.jwt.token_signing_key);
 
 		// Comprobacion para levantar el flag de transfer
 		if (decoded.sub && decoded.sub.search(/^T[RGP]/) === 0) {
-			Flags.set(txId, K.FLAGS.TRANSFER);
+			if (txId) iFlags.set(txId, K.FLAGS.TRANSFER);
 		}
 
-		var meta = {};
+		let meta = {};
 
 		if (decoded.exp) {
-			var diff = (Date.fedicomTimestamp() / 1000) - decoded.exp;
+			let diff = (Date.fedicomTimestamp() / 1000) - decoded.exp;
 			if (diff > ((C.jwt.token_validation_skew_clock_seconds || 10))) {
-				L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
+				if (txId) L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
 				// TOKEN CADUCADO
 				meta = {
 					ok: false,
 					error: 'Token caducado',
-					exception: new FedicomError('AUTH-001', 'Usuario no autentificado', 401)
+					exception: new ErrorFedicom('AUTH-001', 'Usuario no autentificado', 401)
 				}
 			} else {
 				// TOKEN OK
@@ -70,11 +87,11 @@ const verifyJWT = (token, txId) => {
 			}
 		} else {
 			// ¿No contiene campo 'exp'? ESTO ES UN FAKE
-			L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
+			if (txId) L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
 			meta = {
 				ok: false,
 				error: 'Token incompleto',
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		}
 		decoded.meta = meta;
@@ -82,87 +99,131 @@ const verifyJWT = (token, txId) => {
 
 	} catch (err) {
 
-		L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
+		if (txId) L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
 		return {
 			meta: {
 				ok: false,
 				error: err.message,
-				exception: new FedicomError('AUTH-002', 'Token inválido', 401)
+				exception: new ErrorFedicom('AUTH-002', 'Token inválido', 401)
 			}
 		};
 	}
 }
 
+
 /**
- * Realiza la comprobación del token de la petición, pudiendo indicarse opciones de autorización.
- * Si el token no resultara válido, se retorna un error Fedicom3 al cliente con el error.
+ * Funcion que verifica los permisos del token de una petición entrante.
+ * En caso de que el token no sea válido, responde a la petición.
  * 
- * El método retorna un objeto tal que:
- * {
- * 		ok: booleano que indica si el token es válido o no
- * 		responseBody: Si el token no es válido, este es el cuerpo del mensaje enviado al cliente
- * 		status: Si el token no es válido, el estado en el que queda la transmisión [ FALLO_AUTENTICACION | ]
- * }
- * @param {*} req El objeto de petición HTTP entrante
- * @param {*} res El objeto de respuesta HTTP sobre el que enviar las respuestas de error, en caso de haberlo
- * @param {*} opciones Un objeto que permite indicar los dominios y/o permisos que el token debe tener.
+ * La funcion devuelve un objeto donde siempre se incluirá la propiedad 'ok' con el resultado de la autenticacion.
+ * Si el resultado es negativo, la respuesta también incluirá la propiedad 'responseBody' con la respuesta dada al cliente.
+ * En el caso de simulaciones, la respuesta incluirá la propiedad 'usuarioSimulador' indicando el usuario del dominio que ordena la simulación y opcionalmente
+ * se la propiedad 'solicitudAutenticacion' con la solicitud de autenticación simulada.
+ * 
+ * Opciones:
+ *  - grupoRequerido: Indica el nombre de un grupo que debe estar presente en el token, o de lo contrario el token será rechazado.
+ * 	- admitirSimulaciones: Indica si se admiten consultas simuladas. Esto indica que en principio, los tokens del dominio HEFAME con el permiso 'FED3_SIMULADOR' se considerarán válidos.
+ *  - admitirSimulacionesEnProduccion: (requiere admitirSimulaciones = true) Por defecto, las simulaciones en sistemas productivos son rechazadas. Activar esta opción para permitirlas igualmente.
+ * 		Generalmente se usa para servicios de consulta donde no hay peligro en lanzarlos contra producción.
+ *  - simulacionRequiereSolicitudAutenticacion: (requiere admitirSimulaciones = true) Indica si la simulación debe ir acompañada de una solicitud de autenticación. Esto hará que se busque el campo
+ * 		req.body.authReq = {username: "xxxx", domain: "yyyy"} y se genere un token simulando como si la petición viniera con estas credenciales. Si no existiera, se rechaza la petición.
  */
-const validarTransmision = (req, res, opciones) => {
+const DEFAULT_OPTS = {
+	grupoRequerido: null,
+	admitirSimulaciones: false,
+	admitirSimulacionesEnProduccion: false,
+	simulacionRequiereSolicitudAutenticacion: false
+}
+const verificaPermisos = (req, res, opciones) => {
 
-	let txId = req.txId
+	let txId = req.txId;
 
-	/**
-	 * Verificación básica de integridad y expiración del token
-	 */
-	req.token = verifyJWT(req.token, txId);
+	opciones = { ...DEFAULT_OPTS, ...opciones }
+
+	L.xt(txId, ['Verificando validez de token', req.token, opciones], 'txToken')
+
+	req.token = verificarToken(req.token, txId);
 	if (req.token.meta.exception) {
 		L.xe(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
-		var responseBody = req.token.meta.exception.send(res);
-		return { ok: false, responseBody, status: K.TX_STATUS.FALLO_AUTENTICACION };
+		let cuerpoRespuesta = req.token.meta.exception.enviarRespuestaDeError(res);
+		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.FALLO_AUTENTICACION  };
 	}
 
-	/**
-	 * Comprobamos que el dominio del token está en la lista de dominios permitidos
-	 */
-	let dominiosValidos = opciones.dominios || []
-	if (dominiosValidos.length > 0) {
-		if (!dominiosValidos.includes(req.token.aud)) {
-			L.xe(txId, ['El dominio del token no es valido para realizar esta acción.', req.token, opciones], 'txToken');
-			var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
-			var responseBody = error.send(res);
-			return { ok: false, responseBody, status: K.TX_STATUS.NO_AUTORIZADO };
+	// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
+	if (req.token.aud === K.DOMINIOS.INTERFEDICOM) {
+		if (process.type === K.PROCESS_TYPES.MONITOR) {
+			// TODO: Falta hacer control de admision por IP (req.originIp)
+			L.xi(txId, ['Se acepta el token INTERFEDICOM'],'txToken')
+			return { ok: true };
+		}
+		
+		L.xw(txId, ['El token es del dominio INTERFEDICOM y no se admite para este tipo de consulta'], 'txToken');
+		let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
+	}
+
+	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
+	if (opciones.grupoRequerido) {
+		if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
+			L.xw(txId, ['El token no tiene el permiso necesario para realizar la consulta', opciones.grupoRequerido, req.token.perms], 'txToken');
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
 		}
 	}
 
-	/**
-	 * Comprobamos que el token contiene al menos uno de los permisos necesarios para la acción.
-	 * Los permisos solo aplican en el caso de que el dominio sea HEFAME. Si el dominio no es HEFAME 
-	 * y ha pasado la verificación de dominios permitidos, se acepta el token.
-	 */
-	let permisosNecesarios = opciones.permisos || []
-	if (permisosNecesarios.length > 0 && req.token.aud === K.DOMINIOS.HEFAME) {
-		if (req.token.perms.length > 0) {
-			// Intersección entre la lista de permisos necesarios y los del token.
-			// Si la intersección es vacía es que ninguno coincide y por tanto el token no vale
-			let interseccion = permisosNecesarios.filter(value => req.token.perms.includes(value))	
-			if (interseccion.length > 0) {
-				return { ok: true }
+	// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
+	if (opciones.admitirSimulaciones && req.token.aud === K.DOMINIOS.HEFAME) {
+
+		// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza al petición
+		if (C.production === true && !opciones.admitirSimulacionesEnProduccion) {
+			L.xw(txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO  };
+		}
+
+		// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
+		if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
+			L.xw(txId, ['El token no tiene los permisos necesarios para realizar una llamada simulada', req.token.perms], 'txToken');
+			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO  };
+		} else {
+			L.xi(txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
+
+			let solicitudAutenticacion = null;
+
+			if (req.body && req.body.authReq && req.body.authReq.username && req.body.authReq.domain) {
+				solicitudAutenticacion = req.body.authReq;
+				L.xi(txId, ['La solicitid simulada viene con una solicitud de autenticación', solicitudAutenticacion], 'txToken')
+				let newToken = generarToken(txId, solicitudAutenticacion, []);
+				L.xd(txId, ['Se ha generado un token para la solicitud de autenticacion simulada', newToken], 'txToken');
+				req.headers['authorization'] = 'Bearer ' + newToken;
+				req.token = verificarToken(newToken, txId);
 			}
+
+			if (opciones.simulacionRequiereSolicitudAutenticacion && !solicitudAutenticacion) {
+				L.xe(txId, ['No se incluye solicitud de autenticación y esta es obligatoria'], 'txToken');
+				let errorFedicom = new ErrorFedicom('AUTH-999', 'No se indica el usuario objetivo de la transmisión', 400);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.PETICION_INCORRECTA };
+			} 
+
+			return { ok: true, usuarioSimulador: req.token.sub, solicitudAutenticacion: solicitudAutenticacion };
 		}
-
-		L.xe(txId, ['Los permisos del token no sos válidos para realizar esta acción.', req.token, opciones], 'txToken');
-		var error = new FedicomError('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
-		var responseBody = error.send(res);
-		return { ok: false, responseBody, status: K.TX_STATUS.NO_AUTORIZADO };
-
 	}
 
-	return { ok: true }
 
+	L.xi(txId, ['El token transmitido resultó VALIDO', req.token.sub], 'txToken');
+	return { ok: true };
 }
 
+
 module.exports = {
-	generateJWT,
-	verifyJWT,
-	validarTransmision
+	generarToken,
+	generarTokenInterFedicom,
+	verificarToken,
+	verificaPermisos
 }

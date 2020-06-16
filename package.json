@@ -19,24 +19,25 @@
   "license": "ISC",
   "dependencies": {
     "activedirectory": "^0.7.2",
+    "app-module-path": "^2.2.0",
+    "bson": "^4.0.4",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
     "dateformat": "^3.0.3",
     "express": "^4.17.1",
     "express-bearer-token": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
-    "memory-cache": "https://github.com/AlejandroAbad/node-cache.git",
+    "locks": "^0.2.2",
+    "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
     "mongodb": "^3.5.2",
     "os": "^0.1.1",
     "request": "^2.88.0",
     "saslprep": "^1.0.3",
     "sqlite3": "^4.1.1",
-    "underscore": "^1.9.2",
-    "xml-js": "^1.6.11",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "nodemon": "^2.0.2"
   },
   "repository": {
     "type": "git",

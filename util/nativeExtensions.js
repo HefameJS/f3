@@ -1,17 +1,21 @@
 'use strict';
-//const BASE = global.BASE;
 //const C = global.config;
 //const L = global.logger;
 //const K = global.constants;
 
-var dateFormat = require('dateformat');
+// Externos
+const dateFormat = require('dateformat');
 
 /**
  * Date.fedicomTimestamp()
  * Devuelve el timestamp actual
+ * 
+ * - -> UNIX
  */
 if (!Date.fedicomTimestamp) {
-	Date.fedicomTimestamp = function() { return new Date().getTime(); }
+	Date.fedicomTimestamp = () => { 
+		return new Date().getTime(); 
+	}
 }
 
 
@@ -27,9 +31,11 @@ dateFormat.masks.shortTime = 'HHMMss.l';
  * Date.toFedicomDate(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 Date.
  * Si no se especifica la fecha de entrada, se asume el instante actual.
+ * 
+ * Date() -> 'dd/mm/yyyy'
  */
 if (!Date.toFedicomDate) {
-	Date.toFedicomDate = function (date) {
+	Date.toFedicomDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDate")
 	}
@@ -39,9 +45,11 @@ if (!Date.toFedicomDate) {
  * Date.toFedicomDateTime(date)
  * Devuelve una representación del objeto Date en formato Fedicom3 DateTime.
  * Si no se especifica la fecha de entrada, se asume el instante actual.
+ * 
+ * Date() -> 'dd/mm/yyyy HH:MM:ss'
  */
 if (!Date.toFedicomDateTime) {
-	Date.toFedicomDateTime = function (date) {
+	Date.toFedicomDateTime = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDateTime")
 	}
@@ -50,43 +58,46 @@ if (!Date.toFedicomDateTime) {
 /**
  * Date.fromFedicomDate
  * Construye un objeto Date a partir de un string en formato Fedicom3 Date.
+ * 
+ * 'dd/mm/yyyy' -> Date()
  */
 if (!Date.fromFedicomDate) {
-	Date.fromFedicomDate = function (string) {
-		return Date.fromFedicomDateTime(string);
+	Date.fromFedicomDate = (fedicomDate) => {
+		return Date.fromFedicomDateTime(fedicomDate);
 	}
 }
 
 /**
  * Date.fromFedicomDateTime
  * Construye un objeto Date a partir de un string en formato Fedicom3 DateTime.
+ * 
+ * 'dd/mm/yyyy HH:MM:ss' -> Date()
  */
 if (!Date.fromFedicomDateTime) {
-	Date.fromFedicomDateTime = function (string) {
-		if (!string) return null;
+	Date.fromFedicomDateTime = (fedicomDateTime) => {
+		if (!fedicomDateTime) return null;
 
-		var str = string.trim();
-		var parts = str.split(/\s+/);
+		let str = fedicomDateTime.trim();
+		let parts = str.split(/\s+/);
 
 
-		var dateParts = parts[0].split(/[\/\-]/g);
+		let dateParts = parts[0].split(/[\/\-]/g);
 		if (dateParts.length != 3) return null;
 		
 		if (parseInt(dateParts[2]) < 100) dateParts[2] = parseInt(dateParts[2]) + 2000; // Si el año es de 2 dígitos, le sumamos 2000. Ej. 21/11/19 -> 21/11/2019
 
+		let timeParts = [0, 0, 0];
 		if (parts[1]) {
-			var timeParts = parts[1].split(/\:/);
+			timeParts = parts[1].split(/\:/);
 			while (timeParts.length < 3) timeParts.push(0);
-		} else {
-			var timeParts = [0,0,0];
 		}
 
 		try {
-			var date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+			let date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
 			if (!date || !date instanceof Date || isNaN(date)) return null;
 			return date;
 		} catch (exception) {
-			console.log('Error al convertir la fecha', date, exception);
+			L.e('Date.fromFedicomDateTime: Error al convertir la fecha', fedicomDateTime, exception);
 			return null;
 		}
 
@@ -96,15 +107,17 @@ if (!Date.fromFedicomDateTime) {
 /**
  * Date.fromSAPtoFedicomDate
  * Convierte un string en formato fecha SAP (yyyy-mm-dd) a formato Fedicom3
+ * 
+ * 'yyyy-mm-dd' -> 'dd/mm/yyyy'
  */
 if (!Date.fromSAPtoFedicomDate) {
-	Date.fromSAPtoFedicomDate = function (sapDate) {
+	Date.fromSAPtoFedicomDate = (sapDate) => {
 		if (!sapDate) return null;
 
-		var dateParts = sapDate.split(/\-/g);
-		if (dateParts.length != 3) return null;
+		let pedacicos = sapDate.split(/\-/g);
+		if (pedacicos.length != 3) return null;
 
-		return dateParts[2] + '/' + dateParts[1] + '/' + dateParts[0];
+		return pedacicos[2] + '/' + pedacicos[1] + '/' + pedacicos[0];
 
 	}
 }
@@ -112,12 +125,14 @@ if (!Date.fromSAPtoFedicomDate) {
 
 
 /**
- * Date.toFedicomDate(date)
+ * Date.toSapDate(date)
  * Devuelve una representación del objeto Date en formato SAP (yyyymmdd).
  * Si no se especifica la fecha de entrada, se asume el instante actual.
+ * 
+ * Date() -> 'yyyymmdd'
  */
 if (!Date.toSapDate) {
-	Date.toSapDate = function (date) {
+	Date.toSapDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "sapDate")
 	}
@@ -126,9 +141,11 @@ if (!Date.toSapDate) {
 /**
  * Date.prototype.toShortDate
  * Devuelve una representación del objeto Date en formato corto (yyyymmdd).
+ * 
+ * Date() -> 'yyyymmdd'
  */
 if (!Date.toShortDate) {
-	Date.toShortDate = function (date) {
+	Date.toShortDate = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortDate")
 	}
@@ -138,9 +155,10 @@ if (!Date.toShortDate) {
 /**
  * Date.prototype.toShortTime
  * Devuelve una representación del objeto Date en formato corto (HHMMss.sss).
+ * Date() -> 'HHMMss.sss'
  */
 if (!Date.toShortTime) {
-	Date.toShortTime = function (date) {
+	Date.toShortTime = (date) => {
 		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortTime")
 	}

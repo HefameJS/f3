@@ -1,19 +1,21 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const Isap = require(BASE + 'interfaces/isap');
+// Interfaces
+const iMongo = require('interfaces/imongo/iMongo');
+const iSap = require('interfaces/isap/iSap');
+const iEventos = require('interfaces/eventos/iEventos');
 
-const Events = require(BASE + 'interfaces/events')
-const emitRetransmision = Events.retransmisiones.emitRetransmision;
-const ObjectID = Imongo.ObjectID;
+// Modelos
+const ObjectID = iMongo.ObjectID;
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+const Pedido = require('model/pedido/ModeloPedido');
 
-const FedicomError = require(BASE + 'model/fedicomError');
-const Pedido = require(BASE + 'model/pedido/pedido');
-const expressExtensions = require(BASE + 'util/expressExtensions');
+// Helpers
+const extensionesExpress = require('util/extensionesExpress');
+
 
 const estadosRetransmitibles = [
     K.TX_STATUS.RECEPCIONADO,
@@ -26,7 +28,7 @@ const estadosRetransmitiblesForzando = [
     K.TX_STATUS.OK,
     K.TX_STATUS.PETICION_INCORRECTA,
     K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO,
-    K.TX_STATUS.PEDIDO.RECHAZADO_SAP,
+    K.TX_STATUS.RECHAZADO_SAP,
     K.TX_STATUS.PEDIDO.ESPERA_AGOTADA,
     K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP
 ];
@@ -35,205 +37,210 @@ const estadosRetransmitiblesForzando = [
  * Retransmite un pedido.
  * 
  * @param {string} txId El ID de transmisión del pedido a retransmitir
- * @param {object} options Opciones de la retransmisión
+ * @param {object} opcionesRetransmision Opciones de la retransmisión
  */
-const retransmitirPedido = function (otxId, options, callback) {
-    if (!options) options = {};
+const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
+    if (!opcionesRetransmision) opcionesRetransmision = {};
 
-    options.force = options.force ? options.force : false;
-    options.regenerateCRC = options.regenerateCRC ? options.regenerateCRC : false;
-    options.forzarAlmacen = options.forzarAlmacen ? options.forzarAlmacen : undefined;
-    options.sistemaSAP = options.sistemaSAP ? options.sistemaSAP : undefined;
-    options.noActualizarOriginal = options.noActualizarOriginal ? options.noActualizarOriginal : false;
+    opcionesRetransmision.force = opcionesRetransmision.force ? opcionesRetransmision.force : false;
+    opcionesRetransmision.regenerateCRC = opcionesRetransmision.regenerateCRC ? opcionesRetransmision.regenerateCRC : false;
+    opcionesRetransmision.forzarAlmacen = opcionesRetransmision.forzarAlmacen ? opcionesRetransmision.forzarAlmacen : undefined;
+    opcionesRetransmision.sistemaSAP = opcionesRetransmision.sistemaSAP ? opcionesRetransmision.sistemaSAP : undefined;
+    opcionesRetransmision.noActualizarOriginal = opcionesRetransmision.noActualizarOriginal ? opcionesRetransmision.noActualizarOriginal : false;
 
-    let rtxId = new ObjectID();
+    let txIdRetransmision = new ObjectID();
 
-    L.xi(rtxId, ['Retransmisión de pedido con ID ' + otxId, options]);
+    L.xi(txIdRetransmision, ['Retransmisión de pedido con ID ' + txIdOriginal, opcionesRetransmision]);
 
-    Imongo.findTxById(rtxId, otxId, function (err, dbTx) {
+    iMongo.consultaTx.porId(txIdRetransmision, txIdOriginal, (errorMongo, dbTx) => {
         // Comprobación de error en la búsqueda
-        if (err) {
-            var errorMessage = 'Ocurrió un error al buscar la transmisión en la base de datos';
-            L.xe(rtxId, [errorMessage, err]);
-            return callback(errorMessage, rtxId);
+        if (errorMongo) {
+            L.xe(txIdRetransmision, ['Ocurrió un error al buscar la transmisión en la base de datos', errorMongo]);
+            return callback('Ocurrió un error al buscar la transmisión en la base de datos', txIdRetransmision);
         }
 
         // No se encuentra la transmisión a retransmitir
         if (!dbTx) {
-            var errorMessage = 'No se encontró la transmisión en la base de datos';
-            L.xe(rtxId, [errorMessage]);
-            return callback(errorMessage, rtxId);
+            L.xe(txIdRetransmision, ['No se encontró la transmisión en la base de datos']);
+            return callback('No se encontró la transmisión en la base de datos', txIdRetransmision);
         }
 
         // Escribimos en el log de la transmisión original, ahora que sabemos que existe:
-        L.xi(otxId, ['Se lanza la retransmisión con ID ' + rtxId + ' para esta transmisión']);
+        L.xi(txIdOriginal, ['Se lanza la retransmisión con ID ' + txIdRetransmision + ' para esta transmisión']);
 
         // La transmisión a retransmitir no es un pedido
         if (dbTx.type !== K.TX_TYPES.PEDIDO) {
-            var errorMessage = 'La transmisión indicada no es un pedido';
-            L.xe(rtxId, [errorMessage, dbTx.type]);
-            L.xw(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con errores', errorMessage]);
-            emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.IMPOSIBLE, errorMessage)
-            return callback(errorMessage, rtxId);
+            let mensajeDeError = 'La transmisión indicada no es un pedido';
+            L.xe(txIdRetransmision, [mensajeDeError, dbTx.type]);
+            L.xw(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con errores', mensajeDeError]);
+            iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.IMPOSIBLE, mensajeDeError)
+            return callback(mensajeDeError, txIdRetransmision);
         }
-        L.xt(rtxId, ['OK: La transmisión es de tipo CREAR PEDIDO']);
+        L.xt(txIdRetransmision, ['OK: La transmisión es de tipo CREAR PEDIDO']);
 
         // Comprobamos que tenemos toda la información de la petición original necesaria. 
         if (!dbTx.clientRequest || !dbTx.clientRequest.body || !dbTx.clientRequest.authentication) {
-            var errorMessage = 'La transmisión no tiene guardada toda la transmisión HTTP original necesaria';
-            L.xf(rtxId, [errorMessage, dbTx]);
-            L.xe(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con errores', errorMessage]);
-            emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.IMPOSIBLE, errorMessage)
-            return callback(errorMessage, rtxId);
+            let mensajeDeError = 'La transmisión no tiene guardada toda la transmisión HTTP original necesaria';
+            L.xf(txIdRetransmision, [mensajeDeError, dbTx]);
+            L.xe(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con errores', mensajeDeError]);
+            iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.IMPOSIBLE, mensajeDeError)
+            return callback(mensajeDeError, txIdRetransmision);
         }
-        L.xt(rtxId, ['OK: Tenemos todos los campos necesarios para la retransmisión']);
+        L.xt(txIdRetransmision, ['OK: Tenemos todos los campos necesarios para la retransmisión']);
 
-        var [retransmisible, estadoError, mensajeError] = isRetransmitible(dbTx, options.force);
-        if (!retransmisible) {
-            L.xe(rtxId, [mensajeError, estadoError, dbTx.status]);
-            L.xe(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con errores', errorMessage]);
-            emitRetransmision(rtxId, dbTx, options, estadoError, mensajeError)
-            return callback(mensajeError, rtxId);
+        let [esRetransmisible, estadoError, mensajeDeError] = _esRetransmisible(dbTx, opcionesRetransmision.force);
+        if (!esRetransmisible) {
+            L.xe(txIdRetransmision, [mensajeDeError, estadoError, dbTx.status]);
+            L.xe(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con errores', errorMessage]);
+            iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, estadoError, mensajeDeError)
+            return callback(mensajeDeError, txIdRetransmision);
         }
-        L.xt(rtxId, ['OK: La transmisión es válida para ser retransmitida']);
+        L.xt(txIdRetransmision, ['OK: La transmisión es válida para ser retransmitida']);
 
         // Recreamos el pedido, tal y como vendría en la petición original
         // Es decir, hacemos pasar 'dbTx.clientRequest' por la variable 'req' original.
         // Para esto, necesitaremos que existan los campos 'body', 'txId' y 'token'
-        var pedido = null;
+        let pedido = null;
         try {
             dbTx.clientRequest.txId = dbTx._id;
             dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-            var pedido = new Pedido(dbTx.clientRequest);
-        } catch (fedicomError) {
-            fedicomError = FedicomError.fromException(rtxId, fedicomError);
-            L.xe(rtxId, ['Ocurrió un error al analizar la petición', fedicomError])
-            emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
+            pedido = new Pedido(dbTx.clientRequest);
+        } catch (excepcion) {
+            let fedicomError = ErrorFedicom.desdeExcepcion(txIdRetransmision, excepcion);
+            L.xe(txIdRetransmision, ['Ocurrió un error al analizar la petición', fedicomError])
+            iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
                 clientResponse: fedicomError.getErrors(),
                 status: K.TX_STATUS.PETICION_INCORRECTA
             });
-            L.xi(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza en estado de PETICION INCORRECTA']);
-            return callback(null, rtxId);
+            L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza en estado de PETICION INCORRECTA']);
+            return callback(null, txIdRetransmision);
         }
-        L.xt(rtxId, ['OK: El contenido de la transmisión es un pedido correcto', pedido]);
+        L.xt(txIdRetransmision, ['OK: El contenido de la transmisión es un pedido correcto', pedido]);
 
 
-        if (options.sistemaSAP) {
-            L.xd(rtxId, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedido.sapSystem || '<n/a>') + '] => [' + options.sistemaSAP + ']']);
-            pedido.sapSystem = options.sistemaSAP;
+        if (opcionesRetransmision.sistemaSAP) {
+            L.xd(txIdRetransmision, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedido.sapSystem || '<n/a>') + '] => [' + opcionesRetransmision.sistemaSAP + ']']);
+            pedido.sapSystem = opcionesRetransmision.sistemaSAP;
 
             // Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
-            options.regenerateCRC = true;
+            opcionesRetransmision.regenerateCRC = true;
         }
 
-        if (options.forzarAlmacen) {
-            L.xd(rtxId, ['Se fuerza el cambio del almacén del pedido [' + (pedido.codigoAlmacenServicio || '<n/a>') + '] => [' + options.forzarAlmacen + ']']);
-            pedido.codigoAlmacenServicio = options.forzarAlmacen;
+        if (opcionesRetransmision.forzarAlmacen) {
+            L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedido.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
+            pedido.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
 
             // Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
-            options.regenerateCRC = true;
+            opcionesRetransmision.regenerateCRC = true;
         }
 
-        let ctxId = null;
-        if (options.regenerateCRC) {
-            var nuevoNPO = 'RTX' + pedido.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-            L.xd(rtxId, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido. [' + pedido.numeroPedidoOrigen + '] => [' + nuevoNPO + ']']);
+        let txIdNuevo = null;
+        if (opcionesRetransmision.regenerateCRC) {
+            let nuevoNPO = 'RTX' + pedido.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            L.xd(txIdRetransmision, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido. [' + pedido.numeroPedidoOrigen + '] => [' + nuevoNPO + ']']);
             pedido.numeroPedidoOrigen = nuevoNPO;
             pedido.generarCRC();
 
             // Si cambia el CRC, nunca actualizaremos el pedido original sino que generaremos
             // una nueva transmisión con su propio TxId
-            options.noActualizarOriginal = true;
+            opcionesRetransmision.noActualizarOriginal = true;
 
             // Creamos un clon de la request y lo emitimos como un nuevo inicio de pedido
-            let req = expressExtensions.extendReqForRtx(dbTx.clientRequest);
+            let req = extensionesExpress.extenderSolicitudRetransmision(dbTx.clientRequest);
             req.body.numeroPedidoOrigen = nuevoNPO;
 
-            ctxId = req.txId;
-            options.ctxId = ctxId;
+            txIdNuevo = req.txId;
+            opcionesRetransmision.ctxId = txIdNuevo;
 
-            L.xi(rtxId, ['La retransmisión resultará en la generación de una nueva transmisión con TxID [' + ctxId + ']']);
-            L.xi(otxId, ['Se ha generado un clon de la transmisión con ID [' + ctxId + ']']);
-            L.xi(ctxId, ['Se inicia esta transmisión como clon de [' + otxId + '], generado por la retransmisión [' + rtxId + ']']);
+            L.xi(txIdRetransmision, ['La retransmisión resultará en la generación de una nueva transmisión con TxID [' + txIdNuevo + ']']);
+            L.xi(txIdOriginal, ['Se ha generado un clon de la transmisión con ID [' + txIdNuevo + ']']);
+            L.xi(txIdNuevo, ['Se inicia esta transmisión como clon de [' + txIdOriginal + '], generado por la retransmisión [' + txIdRetransmision + ']']);
 
-            Events.retransmisiones.emitInicioClonarPedido(req, pedido, otxId);
+            // Este evento crea la transccion como RECEPCIONADA.
+            // La posterior emisión de iEventos.retransmisiones.retransmitirPedido es la que completará
+            // el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente mediante la
+            // llamada a finClonarPedido.
+            iEventos.retransmisiones.inicioClonarPedido(req, pedido);
         }
 
 
-        pedido.limpiarEntrada(ctxId || otxId);
-        L.xi(rtxId, ['Transmitimos a SAP el pedido']);
+        pedido.limpiarEntrada(txIdNuevo || txIdOriginal);
+        L.xi(txIdRetransmision, ['Transmitimos a SAP el pedido']);
 
+        iSap.retransmitirPedido(pedido, (errorSap, respuestaSap, solicitudASap) => {
 
+            respuestaSap = _construyeRespuestaSap(errorSap, respuestaSap);
 
-        Isap.retransmitirPedido(pedido, (sapError, sapResponse, sapRequest) => {
-
-            sapResponse = construyeSapResponse(sapError, sapResponse);
-
-            if (sapError) {
-                if (sapError.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-                    var fedicomError = new FedicomError('HTTP-400', sapError.code, 400);
-                    L.xe(rtxId, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
-                    emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                        sapRequest: sapRequest,
-                        sapResponse: sapResponse,
-                        clientResponse: construyeClientResponse(ctxId || otxId, 400, fedicomError.getErrors()),
+            if (errorSap) {
+                if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+                    let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+                    L.xe(txIdRetransmision, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
+                    iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+                        sapRequest: solicitudASap,
+                        sapResponse: respuestaSap,
+                        clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 400, errorFedicom.getErrors()),
                         status: K.TX_STATUS.PETICION_INCORRECTA
                     });
-                    L.xi(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con éxito']);
-                    L.xi(rtxId, ['Finaliza la retransmisión']);
-                    return callback(null, rtxId, ctxId);
+                    L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+                    L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
+                    return callback(null, txIdRetransmision, txIdNuevo);
 
                 } else {
-                    L.xe(rtxId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', sapError]);
+                    L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorSap]);
                     pedido.simulaFaltas();
 
-                    emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                        sapRequest: sapRequest,
-                        sapResponse: sapResponse,
-                        clientResponse: construyeClientResponse(ctxId || otxId, 201, pedido),
+                    iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+                        sapRequest: solicitudASap,
+                        sapResponse: respuestaSap,
+                        clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, pedido),
                         status: K.TX_STATUS.NO_SAP
                     });
 
-                    L.xi(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con éxito']);
-                    L.xi(rtxId, ['Finaliza la retransmisión']);
-                    return callback(null, rtxId, ctxId);
+                    L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+                    L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
+                    return callback(null, txIdRetransmision, txIdNuevo);
                 }
             }
 
-            var clientResponse = pedido.obtenerRespuestaCliente(ctxId || otxId, sapResponse.body);
-            var [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = clientResponse.estadoTransmision();
-            var responseHttpStatusCode = clientResponse.isRechazadoSap() ? 409 : 201;
+            let respuestaCliente = pedido.obtenerRespuestaCliente(txIdNuevo || txIdOriginal, respuestaSap.body);
+            let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = respuestaCliente.estadoTransmision();
+            let codigoEstadoHTTP = respuestaCliente.isRechazadoSap() ? 409 : 201;
 
-            emitRetransmision(rtxId, dbTx, options, K.TX_STATUS.RETRANSMISION.OK, null, {
-                sapRequest: sapRequest,
-                sapResponse: sapResponse,
-                clientResponse: construyeClientResponse(ctxId || otxId, responseHttpStatusCode, clientResponse),
+            iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+                sapRequest: solicitudASap,
+                sapResponse: respuestaSap,
+                clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, codigoEstadoHTTP, respuestaCliente),
                 status: estadoTransmision,
                 numerosPedidoSAP: numerosPedidoSAP,
                 numeroPedidoAgrupado: numeroPedidoAgrupado
             });
 
-            L.xi(otxId, ['La retransmisión con ID ' + rtxId + ' finaliza con éxito']);
-            return callback(null, rtxId, ctxId);
+            L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+            return callback(null, txIdRetransmision, txIdNuevo);
         });
 
     });
 
 }
 
-const construyeSapResponse = (callError, httpResponse) => {
+/**
+ * Construye el campo 'sapResponse' de la transmisión para almacenarlo en MongoDB
+ * @param {*} errorSap 
+ * @param {*} respuestaSap 
+ */
+const _construyeRespuestaSap = (errorSap, respuestaSap) => {
 
-    if (callError) {
-        switch (callError.type) {
+    if (errorSap) {
+        switch (errorSap.type) {
             case K.ISAP.ERROR_TYPE_NO_SAPSYSTEM:
                 return null;
             default:
                 return {
                     timestamp: new Date(),
                     error: {
-                        source: K.ISAP.errorToString(callError.type),
-                        statusCode: (callError.errno || callError.errno === 0) ? callError.errno : null,
-                        message: callError.code
+                        source: K.ISAP.errorToString(errorSap.type),
+                        statusCode: (errorSap.errno || errorSap.errno === 0) ? errorSap.errno : null,
+                        message: errorSap.code
                     }
                 };
         }
@@ -241,35 +248,35 @@ const construyeSapResponse = (callError, httpResponse) => {
 
     return {
         timestamp: new Date(),
-        statusCode: httpResponse.statusCode,
-        headers: httpResponse.headers,
-        body: httpResponse.body
+        statusCode: respuestaSap.statusCode,
+        headers: respuestaSap.headers,
+        body: respuestaSap.body
     }
 
 }
 
-const construyeClientResponse = (txId, responseStatus, responseBody) => {
+const _construyeRespuestaCliente = (txId, codigoEstadoHttp, cuerpoRespuesta) => {
     return {
         timestamp: new Date(),
-        statusCode: responseStatus,
+        statusCode: codigoEstadoHttp,
         headers: {
             'x-txid': txId,
             'software-id': K.SOFTWARE_ID.HEFAME,
             'content-api-version': K.PROTOCOL_VERSION,
             'content-type': 'application/json; charset=utf-8',
-            'content-length': responseBody ? '' + responseBody.length : '0'
+            'content-length': cuerpoRespuesta ? '' + cuerpoRespuesta.length : '0'
         },
-        body: responseBody
+        body: cuerpoRespuesta
     };
 }
 
-const isRetransmitible = (dbTx, force) => {
+const _esRetransmisible = (dbTx, forzar) => {
 
     if (estadosRetransmitibles.includes(dbTx.status))
         return [true, null, 'El estado de la transmisión es válido para ser retransmitido'];
 
     if (estadosRetransmitiblesForzando.includes(dbTx.status)) {
-        if (force)
+        if (forzar)
             return [true, null, 'El estado de la transmisión es válido para ser retransmitido porque se está forzando'];
         else
             return [false, K.TX_STATUS.RETRANSMISION.SOLO_FORZANDO, 'El estado de la retransmisión solo permite retransmitirla forzando'];
@@ -280,5 +287,5 @@ const isRetransmitible = (dbTx, force) => {
 
 
 module.exports = {
-    retransmitirPedido: retransmitirPedido
+    retransmitirPedido
 };

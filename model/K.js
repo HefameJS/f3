@@ -23,9 +23,9 @@ module.exports = {
         NO_AUTORIZADO: 3011,
         PETICION_INCORRECTA: 3020,
         NO_SAP: 3110,
+        RECHAZADO_SAP: 3120,
         OK: 9900,
         PEDIDO: {
-            RECHAZADO_SAP: 3120,
             ESPERANDO_NUMERO_PEDIDO: 8010,
             ESPERA_AGOTADA: 8100,
             SIN_NUMERO_PEDIDO_SAP: 9140,
@@ -62,27 +62,14 @@ module.exports = {
         BUSCAR_ALBARANES: 30,
         CONSULTAR_ALBARAN: 31,
         BUSCAR_FACTURAS: 40,
-        CONSULTAR_FACTURA: 41
+        CONSULTAR_FACTURA: 41,
+        LOGISTICA: 50,
+        CONSULTA_LOGISTICA: 51,
+        LOGISTICA_DUPLICADA: 52
     },
     SOFTWARE_ID: {
-        FARMABRAIN: '0010',
-        UNYCOPWIN: '0012',
         HEFAME: '0026',
-        FARMALOG: '0028',
-        NOVOPHAR: '0036',
-        CONSOFT: '0038',
-        PULSO: '0048',
-        TEDIFARMA: '0059',
-        TEDIFARMA_2: '0061',
-        POSTMAN: '9000',
-        FEDICOM_APP: '9001',
-        RETRANSMISOR: '9002',
-        APP_EMPLEADO: '9700',
-        FMASONLINE: '9800',
-        SAP_P01: '9993',
-        SAP_T01: '9992',
-        SAP_D01: '9991',
-        FEDICOM3_APP: '9999'
+        RETRANSMISOR: '9002'
     },
     CODIGOS_ERROR_FEDICOM: {
         WARN_PROTOCOLO: 'PROTOCOL-WARN-999',
@@ -129,11 +116,8 @@ module.exports = {
             },
             LINEAS: {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-
                 codigoArticulo: { ignore: true },
-
                 sap_ignore: { ignore: true },
-
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 descripcionArticulo: { remove: true },
@@ -149,7 +133,6 @@ module.exports = {
                 servicioAplazado: { remove: true },
 
                 // Campos que de aparecer deben ser cadenas de texto
-                codigoArticulo: { string: { max: 15 } },
                 codigoUbicacion: { string: { max: 50 } },
                 valeEstupefaciente: { string: { max: 50 } },
                 observaciones: { string: { max: 50 } },
@@ -203,8 +186,7 @@ module.exports = {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
                 codigoArticulo: { ignore: true },
                 sap_ignore: { ignore: true },
-                crc: { ignore: true },
-
+                ordenLineaAlbaran: { ignore: true },
 
                 // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
                 descripcionArticulo: { remove: true },
@@ -212,12 +194,10 @@ module.exports = {
 
                 // Campos que de aparecer deben ser cadenas de texto
                 numeroAlbaran: { string: { max: 50 } },
-                codigoArticulo: { string: { max: 15 } },
                 lote: { string: { max: 15 } },
                 codigoMotivo: { string: { max: 15 } },
                 valeEstupefaciente: { string: { max: 50 } },
                 observaciones: { string: { max: 50 } },
-
 
                 // Campos que de aparecer deben ser enteros
                 orden: { integer: {} },
@@ -230,7 +210,51 @@ module.exports = {
                 // Campos que deben ser array
                 incidencias: { array: {} }
             }
-        }
+        },
+        LOGISTICA: {
+            CABECERA: {
+                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
+                codigoCliente: { ignore: true },
+                numeroLogisticaOrigen: { ignore: true },
+                lineas: { ignore: true },
+                login: { ignore: true },
+                crc: { ignore: true },
+                sapSystem: { ignore: true },
+                authReq: { ignore: true },
+                ignorarTodasLineas: { ignore: true },
+                origen: { ignore: true },
+                destino: { ignore: true },
+
+                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
+                numeroLogistica: { remove: true },
+                fechaLogistica: { remove: true },
+                
+                // Campos que de aparecer deben ser cadenas de texto
+                tipoLogistica: { string: { max: 1 } },
+                observaciones: { string: { max: 50 } },
+
+                // Campos que deben ser array
+                incidencias: { array: {} }
+            },
+            LINEAS: {
+                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
+                codigoArticulo: { ignore: true },
+                sap_ignore: { ignore: true },
+
+                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
+                descripcionArticulo: { remove: true },
+
+                // Campos que de aparecer deben ser cadenas de texto
+                observaciones: { string: { max: 50 } },
+
+                // Campos que de aparecer deben ser enteros
+                orden: { integer: {} },
+                cantidad: { integer: {} },
+
+                // Campos que deben ser array
+                incidencias: { array: {} }
+            }
+        },
     },
     POST_CLEAN: {
         PEDIDOS: {
@@ -248,7 +272,7 @@ module.exports = {
             removePosIfFalse: ['servicioDemorado']
         },
         DEVOLUCIONES: {
-            removeCab: ['login', 'crc'],
+            removeCab: ['login', 'crc', 'sap_punto_entrega', 'sap_bloqueo_entrega', 'sap_create_logistic', 'sap_kunnr_code', 'sap_num_devo', 'sap_fecha_bapi'],
             removePos: ['sap_ignore'],
             replaceCab: ['numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'],
             replacePos: ['numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente', 'fechaCaducidad'],
@@ -260,10 +284,26 @@ module.exports = {
             removePosEmptyArray: ['incidencias'],
             removePosZeroValue: [],
             removePosIfFalse: []
-        }
+        },
+        LOGISTICA: {
+            removeCab: ['login', 'crc', 'sap_punto_entrega', 'ignorarTodasLineas', 'sap_bloqueo_entrega', 'sap_create_logistic'],
+            removePos: ['sap_pos'],
+            replaceCab: ['numeroLogistica', 'codigoCliente', 'numeroLogisticaOrigen', 'tipoLogistica', 'fechaLogistica'],
+            replacePos: ['codigoArticulo', 'descripcionArticulo'],
+            removeCabEmptyString: ['observaciones', 'tipoLogistica'],
+            removeCabEmptyArray: ['incidencias'],
+            removeCabZeroValue: [],
+            removeCabIfFalse: [],
+            removePosEmptyString: ['observaciones'],
+            removePosEmptyArray: ['incidencias'],
+            removePosZeroValue: [],
+            removePosIfFalse: [],
+            replaceDireccionLogistica: ['codigoPostal'],
+            removeDireccionLogisticaEmptyString: ['codigo', 'nombre', 'calle', 'poblacion', 'provincia', 'codigoPostal', 'pais', 'telefono', 'email']
+        },
     },
-    PROTOCOL_VERSION: '3.4.0',
-    SERVER_VERSION: '0.9.3',
+    PROTOCOL_VERSION: '3.4.2',
+    SERVER_VERSION: '0.10.1',
     TX_VERSION: 902,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
@@ -311,7 +351,8 @@ module.exports = {
         CORE_MASTER: 'core-master',
         CORE_WORKER: 'core-worker',
         WATCHDOG: 'watchdog',
-        MONITOR: 'monitor'
+        MONITOR: 'monitor',
+        BALANCEADOR: 'balanceador'
     },
     PROCESS_REGISTER_INTERVAL: 10000,
     PROCESS_STATUS: {
@@ -320,25 +361,15 @@ module.exports = {
         DEAD: 99
     },
     DOMINIOS: {
-        verificar: (dominio) => {
-            var DOMINIOS = module.exports.DOMINIOS;
-
-            if (dominio) {
-                for (var domainIdx in DOMINIOS) {
-                    if (DOMINIOS[domainIdx].toUpperCase) {
-                        if (DOMINIOS[domainIdx].toUpperCase() === dominio.toUpperCase())
-                            return DOMINIOS[domainIdx];
-                    }
-                }
-            }
-            return DOMINIOS.FEDICOM;
-        },
         FEDICOM: 'FEDICOM',
         TRANSFER: 'transfer_laboratorio',
         HEFAME: 'HEFAME',
         EMPLEADO: 'empleado',
-        FMASONLINE: 'F+Online',
-        APIKEY: 'APIKEY' // DEPRECAR
+        FMASONLINE: 'FMAS',
+        PORTAL_HEFAME: 'PORTAL_HEFAME',
+        SAP_BACKGROUND: 'SAP_BG',
+        INTERFEDICOM: 'INTERFEDICOM'
+
     },
     FLAGS: {
         SQLITE: 'sqlite',
@@ -355,6 +386,7 @@ module.exports = {
         NO_FALTAS: 'noFaltas',
         ESTUPEFACIENTE: 'estupe',
         DUPLICADOS: 'dupes',
+        DUPLICADO_SAP: 'sapDupe',
         BONIFICADO: 'bonif',
         TRANSFER:'transfer',
         FALTATOTAL: 'faltaTotal',
@@ -363,7 +395,9 @@ module.exports = {
         VERSION: 'v',
         TOTALES: 's',
         TIPO: 't',
-        PUNTO_ENTREGA: 'pt'
+        PUNTO_ENTREGA: 'pt',
+        GENERA_RECOGIDA: 'logistica',
+        DEVOLUCION_PARCIAL: 'devParc'
     },
     TIPIFICADO_FALTAS: {
         "BAJA": "desconocido",

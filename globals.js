@@ -1,9 +1,7 @@
 
-global.BASE = __dirname + '/';
-require(BASE + 'util/nativeExtensions');
+require('util/nativeExtensions');
 
-global.constants = require(BASE + 'model/K');
-
+global.constants = require('model/K');
 global.instanceID = require('os').hostname() + '-' + process.pid + '-' + global.constants.SERVER_VERSION;
-global.config = require(BASE + 'config');
-global.logger = require(BASE + 'util/logger');
+global.config = require('config');
+global.logger = require('util/logger');

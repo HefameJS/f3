@@ -1,61 +1,63 @@
 'use strict';
-const BASE = global.BASE;
-const config = global.config;
+const C = global.config;
 const L = global.logger;
+//const K = global.constants;
 
-const Imongo = require(BASE + 'interfaces/imongo');
-const Isqlite = require(BASE + 'interfaces/isqlite');
+// Interfaces
+const iMongo = require('interfaces/imongo/iMongo');
+const iSQLite = require('interfaces/isqlite/iSQLite');
 
 
-var operationInProgress = false;
-var rowsOnTheFly = 0;
-var maxRetries = config.watchdog.sqlite.maxRetries || 10;
+let hayOperacionesEnProceso = false;
+let numeroOperacionesEnEjecucion = 0;
+const intentosMaximosDeEnvio = C.watchdog.sqlite.maxRetries || 10;
 
-var interval = setInterval(function() {
+/*let interval = */
+setInterval(() => {
 
-	if (operationInProgress || rowsOnTheFly) return;
+	if (hayOperacionesEnProceso || numeroOperacionesEnEjecucion) return;
 
-	operationInProgress = true;
+	hayOperacionesEnProceso = true;
 
-	Isqlite.countTx(maxRetries, function (err, count) {
-		if (err) {
-			L.e(['Error al contar el número de entradas en base de datos de respaldo', err], 'sqlitewatch');
-			operationInProgress = false;
+	iSQLite.numeroEntradasPendientes( (errorSQLite, numeroEntradas) => {
+		if (errorSQLite) {
+			L.e(['Error al contar el número de entradas en base de datos de respaldo', errorSQLite], 'sqlitewatch');
+			hayOperacionesEnProceso = false;
 			return;
 		}
 
-		if (count) {
-			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', count], 'sqlitewatch');
+		if (numeroEntradas) {
+			L.i(['Se encontraron entradas en la base de datos de respaldo - Procedemos a insertarlas en base de datos principal', numeroEntradas], 'sqlitewatch');
 
-			Imongo.connectionStatus( (connected) => {
-				if (!connected) {
-					operationInProgress = false;
-					L.w(['Aún no se ha restaurado la conexión con MongoDB']);
+			iMongo.chequeaConexion((conectado) => {
+				if (!conectado) {
+					hayOperacionesEnProceso = false;
+					L.w(['Aún no se ha restaurado la conexión con MongoDB'], 'sqlitewatch');
 					return;
 				}
 
-				Isqlite.retrieveAll(maxRetries, 50, 0, function (error, rows) {
-					if (error) {
-						L.f(['error al obtener las entradas de la base de datos de respaldo', error], 'sqlitewatch');
-						operationInProgress = false;
+				iSQLite.obtenerEntradas(intentosMaximosDeEnvio, (errorSQLite, entradas) => {
+					if (errorSQLite) {
+						L.f(['error al obtener las entradas de la base de datos de respaldo', errorSQLite], 'sqlitewatch');
+						hayOperacionesEnProceso = false;
 						return;
 					}
 
-					rowsOnTheFly = rows.length;
+					numeroOperacionesEnEjecucion = entradas.length;
 
-					rows.forEach( function (row) {
+					entradas.forEach((row) => {
 
-						Imongo.updateFromSqlite(JSON.parse(row.data), function (updated) {
-							if (updated) {
-								Isqlite.removeUid(row.uid, function (err, count) {
-									rowsOnTheFly --;
+						iMongo.transaccion.grabarDesdeSQLite(row.data, (exito) => {
+							if (exito) {
+								iSQLite.eliminarEntrada(row.uid, (errorSQLite, numeroEntradasBorradas) => {
+									numeroOperacionesEnEjecucion--;
 								});
 							} else {
-								Isqlite.incrementUidRetryCount(row.uid, () => {});
-								rowsOnTheFly --;
+								iSQLite.incrementarNumeroDeIntentos(row.uid, () => { });
+								numeroOperacionesEnEjecucion--;
 								// Log de cuando una entrada agota el número de transmisiones
-								if (row.retryCount === maxRetries - 1) {
-									row.retryCount++; 
+								if (row.retryCount === intentosMaximosDeEnvio - 1) {
+									row.retryCount++;
 									L.f(['Se ha alcanzado el número máximo de retransmisiones para la entrada', row], 'sqlitewatch');
 								} else {
 									L.e(['Ocurrió un error al insertar la entrada en MDB. Se reintentará mas tarde.', row], 'sqlitewatch')
@@ -64,15 +66,15 @@ var interval = setInterval(function() {
 						});
 
 					});
-					operationInProgress = false;
+					hayOperacionesEnProceso = false;
 
 				});
 			});
 		} else {
 			L.t('No se encontraron entradas en la base de datos de respaldo', 'sqlitewatch');
-			operationInProgress = false;
+			hayOperacionesEnProceso = false;
 		}
 
 	});
 
-}, ((config.watchdog.sqlite.interval || 5) * 1000) );
+}, ((C.watchdog.sqlite.interval || 5) * 1000));

@@ -1,12 +1,13 @@
 'use strict';
-require('./globals'); 
-const BASE = global.BASE;
+require('app-module-path').addPath(__dirname);
+
+require('globals');
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
 
-var cluster = require('cluster');
+const cluster = require('cluster');
 
 if (cluster.isMaster) {
 
@@ -14,26 +15,26 @@ if (cluster.isMaster) {
 	process.type = K.PROCESS_TYPES.CORE_MASTER;
 	L.i('**** ARRANCANDO CONCENTRADOR FEDICOM 3 - ' + K.SERVER_VERSION + ' ****');
 	L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
-	L.i('*** ID master: ' + global.instanceID , 'cluster');
+	L.i('*** ID master: ' + global.instanceID, 'cluster');
 
-	process.on('uncaughtException', function (err) {
-		L.dump(err)
+	process.on('uncaughtException', (excepcionNoControlada) => {
+		L.dump(excepcionNoControlada)
 		process.exit(1)
 	})
 
 
-	var pidFile = (C.pid || '.') + '/' + process.title + '.pid';
-	require('fs').writeFile(pidFile, process.pid, function(err) {
-	    if(err) {
-	        L.e(["Error al escribir el fichero del PID", err], 'cluster');
-	    }
+	const ficheroPID = (C.pid || '.') + '/' + process.title + '.pid';
+	require('fs').writeFile(ficheroPID, process.pid, (errorFichero) => {
+		if (errorFichero) {
+			L.e(["Error al escribir el fichero del PID", errorFichero], 'cluster');
+		}
 	});
 
 
-	var workerCount = Math.max(parseInt(C.workers), 1) || (require('os').cpus().length - 1 || 1);
-	L.i('** Lanzando ' + workerCount + ' workers', 'cluster');
-	for (var i = 0; i < workerCount; i ++) {
-		 cluster.fork();
+	const numeroWorkers = Math.max(parseInt(C.workers), 1) || (require('os').cpus().length - 1 || 1);
+	L.i('** Lanzando ' + numeroWorkers + ' workers', 'cluster');
+	for (let i = 0; i < numeroWorkers; i++) {
+		cluster.fork();
 	}
 
 } else {
@@ -41,55 +42,52 @@ if (cluster.isMaster) {
 	process.title = K.PROCESS_TITLES.CORE_WORKER + '-' + cluster.worker.id;
 	process.type = K.PROCESS_TYPES.CORE_WORKER;
 
-	process.on('uncaughtException', function (err) {
-		L.dump(err)
+	process.on('uncaughtException', (excepcionNoControlada) => {
+		L.dump(excepcionNoControlada)
 		process.exit(1)
 	})
 
-	L.i(['*** Iniciado worker', {instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id}], 'cluster');
+	L.i(['*** Iniciado worker', { instanceID: global.instanceID, pid: process.pid, workerID: cluster.worker.id }], 'cluster');
 
-	const http = require('http');
-	var httpConf = C.http;
+	const HTTP = require('http');
+	let configuracionHTTP = C.http;
 
 
-	var app = require('express')();
-	var cors = require('cors');
-	app.use(cors({exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version']}));
+	let app = require('express')();
+	let cors = require('cors');
+	app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));
 	app.disable('x-powered-by');
 	app.disable('etag');
-	app.use(require('body-parser').json({extended: true, limit: '5mb'}));
+	app.use(require('body-parser').json({ extended: true, limit: '5mb' }));
 	app.use(require('express-bearer-token')());
 
 	// Carga de rutas
-	var routes = require(BASE + 'routes/core');
-	routes(app);
+	let rutasHTTP = require('routes/core');
+	rutasHTTP(app);
 
 	try {
-		var server = http.createServer(app).listen(httpConf.port, function() {
-			L.i("Servidor HTTP a la escucha en el puerto " + httpConf.port);
-		}).on('error', function(err) {
+		HTTP.createServer(app).listen(configuracionHTTP.port, () => {
+			L.i("Servidor HTTP a la escucha en el puerto " + configuracionHTTP.port);
+		}).on('error', (errorServidorHTTP) => {
 			L.e("Ocurrió un error al arrancar el servicio HTTP");
-		   L.e(err);
+			L.e(errorServidorHTTP);
 			process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 		});
-	} catch (ex) {
+	} catch (excepcionArranqueServidorHTTP) {
 		L.f("Ocurrió un error al arrancar el servicio HTTP");
-		L.f(ex);
+		L.f(excepcionArranqueServidorHTTP);
 		process.exit(K.EXIT_CODES.E_HTTP_SERVER_ERROR);
 	}
 
-	
+
 }
 
 
 
-require(BASE + 'interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
+require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 
 
-cluster.on('exit', function (worker) {
-
+cluster.on('exit', (worker) => {
 	L.f(['**** Un worker ha muerto. Lo levantamos de entre los muertos', worker.id], 'cluster');
-
-    cluster.fork();
-
+	cluster.fork();
 });

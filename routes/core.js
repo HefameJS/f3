@@ -1,45 +1,47 @@
 'use strict';
-const BASE = global.BASE;
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
+// Interfaces
+const iEventos = require('interfaces/eventos/iEventos');
 
-const FedicomError = require(BASE + 'model/fedicomError');
-const Events = require(BASE + 'interfaces/events');
-const ExpressExtensions = require(BASE + 'util/expressExtensions');
+// Modelos
+const ErrorFedicom = require('model/ModeloErrorFedicom');
+
+// Helpers
+const extensionesExpress = require('util/extensionesExpress');
+const tryCatch = require('./tryCatchWrapper');
 
 
-const tryCatch = require(BASE + 'routes/tryCatchWrapper');
+module.exports = (app) => {
 
-
-module.exports = function (app) {
-
-	var controllers = {
-		authenticate: require(BASE + 'controllers/authenticate'),
-		pedidos: require(BASE + 'controllers/pedidos'),
-		devoluciones: require(BASE + 'controllers/devoluciones'),
-		albaranes: require(BASE + 'controllers/albaranes'),
-		confirmacionPedido: require(BASE + 'controllers/confirmacionPedido'),
-		retransmit: require(BASE + 'controllers/retransmit'),
-		stats: require(BASE + 'controllers/stats')
+	const controladores = {
+		autenticacion: require('controllers/controladorAutenticacion'),
+		pedidos: require('controllers/controladorPedidos'),
+		devoluciones: require('controllers/controladorDevoluciones'),
+		albaranes: require('controllers/controladorAlbaranes'),
+		logistica: require('controllers/controladorLogistica'),
+		confirmacionPedido: require('controllers/controladorConfirmacionPedido'),
+		retransmision: require('controllers/controladorRetransmision'),
 	}
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	 * Detecta errores comunes en las peticiones entrantes tales como:
 	 *  - Errores en el parseo del JSON entrante.
 	 */
-	app.use(function (error, req, res, next) {
-		if (error) {
+	app.use((errorExpress, req, res, next) => {
+		if (errorExpress) {
+			
+			[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+			let txId = req.txId;
 
-			[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.originIp);
+			L.xe(txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
 
-			L.e('** Recibiendo transmisión erronea ' + req.txId + ' desde ' + req.originIp);
-			L.xe(req.txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', error]);
-
-			var fedicomError = new FedicomError(error);
-			var responseBody = fedicomError.send(res);
-			Events.emitDiscard(req, res, responseBody, error);
+			let errorFedicom = new ErrorFedicom(errorExpress);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.descartar(req, res, cuerpoRespuesta, errorExpress);
 		} else {
 			next();
 		}
@@ -50,44 +52,45 @@ module.exports = function (app) {
 	 * Tambien añadimos funcionalidades a req y res
 	 */
 
-	app.use(function (req, res, next) {
+	app.use( (req, res, next) => {
 
-		[req, res] = ExpressExtensions.extendReqAndRes(req, res);
+		[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+		let txId = req.txId;
 
-		L.i('** Recibiendo transmisión ' + req.txId + ' desde ' + req.originIp);
-		L.xt(req.txId, 'Iniciando procesamiento de la transmisión');
+		L.i('** Recibiendo transmisión ' + txId + ' desde ' + req.originIp);
+		L.xt(txId, 'Iniciando procesamiento de la transmisión');
 
-		return next();
+		next();
 	});
 
 
 
 	/* RUTAS */
 	app.route('/authenticate')
-		.post(tryCatch(controllers.authenticate.doAuth))
-		.get(tryCatch(controllers.authenticate.verifyToken));
+		.post(tryCatch(controladores.autenticacion.autenticar))
+		.get(tryCatch(controladores.autenticacion.verificarToken));
 
 
 	app.route('/pedidos')
-		.get(tryCatch(controllers.pedidos.getPedido))
-		.post(tryCatch(controllers.pedidos.savePedido))
-		.put(tryCatch(controllers.pedidos.updatePedido));
+		.get(tryCatch(controladores.pedidos.consultaPedido))
+		.post(tryCatch(controladores.pedidos.crearPedido))
+		.put(tryCatch(controladores.pedidos.actualizarPedido));
 	app.route('/pedidos/:numeroPedido')
-		.get(tryCatch(controllers.pedidos.getPedido));
+		.get(tryCatch(controladores.pedidos.consultaPedido));
 
 
 	app.route('/devoluciones')
-		.get(tryCatch(controllers.devoluciones.getDevolucion))
-		.post(tryCatch(controllers.devoluciones.saveDevolucion));
+		.get(tryCatch(controladores.devoluciones.consultaDevolucion))
+		.post(tryCatch(controladores.devoluciones.crearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(tryCatch(controllers.devoluciones.getDevolucion));
+		.get(tryCatch(controladores.devoluciones.consultaDevolucion));
 
 
 	app.route('/albaranes')
-		.get(tryCatch(controllers.albaranes.findAlbaran));
+		.get(tryCatch(controladores.albaranes.listadoAlbaranes));
 	// app.route('/albaranes/confirmacion');
 	app.route('/albaranes/:numeroAlbaran')
-		.get(tryCatch(controllers.albaranes.getAlbaran));
+		.get(tryCatch(controladores.albaranes.consultaAlbaran));
 
 
 	//app.route('/facturas')
@@ -100,25 +103,26 @@ module.exports = function (app) {
 	 *	RUTAS NO STANDARD FEDICOM3
 	 */
 	app.route('/confirmaPedido')
-		.post(tryCatch(controllers.confirmacionPedido.confirmaPedido));
+		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
 
 	app.route('/retransmitir/:txId')
-		.get(tryCatch(controllers.retransmit.retransmitirPedido));
+		.get(tryCatch(controladores.retransmision.retransmitePedido));
 
-	app.route('/stats')
-		.get(tryCatch(controllers.stats.getStats));
-	app.route('/stats/:item')
-		.get(tryCatch(controllers.stats.getStats));
+	app.route('/logistica')
+		.post(tryCatch(controladores.logistica.crearLogistica))
+		.get(tryCatch(controladores.logistica.consultaLogistica));
+
+	app.route('/logistica/:numeroLogistica')
+		.get(tryCatch(controladores.logistica.consultaLogistica));
 
 
 	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
-	app.use(function (req, res, next) {
-		L.xw(req.txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
-		var fedicomError = new FedicomError('HTTP-404', 'No existe el endpoint indicado.', 404);
-		var responseBody = fedicomError.send(res);
-		Events.emitDiscard(req, res, responseBody, null);
-
-		return;
+	app.use((req, res, next) => {
+		let txId = req.txId;
+		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
+		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.descartar(req, res, cuerpoRespuesta, null);
 	});
 
 };
