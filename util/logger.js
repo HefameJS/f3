@@ -26,7 +26,7 @@ const _obtenerFicheroLog = (timestamp, esParaDump) => {
 const grabarLog = (evento) => {
 
 	let txId = evento.tx
-	let categoria = evento.categoria.padStart(15)
+	let categoria = evento.categoria && evento.categoria.padStart ? evento.categoria.padStart(15) : evento.categoria;
 
 	let hora = Date.toShortTime(evento.timestamp)
 
