@@ -28,7 +28,7 @@ const descartar = (transaccion) => {
 		});
 	}
 	else {
-		L.xf(txId, ['ERROR AL HACER COMMIT DISCARD'], 'mdbCommitDiscard');
+		L.xf(txId, ['ERROR AL HACER COMMIT DISCARD - NO SE RETORNA LA COLECCION DE DESCARTES'], 'mdbCommitDiscard');
 	}
 
 };
@@ -51,7 +51,7 @@ const grabar = (transaccion, noAgregarConCache) => {
 		});
 	}
 	else {
-		L.xf(txId, ['ERROR AL HACER COMMIT', transaccion], 'mdbCommit');
+		L.xf(txId, ['ERROR AL HACER COMMIT - NO SE RETORNA LA COLECCION DE TRANSMISIONES'], 'mdbCommit');
 		iSQLite.grabarTransaccion(transaccion);
 	}
 
