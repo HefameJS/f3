@@ -97,12 +97,14 @@ class Devolucion {
 	obtenerRespuestaCliente(txId, respuestaSap) {
 
 		let respuestaCliente = clone(respuestaSap);
+		let incidenciaClienteDesconocido = false;
 
 		respuestaCliente.forEach(devolucion => {
 
-			// Hacemos un tratamiento especial de las cabeceras que devuelve SAP:
-			let incidenciaClienteDesconocido = false;
+			// Si hemos encontrado una incidencia de cliente desconocido, abortamos buclelele.
+			if (incidenciaClienteDesconocido) return;
 
+			// Hacemos un tratamiento especial de las cabeceras que devuelve SAP en buca de incidencias.
 			if (devolucion.incidencias && devolucion.incidencias.filter) {
 
 				devolucion.incidencias = devolucion.incidencias.filter((incidenciaCabecera) => {
@@ -114,23 +116,13 @@ class Devolucion {
 					}
 					// Si aparece la incidencia 'Devolución duplicada', la suprimimos de la respuesta al cliente y levantamos el flag 'DUPLICADO_SAP'.
 					else if (incidenciaCabecera && incidenciaCabecera.descripcion === "Devolución duplicada") {
-						L.xi(txId, 'Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP')
+						L.xi(txId, ['Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP']);
 						iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
 						return false;
 					}
 					return true;
-
+ 
 				})
-			}
-
-			// Si aparece la incidencia de cliente desconocido, enviaremos el mensaje de rechazo y abortamos el resto del saneado
-			if (incidenciaClienteDesconocido) {
-				L.xw(txId, 'Se encontró la incidencia de "Cliente desconocido" en la respuesta de SAP - Devolución rechazada')
-				let errorFedicom = new ErrorFedicom('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido', 400)
-				respuestaCliente = errorFedicom.getErrors();
-				respuestaCliente.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
-				respuestaCliente.isRechazadoSap = () => true;
-				return respuestaCliente;
 			}
 
 			if (devolucion && devolucion.sap_punto_entrega) {
@@ -139,6 +131,16 @@ class Devolucion {
 			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
 			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
+
+		// Si aparece la incidencia de cliente desconocido en cualquier devolución (debería haber solo 1), enviaremos el mensaje de rechazo y abortamos el resto del saneado
+		if (incidenciaClienteDesconocido) {
+			L.xw(txId, 'Se encontró la incidencia de "Cliente desconocido" en la respuesta de SAP - Devolución rechazada')
+			let errorFedicom = new ErrorFedicom('DEV-ERR-002', 'El parámetro "codigoCliente" es inválido', 400)
+			let respuestaClienteError = errorFedicom.getErrors();
+			respuestaClienteError.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
+			respuestaClienteError.isRechazadoSap = () => true;
+			return respuestaClienteError;
+		}
 
 
 		let estado = K.TX_STATUS.OK;
