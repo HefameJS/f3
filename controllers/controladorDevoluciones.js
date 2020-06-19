@@ -71,8 +71,8 @@ exports.crearDevolucion = (req, res) => {
 					devolucionOriginal.incidencias = devolucionOriginal.incidencias.concat(errorFedicom.getErrors());
 				}
 			});
-
-			res.status(200).send(respuestaCliente);
+			
+			res.status(txDevolucionDuplicada.clientResponse.statusCode).send(respuestaCliente);
 			iEventos.devoluciones.devolucionDuplicada(req, res, respuestaCliente, txIdOriginal);
 			return;
 		}
@@ -100,7 +100,7 @@ exports.crearDevolucion = (req, res) => {
 
 			let respuestaCliente = devolucion.obtenerRespuestaCliente(txId, respuestaSap.body);
 			let [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
-			
+
 			res.status(codigoRespuestaHttp).json(respuestaCliente);
 			iEventos.devoluciones.finDevolucion(res, respuestaCliente, estadoTransmision, { numerosDevolucion });
 
