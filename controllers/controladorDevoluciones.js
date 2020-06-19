@@ -64,8 +64,12 @@ exports.crearDevolucion = (req, res) => {
 
 			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'La devolución ya estaba registrada en el sistema')
 			respuestaCliente.forEach(devolucionOriginal => {
-				if (!devolucionOriginal.incidencias || !devolucionOriginal.incidencias.push) devolucionOriginal.incidencias = [];
-				devolucionOriginal.incidencias = devolucionOriginal.incidencias.concat(errorFedicom.getErrors());
+				// Si la devolucion original tenía número asignado, indicamos que es duplicada.
+				// Si no lleva numero, es que probablemente era un error y la dejamos tal cual.
+				if (devolucionOriginal.numeroDevolucion) {
+					if (!devolucionOriginal.incidencias || !devolucionOriginal.incidencias.push) devolucionOriginal.incidencias = [];
+					devolucionOriginal.incidencias = devolucionOriginal.incidencias.concat(errorFedicom.getErrors());
+				}
 			});
 
 			res.status(200).send(respuestaCliente);
@@ -96,7 +100,7 @@ exports.crearDevolucion = (req, res) => {
 
 			let respuestaCliente = devolucion.obtenerRespuestaCliente(txId, respuestaSap.body);
 			let [estadoTransmision, numerosDevolucion, codigoRespuestaHttp] = respuestaCliente.estadoTransmision();
-
+			
 			res.status(codigoRespuestaHttp).json(respuestaCliente);
 			iEventos.devoluciones.finDevolucion(res, respuestaCliente, estadoTransmision, { numerosDevolucion });
 
