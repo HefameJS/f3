@@ -75,7 +75,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
             }
             else {
                 // Cuando el albarán no existe, SAP devuelve un 503 
-                if (respuestaSap.statusCode === 503) {
+                if (respuestaSap && respuestaSap.statusCode === 503) {
                     L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
                     let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
                     errorFedicom.enviarRespuestaDeError(res);
