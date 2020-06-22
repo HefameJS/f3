@@ -6,6 +6,7 @@
 
 module.exports = {
 	transmisiones: require('controllers/monitor/controladorConsultasTransmisiones'),
+	agregaciones: require('controllers/monitor/controladorConsultasAgregaciones'),
 	sap: require('controllers/monitor/controladorConsultasSap'),
 	procesos: require('controllers/monitor/controladorConsultasProcesos'),
 	mongodb: require('controllers/monitor/controladorConsultasMongoDb'),

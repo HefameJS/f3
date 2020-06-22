@@ -67,6 +67,29 @@ const consulta = (txId, consulta, callback) => {
 	}
 }
 
+
+const agregacion = (txId, pipeline, callback) => {
+
+	L.xi(txId, 'Realizando agregación');
+	L.xd(txId, ['Consulta de agregación', pipeline]);
+
+	try {
+		pipeline = EJSON.deserialize(pipeline, { relaxed: false });
+	} catch (errorDeserializadoEJSON) {
+		L.e(['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
+		callback(new Error('La consulta de agregación no es válida'), null);
+		return;
+	}
+
+
+	if (MDB.colTx()) {
+		MDB.colTx().aggregate(pipeline).toArray(callback);
+	} else {
+		callback(new Error('No conectado a MongoDB'), null);
+	}
+
+}
+
 /**
  * Busca la transmisión con el ID indicado
  * @param {*} txId 
@@ -219,6 +242,7 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 
 module.exports = {
 	consulta,
+	agregacion,
 
 	porId,
 	porCRC,

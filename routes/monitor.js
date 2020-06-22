@@ -55,6 +55,8 @@ module.exports = (app) => {
 	app.route('/v1/transmisiones')
 		.put(tryCatch(controladores.consultas.transmisiones.consultaTransmisiones));
 
+	app.route('/v1/agregacion')
+		.put(tryCatch(controladores.consultas.agregaciones.consultaAgregaciones));
 
 	// Consulta de balanceadores de carga HTTP
 	app.route('/v1/balanceadores')
