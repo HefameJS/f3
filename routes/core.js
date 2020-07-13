@@ -88,7 +88,8 @@ module.exports = (app) => {
 
 	app.route('/albaranes')
 		.get(tryCatch(controladores.albaranes.listadoAlbaranes));
-	// app.route('/albaranes/confirmacion');
+	app.route('/albaranes/confirmacion')
+		.post(tryCatch(controladores.albaranes.confirmacionAlbaran));
 	app.route('/albaranes/:numeroAlbaran')
 		.get(tryCatch(controladores.albaranes.consultaAlbaran));
 

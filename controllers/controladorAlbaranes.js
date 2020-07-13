@@ -12,6 +12,7 @@ const CRC = require('model/CRC');
 const ErrorFedicom = require('model/ModeloErrorFedicom');
 const ConsultaAlbaran = require('model/albaran/ModeloConsultaAlbaran');
 const Albaran = require('model/albaran/ModeloAlbaran');
+const ConfirmacionAlbaran = require('model/albaran/ModeloConfirmacionAlbaran');
 
 
 
@@ -103,7 +104,7 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
 }
 
 // GET /albaranes/:numeroAlbaran
-exports.consultaAlbaran = (req, res) => {
+const consultaAlbaran = (req, res) => {
 
     let txId = req.txId;
     L.xi(txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
@@ -154,7 +155,7 @@ exports.consultaAlbaran = (req, res) => {
 
 
 // GET /albaranes
-exports.listadoAlbaranes = (req, res) => {
+const listadoAlbaranes = (req, res) => {
 
     let txId = req.txId;
 
@@ -298,4 +299,44 @@ exports.listadoAlbaranes = (req, res) => {
         }
     });
 
+}
+
+// POST /albaranes/confirmacion
+const confirmacionAlbaran = (req, res) => {
+
+    let txId = req.txId;
+    L.xi(txId, ['Procesando transmisión como CONFIRMACION DE ALBARAN']);
+
+    // Verificación del token del usuario
+    let estadoToken = iTokens.verificaPermisos(req, res, {
+        admitirSimulaciones: true,
+        simulacionRequiereSolicitudAutenticacion: true,
+        admitirSimulacionesEnProduccion: false
+    });
+    if (!estadoToken.ok) return;
+
+
+
+    let confirmacionAlbaran = null;
+    L.xd(txId, ['Analizando el contenido de la transmisión']);
+    try {
+        confirmacionAlbaran = new ConfirmacionAlbaran(req);
+    } catch (excepcion) {
+        let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
+        L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+        /*let cuerpoRespuesta = */errorFedicom.enviarRespuestaDeError(res);
+        // iEventos....
+        return;
+    }
+
+    L.xd(txId, ['El contenido de la transmisión es una solicitud de confirmacion de albarán correcta', confirmacionAlbaran]);
+    res.status(200).json(confirmacionAlbaran);
+    //iEventos....
+
+}
+
+module.exports = {
+    consultaAlbaran,
+    listadoAlbaranes,
+    confirmacionAlbaran
 }
