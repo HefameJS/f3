@@ -234,9 +234,18 @@ const SaneadorLogisticaSAP = {
 
 const obtenerEstadoDeRespuestaSap = (respuestaSap) => {
 
+	let numeroLogistica = respuestaSap.numerologistica; // Ojo: respuestaSap tiene los campos en minusculas !
+
 	let estadoTransmision = K.TX_STATUS.OK;
 	let codigoHttpRespuesta = 201;
-	let numeroLogistica = respuestaSap.numerologistica; // Ojo: respuestaSap tiene los campos en minusculas !
+	
+
+	if (!numeroLogistica) {
+		estadoTransmision = K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+		codigoHttpRespuesta = 201;
+	} else {
+
+	}
 
 	return [estadoTransmision, numeroLogistica, codigoHttpRespuesta];
 }
