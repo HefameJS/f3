@@ -35,6 +35,17 @@ const checkNotEmptyString = (campo, errorFedicom, codigoErrorFedicom, descripcio
 }
 
 /**
+ * Comprueba que un valor dado sea un String o sea nulo.
+ * @param {*} campo El valor a comprobar
+ * @param {ErrorFedicom} errorFedicom El objeto ErrorFedicom donde insertar el error en caso de existir
+ * @param {string} codigoErrorFedicom El código de error que se introduce en caso de error
+ * @param {string} descripcionErrorFedicom El mensaje de error que se introduce en caso de error
+ */
+const checkString = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) => {
+	return (typeof campo === 'string' || campo === null || campo === undefined) 
+}
+
+/**
 * Comprueba que un valor dado exista, sea un número y mayor que cero.
  * @param {*} campo El valor a comprobar
  * @param {ErrorFedicom} errorFedicom El objeto ErrorFedicom donde insertar el error en caso de existir
@@ -151,14 +162,30 @@ const checkExistsAndDate = (campo, errorFedicom, codigoErrorFedicom, descripcion
 	return false;
 }
 
+/**
+ * Comprueba que si un valor está definido sea un string en formato Fedicom3 Date.
+ * @param {*} campo El valor a comprobar
+ * @param {ErrorFedicom} errorFedicom El objeto ErrorFedicom donde insertar el error en caso de existir
+ * @param {string} codigoErrorFedicom El código de error que se introduce en caso de error
+ * @param {string} descripcionErrorFedicom El mensaje de error que se introduce en caso de error
+ */
+const checkDate = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) => {
+
+	if (!campo) return true;
+	return checkExistsAndDate(campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom);
+}
+
+
 module.exports = {
 	checkExists,
 	checkNotEmptyString,
+	checkString,
 	checkExistsAndPositive,
 	checkExistsAndPositiveOrZero,
 	checkPositive,
 	checkPositiveOrZero,
 	checkExistsAndNonEmptyArray,
 	checkArray,
-	checkExistsAndDate
+	checkExistsAndDate,
+	checkDate
 }
