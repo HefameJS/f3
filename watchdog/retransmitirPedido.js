@@ -91,7 +91,7 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
         let [esRetransmisible, estadoError, mensajeDeError] = _esRetransmisible(dbTx, opcionesRetransmision.force);
         if (!esRetransmisible) {
             L.xe(txIdRetransmision, [mensajeDeError, estadoError, dbTx.status]);
-            L.xe(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con errores', errorMessage]);
+            L.xe(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con errores', mensajeDeError]);
             iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, estadoError, mensajeDeError)
             return callback(mensajeDeError, txIdRetransmision);
         }
