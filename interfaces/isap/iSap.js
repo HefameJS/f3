@@ -165,7 +165,7 @@ const retransmitirPedido = (pedido, callback) => {
 		if (respuestaSap.errorSap) {
 			callback({
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: sapRrespuestaSapesponse.statusCode,
+				errno: respuestaSap.statusCode,
 				code: respuestaSap.statusMessage
 			}, respuestaSap, peticionASap);
 			return;
