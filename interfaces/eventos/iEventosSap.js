@@ -4,6 +4,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
+const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 
 module.exports.incioLlamadaSap = (txId, parametrosLlamada) => {
@@ -115,30 +116,10 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
-module.exports.errorConfirmacionPedido = (req, estado) => {
+module.exports.errorConfirmacionPedido = (req, res, cuerpoRespuesta, estado) => {
 
 	let txId = req.txId;
-
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			status: estado,
-			iid: global.instanceID,
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			type: K.TX_TYPES.CONFIRMACION_PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			}
-		}
-	}
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -150,27 +131,10 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 	let txId = req.txId;
 	if (!datosExtra) datosExtra = {};
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			status: K.TX_STATUS.OK,
-			iid: global.instanceID,
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			confirmingId: txIdConfirmado,
-			type: K.TX_TYPES.CONFIRMACION_PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			}
-		}
-	}
+	// NOTA: esta transacción no tiene "evento de cierre", es decir, no guardamos la respuesta que le damos a SAP porque es completamente irrelevante.
+	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.CONFIRMACION_PEDIDO, K.TX_STATUS.OK)
+	transaccion['$set'].confirmingId = txIdConfirmado;
+
 
 	let transaccionActualizacionConfirmada = {
 		$setOnInsert: {

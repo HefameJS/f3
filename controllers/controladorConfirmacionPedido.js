@@ -24,7 +24,7 @@ exports.confirmaPedido = (req, res) => {
 	
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) {
-		iEventos.sap.errorConfirmacionPedido(req, K.TX_STATUS.FALLO_AUTENTICACION);
+		iEventos.sap.errorConfirmacionPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
@@ -36,8 +36,8 @@ exports.confirmaPedido = (req, res) => {
 	} catch (excepcion) {
 		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom])
-		errorFedicom.enviarRespuestaDeError(res);
-		iEventos.sap.errorConfirmacionPedido(req, K.TX_STATUS.PETICION_INCORRECTA);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
@@ -45,15 +45,15 @@ exports.confirmaPedido = (req, res) => {
 		if (errorMongo) {
 			let errorFedicom = ErrorFedicom.desdeExcepcion(txId, errorMongo);
 			L.xe(txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', errorFedicom]);
-			errorFedicom.enviarRespuestaDeError(res);
-			iEventos.sap.errorConfirmacionPedido(req, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
 		if (!dbTx) {
 			let errorFedicom = new ErrorFedicom('SAP-ERR-400', 'No existe el pedido que se está confirmando', 400);
-			errorFedicom.enviarRespuestaDeError(res);
-			iEventos.sap.errorConfirmacionPedido(req, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
