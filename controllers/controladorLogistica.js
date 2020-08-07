@@ -111,17 +111,25 @@ exports.consultaLogistica = (req, res) => {
 	// Comprobación del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.logistica.consultaLogistica(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.consultas.consultaLogistica(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
 	let numeroLogistica = req.params.numeroLogistica || req.query.numeroLogistica;
+	if (!numeroLogistica) {
+		L.xe(txId, ['No se ha espedificado ningún número de logística', errorMongo]);
+		let errorFedicom = new ErrorFedicom('LOG-ERR-005', 'El parámetro "numeroLogistica" es inválido', 400);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		return;
+	}
+
 	iMongo.consultaTx.porNumeroLogistica(txId, numeroLogistica, (errorMongo, dbTx) => {
 		if (errorMongo) {
 			L.xe(txId, ['No se ha podido recuperar el pedido de logística', errorMongo]);
 			let errorFedicom = new ErrorFedicom('LOG-ERR-005', 'El parámetro "numeroLogistica" es inválido', 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.logistica.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
+			iEventos.consultas.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
@@ -131,11 +139,11 @@ exports.consultaLogistica = (req, res) => {
 			// TODO: Autorizacion
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
 			res.status(200).json(cuerpoRespuestaOriginal);
-			iEventos.logistica.consultaLogistica(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
+			iEventos.consultas.consultaLogistica(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
 			let errorFedicom = new ErrorFedicom('LOG-ERR-001', 'El pedido logístico solicitado no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.logistica.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			iEventos.consultas.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 

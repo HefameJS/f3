@@ -172,45 +172,5 @@ module.exports.devolucionDuplicada = (req, res, cuerpoRespuesta, txIdOriginal) =
 	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
 	iMongo.transaccion.grabar(transaccion);
 }
-module.exports.consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
 
-	let txId = req.txId;
-
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: estadoFinal
-		},
-		$set: {
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			devolucionConsultada: req.query.numeroDevolucion || req.params.numeroDevolucion,
-			type: K.TX_TYPES.CONSULTA_DEVOLUCION,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			}
-		}
-	}
-
-	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA DEVOLUCION'], 'txCommit');
-	iMongo.transaccion.grabar(transaccion);
-}
 

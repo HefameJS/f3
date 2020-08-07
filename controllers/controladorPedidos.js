@@ -102,7 +102,7 @@ exports.consultaPedido = (req, res) => {
 	// Comprobación del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.pedido.consultaPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.consultas.consultaPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
@@ -113,7 +113,7 @@ exports.consultaPedido = (req, res) => {
 			L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);
 			let errorFedicom = new ErrorFedicom('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
+			iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
@@ -123,11 +123,11 @@ exports.consultaPedido = (req, res) => {
 			// TODO: Autorizacion
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
 			res.status(200).json(cuerpoRespuestaOriginal);
-			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
+			iEventos.consultas.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
 			let errorFedicom = new ErrorFedicom('PED-ERR-001', 'El pedido solicitado no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.pedidos.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 

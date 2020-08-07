@@ -123,14 +123,14 @@ exports.consultaDevolucion = (req, res) => {
 	if (!numeroDevolucion) {
 		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.devoluciones.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.consultas.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
 
@@ -138,7 +138,7 @@ exports.consultaDevolucion = (req, res) => {
 		if (errorMongo) {
 			let error = new ErrorFedicom('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
 			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
-			iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
 			return;
 		}
 
@@ -158,17 +158,17 @@ exports.consultaDevolucion = (req, res) => {
 
 			if (documentoDevolucion) {
 				res.status(200).json(documentoDevolucion);
-				iEventos.devoluciones.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK);
+				iEventos.consultas.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK);
 			} else {
 				L.xe(txId, ['No se encontró la devolución dentro de la transmisión.']);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 			}
 		} else {
 			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.devoluciones.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	});
 
