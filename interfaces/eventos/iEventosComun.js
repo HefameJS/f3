@@ -18,7 +18,6 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 			status: estado
 		},
 		$set: {
-			// crc: new ObjectID(pedido.crc),
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
 			iid: global.instanceID,
@@ -75,7 +74,6 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 			status: estado
 		},
 		$set: {
-			// pedidoConsultado: numeroPedido,
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
 			iid: global.instanceID,
