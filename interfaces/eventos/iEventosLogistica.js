@@ -4,6 +4,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
+const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
 
@@ -15,33 +16,8 @@ module.exports.inicioLogistica = (req, logistica) => {
 
 	let txId = req.txId;
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: K.TX_STATUS.RECEPCIONADO
-		},
-		$set: {
-			crc: new ObjectID(logistica.crc),
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			type: K.TX_TYPES.LOGISTICA,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			}
-		}
-	};
+	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO);
+	transaccion['$set'].crc = new ObjectID(logistica.crc);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -51,27 +27,11 @@ module.exports.inicioLogistica = (req, logistica) => {
 module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
 	let txId = res.txId;
-	if (!datosExtra) datosExtra = {}
+	if (!datosExtra) datosExtra = {};
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: estadoFinal
-		},
-		$set: {
-			numeroLogistica: datosExtra.numeroLogistica || null,
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			}
-		}
-	}
+	let transaccion = iEventosComun.generarEventoDeCierre(res, cuerpoRespuesta, estadoFinal);
+	transaccion['$set'].numeroLogistica = datosExtra.numeroLogistica || null;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento finLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -81,35 +41,8 @@ module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) =>
 module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let txId = req.txId;
-
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			modifiedAt: new Date(),
-			type: K.TX_TYPES.LOGISTICA,
-			status: estadoFinal,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			}
-		}
-	}
+	let transaccion = iEventosComun.generarEventoCompleto(res, res, cuerpoRespuesta, K.TX_TYPES.LOGISTICA, estadoFinal);
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -119,33 +52,10 @@ module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 
 	let txId = req.txId;
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.LOGISTICA_DUPLICADA, K.TX_STATUS.OK);
+	transaccion['$set'].originalTx = txIdOriginal;
+	iFlags.finaliza(txId, transaccion); // Establece flags que hubiera en la transaccion actual
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			type: K.TX_TYPES.LOGISTICA_DUPLICADA,
-			status: K.TX_STATUS.OK,
-			originalTx: txIdOriginal,
-			iid: global.instanceID,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			},
-		}
-	}
 
 	let transaccionActualizacionOriginal = {
 		$setOnInsert: {
@@ -159,9 +69,10 @@ module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) =>
 			}
 		}
 	}
-
+	// Establece el flag 'DUPLICADOS' en la transaccion original
 	iFlags.set(txId, K.FLAGS.DUPLICADOS);
 	iFlags.finaliza(txId, transaccionActualizacionOriginal);
+	
 
 	L.xi(txId, ['Emitiendo COMMIT para evento LogisticaDuplicado'], 'txCommit');
 	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
