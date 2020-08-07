@@ -4,6 +4,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
+const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
 
@@ -15,139 +16,50 @@ module.exports.inicioPedido = (req, pedido) => {
 
 	let txId = req.txId;
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: K.TX_STATUS.RECEPCIONADO
-		},
-		$set: {
-			crc: new ObjectID(pedido.crc),
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			type: K.TX_TYPES.PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			}
-		}
-	};
+	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO);
+	transaccion['$set'].crc = new ObjectID(pedido.crc);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
 }
+
 module.exports.finPedido = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
 
 	let txId = res.txId;
 	if (!datosExtra) datosExtra = {};
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date()
-		},
-		$max: {
-			modifiedAt: new Date(),
-			status: estadoFinal,
-		},
-		$set: {
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			},
-			numeroPedidoAgrupado: datosExtra.numeroPedidoAgrupado || undefined,
-			numerosPedidoSAP: datosExtra.numerosPedidoSAP || []
-		}
-	}
+	let transaccion = iEventosComun.generarEventoDeCierre(res, cuerpoRespuesta, estadoFinal)
 
+	transaccion['$set'].numeroPedidoAgrupado = datosExtra.numeroPedidoAgrupado || undefined;
+	transaccion['$set'].numerosPedidoSAP = datosExtra.numerosPedidoSAP || [];
 	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.PEDIDO, estadoFinal, [cuerpoRespuesta]);
 }
+
 module.exports.errorPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let txId = req.txId;
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			modifiedAt: new Date(),
-			status: estadoFinal,
-			authenticatingUser: req.identificarUsuarioAutenticado(),
-			client: req.identificarClienteSap(),
-			iid: global.instanceID,
-			type: K.TX_TYPES.PEDIDO,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			}
-		}
-	}
-
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.PEDIDO, estadoFinal)
 	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.PEDIDO, estadoFinal, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
+
 module.exports.pedidoDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 
 	let txId = req.txId;
 
-	let transaccion = {
-		$setOnInsert: {
-			_id: txId,
-			createdAt: new Date(),
-			type: K.TX_TYPES.PEDIDO_DUPLICADO,
-			status: K.TX_STATUS.OK,
-			originalTx: txIdOriginal,
-			iid: global.instanceID,
-			clientRequest: {
-				authentication: req.token,
-				ip: req.originIp,
-				protocol: req.protocol,
-				method: req.method,
-				url: req.originalUrl,
-				route: req.route.path,
-				headers: req.headers,
-				body: req.body
-			},
-			clientResponse: {
-				timestamp: new Date(),
-				statusCode: res.statusCode,
-				headers: res.getHeaders(),
-				body: cuerpoRespuesta
-			},
-		}
-	}
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.PEDIDO_DUPLICADO, K.TX_STATUS.OK)
+	transaccion['$set'].originalTx = txIdOriginal;
+	iFlags.finaliza(txId, transaccion); // Establece flags que hubiera en la transaccion actual
+
 
 	let transaccionActualizacionOriginal = {
 		$setOnInsert: {
@@ -161,14 +73,10 @@ module.exports.pedidoDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 			}
 		}
 	}
-
-	// Establece flags que hubiera en la transaccion actual (la de type: K.TX_TYPES.PEDIDO_DUPLICADO)
-	iFlags.finaliza(txId, transaccion);
-
 	// Establece el flag 'DUPLICADOS' en la transaccion original
 	iFlags.set(txIdOriginal, K.FLAGS.DUPLICADOS);
 	iFlags.finaliza(txIdOriginal, transaccionActualizacionOriginal);
-	
+
 
 	L.xi(txId, ['Emitiendo COMMIT para evento PedidoDuplicado'], 'txCommit');
 	iMongo.transaccion.grabar(transaccionActualizacionOriginal);
