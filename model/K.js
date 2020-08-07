@@ -61,6 +61,7 @@ module.exports = {
         DEVOLUCION_DUPLICADA: 22,
         BUSCAR_ALBARANES: 30,
         CONSULTAR_ALBARAN: 31,
+        CONFIRMACION_ALBARAN: 32,
         BUSCAR_FACTURAS: 40,
         CONSULTAR_FACTURA: 41,
         LOGISTICA: 50,

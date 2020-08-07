@@ -15,6 +15,7 @@ module.exports.sap = require('./iEventosSap');
 module.exports.retransmisiones = require('./iEventosRetransmisiones');
 module.exports.logistica = require('./iEventosLogistica');
 module.exports.consultas = require('./iEventosConsulta');
+module.exports.confirmacionAlbaran = require('./iEventosConfirmacionAlbaran');
 
 module.exports.descartar = (req, res, responseBody, error) => {
 

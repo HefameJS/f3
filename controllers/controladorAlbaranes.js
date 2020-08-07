@@ -345,7 +345,10 @@ const confirmacionAlbaran = (req, res) => {
         simulacionRequiereSolicitudAutenticacion: true,
         admitirSimulacionesEnProduccion: false
     });
-    if (!estadoToken.ok) return;
+    if (!estadoToken.ok) {
+        iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, estadoToken.respuesta, estadoToken.motivo);
+        return;
+    }
 
 
 
@@ -356,14 +359,14 @@ const confirmacionAlbaran = (req, res) => {
     } catch (excepcion) {
         let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
         L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
-        /*let cuerpoRespuesta = */errorFedicom.enviarRespuestaDeError(res);
-        // iEventos....
+        let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+        iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
         return;
     }
 
     L.xd(txId, ['El contenido de la transmisión es una solicitud de confirmacion de albarán correcta', confirmacionAlbaran]);
     res.status(200).json(confirmacionAlbaran);
-    //iEventos....
+    iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, confirmacionAlbaran, K.TX_STATUS.OK, { albaranConfirmado: confirmacionAlbaran.numeroAlbaran });
 
 }
 
