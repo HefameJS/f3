@@ -6,11 +6,7 @@ const K = global.constants;
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
-//const iFlags = require('interfaces/iFlags');
 
-// Modelos
-
-//const ObjectID = iMongo.ObjectID;
 
 const consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 
@@ -25,7 +21,6 @@ const consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 	iMongo.transaccion.grabar(transaccion);
 }
 
-
 const consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let txId = req.txId;
@@ -38,8 +33,6 @@ const consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA DEVOLUCION'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
 }
-
-
 
 const consultaLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
