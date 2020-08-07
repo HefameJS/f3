@@ -34,7 +34,7 @@ class Pedido {
 		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
-			errorFedicom.add('PED-ERR-002', 'Indique el "codigoCliente" si el @hefame al final', 400);
+			errorFedicom.add('PED-ERR-002', 'Indique el "codigoCliente" sin el @hefame al final', 400);
 		}
 
 		if (errorFedicom.hasError()) {
