@@ -53,9 +53,37 @@ const consultaLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 	iMongo.transaccion.grabar(transaccion);
 }
 
+const consultaAlbaran = (req, res, cuerpoRespuesta, estadoFinal, numeroAlbaran, formatoConsulta) => {
+
+	let txId = req.txId;
+
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTAR_ALBARAN, estadoFinal);
+	transaccion['$set'].albaranConsultado = numeroAlbaran;
+	transaccion['$set'].formatoConsulta = formatoConsulta;
+
+	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA ALBARAN'], 'qtxCommit');
+	iMongo.transaccion.grabar(transaccion);
+}
+
+const consultaListadoAlbaranes = (req, res, cuerpoRespuesta, estadoFinal, datosConsulta) => {
+
+
+	let txId = req.txId;
+
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.BUSCAR_ALBARANES, estadoFinal);
+	transaccion['$set'] = {...transaccion['$set'], ...datosConsulta};
+	// Extra: Estos son los datos de la consulta que pueden venir:
+	// let { consultaSap, numeroResultadosTotales, numeroResultadosEnviados} = datosConsulta;
+
+	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA LISTADO ALBARANES'], 'qtxCommit');
+	iMongo.transaccion.grabar(transaccion);
+}
+
 
 module.exports = {
 	consultaPedido,
 	consultaDevolucion,
-	consultaLogistica
+	consultaLogistica,
+	consultaAlbaran,
+	consultaListadoAlbaranes
 }
