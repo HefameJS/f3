@@ -117,7 +117,7 @@ exports.consultaLogistica = (req, res) => {
 
 	let numeroLogistica = req.params.numeroLogistica || req.query.numeroLogistica;
 	if (!numeroLogistica) {
-		L.xe(txId, ['No se ha espedificado ningún número de logística', errorMongo]);
+		L.xe(txId, ['No se ha espedificado ningún número de logística']);
 		let errorFedicom = new ErrorFedicom('LOG-ERR-005', 'El parámetro "numeroLogistica" es inválido', 400);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.consultas.consultaLogistica(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
