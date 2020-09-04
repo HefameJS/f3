@@ -174,7 +174,7 @@ const SaneadorLogisticaSAP = {
 			respuestaCliente.lineas.forEach((linea) => {
 				K.POST_CLEAN.LOGISTICA.replacePos.forEach((nombreCampo) => {
 					let nombreCampoMinusculas = nombreCampo.toLowerCase();
-					if (linea[nombreCampoMinusculas] !== undefined) {
+					if (linea && linea[nombreCampoMinusculas] !== undefined) {
 						linea[nombreCampo] = linea[nombreCampoMinusculas];
 						delete linea[nombreCampoMinusculas];
 					}
