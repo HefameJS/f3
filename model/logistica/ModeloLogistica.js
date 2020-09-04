@@ -159,11 +159,11 @@ const SaneadorLogisticaSAP = {
 		// Saneado de las mayúsculas en las direcciones de origen y destino
 		K.POST_CLEAN.LOGISTICA.replaceDireccionLogistica.forEach(nombreCampo => {
 			let nombreCampoMinusculas = nombreCampo.toLowerCase();
-			if (respuestaCliente.origen[nombreCampoMinusculas] !== undefined) {
+			if (respuestaCliente.origen && respuestaCliente.origen[nombreCampoMinusculas] !== undefined) {
 				respuestaCliente.origen[nombreCampo] = respuestaCliente.origen[nombreCampoMinusculas];
 				delete respuestaCliente.origen[nombreCampoMinusculas];
 			}
-			if (respuestaCliente.destino[nombreCampoMinusculas] !== undefined) {
+			if (respuestaCliente.destino && respuestaCliente.destino[nombreCampoMinusculas] !== undefined) {
 				respuestaCliente.destino[nombreCampo] = respuestaCliente.destino[nombreCampoMinusculas];
 				delete respuestaCliente.destino[nombreCampoMinusculas];
 			}
