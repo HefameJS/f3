@@ -20,7 +20,7 @@
   "dependencies": {
     "activedirectory": "^0.7.2",
     "app-module-path": "^2.2.0",
-    "bson": "^4.0.4",
+    "bson": "^4.1.0",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
     "dateformat": "^3.0.3",
@@ -29,15 +29,15 @@
     "jsonwebtoken": "^8.5.1",
     "locks": "^0.2.2",
     "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
-    "mongodb": "^3.5.2",
+    "mongodb": "^3.6.1",
     "os": "^0.1.1",
     "request": "^2.88.0",
     "saslprep": "^1.0.3",
-    "sqlite3": "^4.1.1",
+    "sqlite3": "^4.2.0",
     "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "nodemon": "^2.0.2"
+    "nodemon": "^2.0.4"
   },
   "repository": {
     "type": "git",
