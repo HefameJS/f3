@@ -122,6 +122,7 @@ exports.consultaPedido = (req, res) => {
 		if (dbTx && dbTx.clientResponse) {
 			// TODO: Autorizacion
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
+			// TODO: Incluir el status original
 			res.status(200).json(cuerpoRespuestaOriginal);
 			iEventos.consultas.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {

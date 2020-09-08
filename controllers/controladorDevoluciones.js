@@ -72,7 +72,7 @@ exports.crearDevolucion = (req, res) => {
 				}
 			});
 			
-			res.status(txDevolucionDuplicada.clientResponse.statusCode).send(respuestaCliente);
+			res.status(txDevolucionDuplicada.clientResponse.status).send(respuestaCliente);
 			iEventos.devoluciones.devolucionDuplicada(req, res, respuestaCliente, txIdOriginal);
 			return;
 		}
