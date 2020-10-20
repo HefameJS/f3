@@ -304,7 +304,7 @@ module.exports = {
         },
     },
     PROTOCOL_VERSION: '3.4.3',
-    SERVER_VERSION: '0.11.1',
+    SERVER_VERSION: '0.11.2',
     TX_VERSION: 1101,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
