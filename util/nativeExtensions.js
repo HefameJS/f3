@@ -36,7 +36,7 @@ dateFormat.masks.shortTime = 'HHMMss.l';
  */
 if (!Date.toFedicomDate) {
 	Date.toFedicomDate = (date) => {
-		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDate")
 	}
 }
@@ -50,7 +50,7 @@ if (!Date.toFedicomDate) {
  */
 if (!Date.toFedicomDateTime) {
 	Date.toFedicomDateTime = (date) => {
-		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "fedicomDateTime")
 	}
 }
@@ -94,7 +94,7 @@ if (!Date.fromFedicomDateTime) {
 
 		try {
 			let date = new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
-			if (!date || !date instanceof Date || isNaN(date)) return null;
+			if (!date || !(date instanceof Date) || isNaN(date)) return null;
 			return date;
 		} catch (exception) {
 			L.e('Date.fromFedicomDateTime: Error al convertir la fecha', fedicomDateTime, exception);
@@ -133,7 +133,7 @@ if (!Date.fromSAPtoFedicomDate) {
  */
 if (!Date.toSapDate) {
 	Date.toSapDate = (date) => {
-		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "sapDate")
 	}
 }
@@ -146,7 +146,7 @@ if (!Date.toSapDate) {
  */
 if (!Date.toShortDate) {
 	Date.toShortDate = (date) => {
-		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortDate")
 	}
 }
@@ -159,7 +159,7 @@ if (!Date.toShortDate) {
  */
 if (!Date.toShortTime) {
 	Date.toShortTime = (date) => {
-		if (!date || !date instanceof Date || isNaN(date)) date = new Date();
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "shortTime")
 	}
 }
