@@ -41,24 +41,24 @@ class LineaDevolucion {
 		Object.assign(this, json);
 
 		// Generacion de CRC de línea
-		this.generateCRC();
-		L.xd(txId, ['Generado CRC de linea', this.crc], 'txCRC');
+		// this.generateCRC();
+		// L.xd(txId, ['Generado CRC de linea', this.crc], 'txCRC');
 
 	}
 
 
-	generateCRC() {
-		this.crc = CRC.crearParaLineaDevolucion(
-			this.codigoMotivo, 
-			this.numeroAlbaran, 
-			this.fechaAlbaran, 
-			this.codigoArticulo, 
-			this.cantidad, 
-			this.lote, 
-			this.fechaCaducidad, 
-			this.valeEstupefaciente
-		)
-	}
+	/* 	generateCRC() {
+			this.crc = CRC.crearParaLineaDevolucion(
+				this.codigoMotivo, 
+				this.numeroAlbaran, 
+				this.fechaAlbaran, 
+				this.codigoArticulo, 
+				this.cantidad, 
+				this.lote, 
+				this.fechaCaducidad, 
+				this.valeEstupefaciente
+			)
+		} */
 
 }
 

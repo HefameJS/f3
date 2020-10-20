@@ -50,10 +50,12 @@ class Devolucion {
 		}
 
 		// SANEADO DE LINEAS
-		let [lineas, lineasExcluidas, crc] = _analizarPosiciones(txId, json);
+		let [lineas, lineasExcluidas/*, crc*/] = _analizarPosiciones(txId, json);
 		this.lineas = lineas;
 		this.lineasExcluidas = lineasExcluidas;
-		this.crc = CRC.crear(this.codigoCliente, crc);
+		// 20.10.2020 - Para evitar duplicados, vamos a generar el CRC siempre con el timestamp actual
+		//this.crc = CRC.crear(this.codigoCliente, crc);
+		this.crc = CRC.crear(this.codigoCliente, Date.fedicomTimestamp());
 
 	}
 
@@ -128,8 +130,8 @@ class Devolucion {
 			if (devolucion && devolucion.sap_punto_entrega) {
 				iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, devolucion.sap_punto_entrega);
 			}
-			devolucion = SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
-			devolucion = SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
+			SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
+			SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
 		})
 
 		// Si aparece la incidencia de cliente desconocido en cualquier devolución (debería haber solo 1), enviaremos el mensaje de rechazo y abortamos el resto del saneado
@@ -167,14 +169,14 @@ class Devolucion {
 const _analizarPosiciones = (txId, json) => {
 	let lineas = [];
 	let lineasExcluidas = [];
-	let crc = '';
+	//let crc = '';
 	let ordenes = [];
 
 	json.lineas.forEach((linea, i) => {
 		let nuevaLinea = new LineaDevolucion(linea, txId, i);
 
-		crc = CRC.crear(crc, nuevaLinea.crc);
-		delete nuevaLinea.crc;
+		//crc = CRC.crear(crc, nuevaLinea.crc);
+		//delete nuevaLinea.crc;
 
 		if (nuevaLinea.excluir) {
 			delete nuevaLinea.excluir;
@@ -201,7 +203,7 @@ const _analizarPosiciones = (txId, json) => {
 		}
 	});
 
-	return [lineas, lineasExcluidas, crc];
+	return [lineas, lineasExcluidas/*, crc*/];
 
 }
 
