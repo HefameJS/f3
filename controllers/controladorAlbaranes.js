@@ -208,6 +208,13 @@ const listadoAlbaranes = (req, res) => {
         iEventos.consultas.consultaListadoAlbaranes(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
         return;
     }
+    // Si el código de cliente no está en formato corto, vamos a utilizar el código de login
+    // aprovechando que la búsqueda se realiza entre todos los códigos del mismo cliente.
+    if (codigoCliente.length < 8 && req.token.sub && req.token.sub.includes('@')) {
+        // Nos quedamos con la parte que va delante de la arroba.
+        codigoCliente = req.token.sub.split('@')[0];
+        L.xi(txId, ['Detectado codigo de cliente corto. Se usa el usuario del token', codigoCliente]);
+    }
     codigoCliente = codigoCliente.padStart(10, '0');
 
     // #2 - Limpieza de offset y limit
