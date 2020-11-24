@@ -145,7 +145,15 @@ const duplicadoDeCRC = (txId, crc, callback) => {
 	}
 
 	if (MDB.colTx()) {
-		MDB.colTx().findOne({ crc: crc }, { _id: 1 }, (errorMongo, resultado) => {
+		let fechaLimite = new Date();
+		fechaLimite.setTime(fechaLimite.getTime() - K.LIMITE_DUPLICADOS);
+
+		let consultaCRC = {
+			crc: crc,
+			createdAt: { $gt: fechaLimite }
+		}
+
+		MDB.colTx().findOne(consultaCRC, { _id: 1 }, (errorMongo, resultado) => {
 			if (errorMongo) {
 				callback(errorMongo, null)
 				return;
