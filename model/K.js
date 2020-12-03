@@ -304,7 +304,7 @@ module.exports = {
         },
     },
     PROTOCOL_VERSION: '3.4.7',
-    SERVER_VERSION: '0.11.3',
+    SERVER_VERSION: '0.11.4',
     TX_VERSION: 1101,
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
     EXIT_CODES: {

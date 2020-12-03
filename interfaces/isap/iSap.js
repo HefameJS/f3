@@ -91,46 +91,6 @@ const realizarPedido = (txId, pedido, callback) => {
 	});
 }
 
-const realizarDevolucion = (txId, devolucion, callback) => {
-	let destinoSap = DestinoSap.desdeNombre(devolucion.sapSystem);
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
-
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_ent_ped_api/devoluciones',
-		body: devolucion
-	});
-
-	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
-
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
-
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, respuestaSap);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, respuestaSap);
-			return;
-		}
-
-		callback(null, respuestaSap);
-
-	});
-}
-
 const retransmitirPedido = (pedido, callback) => {
 
 
@@ -179,8 +139,8 @@ const retransmitirPedido = (pedido, callback) => {
 module.exports = {
 	ping: ping,
 	autenticacion: require('./iSapAutenticacion'),
+	devoluciones: require('./iSapDevoluciones'),
 	realizarPedido: realizarPedido,
-	realizarDevolucion: realizarDevolucion,
 	retransmitirPedido: retransmitirPedido,
 	albaranes: require('./iSapAlbaranes'),
 	logistica: require('./iSapLogistica'),

@@ -21,13 +21,14 @@ const consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 	iMongo.transaccion.grabar(transaccion);
 }
 
-const consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal) => {
+const consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal, formatoConsulta) => {
 
 	let txId = req.txId;
 	let numeroDevolucion = (req.query ? req.query.numeroDevolucion : null) || (req.params ? req.params.numeroDevolucion : null) || null;
 
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTA_DEVOLUCION, estadoFinal);
 	transaccion['$set'].devolucionConsultada = numeroDevolucion;
+	transaccion['$set'].formatoConsulta = formatoConsulta;
 	//TODO: En 'cuerpoRespuesta' podríamos rascar el codigo del cliente y añadirlo al campo 'client' de la transaccion
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA DEVOLUCION'], 'qtxCommit');

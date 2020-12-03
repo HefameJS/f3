@@ -79,7 +79,7 @@ exports.crearDevolucion = (req, res) => {
 
 		iEventos.devoluciones.inicioDevolucion(req, devolucion);
 		devolucion.limpiarEntrada(txId);
-		iSap.realizarDevolucion(txId, devolucion, (errorSap, respuestaSap) => {
+		iSap.devoluciones.realizarDevolucion(txId, devolucion, (errorSap, respuestaSap) => {
 
 			if (errorSap) {
 				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
@@ -112,25 +112,20 @@ exports.crearDevolucion = (req, res) => {
 
 }
 
+
+
+
+
 // GET /devoluciones/:numeroDevolucion
-exports.consultaDevolucion = (req, res) => {
+// Cuando el content-type es JSON
+const _consultaDevolucionJSON = (req, res, numeroDevolucion) => {
 
 	let txId = req.txId;
-	L.xi(txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
-
-	let numeroDevolucion = (req.params ? req.params.numeroDevolucion : null) || (req.query ? req.query.numeroDevolucion : null);
-
-	if (!numeroDevolucion) {
-		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'El parámetro "numeroDevolucion" es inválido', 400);
-		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-		return;
-	}
 
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
 	if (!estadoToken.ok) {
-		iEventos.consultas.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.consultas.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo, 'JSON');
 		return;
 	}
 
@@ -138,7 +133,7 @@ exports.consultaDevolucion = (req, res) => {
 		if (errorMongo) {
 			let error = new ErrorFedicom('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
 			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB, 'JSON');
 			return;
 		}
 
@@ -158,18 +153,130 @@ exports.consultaDevolucion = (req, res) => {
 
 			if (documentoDevolucion) {
 				res.status(200).json(documentoDevolucion);
-				iEventos.consultas.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK);
+				iEventos.consultas.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK, 'JSON');
 			} else {
 				L.xe(txId, ['No se encontró la devolución dentro de la transmisión.']);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, 'JSON');
 			}
 		} else {
 			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, 'JSON');
 		}
 	});
+
+}
+
+// GET /devoluciones/:numeroDevolucion
+// Cuando el content-type es PDF
+const _consultaDevolucionPDF = (req, res, numDevolucion) => {
+
+	let txId = req.txId;
+
+	iSap.devoluciones.consultaDevolucionPDF(txId, numDevolucion, (errorSap, respuestaSap) => {
+		if (errorSap) {
+			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
+				L.xe(txId, ['Error al consultar la devolución PDF', errorSap]);
+				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numDevolucion, 'PDF');
+				return;
+			}
+			else {
+				// TODO: Cuando el albarán no existe, SAP devuelve un 503. Comprobar si ocurre lo mismo con las devoluciones
+				/*if (respuestaSap.statusCode === 503) {
+					L.xe(txId, ['SAP devolvió un 503, probablemente la devolución no existe', errorSap]);
+					let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+					iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
+					return;
+				}*/
+
+				L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba la devolución PDF', errorSap]);
+				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.NO_SAP, numDevolucion, 'PDF');
+				return;
+			}
+		}
+
+		let cuerpoSap = respuestaSap.body;
+
+		if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
+			L.xi(txId, ['Se obtuvo la devolución PDF en Base64 desde SAP']);
+			let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
+
+			res.setHeader('Content-Type', 'application/pdf');
+			res.setHeader('Content-Disposition', 'attachment; filename=' + numDevolucion + '.pdf');
+			res.status(200).send(buffer);
+			iEventos.consultas.consultaDevolucion(req, res, { pdf: numDevolucion, bytes: buffer.length }, K.TX_STATUS.OK, numDevolucion, 'PDF');
+			return;
+		}
+		else {
+			L.xe(txId, ['Ocurrió un error al solicitar la devolución PDF', cuerpoSap]);
+			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
+			return;
+		}
+
+	});
+}
+
+// GET /devoluciones/:numeroDevolucion
+exports.consultaDevolucion = (req, res) => {
+
+	let txId = req.txId;
+	L.xi(txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
+
+	// Verificación del token del usuario
+	let estadoToken = iTokens.verificaPermisos(req, res, {
+		admitirSimulaciones: true,
+		admitirSimulacionesEnProduccion: true
+	});
+	if (!estadoToken.ok) {
+		iEventos.consultas.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo);
+		return;
+	}
+
+
+	// Saneado del número de devolucion
+	let numDevolucion = req.params.numeroDevolucion;
+	if (!numDevolucion) {
+		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'El parámetro "numeroDevolucion" es obligatorio', 400);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, null);
+		return;
+	}
+	let numDevolucionSaneado = numDevolucion.padStart(10, '0');
+	L.xi(txId, ['El número de devolución solicitada', numDevolucionSaneado])
+
+
+	// Detección del formato solicitado
+	let formatoDevolucion = 'JSON';
+
+	if (req.headers['accept']) {
+		switch (req.headers['accept'].toLowerCase()) {
+			case 'application/pdf': formatoDevolucion = 'PDF'; break;
+			default: formatoDevolucion = 'JSON'; break;
+		}
+	}
+
+	L.xd(txId, ['Se determina el formato solicitado de la devolución', formatoDevolucion, req.headers['accept']]);
+
+	switch (formatoDevolucion) {
+		case 'JSON':
+			return _consultaDevolucionJSON(req, res, numDevolucionSaneado);
+		case 'PDF':
+			return _consultaDevolucionPDF(req, res, numDevolucionSaneado);
+		default:
+			// Nunca vamos a llegar a este caso, pero aquí queda el tratamiento necesario por si acaso
+			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se reconoce del formato de la devolución en la cabecera "Accept"', 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numDevolucionSaneado, null);
+			return;
+	}
 
 }
