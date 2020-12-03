@@ -3,10 +3,19 @@
 const L = global.logger;
 const K = global.constants;
 
+// Externo
+const request = require('request');
+
+// Interfaces
 const iSapComun = require('./iSapComun');
+const iEventos = require('interfaces/eventos/iEventos');
+
+// Modelos
 const DestinoSap = require('model/ModeloDestinoSap');
 
-const request = require('request');
+
+
+
 
 
 exports.realizarDevolucion = (txId, devolucion, callback) => {
