@@ -122,13 +122,6 @@ const _consultaDevolucionJSON = (req, res, numeroDevolucion) => {
 
 	let txId = req.txId;
 
-	// Verificacion del estado del token
-	let estadoToken = iTokens.verificaPermisos(req, res, { admitirSimulaciones: true, admitirSimulacionesEnProduccion: true });
-	if (!estadoToken.ok) {
-		iEventos.consultas.consultaDevolucion(req, res, estadoToken.respuesta, estadoToken.motivo, 'JSON');
-		return;
-	}
-
 	iMongo.consultaTx.porNumeroDevolucion(txId, numeroDevolucion, (errorMongo, dbTx) => {
 		if (errorMongo) {
 			let error = new ErrorFedicom('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
