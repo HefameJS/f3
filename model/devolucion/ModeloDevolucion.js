@@ -100,39 +100,55 @@ class Devolucion {
 
 		let respuestaCliente = clone(respuestaSap);
 		let incidenciaClienteDesconocido = false;
+		// let devolucionDeErroresSap = null;
 
-		respuestaCliente.forEach(devolucion => {
+		// Revisión de las incidencias en las cabeceras de las devoluciones devueltas por SAP
+		if (respuestaCliente && respuestaCliente.forEach) {
+			respuestaCliente.forEach(devolucion => {
 
-			// Si hemos encontrado una incidencia de cliente desconocido, abortamos buclelele.
-			if (incidenciaClienteDesconocido) return;
+				/*if (!devolucion.numeroDevolucion) {
+					devolucionDeErroresSap = devolucion;
+				}*/
 
-			// Hacemos un tratamiento especial de las cabeceras que devuelve SAP en buca de incidencias.
-			if (devolucion.incidencias && devolucion.incidencias.filter) {
+				// Si hemos encontrado una incidencia de cliente desconocido, abortamos buclelele.
+				if (incidenciaClienteDesconocido) return;
 
-				devolucion.incidencias = devolucion.incidencias.filter((incidenciaCabecera) => {
-					// Si aparece la incidencia 'Cliente desconocido', la suprimimos de la respuesta al cliente
-					// y al poner incidenciaClienteDesconocido a true. Esto hará que la devolución se marque como rechazada.
-					if (incidenciaCabecera && incidenciaCabecera.descripcion === "Cliente desconocido") {
-						incidenciaClienteDesconocido = true;
-						return false;
-					}
-					// Si aparece la incidencia 'Devolución duplicada', la suprimimos de la respuesta al cliente y levantamos el flag 'DUPLICADO_SAP'.
-					else if (incidenciaCabecera && incidenciaCabecera.descripcion === "Devolución duplicada") {
-						L.xi(txId, ['Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP']);
-						iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
-						return false;
-					}
-					return true;
- 
-				})
-			}
+				// Hacemos un tratamiento especial de las cabeceras que devuelve SAP en buca de incidencias.
+				if (devolucion.incidencias && devolucion.incidencias.filter) {
 
-			if (devolucion && devolucion.sap_punto_entrega) {
-				iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, devolucion.sap_punto_entrega);
-			}
-			SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
-			SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
-		})
+					devolucion.incidencias = devolucion.incidencias.filter((incidenciaCabecera) => {
+						// Si aparece la incidencia 'Cliente desconocido', la suprimimos de la respuesta al cliente
+						// y al poner incidenciaClienteDesconocido a true. Esto hará que la devolución se marque como rechazada.
+						if (incidenciaCabecera && incidenciaCabecera.descripcion === "Cliente desconocido") {
+							incidenciaClienteDesconocido = true;
+							return false;
+						}
+						// Si aparece la incidencia 'Devolución duplicada', la suprimimos de la respuesta al cliente y levantamos el flag 'DUPLICADO_SAP'.
+						else if (incidenciaCabecera && incidenciaCabecera.descripcion === "Devolución duplicada") {
+							L.xi(txId, ['Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP']);
+							iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
+							return false;
+						}
+						return true;
+
+					})
+				}
+
+				if (devolucion && devolucion.sap_punto_entrega) {
+					iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, devolucion.sap_punto_entrega);
+				}
+				SaneadorDevolucionesSAP.sanearMayusculas(devolucion);
+				SaneadorDevolucionesSAP.eliminarCamposInnecesarios(devolucion);
+			})
+		// En ocasiones, SAP no devuelve un array... estoy investigando el motivo
+		} else {
+			L.xe(txId, 'La respuesta de SAP no es un array, como se esperaba', respuestaCliente)
+			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'La petición de devolución se ha rechazado', 400)
+			let respuestaClienteError = errorFedicom.getErrors();
+			respuestaClienteError.estadoTransmision = () => { return [K.TX_STATUS.RECHAZADO_SAP, [], 400] }
+			respuestaClienteError.isRechazadoSap = () => true;
+			return respuestaClienteError;
+		}
 
 		// Si aparece la incidencia de cliente desconocido en cualquier devolución (debería haber solo 1), enviaremos el mensaje de rechazo y abortamos el resto del saneado
 		if (incidenciaClienteDesconocido) {
@@ -150,9 +166,12 @@ class Devolucion {
 		// Si se excluyeron lineas, generamos una devolución sin número donde incluimos 
 		// las lineas que quedaron excluidas y el motivo
 		if (this.lineasExcluidas.length > 0) {
-			respuestaCliente.push(this.generarRespuestaExclusiones());
-			estado = K.TX_STATUS.DEVOLUCION.PARCIAL
-			iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL, true);
+
+			//if (!devolucionDeErroresSap) {
+				respuestaCliente.push(this.generarRespuestaExclusiones());
+				estado = K.TX_STATUS.DEVOLUCION.PARCIAL
+				iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL, true);
+			//}
 		}
 
 		_estableceFlags(txId, respuestaCliente);
