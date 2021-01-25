@@ -57,6 +57,13 @@ class Devolucion {
 		//this.crc = CRC.crear(this.codigoCliente, crc);
 		this.crc = CRC.crear(this.codigoCliente, Date.fedicomTimestamp());
 
+		// 25.01.2021 - Eliminamos los vales de estupefacientes si el domino es PORTAL_HEFAME
+		if (this.login.domain === K.DOMINIOS.PORTAL_HEFAME) {
+			this.lineas.forEach(l => {
+				delete l.valeEstupefaciente;
+			})
+		}
+
 	}
 
 	contienteLineasValidas() {
