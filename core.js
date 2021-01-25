@@ -24,7 +24,7 @@ if (cluster.isMaster) {
 
 
 	const ficheroPID = (C.pid || '.') + '/' + process.title + '.pid';
-	require('fs').writeFile(ficheroPID, process.pid, (errorFichero) => {
+	require('fs').writeFile(ficheroPID, '' + process.pid, (errorFichero) => {
 		if (errorFichero) {
 			L.e(["Error al escribir el fichero del PID", errorFichero], 'cluster');
 		}

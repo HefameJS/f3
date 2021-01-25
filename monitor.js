@@ -21,7 +21,7 @@ L.i('*** Implementando protololo Fedicom v' + K.PROTOCOL_VERSION + ' ****');
 L.i('*** ID de instancia: ' + global.instanceID);
 
 const ficheroPID = (C.pid || '.') + '/' + process.title + '.pid';
-require('fs').writeFile(ficheroPID, process.pid, (err) => {
+require('fs').writeFile(ficheroPID, '' + process.pid, (err) => {
 	if (err) {
 		L.e(["Error al escribir el fichero del PID", err]);
 	}
