@@ -45,7 +45,7 @@ module.exports.errorDevolucion = (req, res, cuerpoRespuesta, estado) => {
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.evento(txId, K.TX_TYPES.DEVOLUCION, status, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
+	L.evento(txId, K.TX_TYPES.DEVOLUCION, estado, [req.identificarUsuarioAutenticado(), cuerpoRespuesta]);
 }
 
 module.exports.devolucionDuplicada = (req, res, cuerpoRespuesta, txIdOriginal) => {
