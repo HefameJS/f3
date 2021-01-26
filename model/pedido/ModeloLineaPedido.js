@@ -18,7 +18,7 @@ class LineaPedido {
 		let errorFedicom = new ErrorFedicom();
 
 		// 001 - Control de codigo de artículo
-		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');
+		FieldChecker.checkExistsAndNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');
 		let errorCantidad = FieldChecker.checkExistsAndPositive(json.cantidad, errorFedicom, 'LIN-PED-ERR-002','El campo "cantidad" es inválido');
 		FieldChecker.checkPositive(json.orden, errorFedicom, 'LIN-PED-ERR-003', 'El campo "orden" es inválido');
 

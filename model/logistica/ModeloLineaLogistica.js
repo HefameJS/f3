@@ -15,7 +15,7 @@ class LineaLogistica {
 		let errorFedicom = new ErrorFedicom();
 
 		FieldChecker.checkPositive(json.orden, errorFedicom, 'LIN-LOG-ERR-001', 'El campo "orden" es inválido');
-		FieldChecker.checkNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-LOG-ERR-002', 'El campo "codigoArticulo" es obligatorio');
+		FieldChecker.checkExistsAndNotEmptyString(json.codigoArticulo, errorFedicom, 'LIN-LOG-ERR-002', 'El campo "codigoArticulo" es obligatorio');
 		// FieldChecker.checkExistsAndPositive(json.cantidad, errorPosicion, 'LIN-LOG-ERR-003', 'El campo "cantidad" es incorrecto');
 		
 		// COPIA DE PROPIEDADES

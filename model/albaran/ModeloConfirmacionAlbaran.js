@@ -33,7 +33,7 @@ class ConfirmacionAlbaran {
 		// SANEADO OBLIGATORIO
 		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkNotEmptyString(json.numeroAlbaran, errorFedicom, 'CONF-ERR-001', 'El parámetro "numeroAlbaran" es inválido');
+		FieldChecker.checkExistsAndNotEmptyString(json.numeroAlbaran, errorFedicom, 'CONF-ERR-001', 'El parámetro "numeroAlbaran" es inválido');
 		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorFedicom, 'CONF-ERR-002', 'El parámetro "fechaAlbaran" es inválido');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'LOG-ERR-004', 'El campo "lineas" no puede estar vacío');
 
@@ -103,7 +103,7 @@ class LineaConfirmacionAlbaran {
 
 		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkNotEmptyString(posicion.codigoArticulo, errorFedicom, 'LIN-CONF-ERR-001', 'El campo "codigoArticulo" es obligatorio');
+		FieldChecker.checkExistsAndNotEmptyString(posicion.codigoArticulo, errorFedicom, 'LIN-CONF-ERR-001', 'El campo "codigoArticulo" es obligatorio');
 		FieldChecker.checkDate(posicion.fechaCaducidad, errorFedicom, 'LIN-CONF-ERR-003', 'El campo "fechaCaducidad" es inválido');
 		
 		// Si hay error, añadimos las incidencias a la linea 

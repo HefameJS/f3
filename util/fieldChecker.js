@@ -26,8 +26,8 @@ const checkExists = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFe
  * @param {string} codigoErrorFedicom El código de error que se introduce en caso de error
  * @param {string} descripcionErrorFedicom El mensaje de error que se introduce en caso de error
  */
-const checkNotEmptyString = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) => {
-	if (campo === null || campo === undefined || typeof campo !== 'string' || campo === "") {
+const checkExistsAndNotEmptyString = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) => {
+	if (campo === null || campo === undefined || typeof campo !== 'string' || campo.trim() === "") {
 		if (errorFedicom) errorFedicom.add(codigoErrorFedicom, descripcionErrorFedicom, 400);
 		return true;
 	}
@@ -178,7 +178,7 @@ const checkDate = (campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedi
 
 module.exports = {
 	checkExists,
-	checkNotEmptyString,
+	checkExistsAndNotEmptyString,
 	checkString,
 	checkExistsAndPositive,
 	checkExistsAndPositiveOrZero,

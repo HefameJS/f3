@@ -27,8 +27,8 @@ class Logistica {
 		// SANEADO OBLIGATORIO
 		let fedicomError = new ErrorFedicom();
 
-		FieldChecker.checkNotEmptyString(json.codigoCliente, fedicomError, 'LOG-ERR-002', 'El campo "codigoCliente" es obligatorio');
-		FieldChecker.checkNotEmptyString(json.numeroLogisticaOrigen, fedicomError, 'LOG-ERR-003', 'El campo "numeroLogisticaOrigen" es obligatorio');
+		FieldChecker.checkExistsAndNotEmptyString(json.codigoCliente, fedicomError, 'LOG-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNotEmptyString(json.numeroLogisticaOrigen, fedicomError, 'LOG-ERR-003', 'El campo "numeroLogisticaOrigen" es obligatorio');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, fedicomError, 'LOG-ERR-004', 'El campo "lineas" no puede estar vacío');
 
 		let direccionOrigen = new DireccionLogistica(txId, json.origen);

@@ -29,9 +29,9 @@ class Pedido {
 
 		// SANEADO OBLIGATORIO
 		let errorFedicom = new ErrorFedicom();
-		FieldChecker.checkNotEmptyString(json.codigoCliente, errorFedicom, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
+		FieldChecker.checkExistsAndNotEmptyString(json.codigoCliente, errorFedicom, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-		FieldChecker.checkNotEmptyString(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
+		FieldChecker.checkExistsAndNotEmptyString(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
 			errorFedicom.add('PED-ERR-002', 'Indique el "codigoCliente" sin el @hefame al final', 400);
