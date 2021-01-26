@@ -2,7 +2,7 @@
   "name": "concentrador-fedicom3",
   "version": "0.0.1",
   "description": "Concentrador Fedicom 3",
-  "main": "fedicom3.js",
+  "main": "core.js",
   "scripts": {
     "test-core": "nodemon --stack-size=16000 core.js",
     "core": "nohup node core.js >> console.log 2>> console.err &",
