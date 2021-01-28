@@ -5,7 +5,7 @@
 
 const crypto = require('crypto');
 
-const crear = (codigoCliente, numeroPedidoOrigen) => {
+function crear(codigoCliente, numeroPedidoOrigen) {
 
 	let hash = crypto.createHash('sha1');
 	return hash.update(codigoCliente + numeroPedidoOrigen)
@@ -13,14 +13,15 @@ const crear = (codigoCliente, numeroPedidoOrigen) => {
 
 }
 
-const crearParaLineaDevolucion = (codigoMotivo, numeroAlbaran, fechaAlbaran, codigoArticulo, cantidad, lote, fechaCaducidad, valeEstupefaciente) => {
-
+function generar(...valores) {
+	let base = valores.reduce((acumulado, actual) => {
+		return acumulado + actual;
+	});
 	let hash = crypto.createHash('sha1');
-	return hash.update(codigoMotivo + numeroAlbaran + fechaAlbaran + codigoArticulo + cantidad + lote + fechaCaducidad + valeEstupefaciente)
-		.digest('hex').substring(1, 25).toUpperCase();
+	return hash.update(base).digest('hex').substring(1, 25).toUpperCase();
 }
 
 module.exports = {
 	crear,
-	crearParaLineaDevolucion
+	generar
 }
