@@ -77,7 +77,7 @@ class DevolucionCliente {
 
 		// 20.10.2020 - Para evitar duplicados, vamos a generar el CRC siempre con el timestamp actual
 		// this.crc = CRC.crear(this.codigoCliente, crc);
-		this.crc = CRC.crear(this.codigoCliente, crcLineas, Date.fedicomTimestamp());
+		this.crc = CRC.generar(this.codigoCliente, crcLineas, Date.fedicomTimestamp());
 
 		// 25.01.2021 - Eliminamos los vales de estupefacientes si el domino es PORTAL_HEFAME
 		if (this.login.domain === K.DOMINIOS.PORTAL_HEFAME) {
