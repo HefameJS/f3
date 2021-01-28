@@ -254,7 +254,7 @@ class ModeloDevolucionSap {
 
 
 		let codigoRespuestaHttp = esRechazoTotal ? 206 : (esDevolucionParcial ? 206 : 201);
-		let estadoTransmision = esRechazoTotal ? K.TX_STATUS.PETICION_INCORRECTA : (esDevolucionParcial ? K.TX_STATUS.DEVOLUCION.PARCIAL : K.TX_STATUS.OK);
+		let estadoTransmision = esRechazoTotal ? K.TX_STATUS.DEVOLUCION.RECHAZO_TOTAL : (esDevolucionParcial ? K.TX_STATUS.DEVOLUCION.PARCIAL : K.TX_STATUS.OK);
 		
 
 		return {

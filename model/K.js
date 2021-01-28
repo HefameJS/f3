@@ -31,7 +31,8 @@ module.exports = {
             SIN_NUMERO_PEDIDO_SAP: 9140,
         },
         DEVOLUCION: {
-            PARCIAL: 29000
+            PARCIAL: 29000,
+            RECHAZO_TOTAL: 29100
         },
         CONFIRMACION_PEDIDO: {
             NO_ASOCIADA_A_PEDIDO: 9004,
