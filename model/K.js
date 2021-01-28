@@ -78,6 +78,18 @@ module.exports = {
         ERR_TODAS_LINEAS_ERROR: 'PED-ERR-999',
         ERR_BLOQUEO_SAP: 'PED-ERR-999'
     },
+    MOTIVO_DEVOLUCION: {
+        "01": "Caducidad del producto",
+        "02": "Retirado por alerta sanitaria",
+        "03": "Falta género",
+        "04": "Mal estado",
+        "05": "Mal servido",
+        "06": "No interesa",
+        "07": "Mal anotado",
+        "08": "Error en el precio",
+        "09": "Defecto de calidad",
+        "10": "Otros"
+    },
     PRE_CLEAN: {
         PEDIDOS: {
             CABECERA: {
@@ -158,60 +170,6 @@ module.exports = {
 
             }
         },
-        DEVOLUCIONES: {
-            CABECERA: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoCliente: { ignore: true },
-                lineas: { ignore: true },
-                login: { ignore: true },
-                crc: { ignore: true },
-                sapSystem: { ignore: true },
-                authReq: { ignore: true },
-                lineasExcluidas: {ignore: true},
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                numeroDevolucion: { remove: true },
-                fechaDevolucion: { remove: true },
-                codigoRecogida: { remove: true },
-                numeroAlbaranAbono: { remove: true },
-                fechaAlbaranAbono: { remove: true },
-                empresaFacturadora: { remove: true },
-
-                // Campos que de aparecer deben ser cadenas de texto
-                observaciones: { string: { max: 50 } },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-            },
-            LINEAS: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoArticulo: { ignore: true },
-                sap_ignore: { ignore: true },
-                ordenLineaAlbaran: { ignore: true },
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                descripcionArticulo: { remove: true },
-                descripcionMotivo: { remove: true },
-
-                // Campos que de aparecer deben ser cadenas de texto
-                numeroAlbaran: { string: { max: 50 } },
-                lote: { string: { max: 15 } },
-                codigoMotivo: { string: { max: 15 } },
-                valeEstupefaciente: { string: { max: 50 } },
-                observaciones: { string: { max: 50 } },
-
-                // Campos que de aparecer deben ser enteros
-                orden: { integer: {} },
-                cantidad: { integer: {} },
-
-                // Campos que de aparecer deben estar en formato Date
-                fechaAlbaran: { date: {} },
-                fechaCaducidad: { date: {} },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-            }
-        },
         LOGISTICA: {
             CABECERA: {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
@@ -272,20 +230,6 @@ module.exports = {
             removePosZeroValue: ['cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'precio'],
             removePosIfFalse: ['servicioDemorado']
         },
-        DEVOLUCIONES: {
-            removeCab: ['login', 'crc', 'sap_punto_entrega', 'sap_bloqueo_entrega', 'sap_create_logistic', 'sap_kunnr_code', 'sap_num_devo', 'sap_fecha_bapi'],
-            removePos: ['sap_ignore'],
-            replaceCab: ['numeroDevolucion', 'fechaDevolucion', 'codigoRecogida', 'codigoCliente', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora'],
-            replacePos: ['numeroAlbaran', 'fechaAlbaran', 'codigoArticulo', 'descripcionArticulo', 'codigoMotivo', 'descripcionMotivo', 'valeEstupefaciente', 'fechaCaducidad'],
-            removeCabEmptyString: ['codigoRecogida', 'numeroAlbaranAbono', 'fechaAlbaranAbono', 'empresaFacturadora', 'observaciones'],
-            removeCabEmptyArray: ['incidencias'],
-            removeCabZeroValue: [],
-            removeCabIfFalse: [],
-            removePosEmptyString: ['numeroAlbaran', 'fechaAlbaran', 'descripcionArticulo', 'lote', 'fechaCaducidad', 'descripcionMotivo', 'valeEstupefaciente', 'observaciones'],
-            removePosEmptyArray: ['incidencias'],
-            removePosZeroValue: [],
-            removePosIfFalse: []
-        },
         LOGISTICA: {
             removeCab: ['login', 'crc', 'sap_punto_entrega', 'ignorarTodasLineas', 'sap_bloqueo_entrega', 'sap_create_logistic'],
             removePos: ['sap_pos', 'sap_ignore'],
@@ -304,8 +248,8 @@ module.exports = {
         },
     },
     PROTOCOL_VERSION: '3.4.7',
-    SERVER_VERSION: '0.11.4',
-    TX_VERSION: 1101,
+    SERVER_VERSION: '0.12.1',
+    TX_VERSION: 1102,
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
@@ -399,7 +343,8 @@ module.exports = {
         TIPO: 't',
         PUNTO_ENTREGA: 'pt',
         GENERA_RECOGIDA: 'logistica',
-        DEVOLUCION_PARCIAL: 'devParc'
+        DEVOLUCION_PARCIAL: 'devParc',
+        DEVOLUCION_RECHAZO_TOTAL: 'devRechTotal'
     },
     TIPIFICADO_FALTAS: {
         "BAJA": "desconocido",
