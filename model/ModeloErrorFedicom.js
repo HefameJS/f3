@@ -70,8 +70,9 @@ class ErrorFedicom {
 	  return this.listaErroresFedicom;
   }
 
-  enviarRespuestaDeError(expressRes) {
-    expressRes.status(this.codigoRespuestaHTTP).json(this.listaErroresFedicom);
+  enviarRespuestaDeError(expressRes, codigoHttp) {
+    codigoHttp = codigoHttp || this.codigoRespuestaHTTP || 500;
+    expressRes.status(codigoHttp).json(this.listaErroresFedicom);
     return this.listaErroresFedicom;
   }
 
