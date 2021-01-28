@@ -116,10 +116,10 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
-module.exports.errorConfirmacionPedido = (req, res, cuerpoRespuesta, estado) => {
+module.exports.errorConfirmacionPedido = (req, res, estado) => {
 
 	let txId = req.txId;
-	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, {}, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)
 
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);

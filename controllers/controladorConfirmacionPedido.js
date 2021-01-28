@@ -24,7 +24,7 @@ exports.confirmaPedido = (req, res) => {
 	
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) {
-		iEventos.sap.errorConfirmacionPedido(req, res, estadoToken.respuesta, estadoToken.motivo);
+		iEventos.sap.errorConfirmacionPedido(req, res, estadoToken.motivo);
 		return;
 	}
 
@@ -36,24 +36,24 @@ exports.confirmaPedido = (req, res) => {
 	} catch (excepcion) {
 		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom])
-		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		errorFedicom.enviarRespuestaDeError(res, 400);
+		iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
 	iMongo.consultaTx.porCRC(txId, confirmacionPedidoSAP.crc, (errorMongo, dbTx) => {
 		if (errorMongo) {
-			let errorFedicom = ErrorFedicom.desdeExcepcion(txId, errorMongo);
-			L.xe(txId, ['No se ha podido recuperar la transmisión a confirmar - Se aborta el proceso', errorFedicom]);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			
+			L.xe(txId, ['No se ha podido recuperar la transmisión a confirmar - Se deja pendiente de asociar a pedido', errorMongo]);
+			res.status(202).json({ ok: true });
+			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
 		if (!dbTx) {
-			let errorFedicom = new ErrorFedicom('SAP-ERR-400', 'No existe el pedido que se está confirmando', 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.sap.errorConfirmacionPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			L.xe(txId, ['No se ha encontrado el pedido que se está confirmando - Se deja pendiete de asociar a pedido', errorMongo]);
+			res.status(202).json({ ok: true });
+			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
