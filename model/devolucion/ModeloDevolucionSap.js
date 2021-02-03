@@ -145,12 +145,12 @@ class ModeloDevolucionSap {
 		let numerosDevolucion = [];
 
 		// Las siguientes variables las rellenaremos recorriendo las distintas devoluciones dadas por SAP.
-		let devolucionDuplicadaSap = false; // Si en alguna devolucion aparece la incidencia de duplicado SAP.
-		let clienteNoExiste = false;
-		let puntoEntrega = null;
-		let esDevolucionParcial = false;
-		let esRechazoTotal = true;
-		let creaOrdenLogistica = false;
+		let devolucionDuplicadaSap = false; 	// Si en alguna devolucion aparece la incidencia de duplicado SAP.
+		let clienteNoExiste = false;			// Si en alguna devolucion aparece la incidencia de Cliente no existe.
+		let puntoEntrega = null;				// Si encontramos el punto de entrega
+		let esDevolucionParcial = false;		// Si no todas las lineas han sido aceptadas
+		let esRechazoTotal = true;				// Si todas las linas se han rechazado
+		let creaOrdenLogistica = false;			// Si aparece el numero de la orden de recogida
 		let totales = {
 			lineas: 0,
 			lineasExcluidas: 0,
@@ -176,20 +176,20 @@ class ModeloDevolucionSap {
 			if (devolucionSap.esDeLineasDescartadas()) {
 
 				esDevolucionParcial = true;
-				
+
 				let totalesExcluidos = devolucionSap.metadatos.totales;
 				let lineasDescartadasConcentrador = devolucionCliente.generarListaLineasExcluidas();
 
 				lineasDescartadasConcentrador.forEach(lineaDescartada => {
 					devolucionSap.lineas.push(lineaDescartada)
-					
-					totalesExcluidos.lineas ++;
-					totalesExcluidos.lineasIncidencias ++;
+
+					totalesExcluidos.lineas++;
+					totalesExcluidos.lineasIncidencias++;
 					totalesExcluidos.cantidad += lineaDescartada.cantidad || 0;
 					totalesExcluidos.cantidadIncidencias += lineaDescartada.cantidad || 0;
 
 					if (lineaDescartada.valeEstupefaciente) {
-						totalesExcluidos.lineasEstupe ++;
+						totalesExcluidos.lineasEstupe++;
 						totalesExcluidos.cantidadEstupe += lineaDescartada.cantidad || 0;
 					}
 				});
@@ -204,7 +204,7 @@ class ModeloDevolucionSap {
 				totales.cantidadEstupe += totalesExcluidos.cantidadEstupe;
 
 			} else {
-				numerosDevolucion.concat(devolucionSap.metadatos.numerosDevolucion);
+				numerosDevolucion = numerosDevolucion.concat(devolucionSap.metadatos.numerosDevolucionSap);
 				esRechazoTotal = false;
 
 				let totalesIncluidos = devolucionSap.metadatos.totales;
@@ -214,15 +214,15 @@ class ModeloDevolucionSap {
 				totales.lineasEstupe += totalesIncluidos.lineasEstupe;
 				totales.cantidad += totalesIncluidos.cantidad;
 				totales.cantidadIncidencias += totalesIncluidos.cantidadIncidencias;
-				totales.cantidadEstupe += totalesIncluidos.cantidadEstupe;				
+				totales.cantidadEstupe += totalesIncluidos.cantidadEstupe;
 			}
 
-			
+
 			devolucionDuplicadaSap = devolucionDuplicadaSap || devolucionSap.metadatos.devolucionDuplicadaSap;
 			puntoEntrega = puntoEntrega || devolucionSap.metadatos.puntoEntrega;
 			creaOrdenLogistica = creaOrdenLogistica || devolucionSap.metadatos.creaOrdenLogistica;
 
-			cuerpoRespuestaHttp.push( devolucionSap.generarJSON() )
+			cuerpoRespuestaHttp.push(devolucionSap.generarJSON())
 
 		})
 
@@ -238,24 +238,33 @@ class ModeloDevolucionSap {
 				numerosDevolucion: []
 			};
 		}
+		// RETURN
+
+
+		// Es posible que todas las lineas enviadas a SAP hayan vuelto OK, pero que el concentrador no le haya
+		// enviado todas las lineas por encontrar errores. En tal caso, las anadimos
+		if (!esDevolucionParcial && devolucionCliente.contieneLineasExcluidas()) {
+			esDevolucionParcial = true;
+			cuerpoRespuestaHttp.push(devolucionCliente.generarRespuestaDeTodasLasLineasSonInvalidas());
+		}
 
 
 		// Levantamos Flags
 		if (devolucionDuplicadaSap) iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
 		if (puntoEntrega) iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, puntoEntrega);
-		
+
 		if (creaOrdenLogistica) iFlags.set(txId, K.FLAGS.GENERA_RECOGIDA);
 		if (totales.lineasEstupe) iFlags.set(txId, K.FLAGS.ESTUPEFACIENTE);
 
 		if (esRechazoTotal) iFlags.set(txId, K.FLAGS.DEVOLUCION_RECHAZO_TOTAL);
 		else if (esDevolucionParcial) iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL);
-		
+
 		iFlags.set(txId, K.FLAGS.TOTALES, totales);
 
 
 		let codigoRespuestaHttp = esRechazoTotal ? 206 : (esDevolucionParcial ? 206 : 201);
 		let estadoTransmision = esRechazoTotal ? K.TX_STATUS.DEVOLUCION.RECHAZO_TOTAL : (esDevolucionParcial ? K.TX_STATUS.DEVOLUCION.PARCIAL : K.TX_STATUS.OK);
-		
+
 
 		return {
 			cuerpoRespuestaHttp,

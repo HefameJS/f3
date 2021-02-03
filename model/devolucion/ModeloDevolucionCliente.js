@@ -136,7 +136,14 @@ class DevolucionCliente {
 	 * Indica si la devolución contiene al menos una línea valida para ser pasada a SAP
 	 */
 	contieneLineasValidas() {
-		return this.lineas.length > 0
+		return this.lineas.length > 0;
+	}
+
+	/**
+	 * 
+	 */
+	contieneLineasExcluidas() {
+		return this.lineasExcluidas.length > 0;
 	}
 
 	/**
