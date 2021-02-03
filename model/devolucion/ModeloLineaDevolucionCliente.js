@@ -44,10 +44,9 @@ class LineaDevolucionCliente {
 
 
 		// Copiamos las propiedades de la POSICION que son relevantes
-		// Valores comprobados previamente y que son obligatorios:
-		this.numeroAlbaran = json.numeroAlbaran.trim();
-		this.fechaAlbaran = json.fechaAlbaran.trim();
-		this.codigoArticulo = json.codigoArticulo.trim();
+		this.numeroAlbaran = json.numeroAlbaran?.trim();
+		this.fechaAlbaran = json.fechaAlbaran?.trim();
+		this.codigoArticulo = json.codigoArticulo?.trim();
 		this.cantidad = parseInt(json.cantidad);
 		this.codigoMotivo = json.codigoMotivo;
 
