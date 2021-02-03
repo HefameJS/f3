@@ -114,7 +114,7 @@ exports.crearDevolucion = (req, res) => {
 			}
 
 
-			let devolucionesSap = cuerpoRespuestaSap.map(cuerpoDevolucionSap => new DevolucionSap(cuerpoDevolucionSap, req));
+			let devolucionesSap = cuerpoRespuestaSap.map(cuerpoDevolucionSap => new DevolucionSap(cuerpoDevolucionSap, txId));
 
 			let {
 				cuerpoRespuestaHttp,
