@@ -21,7 +21,7 @@ class ModeloDevolucionSap {
 		L.xt(txId, ['Instanciando objeto Devolucion Sap con los datos del cuerpo HTTP', json]);
 
 		this.metadatos = {
-			creaOrdenLogistica: Boolean(json.sap_create_logistic),
+			creaOrdenLogistica: Boolean(json.codigorecogida),
 			clienteNoExiste: false,
 			devolucionDuplicadaSap: false,
 			puntoEntrega: json.sap_punto_entrega || null,
