@@ -120,11 +120,12 @@ exports.crearDevolucion = (req, res) => {
 				cuerpoRespuestaHttp,
 				codigoRespuestaHttp,
 				estadoTransmision,
-				numerosDevolucion
+				numerosDevolucionSap,
+				numeroDevolucion
 			} = DevolucionSap.condensar(txId, devolucionesSap, devolucionCliente);
 
 			res.status(codigoRespuestaHttp).json(cuerpoRespuestaHttp);
-			iEventos.devoluciones.finDevolucion(res, cuerpoRespuestaHttp, estadoTransmision, { numerosDevolucion });
+			iEventos.devoluciones.finDevolucion(res, cuerpoRespuestaHttp, estadoTransmision, { numerosDevolucionSap, numeroDevolucion });
 
 		});
 

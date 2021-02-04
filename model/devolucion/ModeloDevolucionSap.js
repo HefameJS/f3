@@ -141,10 +141,12 @@ class ModeloDevolucionSap {
 
 
 	static condensar(txId, devolucionesSap, devolucionCliente) {
-		let cuerpoRespuestaHttp = [];
-		let numerosDevolucion = [];
-
+		
+		
 		// Las siguientes variables las rellenaremos recorriendo las distintas devoluciones dadas por SAP.
+		let cuerpoRespuestaHttp = [];
+		let numerosDevolucionSap = [];
+		let numeroDevolucion = null;
 		let devolucionDuplicadaSap = false; 	// Si en alguna devolucion aparece la incidencia de duplicado SAP.
 		let clienteNoExiste = false;			// Si en alguna devolucion aparece la incidencia de Cliente no existe.
 		let puntoEntrega = null;				// Si encontramos el punto de entrega
@@ -204,7 +206,8 @@ class ModeloDevolucionSap {
 				totales.cantidadEstupe += totalesExcluidos.cantidadEstupe;
 
 			} else {
-				numerosDevolucion = numerosDevolucion.concat(devolucionSap.metadatos.numerosDevolucionSap);
+				numeroDevolucion = devolucionSap.numeroDevolucion;
+				numerosDevolucionSap = numerosDevolucionSap.concat(devolucionSap.metadatos.numerosDevolucionSap);
 				esRechazoTotal = false;
 
 				let totalesIncluidos = devolucionSap.metadatos.totales;
@@ -270,7 +273,8 @@ class ModeloDevolucionSap {
 			cuerpoRespuestaHttp,
 			codigoRespuestaHttp,
 			estadoTransmision,
-			numerosDevolucion
+			numerosDevolucionSap,
+			numeroDevolucion
 		}
 	}
 }

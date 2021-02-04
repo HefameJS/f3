@@ -29,7 +29,8 @@ module.exports.finDevolucion = (res, cuerpoRespuesta, estadoFinal, datosExtra) =
 	if (!datosExtra) datosExtra = {}
 
 	let transaccion = iEventosComun.generarEventoDeCierre(res, cuerpoRespuesta, estadoFinal);
-	transaccion['$set'].numerosDevolucion = datosExtra.numerosDevolucion || [];
+	transaccion['$set'].numeroDevolucion = datosExtra.numeroDevolucion;
+	transaccion['$set'].numerosDevolucionSap = datosExtra.numerosDevolucionSap || [];
 	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento FinCrearDevolucion'], 'txCommit');

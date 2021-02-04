@@ -182,7 +182,7 @@ const porNumeroPedido = (txId, numeroPedido, callback) => {
 const porNumeroDevolucion = (txId, numeroDevolucion, callback) => {
 	let query = {
 		type: K.TX_TYPES.DEVOLUCION,
-		numerosDevolucion: numeroDevolucion
+		numeroDevolucion: numeroDevolucion
 	};
 
 	_consultaUnaTransmision(txId, query, callback);
