@@ -109,7 +109,7 @@ exports.crearDevolucion = (req, res) => {
 				L.xe(txId, ['SAP devuelve un cuerpo de respuesta que no es un array. Se devuelve error genérico al cliente', cuerpoRespuestaSap]);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.RECHAZADO_SAP);
+				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
 				return;
 			}
 

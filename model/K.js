@@ -24,6 +24,7 @@ module.exports = {
         PETICION_INCORRECTA: 3020,
         NO_SAP: 3110,
         RECHAZADO_SAP: 3120,
+        ERROR_RESPUESTA_SAP: 3130,
         OK: 9900,
         PEDIDO: {
             ESPERANDO_NUMERO_PEDIDO: 8010,
