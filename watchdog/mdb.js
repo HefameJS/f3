@@ -18,25 +18,31 @@ const configuracionWatchdowgMDB = C.watchdog.mdbwatch;
 
 
 let numeroRetransmisionesEnProgreso = 0;
-let buscandoCandidatos = false;
+let intervaloEnEjecucion = false;
+
+
 
 /*let interval = */
 setInterval(() =>  {
 
 	// TODO: Interesante no hacer recovery de transmisiones si hay datos pendientes de escribir en SQLite
-	if (numeroRetransmisionesEnProgreso || buscandoCandidatos) return;
+	if (numeroRetransmisionesEnProgreso || intervaloEnEjecucion) return;
 
-
+	intervaloEnEjecucion = true;
+	
 	iRegistroProcesos.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
-		if (err) return;
+		if (err) {
+			intervaloEnEjecucion = false;
+			return;
+		}
 
 		if (maestro) {
-			buscandoCandidatos = true;
+
 			iMongo.consultaTx.candidatasParaRetransmitir(configuracionWatchdowgMDB.buffer_size || 10, configuracionWatchdowgMDB.minimum_age || 300, (errorMongo, candidatos) => {
-				buscandoCandidatos = false;
 
 				if (errorMongo) {
 					L.e(['Error al obtener lista de transmisiones recuperables', errorMongo], 'mdbwatch');
+					intervaloEnEjecucion = false;
 					return;
 				}
 
@@ -44,17 +50,19 @@ setInterval(() =>  {
 					L.i('Se encontraron ' + candidatos.length + ' transmisiones recuperables', 'mdbwatch');
 
 					iSap.ping(null, (sapError, sapStatus) => {
+						
 						if (sapStatus) {
+
 							candidatos.forEach((dbTx) => {
 
 								let txId = dbTx._id;
+								numeroRetransmisionesEnProgreso++;
 
 								L.xt(txId, ['La transmisión ha sido identificada como recuperable'], 'mdbwatch');
 
 								// CASO TIPICO: No ha entrado a SAP
 								if (dbTx.status === K.TX_STATUS.NO_SAP) {
 									L.xi(txId, 'Retransmitiendo pedido por encontrarse en estado NO_SAP', 'mdbwatch');
-									numeroRetransmisionesEnProgreso++;
 									retransmitirPedido(txId, null, (err, rtxId) => {
 										numeroRetransmisionesEnProgreso--;
 									});
@@ -64,7 +72,9 @@ setInterval(() =>  {
 								else if (dbTx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO && dbTx.sapConfirms) {
 									L.xi(txId, 'Recuperando estado de pedido ya que existe confirmación del mismo por SAP', 'mdbwatch');
 									iFlags.set(txId, K.FLAGS.STATUS_FIX1);
-									return iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.OK);
+									iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.OK);
+									numeroRetransmisionesEnProgreso--;
+									return;
 								}
 								// SAP NO DA CONFIRMACION
 								else if (dbTx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO) {
@@ -76,7 +86,6 @@ setInterval(() =>  {
 									 * estado NO_EXISTE_PEDIDO o ERROR_INTERNO.
 									 */
 									L.xi(txId, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
-									numeroRetransmisionesEnProgreso++;
 									let crc = dbTx.crc.toHexString().substr(0, 8);
 									iMongo.consultaTx.porCRCDeConfirmacion(crc, (errorMongo, confirmacionPedido) => {
 										// Error al consultar a MDB - Sigue habiendo problemas, nos estamos quietos por el momento
@@ -108,24 +117,29 @@ setInterval(() =>  {
 								// CASO ERROR: La transmisión falló durante el proceso
 								else {
 									L.xi(txId, 'La transmisión está en un estado inconsistente - La retransmitimos a SAP', 'mdbwatch');
-									numeroRetransmisionesEnProgreso++;
+									
 									retransmitirPedido(txId, null, (err, rtxId) => {
 										numeroRetransmisionesEnProgreso--;
 									});
 									return;
 								}
 							});
+
+							intervaloEnEjecucion = false;
 						} else {
 							L.i(['Aún no se ha recuperado la comunicación con SAP', sapError], 'mdbwatch');
+							intervaloEnEjecucion = false;
 						}
 					});
 				} else {
 					L.t(['No se encontraron candidatos a retransmitir'], 'mdbwatch');
+					intervaloEnEjecucion = false;
 				}
 
 			});
 		} else {
-
+			intervaloEnEjecucion = false;
+			// No soy maestro, no hago nada.
 		}
 
 	});
