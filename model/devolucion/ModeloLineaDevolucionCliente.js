@@ -52,61 +52,46 @@ class LineaDevolucionCliente {
 
 
 		// Valores que son opcionales
-		// Estos campos no son obligatorios, pero se puede salvar la línea si vienen y son incorrectos
+		// Estos campos no son obligatorios, y se puede salvar la línea si vienen y son incorrectos
 		// Se comprobará la validez de los mismos y en caso de ser inválidos se obrará en consecuencia dependiendo del campo
 
 		// orden
-		if (Validador.existe(json.orden)) {
-			if (Validador.esEnteroPositivo(json.orden)) {
-				this.orden = parseInt(json.orden);
-			} else {
-				L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden]);
-				// Si el orden no es válido o no aparece, el objeto de Devolucion que contiene esta línea le asignará un orden.
-				// por eso no asignamos ningún valor por defecto
-			}
+		if (Validador.esEnteroPositivo(json.orden)) {
+			this.orden = parseInt(json.orden);
+		} else {
+			L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden]);
+			// Si el orden no es válido o no aparece, el objeto de Devolucion que contiene esta línea le asignará un orden.
+			// por eso no asignamos ningún valor por defecto
 		}
 
 		// ordenLineaAlbaran
-		if (Validador.existe(json.ordenLineaAlbaran)) {
-			if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
-				this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
-			} else {
-				L.xw(txId, ['El campo "ordenLineaAlbaran" no es un entero >= 0', json.ordenLineaAlbaran]);
-				// Descartamos el valor en caso de error
-			}
+		if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
+			this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
+		} else {
+			L.xw(txId, ['El campo "ordenLineaAlbaran" no es un entero >= 0', json.ordenLineaAlbaran]);
+			// Descartamos el valor en caso de error
 		}
 
 		// lote
-		if (Validador.existe(json.lote)) {
-			if (Validador.esCadenaNoVacia(json.lote)) {
-				this.lote = json.lote.trim();
-			}
-			// Si viene lote: "", lo ignoramos por completo. Algunos programas de farmacia son asín de tontos.
+		if (Validador.esCadenaNoVacia(json.lote)) {
+			this.lote = json.lote.trim();
 		}
 
 		// fechaCaducidad
-		if (Validador.existe(json.fechaCaducidad)) {
-			if (Validador.esFecha(json.fechaCaducidad)) {
-				this.fechaCaducidad = json.fechaCaducidad.trim();
-			} else {
-				L.xw(txId, ['El campo "fechaCaducidad" no va en formato Fedicom3 Date dd/mm/yyyy', json.ordenLineaAlbaran]);
-			}
+		if (Validador.esFecha(json.fechaCaducidad)) {
+			this.fechaCaducidad = json.fechaCaducidad.trim();
+		} else {
+			L.xw(txId, ['El campo "fechaCaducidad" no va en formato Fedicom3 Date dd/mm/yyyy', json.ordenLineaAlbaran]);
 		}
 
 		// valeEstupefaciente
-		if (Validador.existe(json.valeEstupefaciente)) {
-			if (Validador.esCadenaNoVacia(json.valeEstupefaciente)) {
-				this.valeEstupefaciente = json.valeEstupefaciente.trim();
-			}
-			// Si viene valeEstupefaciente: "", lo ignoramos por completo. Algunos programas de farmacia son asín de tontos.
+		if (Validador.esCadenaNoVacia(json.valeEstupefaciente)) {
+			this.valeEstupefaciente = json.valeEstupefaciente.trim();
 		}
 
 		// observaciones
-		if (Validador.existe(json.observaciones)) {
-			if (Validador.esCadenaNoVacia(json.observaciones)) {
-				this.observaciones = json.observaciones.trim();
-			}
-			// Si viene observaciones: "", lo ignoramos por completo. Algunos programas de farmacia son asín de tontos.
+		if (Validador.esCadenaNoVacia(json.observaciones)) {
+			this.observaciones = json.observaciones.trim();
 		}
 
 

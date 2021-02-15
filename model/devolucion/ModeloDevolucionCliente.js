@@ -54,12 +54,10 @@ class DevolucionCliente {
 
 		// Valores opcionales que deben comprobarse:
 		// observaciones
-		if (Validador.existe(this.observaciones)) {
-			if (Validador.esCadenaNoVacia(this.observaciones)) {
-				this.observaciones = json.observaciones?.trim() ?? '';
-			}
-			// Si viene observaciones: "", lo ignoramos por completo. Algunos programas de farmacia son asín de tontos.
+		if (Validador.esCadenaNoVacia(this.observaciones)) {
+			this.observaciones = json.observaciones.trim();
 		}
+
 
 
 		// Copiamos las líneas, no sin antes analizarlas.
