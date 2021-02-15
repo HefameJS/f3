@@ -47,8 +47,10 @@ class LineaDevolucionCliente {
 		this.numeroAlbaran = json.numeroAlbaran?.trim();
 		this.fechaAlbaran = json.fechaAlbaran?.trim();
 		this.codigoArticulo = json.codigoArticulo?.trim();
-		this.cantidad = parseInt(json.cantidad);
+		this.cantidad = parseInt(json.cantidad) || 0;
 		this.codigoMotivo = json.codigoMotivo;
+
+			
 
 
 		// Valores que son opcionales
