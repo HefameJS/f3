@@ -47,7 +47,7 @@ exports.crearDevolucion = (req, res) => {
 
 	// Si la transmisión no contiene ningúna línea válida, no se hace nada mas con esta.
 	if (!devolucionCliente.contieneLineasValidas()) {
-		L.xd(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
+		L.xi(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
 		let cuerpoRespuesta = [devolucionCliente.generarRespuestaDeTodasLasLineasSonInvalidas()];
 		res.status(400).json(cuerpoRespuesta);
 		iEventos.devoluciones.errorDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
