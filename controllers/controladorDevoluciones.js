@@ -271,7 +271,7 @@ exports.consultaDevolucion = (req, res) => {
 
 
 	// Detección del formato solicitado
-	let formatoDevolucion = 'JSON';
+	let formatoDevolucion;
 
 	if (req.headers['accept']) {
 		switch (req.headers['accept'].toLowerCase()) {
