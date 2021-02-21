@@ -32,12 +32,12 @@ const grabarLog = (evento) => {
 
 	let mensaje = (txId ? txId + '|' : '') + hora + '|' + evento.level + '|' + categoria + '|' + JSON.stringify(evento.datos)
 
-	fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
+	/*fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
 		if (err) {
 			console.log(mensaje)
 			console.log('###', err)
 		}
-	})
+	})*/
 
 	if (C.logconsole) {
 		console.log(mensaje)
@@ -102,12 +102,12 @@ const dump = (err, req) => {
 		message += util.inspect(req.body)
 	}
 
-	fs.appendFileSync(_obtenerFicheroLog(new Date(), true), message, (err) => {
+	/*fs.appendFileSync(_obtenerFicheroLog(new Date(), true), message, (err) => {
 		if (err) {
 			console.error(message)
 			console.error('###', err)
 		}
-	})
+	})*/
 
 	if (C.logconsole) {
 		console.log('DUMP GENERADO: ' + _obtenerFicheroLog(new Date(), true))

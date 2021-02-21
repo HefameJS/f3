@@ -74,11 +74,17 @@ module.exports = {
         HEFAME: '0026',
         RETRANSMISOR: '9002'
     },
-    CODIGOS_ERROR_FEDICOM: {
+    CODIGOS_ERROR_FEDICOM: { /* DEPRECAR */
         WARN_PROTOCOLO: 'PROTOCOL-WARN-999',
+
         WARN_NO_EXISTE_ALMACEN: 'PED-WARN-999',
         ERR_TODAS_LINEAS_ERROR: 'PED-ERR-999',
-        ERR_BLOQUEO_SAP: 'PED-ERR-999'
+        ERR_BLOQUEO_SAP: 'PED-ERR-999',
+        
+    },
+    INCIDENCIA_FEDICOM: {
+        ERR_PED: 'PED-ERR-999',
+        WARN_PED: 'PED-WARN-999'
     },
     MOTIVO_DEVOLUCION: {
         "01": "Caducidad del producto",
@@ -93,85 +99,6 @@ module.exports = {
         "10": "Otros"
     },
     PRE_CLEAN: {
-        PEDIDOS: {
-            CABECERA: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoCliente: { ignore: true },
-                numeroPedidoOrigen: { ignore: true },
-                lineas: { ignore: true },
-                login: { ignore: true },
-                crc: { ignore: true },
-                sap_url_confirmacion: { ignore: true },
-                sapSystem: { ignore: true },
-                authReq: { ignore: true },
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                numeroPedido: { remove: true },
-                alertas: { remove: true },
-                empresaFacturadora: { remove: true },
-                fechaPedido: { remove: true },
-
-                // Campos que de aparecer deben ser cadenas de texto
-                direccionEnvio: { string: { max: 50 } },
-                tipoPedido: { string: { max: 6 } },
-                observaciones: { string: { max: 50 } },
-                codigoAlmacenServicio: { string: { max: 4 } },
-
-                // Campos que de aparecer deben ser enteros
-                aplazamiento: { integer: { min: 1 } },
-
-                // Campos que de aparecer deben estar en formato DateTime
-                fechaServicio: { datetime: {} },
-
-                // Campos que deben ser objetos
-                notificaciones: { object: true },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-            },
-            LINEAS: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoArticulo: { ignore: true },
-                sap_ignore: { ignore: true },
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                descripcionArticulo: { remove: true },
-                codigoArticuloSustituyente: { remove: true },
-                cantidadFalta: { remove: true },
-                cantidadBonificacionFalta: { remove: true },
-                precio: { remove: true },
-                descuentoImporte: { remove: true },
-                cargoPorcentaje: { remove: true },
-                cargoImporte: { remove: true },
-                codigoAlmacenServicio: { remove: true },
-                estadoServicio: { remove: true },
-                servicioAplazado: { remove: true },
-
-                // Campos que de aparecer deben ser cadenas de texto
-                codigoUbicacion: { string: { max: 50 } },
-                valeEstupefaciente: { string: { max: 50 } },
-                observaciones: { string: { max: 50 } },
-
-                // Campos que de aparecer deben ser enteros
-                orden: { integer: {} },
-                cantidad: { integer: {} },
-                cantidadBonificacion: { integer: { min: 1 } },
-                descuentoPorcentaje: { decimal: { min: 0.01, max: 99.99 } },
-
-                // Campos que de aparecer deben estar en formato DateTime
-                fechaLimiteServicio: { datetime: {} },
-
-                // Campos que deben ser objetos
-                condicion: { object: {} },
-
-                // Campos que deben ser booleanos
-                servicioDemorado: { boolean: {} },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-
-            }
-        },
         LOGISTICA: {
             CABECERA: {
                 // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
@@ -218,20 +145,6 @@ module.exports = {
         },
     },
     POST_CLEAN: {
-        PEDIDOS: {
-            removeCab: ['login', 'crc', 'sap_pedidosasociados', 'sap_url_confirmacion', 'sap_pedidoprocesado', 'sap_tipopedido', 'sap_motivo_pedido', 'sap_cliente', 'sap_punto_entrega'],
-            removePos: ['posicion_sap', 'valeestupefacientes', 'sap_ignore'],
-            replaceCab: ['numeroPedido', 'codigoCliente', 'direccionEnvio', 'numeroPedidoOrigen', 'tipoPedido', 'codigoAlmacenServicio', 'fechaPedido', 'fechaServicio', 'cargoCooperativo', 'empresaFacturadora'],
-            replacePos: ['codigoArticulo', 'codigoUbicacion', 'codigoArticuloSustituyente', 'cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'valeEstupefaciente', 'fechaLimiteServicio', 'servicioDemorado', 'estadoServicio', 'servicioAplazado', 'descripcionArticulo', 'codigoAlmacenServicio'],
-            removeCabEmptyString: ['condicion', 'observaciones', 'direccionEnvio', 'empresaFacturadora', 'tipoPedido', 'fechaServicio'],
-            removeCabEmptyArray: ['notificaciones', 'incidencias', 'alertas'],
-            removeCabZeroValue: ['aplazamiento'],
-            removeCabIfFalse: ['cargoCooperativo'],
-            removePosEmptyString: ['codigoUbicacion', 'codigoArticuloSustituyente', 'valeEstupefaciente', 'fechaLimiteServicio', 'estadoServicio', 'servicioAplazado', 'observaciones'],
-            removePosEmptyArray: ['notificaciones', 'incidencias', 'alertas'],
-            removePosZeroValue: ['cantidadFalta', 'cantidadBonificacion', 'cantidadBonificacionFalta', 'descuentoPorcentaje', 'descuentoImporte', 'cargoPorcentaje', 'cargoImporte', 'precio'],
-            removePosIfFalse: ['servicioDemorado']
-        },
         LOGISTICA: {
             removeCab: ['login', 'crc', 'sap_punto_entrega', 'ignorarTodasLineas', 'sap_bloqueo_entrega', 'sap_create_logistic'],
             removePos: ['sap_pos', 'sap_ignore'],
@@ -317,7 +230,6 @@ module.exports = {
         PORTAL_HEFAME: 'PORTAL_HEFAME',
         SAP_BACKGROUND: 'SAP_BG',
         INTERFEDICOM: 'INTERFEDICOM'
-
     },
     FLAGS: {
         SQLITE: 'sqlite',
@@ -335,6 +247,7 @@ module.exports = {
         ESTUPEFACIENTE: 'estupe',
         DUPLICADOS: 'dupes',
         DUPLICADO_SAP: 'sapDupe',
+        BLOQUEO_CLIENTE: 'clibloq',
         BONIFICADO: 'bonif',
         TRANSFER:'transfer',
         FALTATOTAL: 'faltaTotal',

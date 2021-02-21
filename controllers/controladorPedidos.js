@@ -12,7 +12,8 @@ const iFlags = require('interfaces/iFlags');
 
 // Modelos
 const ErrorFedicom = require('model/ModeloErrorFedicom');
-const Pedido = require('model/pedido/ModeloPedido');
+const PedidoCliente = require('model/pedido/ModeloPedidoCliente');
+const PedidoSap = require('model/pedido/ModeloPedidoSap');
 
 
 
@@ -30,11 +31,12 @@ exports.crearPedido = (req, res) => {
 		return;
 	}
 
-	let pedido = null;
+	let pedidoCliente = null;
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
-		pedido = new Pedido(req);
+		pedidoCliente = new PedidoCliente(req);
 	} catch (excepcion) {
+		// La generación del objeto puede causar una excepción si la petición no era correcta.
 		let errorFedicom = ErrorFedicom.desdeExcepcion(txId, excepcion);
 		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom])
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
@@ -44,23 +46,32 @@ exports.crearPedido = (req, res) => {
 	L.xd(txId, ['El contenido de la transmisión es un pedido correcto']);
 
 
-	iMongo.consultaTx.duplicadoDeCRC(txId, pedido.crc, (errorMongo, txIdOriginal) => {
+	// Si la transmisión no contiene ningúna línea válida, no se hace nada mas con esta.
+	if (!pedidoCliente.contieneLineasValidas()) {
+		L.xi(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);
+		let cuerpoRespuesta = pedidoCliente.generarRespuestaDeTodasLasLineasSonInvalidas();
+		res.status(400).json(cuerpoRespuesta);
+		iEventos.pedidos.errorPedido(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		return;
+	}
+
+
+	iMongo.consultaTx.duplicadoDeCRC(txId, pedidoCliente.crc, (errorMongo, txIdOriginal) => {
 		if (errorMongo) {
 			L.xe(txId, ['Ocurrió un error al comprobar si el pedido es duplicado - Se asume que no lo es', errorMongo], 'crc');
 		}
 		else if (txIdOriginal) {
 			L.xi(txId, 'Detectada la transmisión de pedido con ID ' + txIdOriginal + ' con identico CRC', 'crc');
 			L.xi(txIdOriginal, 'Se ha detectado un duplicado de este pedido con ID ' + txId, 'crc');
-			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedido.crc, 400);
+			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
 			return
 		}
 
-		iEventos.pedidos.inicioPedido(req, pedido);
-		pedido.limpiarEntrada(txId);
+		iEventos.pedidos.inicioPedido(req, pedidoCliente);
 
-		iSap.realizarPedido(txId, pedido, (errorSap, respuestaSap) => {
+		iSap.realizarPedido(txId, pedidoCliente.generarJSON(), (errorSap, respuestaSap) => {
 			if (errorSap) {
 				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
 					let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
@@ -70,21 +81,65 @@ exports.crearPedido = (req, res) => {
 				}
 				else {
 					L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorSap]);
-					pedido.simulaFaltas();
-					res.status(202).json(pedido);
+					let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+					res.status(202).json(respuestaFaltasSimuladas);
 					iFlags.set(txId, K.FLAGS.NO_SAP);
 					iFlags.set(txId, K.FLAGS.NO_FALTAS);
-					iEventos.pedidos.finPedido(res, pedido, K.TX_STATUS.NO_SAP);
+					iEventos.pedidos.finPedido(res, respuestaFaltasSimuladas, K.TX_STATUS.NO_SAP);
 				}
 				return;
 			}
 
-			let respuestaCliente = pedido.obtenerRespuestaCliente(txId, respuestaSap.body);
-			let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = respuestaCliente.estadoTransmision();
 
-			let responseHttpStatusCode = respuestaCliente.isRechazadoSap() ? 409 : 201;
-			res.status(responseHttpStatusCode).json(respuestaCliente);
-			iEventos.pedidos.finPedido(res, respuestaCliente, estadoTransmision, { numeroPedidoAgrupado, numerosPedidoSAP });
+			let cuerpoRespuestaSap = respuestaSap.body;
+
+			// Lo primero, vamos a comprobar que SAP nos haya devuelto un objeto con las faltas del pedido. En ocasiones la conexión peta y la respuesta no 
+			// puede recuperarse, por lo que tratamos este caso como que SAP está caído.
+			if (!cuerpoRespuestaSap || !cuerpoRespuestaSap.crc) {
+				L.xe(txId, ['SAP devuelve un cuerpo de respuesta que no es un objeto válido. Se devuelve error de faltas simuladas', cuerpoRespuestaSap]);
+				let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+				res.status(202).json(respuestaFaltasSimuladas);
+				iFlags.set(txId, K.FLAGS.NO_SAP);
+				iFlags.set(txId, K.FLAGS.NO_FALTAS);
+				iEventos.pedidos.finPedido(res, respuestaFaltasSimuladas, K.TX_STATUS.NO_SAP);
+				return;
+			}
+
+			// Si la respuesta de SAP es un array ...
+			if (Array.isArray(cuerpoRespuestaSap)) {
+
+				// Eliminamos las incidencias cuyo código comienza por 'SAP-IGN', ya que dan información sobre el bloqueo del cliente
+				// y no queremos que esta información se mande al clietne.
+				let bloqueoCliente = false;
+				let incidenciasSaneadas = cuerpoRespuestaSap.filter((incidencia) => {
+					bloqueoCliente = Boolean(incidencia?.codigo?.startsWith('SAP-IGN'));
+					return !bloqueoCliente && Boolean(incidencia);
+				});
+
+				// Si el cliente está bloqueado, agregamos la incidencia de error de bloqueo en SAP y levantamos el Flag
+				if (bloqueoCliente) {
+					iFlags.set(txId, K.FLAGS.BLOQUEO_CLIENTE)
+					incidenciasSaneadas = incidenciasSaneadas.push({
+						codigo: K.INCIDENCIA_FEDICOM.ERR_PED,
+						descripcion: 'No se pudo guardar el pedido. Contacte con su comercial.'
+					});
+				}
+
+				res.status(409).json(incidenciasSaneadas);
+				iEventos.pedidos.finPedido(res, incidenciasSaneadas, K.TX_STATUS.RECHAZADO_SAP);
+				return;
+			}
+
+
+			// Si la respuesta de SAP es un Objeto, lo procesamos y mandamos las faltas al cliente
+			let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente.crc, txId);
+			let respuestaCliente = pedidoSap.generarJSON();
+
+			res.status(201).json(respuestaCliente);
+			iEventos.pedidos.finPedido(res, respuestaCliente, pedidoSap.getEstadoTransmision(), {
+				numeroPedidoAgrupado: pedidoSap.getNumeroPedidoAgrupado(),
+				numerosPedidoSAP: pedidoSap.getNumerosPedidoSap()
+			});
 		});
 
 	});
@@ -107,7 +162,7 @@ exports.consultaPedido = (req, res) => {
 	}
 
 	let numeroPedido = (req.params ? req.params.numeroPedido : null) || (req.query ? req.query.numeroPedido : null);
-	
+
 	iMongo.consultaTx.porCRC(txId, numeroPedido, (errorMongo, dbTx) => {
 		if (errorMongo) {
 			L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);

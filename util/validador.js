@@ -113,6 +113,11 @@ function esFecha(campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedico
  */
 function esFechaHora(campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) {
 
+	if (!campo) {
+		if (errorFedicom) errorFedicom.add(codigoErrorFedicom, descripcionErrorFedicom, 400);
+		return false;		
+	}
+
 	let fechaFedicom = Date.fromFedicomDateTime(campo);
 
 	if (!fechaFedicom) {
