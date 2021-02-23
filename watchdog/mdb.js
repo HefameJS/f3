@@ -23,21 +23,26 @@ let intervaloEnEjecucion = false;
 
 
 /*let interval = */
-setInterval(() =>  {
+setInterval(() => {
 
 	// TODO: Interesante no hacer recovery de transmisiones si hay datos pendientes de escribir en SQLite
-	if (numeroRetransmisionesEnProgreso || intervaloEnEjecucion) return;
+	if (numeroRetransmisionesEnProgreso || intervaloEnEjecucion) {
+		L.t(['Ya existe otro intervalo en ejecucion', numeroRetransmisionesEnProgreso, intervaloEnEjecucion], 'mdbwatch');
+		return;
+	}
 
+	L.t('Arranco intervalo. Voy a comprobar si soy maestro');
 	intervaloEnEjecucion = true;
-	
+
 	iRegistroProcesos.soyMaestro(K.PROCESS_TYPES.WATCHDOG, (err, maestro) => {
 		if (err) {
+			L.e(['Ocurrió un error al comprobar si el watchdog es el maestro', err], 'mdbwatch');
 			intervaloEnEjecucion = false;
 			return;
 		}
 
 		if (maestro) {
-
+			L.t(['Soy el proceso maestro, paso a consultar transmisiones candidatas a ser retrasnmitidas'], 'mdbwatch');
 			iMongo.consultaTx.candidatasParaRetransmitir(configuracionWatchdowgMDB.buffer_size || 10, configuracionWatchdowgMDB.minimum_age || 300, (errorMongo, candidatos) => {
 
 				if (errorMongo) {
@@ -46,12 +51,22 @@ setInterval(() =>  {
 					return;
 				}
 
+				L.t(['Candidatos a retransmitir', candidatos.length], 'mdbwatch');
+
 				if (candidatos && candidatos.length > 0) {
 					L.i('Se encontraron ' + candidatos.length + ' transmisiones recuperables', 'mdbwatch');
 
+					L.t(['Haciendo PING a SAP'], 'mdbwatch');
 					iSap.ping(null, (sapError, sapStatus) => {
-						
+						if (sapError) {
+							L.i(['Aún no se ha recuperado la comunicación con SAP', sapError], 'mdbwatch');
+							intervaloEnEjecucion = false;
+							return;
+						}
+
 						if (sapStatus) {
+
+							L.i(['SAP indica que está listo para recibir pedidos, procedemos a mandar la tanda'], 'mdbwatch');
 
 							candidatos.forEach((dbTx) => {
 
@@ -117,7 +132,7 @@ setInterval(() =>  {
 								// CASO ERROR: La transmisión falló durante el proceso
 								else {
 									L.xi(txId, 'La transmisión está en un estado inconsistente - La retransmitimos a SAP', 'mdbwatch');
-									
+
 									retransmitirPedido(txId, null, (err, rtxId) => {
 										numeroRetransmisionesEnProgreso--;
 									});
@@ -127,7 +142,7 @@ setInterval(() =>  {
 
 							intervaloEnEjecucion = false;
 						} else {
-							L.i(['Aún no se ha recuperado la comunicación con SAP', sapError], 'mdbwatch');
+							L.i(['SAP indica que no está listo para recibir pedidos'], 'mdbwatch');
 							intervaloEnEjecucion = false;
 						}
 					});
@@ -138,6 +153,7 @@ setInterval(() =>  {
 
 			});
 		} else {
+			L.t(['No soy maestro'], 'mdbwatch');
 			intervaloEnEjecucion = false;
 			// No soy maestro, no hago nada.
 		}

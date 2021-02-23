@@ -44,58 +44,82 @@ const detenerIntervaloRegistro = () => {
  * @param {function} callback (err, false)
  */
 const soyMaestro = (tipoProceso, callback) => {
+
+	// Obtenemos la lista de procesos de este tipo que estén registrados y con prioridad > 0
 	_obtenerProcesoMaestro(tipoProceso, (err, procesos) => {
 		if (err) {
+			L.e(['Ocurrió un error al obtener el proceso maestro', err], 'election');
 			callback(err, false)
 			return;
 		}
 
-		let maestro = procesos[0]
+		// Si la lista no viene vacía, el primero es el actual maestro (i.e. el que tiene mas prioridad)
+		let maestro = procesos.length > 0 ? procesos[0] : null;
 
+		// Si no hay maestro o YO soy el maestro!
 		if (!maestro || maestro.host === OS.hostname()) {
-			if (!maestro) L.i(['No hay procesos compitiendo por ser maestros'], 'election')
-			if (!vecesGanadoMaestro[tipoProceso] || vecesGanadoMaestro[tipoProceso] < 2) {
+			// Soy el único proceso de este tipo. Dejamos constancia en el log...
+			if (!maestro) L.i(['No hay procesos compitiendo por ser maestros'], 'election');
+
+			// Mientras no ganemos el proceso de convertirnos en maestro, simplemente esperamos ...
+			if (!vecesGanadoMaestro[tipoProceso] || vecesGanadoMaestro[tipoProceso] < 3) {
 				if (!vecesGanadoMaestro[tipoProceso]) vecesGanadoMaestro[tipoProceso] = 0
 				vecesGanadoMaestro[tipoProceso]++
 				L.i(['He ganado la elección de maestro ' + vecesGanadoMaestro[tipoProceso] + '/3 veces consecutivas'], 'election')
 				callback(null, false);
 				return;
-			} else if (vecesGanadoMaestro[tipoProceso] === 2) {
-				vecesGanadoMaestro[tipoProceso]++
+				// Si hemos ganado ya mas de 3 veces la contienda, esta es la tercera vez que gamanos y somos el maestro!
+			} else {
 				L.i(['He ganado la elección de maestro suficientes veces, comienzo a hacer el trabajo de maestro'], 'election')
+				callback(null, true);
+				return;
 			}
-			callback(null, true);
-			return;
+
+			// En el caso de que nos econtramos otro proceso siendo el maestro y que tiene una prioridad superior a la nuestra
 		} else {
+			// Si estabamos postulandonos a maestro, simplemente logeamos este hecho
 			if (vecesGanadoMaestro[tipoProceso] > 0) L.t(['Un proceso con mayor prioridad ha reclamado ser maestro', maestro.host], 'election')
-			// L.t(['No soy el maestro, el maestro es', maestro.host], 'election')
+
+			L.t(['Según la lista de procesos, el maestro ahora mismo es ', maestro.host], 'election')
 
 			vecesGanadoMaestro[tipoProceso] = 0
 
+			// Si el maestro lleva mas de 20000 ms sin dar señales de vida, asumimos que está muerto
 			let diff = Date.fedicomTimestamp() - maestro.timestamp
 			if (diff > 20000) {
+
 				L.w(['El maestro en ' + maestro.host + ' no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos'], 'election')
 
+				// Realizamos la comprobación del tiempo para todos los candidatos de la lista que tengan mas prioridad que yo
 				for (let i = 1; i < procesos.length; i++) {
 					let candidato = procesos[i]
-					if (!candidato) {break;}
+					if (!candidato.host) { continue; }
 
 					if (candidato.host === OS.hostname()) {
 						L.i(['Yo soy el candidato con mayor prioridad, me postulo como próximo maestro'])
 						_asumirMaestro(tipoProceso)
-						callback(null, false)
+						callback(null, false) // Ojo, que aún no lo somos!
 						return;
 					} else {
 						let diff = Date.fedicomTimestamp() - candidato.timestamp
 						if (diff > 20000) {
-							L.w(['El candidato ' + candidato.host + 'no ha dado señales de vida desde hace ' + diff / 1000 + ' segundos. Probamos el siguiente'], 'election')
+							L.w(['El candidato ' + candidato.host + 'tampoco ha dado señales de vida desde hace tiempo. Probamos el siguiente', diff], 'election')
 						} else {
-							L.i(['Hay un candidato en ' + candidato.host + ' con mayor prioridad. Espero a que de señales de vida',], 'election')
+							L.i(['Hay un candidato en ' + candidato.host + ' con mayor prioridad. Espero a que de señales de vida'], 'election')
 							callback(null, false)
 							return;
 						}
 					}
 				}
+
+				L.w(['Hemos terminado de recorrer la lista de procesos y ninguno opta para maestro. ¡Ni siquiera yo!. Es probable que aún no se hayan registrado'], 'election')
+				callback(null, false)
+				return;
+
+			} else {
+				L.t(['El maestro se registró hace poco tiempo, asumimos que está OK ', diff], 'election')
+				callback(null, false)
+				return;
 			}
 		}
 	})
@@ -118,12 +142,12 @@ const consultaProcesos = (tipoProceso, host, callback) => {
 		control.find(filtro).toArray((errorMongo, res) => {
 			if (errorMongo) {
 				L.e(['Error al obtener la lista de procesos', errorMongo]);
-				callback(errorMongo, null);	
+				callback(errorMongo, null);
 				return;
 			}
 			callback(null, res);
 		});
-						
+
 	} else {
 		L.e(['Error al obtener la lista de procesos. No conectado a MDB']);
 		callback({ error: 'No conectado a MDB' }, null);
@@ -203,7 +227,7 @@ const _obtenerProcesoMaestro = (tipoProceso, callback) => {
 
 	let control = iMongo.colControl();
 	if (control) {
-		control.find(filtro).sort({ priority: -1 }).toArray( (err, res) => {
+		control.find(filtro).sort({ priority: -1 }).toArray((err, res) => {
 			if (err) {
 				L.e(['Error al obtener el proceso maestro', filtro, err], 'election');
 				callback(err, null)
