@@ -11,7 +11,8 @@ const iEventos = require('interfaces/eventos/iEventos');
 // Modelos
 const ObjectID = iMongo.ObjectID;
 const ErrorFedicom = require('model/ModeloErrorFedicom');
-const Pedido = require('model/pedido/ModeloPedido');
+const PedidoCliente = require('model/pedido/ModeloPedidoCliente');
+const PedidoSap = require('model/pedido/ModeloPedidoSap');
 
 // Helpers
 const extensionesExpress = require('util/extensionesExpress');
@@ -100,11 +101,12 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
         // Recreamos el pedido, tal y como vendría en la petición original
         // Es decir, hacemos pasar 'dbTx.clientRequest' por la variable 'req' original.
         // Para esto, necesitaremos que existan los campos 'body', 'txId' y 'token'
-        let pedido = null;
+        let pedidoCliente = null;
         try {
             dbTx.clientRequest.txId = dbTx._id;
             dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-            pedido = new Pedido(dbTx.clientRequest);
+            pedidoCliente = new PedidoCliente(dbTx.clientRequest);
+
         } catch (excepcion) {
             let fedicomError = ErrorFedicom.desdeExcepcion(txIdRetransmision, excepcion);
             L.xe(txIdRetransmision, ['Ocurrió un error al analizar la petición', fedicomError])
@@ -115,20 +117,20 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
             L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza en estado de PETICION INCORRECTA']);
             return callback(null, txIdRetransmision);
         }
-        L.xt(txIdRetransmision, ['OK: El contenido de la transmisión es un pedido correcto', pedido]);
+        L.xt(txIdRetransmision, ['OK: El contenido de la transmisión es un pedido correcto', pedidoCliente]);
 
 
         if (opcionesRetransmision.sistemaSAP) {
-            L.xd(txIdRetransmision, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedido.sapSystem || '<n/a>') + '] => [' + opcionesRetransmision.sistemaSAP + ']']);
-            pedido.sapSystem = opcionesRetransmision.sistemaSAP;
+            L.xd(txIdRetransmision, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedidoCliente.sapSystem || '<n/a>') + '] => [' + opcionesRetransmision.sistemaSAP + ']']);
+            pedidoCliente.sapSystem = opcionesRetransmision.sistemaSAP;
 
             // Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
             opcionesRetransmision.regenerateCRC = true;
         }
 
         if (opcionesRetransmision.forzarAlmacen) {
-            L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedido.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
-            pedido.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
+            L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedidoCliente.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
+            pedidoCliente.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
 
             // Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
             opcionesRetransmision.regenerateCRC = true;
@@ -136,10 +138,10 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
 
         let txIdNuevo = null;
         if (opcionesRetransmision.regenerateCRC) {
-            let nuevoNPO = 'RTX' + pedido.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-            L.xd(txIdRetransmision, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido. [' + pedido.numeroPedidoOrigen + '] => [' + nuevoNPO + ']']);
-            pedido.numeroPedidoOrigen = nuevoNPO;
-            pedido.generarCRC();
+            let nuevoNPO = 'RTX' + pedidoCliente.crc.substring(0, 8) + '-' + Date.fedicomTimestamp() + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            L.xd(txIdRetransmision, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido. [' + pedidoCliente.numeroPedidoOrigen + '] => [' + nuevoNPO + ']']);
+            pedidoCliente.numeroPedidoOrigen = nuevoNPO;
+			pedidoCliente.regenerarCrc();
 
             // Si cambia el CRC, nunca actualizaremos el pedido original sino que generaremos
             // una nueva transmisión con su propio TxId
@@ -147,7 +149,12 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
 
             // Creamos un clon de la request y lo emitimos como un nuevo inicio de pedido
             let req = extensionesExpress.extenderSolicitudRetransmision(dbTx.clientRequest);
+
+			// Además del nuevo numeroPedidoOrigen, si se ha establecido un almacen nuevo y/o un sistema SAP nuevo, 
+			// debemos tambien cambiarlo en el cuerpo de la petición.
             req.body.numeroPedidoOrigen = nuevoNPO;
+			if (pedidoCliente.sapSystem) req.body.sapSystem = pedidoCliente.sapSystem;
+			if (pedidoCliente.codigoAlmacenServicio) req.body.codigoAlmacenServicio = pedidoCliente.codigoAlmacenServicio;
 
             txIdNuevo = req.txId;
             opcionesRetransmision.ctxId = txIdNuevo;
@@ -160,14 +167,13 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
             // La posterior emisión de iEventos.retransmisiones.retransmitirPedido es la que completará
             // el estado de la misma con la respuesta de SAP y la nueva respuesta del cliente mediante la
             // llamada a finClonarPedido.
-            iEventos.retransmisiones.inicioClonarPedido(req, pedido);
+            iEventos.retransmisiones.inicioClonarPedido(req, pedidoCliente);
         }
 
 
-        pedido.limpiarEntrada(txIdNuevo || txIdOriginal);
         L.xi(txIdRetransmision, ['Transmitimos a SAP el pedido']);
 
-        iSap.retransmitirPedido(pedido, (errorSap, respuestaSap, solicitudASap) => {
+        iSap.retransmitirPedido(pedidoCliente.generarJSON(), (errorSap, respuestaSap, solicitudASap) => {
 
             respuestaSap = _construyeRespuestaSap(errorSap, respuestaSap);
 
@@ -183,41 +189,95 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
                     });
                     L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
                     L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
-                    return callback(null, txIdRetransmision, txIdNuevo);
 
                 } else {
                     L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorSap]);
-                    pedido.simulaFaltas();
+					let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
 
                     iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
                         sapRequest: solicitudASap,
                         sapResponse: respuestaSap,
-                        clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, pedido),
+						clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
                         status: K.TX_STATUS.NO_SAP
                     });
 
                     L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
                     L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
-                    return callback(null, txIdRetransmision, txIdNuevo);
                 }
-            }
+				callback(null, txIdRetransmision, txIdNuevo);
+				return;
+			} // +RETURN
 
-            let respuestaCliente = pedido.obtenerRespuestaCliente(txIdNuevo || txIdOriginal, respuestaSap.body);
-            let [estadoTransmision, numeroPedidoAgrupado, numerosPedidoSAP] = respuestaCliente.estadoTransmision();
-            let codigoEstadoHTTP = respuestaCliente.isRechazadoSap() ? 409 : 201;
 
+			let cuerpoRespuestaSap = respuestaSap.body;
+			// Lo primero, vamos a comprobar que SAP nos haya devuelto un objeto con las faltas del pedido. En ocasiones la conexión peta y la respuesta no 
+			// puede recuperarse, por lo que tratamos este caso como que SAP está caído.
+			if (!cuerpoRespuestaSap || !cuerpoRespuestaSap.crc) {
+				L.xe(txIdRetransmision, ['SAP devuelve un cuerpo de respuesta que no es un objeto válido. Se devuelve error de faltas simuladas', cuerpoRespuestaSap]);
+				let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+
+				iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+					sapRequest: solicitudASap,
+					sapResponse: respuestaSap,
+					clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
+					status: K.TX_STATUS.NO_SAP
+				});
+
+				L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+				callback(null, txIdRetransmision, txIdNuevo);
+				return;
+			} // +RETURN
+
+
+			// Si la respuesta de SAP es un array ...
+			if (Array.isArray(cuerpoRespuestaSap)) {
+
+				// Eliminamos las incidencias cuyo código comienza por 'SAP-IGN', ya que dan información sobre el bloqueo del cliente
+				// y no queremos que esta información se mande al clietne.
+				let bloqueoCliente = false;
+				let incidenciasSaneadas = cuerpoRespuestaSap.filter((incidencia) => {
+					bloqueoCliente = Boolean(incidencia?.codigo?.startsWith('SAP-IGN'));
+					return !bloqueoCliente && Boolean(incidencia);
+				});
+
+				// Si el cliente está bloqueado, agregamos la incidencia de error de bloqueo en SAP y levantamos el Flag
+				if (bloqueoCliente) {
+					iFlags.set(txId, K.FLAGS.BLOQUEO_CLIENTE)
+					incidenciasSaneadas = incidenciasSaneadas.push({
+						codigo: K.INCIDENCIA_FEDICOM.ERR_PED,
+						descripcion: 'No se pudo guardar el pedido. Contacte con su comercial.'
+					});
+				}
+
+				iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+					sapRequest: solicitudASap,
+					sapResponse: respuestaSap,
+					clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 409, incidenciasSaneadas),
+					status: K.TX_STATUS.RECHAZADO_SAP
+				});
+
+				callback(null, txIdRetransmision, txIdNuevo);
+				return;
+			} // +RETURN
+
+
+
+			// Si la respuesta de SAP es un Objeto, lo procesamos y mandamos las faltas al cliente
+			let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente.crc, txIdNuevo);
+		
             iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
                 sapRequest: solicitudASap,
                 sapResponse: respuestaSap,
-                clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, codigoEstadoHTTP, respuestaCliente),
-                status: estadoTransmision,
-                numerosPedidoSAP: numerosPedidoSAP,
-                numeroPedidoAgrupado: numeroPedidoAgrupado
+				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, pedidoSap.generarJSON()),
+				status: pedidoSap.getEstadoTransmision(),
+				numerosPedidoSAP: pedidoSap.getNumerosPedidoSap(),
+				numeroPedidoAgrupado: pedidoSap.getNumeroPedidoAgrupado()
             });
 
             L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
-            return callback(null, txIdRetransmision, txIdNuevo);
-        });
+            callback(null, txIdRetransmision, txIdNuevo);
+			return;
+        }); // +RETURN
 
     });
 

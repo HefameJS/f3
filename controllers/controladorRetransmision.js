@@ -14,6 +14,8 @@ exports.retransmitePedido = (req, res) => {
 
 	let txId = req.params.txId;
 
+	L.xi(txId, ['Procesando transmisión como RETRANSMISION DE PEDIDO']);
+
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { requiereGrupo: 'FED3_RETRANSMISION' });
 	if (!estadoToken.ok) return;
