@@ -52,21 +52,6 @@ class LineaPedidoCliente {
 
 
 		// Copiamos las propiedades de la POSICION que son relevantes
-		// codigoArticulo
-		this.codigoArticulo = json.codigoArticulo?.trim();
-
-		// cantidad. Los valores no válidos se convierten en un 1.
-		this.cantidad = parseInt(json.cantidad) || 1;
-		if (this.cantidad <= 0) this.cantidad = 1;
-
-		// cantidadBonificacion
-		if (Validador.esEnteroPositivoMayorQueCero(json.cantidadBonificacion)) {
-			this.cantidadBonificacion = parseInt(json.cantidadBonificacion);
-		}
-
-		// Valores que son opcionales
-		// Estos campos no son obligatorios, y se puede salvar la línea si vienen y son incorrectos
-		// Se comprobará la validez de los mismos y en caso de ser inválidos se obrará en consecuencia dependiendo del campo
 
 		// orden
 		if (Validador.existe(json.orden)) {
@@ -79,9 +64,21 @@ class LineaPedidoCliente {
 			}
 		}
 
+		// codigoArticulo
+		this.codigoArticulo = json.codigoArticulo?.trim();
+
 		// codigoUbicacion
 		if (Validador.esCadenaNoVacia(json.codigoUbicacion)) {
 			this.codigoUbicacion = json.codigoUbicacion.trim();
+		}
+
+		// cantidad. Los valores no válidos se convierten en un 1.
+		this.cantidad = parseInt(json.cantidad) || 1;
+		if (this.cantidad <= 0) this.cantidad = 1;
+
+		// cantidadBonificacion
+		if (Validador.esEnteroPositivoMayorQueCero(json.cantidadBonificacion)) {
+			this.cantidadBonificacion = parseInt(json.cantidadBonificacion);
 		}
 
 		// valeEstupefaciente
@@ -135,6 +132,7 @@ class LineaPedidoCliente {
 		let json = {};
 		if (this.orden || this.orden === 0) json.orden = this.orden;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
+		if (this.codigoUbicacion) json.codigoUbicacion = this.codigoUbicacion;
 		if (this.cantidad) {
 			json.cantidad = this.cantidad;
 			json.cantidadFalta = json.cantidad;
@@ -143,6 +141,7 @@ class LineaPedidoCliente {
 			json.cantidadBonificacion = this.cantidadBonificacion;
 			json.cantidadBonificacionFalta = json.cantidadBonificacion;
 		}
+		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
 		if (this.condicion) json.condicion = {
 			codigo: this.condicion.codigo,
 			fechaInicio: this.condicion.fechaInicio,
@@ -153,10 +152,9 @@ class LineaPedidoCliente {
 			json.estadoServicio = 'SR';
 		}
 		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
-		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
-		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.observaciones) json.observaciones = this.observaciones;
-
+		if (this.incidencias) json.incidencias = this.incidencias;
+		
 		if (generarParaSap) {
 			if (this.metadatos.lineaIncorrecta) json.sap_ignore = true;
 		}

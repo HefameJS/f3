@@ -3,12 +3,7 @@
 const L = global.logger;
 //const K = global.constants;
 
-// Modelos
-const ErrorFedicom = require('model/ModeloErrorFedicom');
-const CRC = require('model/CRC');
-
 // Helpers
-const Validador = require('util/validador');
 const K = require('model/K');
 
 
@@ -27,35 +22,25 @@ class LineaPedidoSap {
 		this.codigoArticulo = json.codigoarticulo || null;
 		this.descripcionArticulo = json.descripcionarticulo || null;
 		this.codigoArticuloSustituyente = json.codigoarticulosustituyente || null;
-
+		this.codigoUbicacion = json.codigoubicacion || null;
 		this.cantidad = parseInt(json.cantidad);
 		this.cantidadFalta = parseInt(json.cantidadfalta);
 		this.cantidadBonificacion = parseInt(json.cantidadbonificacion);
 		this.cantidadBonificacionFalta = parseInt(json.cantidadbonificacionfalta);
-
-
-		this.valeEstupefaciente = json.valeestupefaciente || null;
-		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
-		this.codigoUbicacion = json.codigoubicacion || null;
-
-		this.condicion = json.condicion || null;
 		this.precio = parseFloat(json.precio);
 		this.descuentoPorcentaje = parseFloat(json.descuentoporcentaje);
 		this.descuentoImporte = parseFloat(json.descuentoimporte);
 		this.cargoPorcentaje = parseFloat(json.cargoporcentaje);
 		this.cargoImporte = parseFloat(json.cargoimporte);
-
-		this.fechaLimiteServicio = json.fechalimiteservicio || null;
+		this.valeEstupefaciente = json.valeestupefaciente || null;
+		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
+		this.condicion = json.condicion || null;
 		this.servicioDemorado = Boolean(json.serviciodemorado);
 		this.estadoServicio = json.estadoservicio || (this.servicioDemorado ? 'SR' : null);
+		this.fechaLimiteServicio = json.fechalimiteservicio || null;
 		this.servicioAplazado = json.servicioaplazado || null;
-
-
-
-		this.incidencias = json.incidencias.length === 0 ? null : json.incidencias;
 		this.observaciones = json.observaciones || null;
-
-
+		this.incidencias = json.incidencias.length === 0 ? null : json.incidencias;
 
 		// Tipificado del motivo de la falta
 		this.incidencias?.forEach(incidencia => {

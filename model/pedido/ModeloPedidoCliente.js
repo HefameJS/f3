@@ -24,12 +24,14 @@ class PedidoCliente {
 		let txId = req.txId;
 		let json = req.body;
 
+		this.txId = txId;
+
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de un pedido
 		let errorFedicom = new ErrorFedicom();
 		Validador.esCadenaNoVacia(json.codigoCliente, errorFedicom, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
-		Validador.esArrayNoVacio(json.lineas, errorFedicom, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
 		Validador.esCadenaNoVacia(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
-
+		Validador.esArrayNoVacio(json.lineas, errorFedicom, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
+		
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
 			errorFedicom.add('PED-ERR-002', 'Indique el "codigoCliente" sin el @hefame al final', 400);
 		}
@@ -255,6 +257,7 @@ class PedidoCliente {
 		}
 		if (this.notificaciones) respuesta.notificaciones = this.notificaciones;
 		if (this.direccionEnvio) respuesta.direccionEnvio = this.direccionEnvio;
+		if (this.codigoAlmacenServicio) respuesta.codigoAlmacenServicio = this.codigoAlmacenServicio;
 		if (this.tipoPedido) respuesta.tipoPedido = this.tipoPedido;
 		if (this.fechaServicio) respuesta.fechaServicio = this.fechaServicio;
 		if (this.aplazamiento) respuesta.aplazamiento = this.aplazamiento;
@@ -281,6 +284,7 @@ class PedidoCliente {
 		}
 		if (this.notificaciones) respuesta.notificaciones = this.notificaciones;
 		if (this.direccionEnvio) respuesta.direccionEnvio = this.direccionEnvio;
+		if (this.codigoAlmacenServicio) respuesta.codigoAlmacenServicio = this.codigoAlmacenServicio;
 		if (this.tipoPedido) respuesta.tipoPedido = this.tipoPedido;
 		if (this.fechaServicio) respuesta.fechaServicio = this.fechaServicio;
 		if (this.aplazamiento) respuesta.aplazamiento = this.aplazamiento;
@@ -293,18 +297,16 @@ class PedidoCliente {
 	generarJSON(generarParaSap = true) {
 		let respuesta = {}
 
-
 		respuesta.codigoCliente = this.codigoCliente;
-		respuesta.numeroPedidoOrigen = this.numeroPedidoOrigen;
-		respuesta.lineas = this.lineas.map(l => l.generarJSON(generarParaSap));
-
-
 		if (this.notificaciones) respuesta.notificaciones = this.notificaciones;
 		if (this.direccionEnvio) respuesta.direccionEnvio = this.direccionEnvio;
+		if (this.codigoAlmacenServicio) respuesta.codigoAlmacenServicio = this.codigoAlmacenServicio;
+		respuesta.numeroPedidoOrigen = this.numeroPedidoOrigen;
 		if (this.tipoPedido) respuesta.tipoPedido = this.tipoPedido;
 		if (this.fechaServicio) respuesta.fechaServicio = this.fechaServicio;
 		if (this.aplazamiento) respuesta.aplazamiento = this.aplazamiento;
 		if (this.observaciones) respuesta.observaciones = this.observaciones;
+		respuesta.lineas = this.lineas.map(l => l.generarJSON(generarParaSap));
 		if (this.incidencias) respuesta.incidencias = this.incidencias;
 
 		if (generarParaSap) {
@@ -315,6 +317,16 @@ class PedidoCliente {
 		}
 
 		return respuesta;
+	}
+
+	/**
+	 * Regenera el CRC del pedido.
+	 * Este CRC siempre se genera utilizando el numeroPedidoOrigen y nunca las líneas.
+	 */
+	regenerarCrc() {
+		this.crc = CRC.generar(this.codigoCliente, this.numeroPedidoOrigen);
+		this.crcDeLineas = false;
+		L.xd(this.txId, ['Se regenera el CRC para el pedido usando el numeroPedidoOrigen', this.crc], 'txCRC')
 	}
 
 

@@ -42,24 +42,23 @@ class PedidoSap {
 
 
 		this.numeroPedido = crc || null; // Este CRC lo recibe del PedidoCliente directamente
-		this.fechaPedido = Date.toFedicomDateTime();
-
 		this.codigoCliente = json.codigocliente || null;
-		this.numeroPedidoOrigen = json.numeropedidoorigen || null;
-		this.tipoPedido = json.tipopedido || null;
-		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
 		this.notificaciones = json.notificaciones?.length > 0 ? json.notificaciones : null;
 		this.direccionEnvio = json.direccionenvio || null;
+		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
+		this.numeroPedidoOrigen = json.numeropedidoorigen || null;
+		this.tipoPedido = json.tipopedido || null;
+		this.fechaPedido = Date.toFedicomDateTime();
 		this.fechaServicio = json.fechaservicio || null;
-		this.condicion = json.condicion || null;
 		this.aplazamiento = json.aplazamiento || null;
-		this.cargoCooperativo = json.cargocooperativo || null;
 		this.empresaFacturadora = json.empresafacturadora || null;
 		this.observaciones = json.observaciones || null;
+		this.#extraerLineas(json.lineas);
+		this.#sanearIncidenciasSap(json.incidencias);
 		this.alertas = json.alertas?.length > 0 ? json.alertas : null;
 
-		this.#sanearIncidenciasSap(json.incidencias);
-		this.#extraerLineas(json.lineas);
+		
+		
 
 		this.#establecerFlags();
 	}
@@ -181,21 +180,20 @@ class PedidoSap {
 		let json = {};
 
 		if (this.numeroPedido) json.numeroPedido = this.numeroPedido;
-		if (this.fechaPedido) json.fechaPedido = this.fechaPedido;
 		if (this.codigoCliente) json.codigoCliente = this.codigoCliente;
-		if (this.codigoAlmacenServicio) json.codigoAlmacenServicio = this.codigoAlmacenServicio;
 		if (this.notificaciones) json.notificaciones = this.notificaciones;
 		if (this.direccionEnvio) json.direccionEnvio = this.direccionEnvio;
+		if (this.codigoAlmacenServicio) json.codigoAlmacenServicio = this.codigoAlmacenServicio;
+		if (this.numeroPedidoOrigen) json.numeroPedidoOrigen = this.numeroPedidoOrigen;
+		if (this.tipoPedido) json.tipoPedido = this.tipoPedido;
+		if (this.fechaPedido) json.fechaPedido = this.fechaPedido;
 		if (this.fechaServicio) json.fechaServicio = this.fechaServicio;
-		if (this.condicion) json.condicion = this.condicion;
 		if (this.aplazamiento) json.aplazamiento = this.aplazamiento;
-		if (this.cargoCooperativo) json.cargoCooperativo = this.cargoCooperativo;
 		if (this.empresaFacturadora) json.empresaFacturadora = this.empresaFacturadora;
 		if (this.observaciones) json.observaciones = this.observaciones;
-		if (this.alertas) json.alertas = this.alertas;
-
 		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
-		if (this.incidencias) json.incidencias = this.incidencias;
+		if (this.incidencias) json.incidencias = this.incidencias;		
+		if (this.alertas) json.alertas = this.alertas;
 
 		return json;
 	}
