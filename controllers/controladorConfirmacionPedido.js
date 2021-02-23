@@ -41,28 +41,25 @@ exports.confirmaPedido = (req, res) => {
 		return;
 	}
 
-	iMongo.consultaTx.porCRC(txId, confirmacionPedidoSAP.crc, (errorMongo, dbTx) => {
+	iMongo.consultaTx.porCrcSap(txId, confirmacionPedidoSAP.crcSap, (errorMongo, dbTxConfirmada) => {
 		if (errorMongo) {
-			
 			L.xe(txId, ['No se ha podido recuperar la transmisión a confirmar - Se deja pendiente de asociar a pedido', errorMongo]);
 			res.status(202).json({ ok: true });
 			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
-		if (!dbTx) {
+		if (!dbTxConfirmada) {
 			L.xe(txId, ['No se ha encontrado el pedido que se está confirmando - Se deja pendiete de asociar a pedido', errorMongo]);
 			res.status(202).json({ ok: true });
 			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
 			return;
 		}
 
-		let [estadoTransmision, numerosPedidoSAP] = confirmacionPedidoSAP.obtenerEstado();
-
-		let originalTxId = dbTx._id;
-		L.xi(txId, ['Se selecciona la transmisión con ID para confirmar', originalTxId], 'confirm');
+		let originalTxId = dbTxConfirmada._id;
+		L.xi(txId, ['Se selecciona la transmisión para confirmar con ID', originalTxId], 'confirm');
 		res.status(200).json({ok: true});
-		iEventos.sap.confirmacionPedido(req, originalTxId, estadoTransmision, { numerosPedidoSAP });
+		iEventos.sap.confirmacionPedido(req, originalTxId, confirmacionPedidoSAP.estadoTransmision, { numerosPedidoSAP: confirmacionPedidoSAP.pedidosAsociadosSap });
 
 	} );
 

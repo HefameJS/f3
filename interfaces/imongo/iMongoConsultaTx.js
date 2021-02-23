@@ -127,6 +127,19 @@ const porCRC = (txId, crc, callback) => {
 	_consultaUnaTransmision(txId, { crc: crc }, callback);
 };
 
+
+/**
+ * Busca la transmisión con el CRC de SAP (el de 8 dígitos pasado a decimal) indicado.
+ * Si la intención es saber si un CRC está duplicado, es mejor utilizar la funcion 'esDuplicado()'
+ * @param {*} txId 
+ * @param {*} crc 
+ * @param {*} callback 
+ */
+const porCrcSap = (txId, crc, callback) => {
+	_consultaUnaTransmision(txId, { crcSap: crc }, callback);
+};
+
+
 /**
  * Busca la transmisión con el CRC dado y llama al callback con el ID de la transmisión original 
  * si la encuentra o false de no encontrarla.
@@ -254,6 +267,7 @@ module.exports = {
 
 	porId,
 	porCRC,
+	porCrcSap,
 
 	porNumeroPedido,
 	porNumeroDevolucion,

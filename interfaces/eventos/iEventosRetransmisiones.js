@@ -217,8 +217,7 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 
 	let cuerpoConfirmacionSap = dbTxConfirmacionSap.clientRequest.body;
 	let txIdConfirmacionSap = dbTxConfirmacionSap._id;
-
-	let [estadoTransmision, numerosPedidoSAP] = ConfirmacionPedidoSAP.obtenerEstadoDeConfirmacionSap(cuerpoConfirmacionSap);
+	let confirmacionPedidoSAP = new ConfirmacionPedidoSAP({ txId: txIdConfirmacionSap, body: cuerpoConfirmacionSap });
 
 	let transaccion = {
 		$setOnInsert: {
@@ -227,10 +226,10 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 		},
 		$max: {
 			modifiedAt: new Date(),
-			status: estadoTransmision,
+			status: confirmacionPedidoSAP.estadoTransmision,
 		},
 		$set: {
-			numerosPedidoSAP: numerosPedidoSAP
+			numerosPedidoSAP: confirmacionPedidoSAP.pedidosAsociadosSap
 		},
 		$push: {
 			sapConfirms: {
@@ -245,7 +244,7 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 
 	L.xi(txIdConfirmada, ['Emitiendo COMMIT para evento asociarConfirmacionConPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
-	L.evento(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, estadoTransmision, numerosPedidoSAP);
+	L.evento(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, confirmacionPedidoSAP.estadoTransmision, confirmacionPedidoSAP.pedidosAsociadosSap);
 
 	/**
 	 * Dejamos constancia en la propia transmisión de confirmación de que se ha actualizado

@@ -162,9 +162,9 @@ module.exports = {
             removeDireccionLogisticaEmptyString: ['codigo', 'nombre', 'calle', 'poblacion', 'provincia', 'codigoPostal', 'pais', 'telefono', 'email']
         },
     },
-    PROTOCOL_VERSION: '3.4.7',
-    SERVER_VERSION: '0.12.2',
-    TX_VERSION: 1202,
+    PROTOCOL_VERSION: '3.4.8',
+    SERVER_VERSION: '0.12.3',
+    TX_VERSION: 1203,
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
     EXIT_CODES: {
         E_NO_CONFIG: 1,
