@@ -168,7 +168,9 @@ actualizar_git() {
   then
     echo -e "\n$C_BLUE # ACTUALIZANDO CODIGO FUNENTE DESDE EL REPOSITORIO GIT #$C_RESET\n"
     cd $SRCDIR
-    git config --global credential.helper cache
+    git config --global credential.helper cache >/dev/null 2>/dev/null
+	git stash >/dev/null 2>/dev/null
+	git stash clear >/dev/null 2>/dev/null
     git pull
     echo -e "\n"
   fi
