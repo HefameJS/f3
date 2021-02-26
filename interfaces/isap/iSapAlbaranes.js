@@ -4,7 +4,7 @@ const L = global.logger;
 const K = global.constants;
 
 const iSapComun = require('./iSapComun');
-const DestinoSap = require('model/ModeloDestinoSap');
+const DestinoSap = require('modelos/DestinoSap');
 
 const request = require('request');
 

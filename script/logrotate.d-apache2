@@ -1,0 +1,11 @@
+/var/log/apache2/*log {
+    copytruncate
+    compress
+    dateext
+    maxage 30
+    rotate 99
+    size=+1024k
+    notifempty
+    missingok
+    create 644 root root
+}

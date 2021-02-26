@@ -24,7 +24,7 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.originIp,
+				ip: req.ipOrigen,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
@@ -80,7 +80,7 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.originIp,
+				ip: req.ipOrigen,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

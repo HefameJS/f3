@@ -4,7 +4,7 @@
 //const K = global.constants;
 
 // Interfaces
-const MDB = require('./iMongoConexion');
+// const conexionMongo = require('./iMongoConexion');
 
 
 /**
@@ -13,8 +13,8 @@ const MDB = require('./iMongoConexion');
  * @param {*} callback - Cuando termina la operacion, se llama con un booleano indicando si hubo exito o no
  */
 const chequeaConexion = (callback) => {
-	if (MDB.colTx()) {
-		MDB.colTx().findOne({}, { _id: 1 }, (err, res) => {
+	if (conexionMongo.colTx()) {
+		conexionMongo.colTx().findOne({}, { _id: 1 }, (err, res) => {
 			if (err) {
 				return callback(false);
 			}
@@ -28,6 +28,9 @@ const chequeaConexion = (callback) => {
 
 
 module.exports = {
+	//conexion: conexionMongo
+	/*
+	conectar: MDB.conectar,
 	// Acceso a propiedades de la conexión en crudo
 	ObjectID: MDB.ObjectID,
 	cliente: MDB.cliente,
@@ -35,11 +38,12 @@ module.exports = {
 	colTx: MDB.colTx,
 	colDiscard: MDB.colDiscard,
 	colControl: MDB.colControl,
+	colConfiguracion: MDB.colConfiguracion,
 
 	chequeaConexion,
 
 	// Consultas sobre las transmisiones
 	consultaTx: require('./iMongoConsultaTx'),
 	transaccion: require('./iMongoTransaccion'),
-	monitor: require('./iMongoMonitor')
+	monitor: require('./iMongoMonitor')*/
 }

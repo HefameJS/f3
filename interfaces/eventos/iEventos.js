@@ -31,7 +31,7 @@ module.exports.descartar = (req, res, responseBody, error) => {
 			type: K.TX_TYPES.INVALIDO,
 			status: K.TX_STATUS.DESCONOCIDO,
 			clientRequest: {
-				ip: req.originIp,
+				ip: req.ipOrigen,
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

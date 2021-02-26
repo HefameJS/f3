@@ -1,68 +1,52 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
+//const C = global.config;
+//const L = global.logger;
 //const K = global.constants;
 
 // Externo
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
+const conexion = async function () {
+	let C = global.config;
+	let L = global.logger;
 
-const MONGODB_OPTIONS = {
-	connectTimeoutMS: 5000,
-	serverSelectionTimeoutMS: 5000,
-	w: C.mongodb.writeconcern || 1,
-	wtimeout: 1000,
-	useUnifiedTopology: true,
-	appname: global.instanceID,
-	loggerLevel: 'warn'
-};
+	L.i(['Conectando al clúster MongoDB'], 'mongodb')
 
-const colecciones = {
-	tx: null,
-	discard: null,
-	control: null
-};
+	let cliente = new MongoClient(C.mongodb.getUrl(), C.mongodb.getConfigConexion());
+	let baseDatos = null;
+	let colecciones = {
+		tx: null,
+		discard: null,
+		control: null,
+		configuracion: null
+	};
 
-let clienteDb;
+	try {
+		cliente = await cliente.connect();
+		baseDatos = cliente.db(C.mongodb.database);
+		colecciones.tx = baseDatos.collection('tx');
+		colecciones.discard = baseDatos.collection('discard');
+		colecciones.control = baseDatos.collection('control');
+		colecciones.configuracion = baseDatos.collection('configuracion');
+		L.i(['Conexión a MongoDB establecida'], 'mongodb')
 
-const conectar = () => {
-	if (clienteDb) return;
+	}
+	catch (error) {
+		L.f(['Error en la conexión a de MongoDB', C.mongodb.getUrl(), error], 'mongodb')
+		L.f(['Reintentando la conexión en milisegundos', C.mongodb.intervaloReconexion], 'mongodb')
+		setTimeout(() => conexion(), C.mongodb.intervaloReconexion)
+	}
 
-	clienteDb = new MongoClient(C.urlConexionMongo(), MONGODB_OPTIONS);
-	clienteDb.connect()
-		.then((cliente) => {
-			clienteDb = cliente;
-			let bdFedicom = clienteDb.db(C.mongodb.database);
+	global.mongodb = {
+		ObjectID,
+		conectado: cliente ? true : false,
+		cliente,
+		bd: baseDatos,
+		col: colecciones
+	}
 
-			let nombreColeccionTx = C.mongodb.txCollection || 'tx';
-			colecciones.tx = bdFedicom.collection(nombreColeccionTx);
-			L.i(['*** Conexión a la colección [' + C.mongodb.database + '.' + nombreColeccionTx + '] para almacenamiento de transmisiones'], 'mongodb');
-
-			let nombreColeccionDiscard = C.mongodb.discardCollection || 'discard';
-			colecciones.discard = bdFedicom.collection(nombreColeccionDiscard);
-			L.i(['*** Conexión a la colección [' + C.mongodb.database + '.' + nombreColeccionDiscard + '] para almacenamiento de transmisiones descartadas'], 'mongodb');
-
-			let nombreColeccionControl = C.mongodb.controlCollection || 'control';
-			colecciones.control = bdFedicom.collection(nombreColeccionControl);
-			L.i(['*** Conexión a la colección [' + C.mongodb.database + '.' + nombreColeccionControl + '] para control'], 'mongodb');
-
-		})
-		.catch(error => {
-			clienteDb = null;
-			L.f(['*** Error en la conexión a de MongoDB ***', C.urlConexionMongo(), error], 'mongodb')
-		});
+	return global.mongodb;
 }
 
-conectar();
-setInterval(conectar, 10000);
-
-
-module.exports = {
-	ObjectID,
-	cliente: () => clienteDb,
-	db: (nombreDB) => clienteDb.db(nombreDB || C.mongodb.database),
-	colTx: () => colecciones.tx,
-	colDiscard: () => colecciones.discard,
-	colControl: () => colecciones.control
-};
+module.exports = conexion;

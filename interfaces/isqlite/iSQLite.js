@@ -9,13 +9,13 @@ const ObjectID = require('mongodb').ObjectID;
 const sqlite3 = require('sqlite3').verbose();
 const lock = require('locks');
 
-const db = new sqlite3.Database(C.sqlite.db_path, (err) => {
+const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
 	if (err) {
-		L.f(['*** NO SE PUDO CONECTAR A SQLITE ***', C.sqlite.db_path, err], 'sqlite');
+		L.f(['*** NO SE PUDO CONECTAR A SQLITE ***', C.sqlite.fichero, err], 'sqlite');
 		return;
 	}
 
-	L.i(['Conectado a la base de datos de emergencia SQLite3', C.sqlite.db_path], 'sqlite');
+	L.i(['Conectado a la base de datos de emergencia SQLite3', C.sqlite.fichero], 'sqlite');
 	db.exec('CREATE TABLE IF NOT EXISTS tx(uid CHARACTER(24) PRIMARY KEY, txid CHARACTER(24), data TEXT, retryCount INTEGER)');
 });
 

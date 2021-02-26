@@ -11,7 +11,7 @@ const iSapComun = require('./iSapComun');
 const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
-const DestinoSap = require('model/ModeloDestinoSap');
+const DestinoSap = require('modelos/DestinoSap');
 
 
 

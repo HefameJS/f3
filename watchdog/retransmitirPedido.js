@@ -10,9 +10,9 @@ const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
-const ErrorFedicom = require('model/ModeloErrorFedicom');
-const PedidoCliente = require('model/pedido/ModeloPedidoCliente');
-const PedidoSap = require('model/pedido/ModeloPedidoSap');
+const ErrorFedicom = require('modelos/ErrorFedicom');
+const PedidoCliente = require('modelos/pedido/ModeloPedidoCliente');
+const PedidoSap = require('modelos/pedido/ModeloPedidoSap');
 
 // Helpers
 const extensionesExpress = require('util/extensionesExpress');
@@ -108,10 +108,10 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
             pedidoCliente = new PedidoCliente(dbTx.clientRequest);
 
         } catch (excepcion) {
-            let fedicomError = ErrorFedicom.desdeExcepcion(txIdRetransmision, excepcion);
+            let fedicomError = new ErrorFedicom(excepcion);
             L.xe(txIdRetransmision, ['Ocurrió un error al analizar la petición', fedicomError])
             iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-                clientResponse: fedicomError.getErrors(),
+                clientResponse: fedicomError.getErrores(),
                 status: K.TX_STATUS.PETICION_INCORRECTA
             });
             L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza en estado de PETICION INCORRECTA']);
@@ -184,7 +184,7 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
                     iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
                         sapRequest: solicitudASap,
                         sapResponse: respuestaSap,
-                        clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 400, errorFedicom.getErrors()),
+                        clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 400, errorFedicom.getErrores()),
                         status: K.TX_STATUS.PETICION_INCORRECTA
                     });
                     L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);

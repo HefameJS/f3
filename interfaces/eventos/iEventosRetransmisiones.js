@@ -9,7 +9,7 @@ const iFlags = require('interfaces/iFlags');
 
 // Modelos
 const ObjectID = iMongo.ObjectID;
-const ConfirmacionPedidoSAP = require('model/pedido/ModeloConfirmacionPedidoSAP');
+const ConfirmacionPedidoSAP = require('modelos/pedido/ModeloConfirmacionPedidoSAP');
 
 
 

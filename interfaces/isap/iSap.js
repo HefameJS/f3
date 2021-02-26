@@ -10,7 +10,7 @@ const request = require('request');
 const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
-const DestinoSap = require('model/ModeloDestinoSap');
+const DestinoSap = require('modelos/DestinoSap');
 
 // Helpers
 const iSapComun = require('./iSapComun');
@@ -33,7 +33,7 @@ const ping = (nombreSistemaSap, callback) => {
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, false, destinoSap.prefijoRuta);
+			callback(errorComunicacion, false, destinoSap.urlBase);
 			return;
 		}
 
@@ -42,11 +42,11 @@ const ping = (nombreSistemaSap, callback) => {
 				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
 				errno: respuestaSap.statusCode,
 				code: respuestaSap.statusMessage
-			}, false, destinoSap.prefijoRuta);
+			}, false, destinoSap.urlBase);
 			return;
 		}
 
-		callback(null, true, destinoSap.prefijoRuta);
+		callback(null, true, destinoSap.urlBase);
 
 	});
 }

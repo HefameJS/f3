@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -9,10 +9,7 @@ const request = require('request');
 // Interfaces
 const iSapComun = require('./iSapComun');
 const iCacheCredencialesSap = require('./iCacheCredencialesSap');
-const iEventos = require('interfaces/eventos/iEventos');
-
-// Modelos
-const DestinoSap = require('model/ModeloDestinoSap');
+// const iEventos = require('interfaces/eventos/iEventos');
 
 
 const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
@@ -32,7 +29,7 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 	let nombreSistemaSap = solicitudAutenticacion.sapSystem;
 
 
-	let destinoSap = DestinoSap.desdeNombre(nombreSistemaSap);
+	let destinoSap = C.sap.getSistema(nombreSistemaSap);
 	if (!destinoSap) {
 		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
 		return;
@@ -44,12 +41,12 @@ const verificarCredenciales = (txId, solicitudAutenticacion, callback) => {
 	});
 
 
-	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
+	// iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
 
 	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
 
 		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
+		// iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
 
 		if (errorComunicacion) {
 			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
