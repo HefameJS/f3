@@ -43,7 +43,7 @@ class SolicitudAutenticacion {
 		this.usuario = json.user.trim();
 		this.clave = json.password.trim();
 		this.dominio = C.dominios.resolver(json.domain);
-		L.xd(this.txId, ['Nombre de dominio resuelto', this.domain]);
+		L.xd(this.txId, ['Nombre de dominio resuelto', this.dominio]);
 
 
 		// Comprobación de si es TRANSFER o no en funcion de si el nombre del usuario empieza por TR, TG o TP

@@ -26,14 +26,9 @@ const autenticar = function (txId, solicitudAutenticacion) {
 					return;
 				}
 
-				let grupos = [];
-				gruposAd.forEach((grupoAd) => {
-					if (grupoAd.cn && grupoAd.cn.startsWith(C.ldap.prefijoGrupos))
-						grupos.push(grupoAd.cn);
-				});
+				let grupos = gruposAd.filter(grupoAd => (grupoAd.cn && grupoAd.cn.startsWith(C.ldap.prefijoGrupos)));
 
 				resolve(grupos);
-
 			})
 		});
 	});
