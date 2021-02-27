@@ -68,8 +68,13 @@ class SolicitudAutenticacion {
 
 	}
 
+	/**
+	 * La solicitud es transfer si se cumple una de
+	 *  - El dominio es TRANSFER
+	 *  - El dominio es FEDICOM y el nombre del usuario cumple la expresión regular /^T[RGP]/
+	 */
 	esTransfer() {
-		return this.dominio === K.DOMINIOS.FEDICOM && this.usuario.search(/^T[RGP]/);
+		return this.dominio === C.dominios.TRANSFER || (this.dominio === C.dominios.FEDICOM && this.usuario.search(/^T[RGP]/) !== -1);
 	}
 
 	generarJSON() {
