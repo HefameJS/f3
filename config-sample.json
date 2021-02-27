@@ -1,72 +1,29 @@
 {
-	"production": false, 
-	"workers": 8,
-	"logdir": "/home/fedicom3/log",
-	"pid": "/home/fedicom3/pid",
-	"depurar_transmisiones": false,
+	"produccion": false,
+	"numeroWorkers": 1,
 	"mongodb": {
-		"username": "fedicom",
-		"pwd": "fedicom3",
-		"hosts": [
-			"fedicom1.mydomain.com:27017",
-			"fedicom2.mydomain.com:27017"
+		"servidores": [
+			"server1.hefame.es:27017",
+			"server2.hefame.es:27017"
 		],
+		"usuario": "fedi",
+		"password": "password",
 		"database": "fedicom3",
-		"replicaset": "fedicom3",
-		"writeconcern": 1,
-		"txCollection": "tx",
-		"discardCollection": "discard",
-		"logCollection": "log"
+		"replicaSet": "fedicom3-dev",
+		"intervaloReconexion": 5000
 	},
-	"sqlite": {
-		"db_path": "/home/fedicom3/db/sqlite.db"
+	"pid": {
+		"directorio": "~/cache"
+	},
+	"log": {
+		"consola": true,
+		"directorio": "~/cache/log"
 	},
 	"http": {
-		"port": 5000
+		"puertoConcentrador": 5000,
+		"puertoConsultas": 5001
 	},
-	"jwt": {
-		"token_signing_key": "SecretOne",
-		"token_lifetime_minutes": 30,
-		"token_validation_skew_clock_seconds": 10
-	},
-	"sap_systems": {
-		"default": "D01",
-		"D01": {
-			"host": "d01.hefame.es",
-			"port": 11081,
-			"https": true,
-			"username": "fedicom",
-			"password": "secretD01",
-			"prefix": "/devel"
-		},
-		"T01": {
-			"host": "t01.hefame.es",
-			"port": 21081,
-			"https": true,
-			"username": "fedicom",
-			"password": "secretT01",
-			"prefix": "/test"
-		}
-	},
-	"watchdog": {
-		"mdbwatch": {
-			"buffer_size": 10,
-			"interval": 5,
-			"minimum_age": 600
-		},
-		"sqlite": {
-			"interval": 5,
-			"maxRetries": 10
-		},
-		"priority": 100
-	},
-	"ldap": {
-		"url": "ldap://ad.domain.com",
-		"cacert": "ssl/ad_ca_cert.crt"
-	},
-	"monitor": {
-		"http": {
-				"port": 5001
-		}
+	"sqlite": {
+		"fichero": "~/cache/f3.sqlite"
 	}
 }
