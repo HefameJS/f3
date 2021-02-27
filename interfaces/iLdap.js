@@ -7,40 +7,39 @@ const C = global.config;
 const ActiveDirectory = require('activedirectory');
 const clone = require('clone');
 
-const autenticar = (txId, solicitudAutenticacion, callback) => {
+const autenticar = function (txId, solicitudAutenticacion) {
 
-    let configuracionLdap = clone(C.ldap);
-    configuracionLdap.baseDN = 'DC=hefame,DC=es';
-    configuracionLdap.username = solicitudAutenticacion.domain + '\\' + solicitudAutenticacion.username;
-    configuracionLdap.password = solicitudAutenticacion.password;
+	return new Promise((resolve, reject) => {
 
-    let activeDirectory = new ActiveDirectory(configuracionLdap);
+		let configuracionLdap = C.ldap.getParametrosActiveDirectory(solicitudAutenticacion);
+		let activeDirectory = new ActiveDirectory(configuracionLdap);
+		
+		activeDirectory.authenticate(configuracionLdap.username, configuracionLdap.password, (authErr, authResult) => {
+			if (authErr) {
+				reject(authErr);
+				return;
+			}
 
-    activeDirectory.authenticate(configuracionLdap.username, configuracionLdap.password, (authErr, authResult) => {
-        if (authErr) {
-            callback(authErr);
-            return;
-        }
+			activeDirectory.getGroupMembershipForUser(solicitudAutenticacion.username, (errorLdap, gruposAd) => {
+				if (errorLdap || !gruposAd || !gruposAd.forEach) {
+					reject(errorLdap);
+					return;
+				}
 
-        activeDirectory.getGroupMembershipForUser(solicitudAutenticacion.username, (errorLdap, gruposAd) => {
-            if (errorLdap || !gruposAd || !gruposAd.forEach) {
-                callback(errorLdap);
-                return;
-            }
+				let grupos = [];
+				gruposAd.forEach((grupoAd) => {
+					if (grupoAd.cn && grupoAd.cn.startsWith(C.ldap.prefijoGrupos))
+						grupos.push(grupoAd.cn);
+				});
 
-            let grupos = [];
-            gruposAd.forEach((grupoAd) => {
-                if (grupoAd.cn && grupoAd.cn.startsWith('FED3_'))
-                    grupos.push(grupoAd.cn);
-            });
+				resolve(grupos);
 
-            callback(null, grupos);
-
-        })
-    });
+			})
+		});
+	});
 }
 
 module.exports = {
-    autenticar
+	autenticar
 }
 

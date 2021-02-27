@@ -19,7 +19,7 @@ const SolicitudAutenticacion = require('modelos/autenticacion/SolicitudAutentica
 
 
 // POST /authenticate
-const autenticar = (req, res) => {
+const autenticar = function (req, res) {
 
 	let txId = req.txId;
 
@@ -36,14 +36,18 @@ const autenticar = (req, res) => {
 		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
-	
+
 	// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
+
 	switch (solicitudAutenticacion.dominio) {
 		case C.dominios.FEDICOM:
 		case C.dominios.TRANSFER:
-			return _autenticarContraSAP(txId, solicitudAutenticacion, res);
+			res.status(200).json(solicitudAutenticacion.generarJSON());
+			//_autenticarContraSAP(txId, solicitudAutenticacion, res);
+			return;
 		case C.dominios.HEFAME:
-			return _autenticarContraLDAP(txId, solicitudAutenticacion, res);
+			_autenticarContraLDAP(txId, solicitudAutenticacion, res);
+			return;
 		default: {
 			L.xi(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.dominio]);
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
@@ -51,8 +55,8 @@ const autenticar = (req, res) => {
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	}
-	
-	res.status(200).json({tira:true});
+
+	// res.status(200).json(solicitudAutenticacion.generarJSON());
 
 }
 
@@ -85,7 +89,7 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 			let cuerpoRespuesta = { auth_token: token };
 
 			// Si se indica el campo debug = true, se incluyen el resultado de verificar el token en el campo data.
-			if (solicitudAutenticacion.debug) 
+			if (solicitudAutenticacion.debug)
 				cuerpoRespuesta.data = iTokens.verificarToken(token);
 
 			res.status(201).json(cuerpoRespuesta);
@@ -99,26 +103,28 @@ const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
 	});
 }
 
-const _autenticarContraLDAP = (txId, solicitudAutenticacion, res) => {
+const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res) {
 	L.xi(txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
-	iLdap.autenticar(txId, solicitudAutenticacion, (errorLdap, groups) => {
-		if (errorLdap || !groups) {
-			L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
-			let error = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
-			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
-			return;
-		}
 
-		L.xt(txId, ['Usuario validado por LDAP, grupos obtenidos', groups]);
+	try {
+		let grupos = await iLdap.autenticar(txId, solicitudAutenticacion);
+
+		L.xt(txId, ['Usuario validado por LDAP, grupos obtenidos', grupos]);
 		// AUTH OK POR LDAP
-		let token = solicitudAutenticacion.generarToken(groups);
+		let token = solicitudAutenticacion.generarToken(grupos);
 		let cuerpoRespuesta = { auth_token: token };
 		if (solicitudAutenticacion.debug) cuerpoRespuesta.data = iTokens.verificarToken(token);
 		res.status(201).json(cuerpoRespuesta);
-		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
+		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
 
-	});
+	} catch (errorLdap) {
+		L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
+		let error = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
+		let cuerpoRespuesta = error.enviarRespuestaDeError(res);
+		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
+		return;
+	}
+
 }
 
 
@@ -133,7 +139,7 @@ const verificarToken = (req, res) => {
 		res.status(200).send({token: req.token, token_data: tokenData});
 	}
 	*/
-	res.status(200).send({ ful:'pereful'});
+	res.status(200).send({ ful: 'pereful' });
 }
 
 

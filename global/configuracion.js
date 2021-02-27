@@ -47,6 +47,7 @@ class Configuracion {
 		this.sap = await ConfiguracionSap.cargar();
 		this.dominios = await ConfiguracionDominios.cargar();
 		this.flags = await ConfiguracionFlags.cargar();
+		this.ldap = await ConfiguracionLdap.cargar();
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -299,6 +300,51 @@ class ConfiguracionFlags {
 
 }
 
+class ConfiguracionLdap {
+
+/**C.ldap.tlsOptions = {
+		ca: [require('fs').readFileSync(C.ldap.cacert)]
+	}; */
+
+	constructor(config) {
+
+		if (!config) throw new Error("No se ha definido la configuracion de LDAP ($.ldap)");
+		if (!Validador.esCadenaNoVacia(config.servidor)) throw new Error("No se ha definido el servidor LDAP ($.ldap.servidor)");
+		if (!Validador.esCadenaNoVacia(config.baseBusqueda)) throw new Error("No se ha definido la base de búsqueda LDAP ($.ldap.baseBusqueda)");
+		 
+
+		this.servidor = config.servidor.trim();
+		this.baseBusqueda = config.baseBusqueda.trim();
+		this.prefijoGrupos = config.prefijoGrupos?.trim() || 'FED3_';
+		this.certificado = Buffer.from(config.certificado);
+
+		this.opcionesTls = {
+			ca: [this.certificado]
+		}
+	}
+
+	static async cargar() {
+		let config = await Configuracion.cargarObjetoCluster('ldap');
+		return new ConfiguracionLdap(config);
+	}
+
+	/**
+	 * Devuelve un objeto con los parámetros de conexión al servidor LDAP que debe utilizarse
+	 * para crear la instancia de ActiveDirectory
+	 * @param {*} solicitudAutenticacion 
+	 */
+	getParametrosActiveDirectory(solicitudAutenticacion) {
+		return {
+			url: this.servidor,
+			baseDN: this.baseBusqueda,
+			username: solicitudAutenticacion.dominio + '\\' + solicitudAutenticacion.usuario,
+			password: solicitudAutenticacion.clave,
+			tlsOptions: this.opcionesTls
+		}
+	}
+
+
+}
 
 
 
