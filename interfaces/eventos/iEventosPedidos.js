@@ -2,14 +2,12 @@
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
-
-// Modelos
-const ObjectID = iMongo.ObjectID;
 
 
 module.exports.inicioPedido = (req, pedido) => {
@@ -17,7 +15,7 @@ module.exports.inicioPedido = (req, pedido) => {
 	let txId = req.txId;
 
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO);
-	transaccion['$set'].crc = new ObjectID(pedido.crc);
+	transaccion['$set'].crc = new M.ObjectID(pedido.crc);
 	// 23-02-2021 - Se añade el campo crcSap con el valor decimal del CRC(8) que es el que usa SAP
 	// Con este campo podemos encontrar la transmisión cuando SAP la confirme
 	transaccion['$set'].crcSap = parseInt(pedido.crc.substring(0, 8), 16);

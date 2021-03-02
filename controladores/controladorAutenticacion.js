@@ -7,8 +7,9 @@ const K = global.constants;
 const iSap = require('interfaces/isap/iSap');
 const iLdap = require('interfaces/iLdap');
 const iTokens = require('global/tokens');
+const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
 const iFlags = require('interfaces/iFlags');
-//const iEventos = require('interfaces/eventos/iEventos');
+const iEventos = require('interfaces/eventos/iEventos');
 
 
 
@@ -24,83 +25,93 @@ const autenticar = function (req, res) {
 	let txId = req.txId;
 
 	L.xi(txId, 'Procesando petición de autenticación');
-	//iEventos.autenticacion.inicioAutenticacion(req);
+	iEventos.autenticacion.inicioAutenticacion(req);
 
 	let solicitudAutenticacion = null;
 	try {
 		solicitudAutenticacion = new SolicitudAutenticacion(req);
 	} catch (excepcion) {
 		let errorFedicom = new ErrorFedicom(excepcion);
-		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+		L.xw(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
-	// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
 
 	switch (solicitudAutenticacion.dominio) {
 		case C.dominios.FEDICOM:
 		case C.dominios.TRANSFER:
-			res.status(200).json(solicitudAutenticacion.generarJSON());
-			//_autenticarContraSAP(txId, solicitudAutenticacion, res);
+			// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
+			_autenticarContraSAP(txId, solicitudAutenticacion, res);
 			return;
 		case C.dominios.HEFAME:
+			// Las peticiones al dominio HEFAME se verifica contra el LDAP
 			_autenticarContraLDAP(txId, solicitudAutenticacion, res);
 			return;
 		default: {
-			L.xi(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.dominio]);
+			// Las peticiones de otros dominios no son legales
+			L.xw(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.dominio]);
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
 	}
-
-	// res.status(200).json(solicitudAutenticacion.generarJSON());
-
 }
 
-const _autenticarContraSAP = (txId, solicitudAutenticacion, res) => {
-	L.xi(txId, ['Se procede a comprobar en SAP las credenciales de la petición']);
-	iSap.autenticacion.verificarCredenciales(txId, solicitudAutenticacion, (errorSap, respuestaSap) => {
-		if (errorSap) {
-			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				L.xe(txId, ['Error al autenticar al usuario', errorSap]);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-			}
-			else {
-				L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', errorSap]);
-				let token = solicitudAutenticacion.generarToken();
-				let cuerpoRespuesta = { auth_token: token };
-				res.status(201).json(cuerpoRespuesta);
+const _autenticarContraSAP = async function (txId, solicitudAutenticacion, res) {
 
-				iFlags.set(txId, C.flags.NO_SAP)
-				iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-			}
-			return;
-		}
-
-		if (respuestaSap.body.username) {
-			// AUTH OK POR SAP
-
-			let token = solicitudAutenticacion.generarToken();
-			let cuerpoRespuesta = { auth_token: token };
-
-			// Si se indica el campo debug = true, se incluyen el resultado de verificar el token en el campo data.
-			if (solicitudAutenticacion.debug)
-				cuerpoRespuesta.data = iTokens.verificarToken(token);
-
+	// Comprobacion de si la credencial del usuario se encuenta en la caché
+	if (!solicitudAutenticacion.noCache) {
+		let resultadoCache = iCacheCredencialesSap.chequearSolicitud(solicitudAutenticacion);
+		if (resultadoCache) {
+			L.xi(txId, 'Se produjo un acierto de caché en la credencial de usuario.', 'credentialCache');
+			let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
 			res.status(201).json(cuerpoRespuesta);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
+			return;
+		}
+	}
+
+	L.xi(txId, ['Se procede a comprobar en SAP las credenciales de la petición']);
+
+	try {
+		let respuestaSap = await iSap.autenticacion.verificarCredenciales(solicitudAutenticacion);
+
+		// Si el mensaje de SAP contiene el parámetro 'username', es que las credenciales son correctas.
+		// de lo contrario, es que son incorrectas.
+		if (respuestaSap.username) {
+			let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
+			res.status(201).json(cuerpoRespuesta);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
+
+			// Guardamos la entrada en caché
+			if (!solicitudAutenticacion.noCache) {
+				iCacheCredencialesSap.agregarEntrada(solicitudAutenticacion);
+			}
 		} else {
-			// SAP INDICA QUE EL USUARIO NO ES VALIDO
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		}
-	});
+
+	} catch (errorLlamadaSap) {
+		
+		if (errorLlamadaSap?.esSistemaSapNoDefinido()) {
+			L.xe(txId, ['Error al autenticar al usuario', errorLlamadaSap]);
+			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		} else {
+			L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', errorLlamadaSap]);
+			let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
+			res.status(201).json(cuerpoRespuesta);
+			iFlags.set(txId, C.flags.NO_SAP);
+			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+		}
+
+	}
+
 }
 
 const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res) {
@@ -108,20 +119,16 @@ const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res)
 
 	try {
 		let grupos = await iLdap.autenticar(txId, solicitudAutenticacion);
-
 		L.xt(txId, ['Usuario validado por LDAP, grupos obtenidos', grupos]);
-		// AUTH OK POR LDAP
-		let token = solicitudAutenticacion.generarToken(grupos);
-		let cuerpoRespuesta = { auth_token: token };
-		if (solicitudAutenticacion.debug) cuerpoRespuesta.data = iTokens.verificarToken(token);
+		let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken(grupos);
 		res.status(201).json(cuerpoRespuesta);
-		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
-
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.OK);
+		return;
 	} catch (errorLdap) {
-		L.xe(txId, ['Las credenciales indicadas no son correctas - No se genera token', errorLdap]);
+		L.xe(txId, ['La autenticación LDAP no fue satisfatoria. No se genera token', errorLdap]);
 		let error = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
 		let cuerpoRespuesta = error.enviarRespuestaDeError(res);
-		//iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.FALLO_AUTENTICACION);
 		return;
 	}
 
@@ -130,7 +137,7 @@ const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res)
 
 // GET /authenticate
 const verificarToken = (req, res) => {
-	/*
+	
 	if (req.token) {
 		let tokenData = iTokens.verificarToken(req.token);
 		res.status(200).send({token: req.token, token_data: tokenData});
@@ -138,7 +145,7 @@ const verificarToken = (req, res) => {
 		let tokenData = { meta: { ok: false, error: 'No se incluye token' } };
 		res.status(200).send({token: req.token, token_data: tokenData});
 	}
-	*/
+	
 	res.status(200).send({ ful: 'pereful' });
 }
 

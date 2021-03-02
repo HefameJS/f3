@@ -1,6 +1,7 @@
 'use strict';
 
-require('global/extensiones/extensionesNativas');
+require('global/extensiones/extensionesDate');
+require('global/extensiones/extensionesError');
 
 module.exports = async function () {
 

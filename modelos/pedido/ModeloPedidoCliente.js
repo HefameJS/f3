@@ -12,7 +12,7 @@ const LineaPedidoCliente = require('./ModeloLineaPedidoCliente');
 const CRC = require('modelos/CRC');
 
 // Helpers
-const Validador = require('util/validador');
+const Validador = require('global/validador');
 
 /** 
  * Objeto que representa la petición de creación de un pedido por parte del cliente
@@ -25,13 +25,18 @@ class PedidoCliente {
 		let json = req.body;
 
 		this.txId = txId;
+		this.metadatos = {
+			todasLineasInvalidas: true,
+			crcDeLineas: false,
+			crcLineas: ''
+		}
 
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de un pedido
 		let errorFedicom = new ErrorFedicom();
 		Validador.esCadenaNoVacia(json.codigoCliente, errorFedicom, 'PED-ERR-002', 'El campo "codigoCliente" es obligatorio');
 		Validador.esCadenaNoVacia(json.numeroPedidoOrigen, errorFedicom, 'PED-ERR-006', 'El campo "numeroPedidoOrigen" es obligatorio')
 		Validador.esArrayNoVacio(json.lineas, errorFedicom, 'PED-ERR-004', 'El campo "lineas" no puede estar vacío');
-		
+
 		if (json.codigoCliente && json.codigoCliente.endsWith('@hefame')) {
 			errorFedicom.insertar('PED-ERR-002', 'Indique el "codigoCliente" sin el @hefame al final', 400);
 		}
@@ -39,7 +44,7 @@ class PedidoCliente {
 		// Si se encuentran errores:
 		// - Se describen los errores encontrados en el array de incidencias y se lanza una excepción.
 		if (errorFedicom.tieneErrores()) {
-			L.xe(txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', errorFedicom]);
+			L.xw(txId, ['El pedido contiene errores. Se aborta el procesamiento del mismo', errorFedicom]);
 			throw errorFedicom;
 		}
 
@@ -102,9 +107,7 @@ class PedidoCliente {
 
 
 		// Copiamos las líneas, no sin antes analizarlas.
-		let [lineasSaneadas, errorEnTodasLineas, crcLineas] = PedidoCliente.#analizarPosiciones(req);
-		this.lineas = lineasSaneadas;
-		this.errorEnTodasLineas = errorEnTodasLineas;
+		this.#analizarPosiciones(req);
 
 
 		// Incluimos en el pedido los valores del usuario que lo transmitió
@@ -129,13 +132,13 @@ class PedidoCliente {
 
 		// 15.02.2021 - Para pedidos de mas de 10 líneas, vamos a generar el CRC en función de las propias
 		// líneas y no del numeroPedidoOrigen.
-		if (this.lineas.length > 10) {
-			this.crc = CRC.generar(this.codigoCliente, crcLineas);
-			this.crcDeLineas = true;
+		if (this.lineas.length > 1) {
+			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas);
+			this.metadatos.crcDeLineas = true;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando las lineas del mismo', this.crc], 'txCRC')
 		} else {
 			this.crc = CRC.generar(this.codigoCliente, this.numeroPedidoOrigen);
-			this.crcDeLineas = false;
+			this.metadatos.crcDeLineas = false;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando el numeroPedidoOrigen', this.crc], 'txCRC')
 		}
 
@@ -148,22 +151,19 @@ class PedidoCliente {
 	* Asume que req.body.lineas es un array.
 	* @param {*} req
 	*/
-	static #analizarPosiciones(req) {
+	#analizarPosiciones(req) {
 		let txId = req.txId;
 		let lineas = req.body.lineas || [];
-		let lineasSaneadas = [];
+		this.lineas = [];
 		let ordenes = [];
-
-		let todasLineasInvalidas = true;
-		let crcLineas = '';
 
 		lineas.forEach((linea, i) => {
 			let lineaPedido = new LineaPedidoCliente(linea, txId, i);
 
 			// "Acumulamos" el CRC de la linea
-			crcLineas = CRC.generar(crcLineas, lineaPedido.crc);
+			this.metadatos.crcLineas = CRC.generar(this.metadatos.crcLineas, lineaPedido.crc);
 
-			lineasSaneadas.push(lineaPedido);
+			this.lineas.push(lineaPedido);
 
 			// Guardamos el orden de aquellas lineas que lo llevan para no duplicarlo
 			if (lineaPedido.orden) {
@@ -171,7 +171,7 @@ class PedidoCliente {
 			}
 
 			if (lineaPedido.esLineaCorrecta()) {
-				todasLineasInvalidas = false;
+				this.metadatos.todasLineasInvalidas = false;
 			}
 
 
@@ -179,7 +179,7 @@ class PedidoCliente {
 
 		// Rellenamos el orden.
 		let siguienteOrdinal = 1;
-		lineasSaneadas.forEach((linea) => {
+		this.lineas.forEach((linea) => {
 			if (!linea.orden) {
 				while (ordenes.includes(siguienteOrdinal)) {
 					siguienteOrdinal++;
@@ -188,12 +188,10 @@ class PedidoCliente {
 				siguienteOrdinal++;
 			}
 		});
-		return [lineasSaneadas, todasLineasInvalidas, crcLineas];
-
 	}
 
 	#generaUrlConfirmacion() {
-		return 'http://' + HOSTNAME + '.hefame.es:' + C.http.port + '/confirmaPedido';
+		return 'http://' + HOSTNAME + '.hefame.es:' + C.http.puerto + '/confirmaPedido';
 	}
 
 	/**
@@ -203,12 +201,24 @@ class PedidoCliente {
 	#converAlmacen() {
 
 		if (!this.codigoAlmacenServicio.startsWith('RG')) {
+
+			const cambiarAlmacen = (nuevoAlmacen) => {
+				if (nuevoAlmacen) {
+					L.xw(this.txId, ['Se traduce el código del almacén.', this.codigoAlmacenServicio, nuevoAlmacen])
+					this.codigoAlmacenServicio = nuevoAlmacen;
+				} else {
+					L.xw(this.txId, ['No se reconce el código de almacén indicado - Se elimina el campo para que SAP lo elija']);
+					delete this.codigoAlmacenServicio;
+					this.addIncidencia(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado - Se le asigna su almacén habitual');
+				}
+			}
+
 			let codigoFedicom2 = parseInt(this.codigoAlmacenServicio);
 			switch (codigoFedicom2) {
-				case 2: this.codigoAlmacenServicio = 'RG01'; break;  // Santomera
-				case 5: this.codigoAlmacenServicio = 'RG15'; break; // Barcelona viejo
-				case 9: this.codigoAlmacenServicio = 'RG19'; break; // Málaga viejo
-				case 13: this.codigoAlmacenServicio = 'RG04'; break; // Madrid viejo
+				case 2: cambiarAlmacen('RG01'); break;  // Santomera
+				case 5: cambiarAlmacen('RG15'); break; // Barcelona viejo
+				case 9: cambiarAlmacen('RG19'); break; // Málaga viejo
+				case 13: cambiarAlmacen('RG04'); break; // Madrid viejo
 				case 3: /* Cartagena */
 				case 4: /* Madrid nuevo */
 				case 6: /* Alicante */
@@ -220,11 +230,10 @@ class PedidoCliente {
 				case 17: /* Melilla */
 				case 18: /* Granada */
 				case 19: /* Malaga nuevo */
-					this.codigoAlmacenServicio = 'RG' + (codigoFedicom2 > 9 ? codigoFedicom2 : '0' + codigoFedicom2);
+					cambiarAlmacen('RG' + (codigoFedicom2 > 9 ? codigoFedicom2 : '0' + codigoFedicom2));
 					break;
 				default:
-					delete this.codigoAlmacenServicio;
-					this.addIncidencia(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado – Se le asigna su almacén habitual');
+					cambiarAlmacen(null);
 			}
 		}
 

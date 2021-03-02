@@ -23,7 +23,7 @@ module.exports.incioLlamadaSap = (txId, parametrosLlamada) => {
 				timestamp: new Date(),
 				method: parametrosLlamada.method,
 				headers: parametrosLlamada.headers,
-				body: parametrosLlamada.body,
+				body: parametrosLlamada.data,
 				url: parametrosLlamada.url
 			}
 		}
@@ -66,35 +66,21 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 					}
 				}
 	*/
-	
+
 	let respuestaSapTransaccion = {};
 
-	if (errorLlamadaSap) { // Error de RED
+	if (errorLlamadaSap) { // Error en la llamada a SAP
 		respuestaSapTransaccion = {
 			timestamp: new Date(),
-			error: {
-				source: 'NET',
-				statusCode: errorLlamadaSap.errno || false,
-				message: errorLlamadaSap.message || 'Sin descripción del error'
-			}
+			error: errorLlamadaSap.generarJSON()
 		}
 	} else {
-		if (respuestaSap.errorSap) { // Error de SAP
-			respuestaSapTransaccion = {
-				timestamp: new Date(),
-				error: {
-					source: 'SAP',
-					statusCode: respuestaSap.statusCode,
-					message: respuestaSap.statusMessage
-				}
-			}
-		} else { // Respuesta correcta de SAP
-			respuestaSapTransaccion = {
-				timestamp: new Date(),
-				statusCode: respuestaSap.statusCode,
-				headers: respuestaSap.headers,
-				body: respuestaSap.body
-			}
+		// Respuesta correcta de SAP
+		respuestaSapTransaccion = {
+			timestamp: new Date(),
+			statusCode: respuestaSap.status,
+			headers: respuestaSap.headers,
+			body: respuestaSap.data
 		}
 	}
 
@@ -148,7 +134,7 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 		$set: {
 			numerosPedidoSAP: datosExtra.numerosPedidoSAP
 		},
-		$push:{
+		$push: {
 			sapConfirms: {
 				txId: txId,
 				timestamp: new Date(),

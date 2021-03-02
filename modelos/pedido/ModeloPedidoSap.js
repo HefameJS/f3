@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -57,8 +57,8 @@ class PedidoSap {
 		this.#sanearIncidenciasSap(json.incidencias);
 		this.alertas = json.alertas?.length > 0 ? json.alertas : null;
 
-		
-		
+
+
 
 		this.#establecerFlags();
 	}
@@ -67,7 +67,7 @@ class PedidoSap {
 		this.incidencias = incidenciasJson?.length === 0 ? null : incidenciasJson.filter(inc => {
 			/**
 			 * Elimina en las indidencias de cabecera una que sea exactamente {codigo: "", "descripcion": "Pedido duplicado"}
-			 * y activa el flag K.FLAGS.DUPLICADO_SAP si la encuentra
+			 * y activa el flag C.flags.DUPLICADO_SAP si la encuentra
 			 */
 			if (!inc.codigo && inc.descripcion === 'Pedido duplicado') {
 				this.metadatos.pedidoDuplicadoSap = true;
@@ -75,7 +75,7 @@ class PedidoSap {
 			}
 
 			return (inc.descripcion);
-		}).map( inc => {
+		}).map(inc => {
 			return {
 				codigo: inc.codigo || K.INCIDENCIA_FEDICOM.ERR_PED,
 				descripcion: inc.descripcion
@@ -86,6 +86,11 @@ class PedidoSap {
 
 	#extraerLineas(lineasJson) {
 		// Extracción de información de las lineas
+		if (!lineasJson) {
+			this.lineas = [];
+			return;
+		}
+
 		this.lineas = lineasJson.length === 0 ? [] : lineasJson.map((linea, index) => {
 			let lineaSap = new LineaPedidoSap(linea, this.txId, index);
 
@@ -112,40 +117,40 @@ class PedidoSap {
 		let txId = this.txId;
 		let totales = this.metadatos.totales;
 
-		
-		iFlags.set(txId, K.FLAGS.TOTALES, totales);
+
+		iFlags.set(txId, C.flags.TOTALES, totales);
 
 		// Es falta total ?
-		if (totales.cantidad === totales.cantidadFalta) iFlags.set(txId, K.FLAGS.FALTATOTAL)
+		if (totales.cantidad === totales.cantidadFalta) iFlags.set(txId, C.flags.FALTATOTAL)
 
 		// Tiene lineas demoradas ?
-		if (totales.lineasDemorado) iFlags.set(txId, K.FLAGS.DEMORADO)
+		if (totales.lineasDemorado) iFlags.set(txId, C.flags.DEMORADO)
 
 		// Tiene lineas bonificadas ?
-		if (totales.cantidadBonificacion) iFlags.set(txId, K.FLAGS.BONIFICADO)
+		if (totales.cantidadBonificacion) iFlags.set(txId, C.flags.BONIFICADO)
 
 		// Tiene lineas con estupefaciente ?
-		if (totales.lineasEstupe) iFlags.set(txId, K.FLAGS.ESTUPEFACIENTE)
+		if (totales.lineasEstupe) iFlags.set(txId, C.flags.ESTUPEFACIENTE)
 
-		
+
 		// El Flag tipoPedido contiene el tipo del pedido convertido a número para permitir búsquedas por tipo de pedido rápidas y fiables. (Donde los tipos de pedido "1", "001", "000001", "001   " son el mismo valor)
 		// Si tipoPedido es una clave de transmisión típica de fedicom (un número de 0 a 999999, eliminando espacios a izquierda y derecha) se guarda el valor numérico. 
 		// Si no se indica nada, por defecto se usa un 0. Si el valor no es numérico (p.e. se indica grupo de precios SAP como "KF"), se guarda tal cual.
 		if (this.tipoPedido) {
 			let tipoInt = parseInt(this.tipoPedido);
 			if (tipoInt >= 0 && tipoInt <= 999999) {
-				iFlags.set(txId, K.FLAGS.TIPO, tipoInt);
+				iFlags.set(txId, C.flags.TIPO, tipoInt);
 			}
 		} else {
-			iFlags.set(txId, K.FLAGS.TIPO, 0);
+			iFlags.set(txId, C.flags.TIPO, 0);
 		}
 
 
 		if (this.metadatos.pedidoDuplicadoSap)
-			iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
+			iFlags.set(txId, C.flags.DUPLICADO_SAP);
 
 		if (this.metadatos.puntoEntrega)
-			iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, this.metadatos.puntoEntrega);
+			iFlags.set(txId, C.flags.PUNTO_ENTREGA, this.metadatos.puntoEntrega);
 
 	}
 
@@ -171,10 +176,10 @@ class PedidoSap {
 		} else {
 			return K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO;
 		}
-		
+
 	}
 
-	
+
 
 	generarJSON() {
 		let json = {};
@@ -192,7 +197,7 @@ class PedidoSap {
 		if (this.empresaFacturadora) json.empresaFacturadora = this.empresaFacturadora;
 		if (this.observaciones) json.observaciones = this.observaciones;
 		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
-		if (this.incidencias) json.incidencias = this.incidencias;		
+		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.alertas) json.alertas = this.alertas;
 
 		return json;

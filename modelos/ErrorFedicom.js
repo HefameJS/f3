@@ -55,7 +55,7 @@ class ErrorFedicom {
 
 		// Se llama pasando otro error Fedicom
 		if (error && error.constructor.name === 'ErrorFedicom') {
-			this.listaErroresFedicom.concat(error.listaErroresFedicom);
+			this.listaErroresFedicom = [...this.listaErroresFedicom, ...error.listaErroresFedicom];
 			if (codigoRespuestaHttp) this.codigoRespuestaHttp = parseInt(codigoRespuestaHttp) || CODIGO_HTTP_POR_DEFECTO;
 			return this;
 		}
@@ -80,7 +80,7 @@ class ErrorFedicom {
 		}
 
 		// Si los parámetros de la llamada no son válidos
-		L.f('ERROR NO CONTROLADO: ' + error);
+		L.f(['Se inserta un error desconocido', error]);
 		this.listaErroresFedicom.push({ codigo: 'HTTP-500', descripcion: 'Error desconocido' });
 		return this;
 	}

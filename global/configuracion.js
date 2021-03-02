@@ -228,10 +228,12 @@ class ConfiguracionSap {
 	}
 
 	getSistema(sapsid) {
+		if (!sapsid) return this.destinoPorDefecto;
 		return this.destinos.find(destino => {
 			return destino.id === sapsid
 		})
 	}
+	
 
 }
 

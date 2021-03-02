@@ -12,12 +12,12 @@ cacheCredencialesFedicom.countStats(true);
 
 
 const chequearSolicitud = (solicitudAutenticacion) => {
-	let passwordEnCache = cacheCredencialesFedicom.get(solicitudAutenticacion.username);
-	return (passwordEnCache && passwordEnCache === solicitudAutenticacion.password)
+	let passwordEnCache = cacheCredencialesFedicom.get(solicitudAutenticacion.usuario);
+	return (passwordEnCache && passwordEnCache === solicitudAutenticacion.clave)
 }
 
 const agregarEntrada = (solicitudAutenticacion) => {
-	cacheCredencialesFedicom.put(solicitudAutenticacion.username, solicitudAutenticacion.password);
+	cacheCredencialesFedicom.put(solicitudAutenticacion.usuario, solicitudAutenticacion.clave);
 }
 
 const estadisticas = () => {

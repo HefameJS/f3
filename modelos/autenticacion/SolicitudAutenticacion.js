@@ -36,7 +36,7 @@ class SolicitudAutenticacion {
 		Validador.esCadenaNoVacia(json.password, errorFedicom, 'AUTH-004', 'El parámetro "password" es obligatorio');
 
 		if (errorFedicom.tieneErrores()) {
-			L.xe(txId, 'La autenticación contiene errores. Se aborta el procesamiento de la misma');
+			L.xw(this.txId, ['La autenticación contiene errores. Se aborta el procesamiento de la misma', errorFedicom]);
 			throw errorFedicom;
 		}
 
@@ -84,12 +84,17 @@ class SolicitudAutenticacion {
 			password: this.clave
 		}
 	}
-
 	
 	generarToken(permisos) {
 		return iTokens.generarToken(this.txId, this, permisos);
 	}
-	
+
+	generarRespuestaToken(grupos) {
+		let token = this.generarToken(grupos);
+		let cuerpoRespuesta = { auth_token: token };
+		if (this.debug) cuerpoRespuesta.data = iTokens.verificarToken(token);
+		return cuerpoRespuesta;
+	}
 
 }
 

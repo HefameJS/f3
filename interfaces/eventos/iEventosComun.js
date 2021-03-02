@@ -20,7 +20,7 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 		$set: {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
-			iid: global.instanceID,
+			iid: process.iid,
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
@@ -76,7 +76,7 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 		$set: {
 			authenticatingUser: req.identificarUsuarioAutenticado(),
 			client: req.identificarClienteSap(),
-			iid: global.instanceID,
+			iid: process.iid,
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
@@ -84,14 +84,14 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
-				route: req.route.path,
+				route: req.route?.path,
 				headers: req.headers,
 				body: req.body
 			},
 			clientResponse: {
 				timestamp: new Date(),
 				statusCode: res.statusCode,
-				headers: res.getHeaders(),
+				headers: res.getHeaders ? res.getHeaders() : null,
 				body: cuerpoRespuesta
 			}
 		}

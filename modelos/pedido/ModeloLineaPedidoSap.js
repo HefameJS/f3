@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Helpers
-const K = require('util/constantes');
+const K = require('global/constantes');
 
 
 class LineaPedidoSap {

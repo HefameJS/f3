@@ -2,38 +2,32 @@
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Externo
 const MemoryCache = require('memory-cache');
-const ObjectID = require('mongodb').ObjectID;
 
 // Interfaces
-const MDB = require('./iMongoConexion');
 const iSQLite = require('interfaces/isqlite/iSQLite');
 
 
 const cacheTransacciones = new MemoryCache.Cache();
 
-const descartar = (transaccion) => {
-
+const descartar = async function (transaccion) {
 	let txId = transaccion['$setOnInsert']._id;
 
-	if (MDB.colDiscard()) {
-		MDB.colDiscard().updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 }, (errorMongo, res) => {
-			if (errorMongo) {
-				L.xe(txId, ['**** ERROR AL HACER COMMIT DISCARD. SE IGNORA LA TRANSMISION', errorMongo], 'mdbCommitDiscard');
-			} else {
-				//L.xd(key, ['COMMIT DISCARD OK'], 'mdbCommitDiscard');
-			}
-		});
-	}
-	else {
-		L.xf(txId, ['ERROR AL HACER COMMIT DISCARD - NO SE RETORNA LA COLECCION DE DESCARTES'], 'mdbCommitDiscard');
+	try {
+		await M.col.discard.updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 });
+		L.xd(txId, ['Commit OK'], 'mdbCommitDiscard');
+		return true;
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al hacer COMMIT DISCARD', errorMongo], 'mdbCommitDiscard');
 	}
 
-};
+	return false;
+}
 
-const grabar = (transaccion, noAgregarConCache) => {
+const grabar = async function (transaccion, noAgregarConCache) {
 
 	let txId = transaccion['$setOnInsert']._id;
 
@@ -42,62 +36,54 @@ const grabar = (transaccion, noAgregarConCache) => {
 		transaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
 	}
 
-	if (MDB.colTx()) {
-		MDB.colTx().updateOne({ _id: txId }, transaccion, { upsert: true }, (errorMongo, res) => {
-			if (errorMongo) {
-				L.xe(txId, ['**** ERROR AL HACER COMMIT', errorMongo], 'mdbCommit');
-				iSQLite.grabarTransaccion(transaccion);
-			}
-		});
-	}
-	else {
-		L.xf(txId, ['ERROR AL HACER COMMIT - NO SE RETORNA LA COLECCION DE TRANSMISIONES'], 'mdbCommit');
+	try {
+		await M.col.tx.updateOne({ _id: txId }, transaccion, { upsert: true });
+		L.xd(txId, ['Commit OK'], 'mdbCommit');
+		return true;
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al hacer COMMIT', errorMongo], 'mdbCommit');
 		iSQLite.grabarTransaccion(transaccion);
-	}
-
-	if (transaccionEnCache) {
-		cacheTransacciones.del(txId);
+		return false;
+	} finally {
+		if (transaccionEnCache) {
+			cacheTransacciones.del(txId);
+		}
 	}
 
 };
 
-const grabarEnMemoria = (transaccion) => {
+const grabarEnMemoria = async function (transaccion) {
 
 	let txId = transaccion['$setOnInsert']._id;
 	let transaccionEnCache = cacheTransacciones.get(txId);
 	let nuevaTransaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
-	cacheTransacciones.put(txId, nuevaTransaccion, 5000, /*onTimeout*/(key, value) => {
-		L.xw(key, ['Atención: Se fuerza COMMIT por timeout'], 'mdbCommit');
+	cacheTransacciones.put(txId, nuevaTransaccion, 5000, (key, value) => {
+		L.xw(key, ['Se fuerza COMMIT por timeout'], 'mdbCommit');
 		grabar(value);
 	});
+	return true;
 
 }
 
-const grabarDesdeSQLite = (transaccion, callback) => {
-	
+
+
+const grabarDesdeSQLite = async function (transaccion) {
+
 	let txId = transaccion['$setOnInsert']._id;
 
 	// Establecemos la bandera SQLite en la transaccion.
 	if (!transaccion.$set) transaccion.$set = {};
-	transaccion.$set['flags.' + K.FLAGS.SQLITE] = true;
+	transaccion.$set['flags.' + C.flags.SQLITE] = true;
 
-
-	if (MDB.colTx()) {
-		MDB.colTx().updateOne({ _id: txId }, transaccion, { upsert: true }, (err, resultado) => {
-			if (err) {
-				L.xe(txId, ['** Error al actualizar desde SQLite', err], 'txSqliteCommit');
-				callback(false);
-			} else {
-				callback(true);
-			}
-		});
-	}
-	else {
-		L.xe(txId, ['** No conectado a MongoDB'], 'txSqliteCommit');
-		callback(false);
+	try {
+		await M.col.tx.updateOne({ _id: txId }, transaccion, { upsert: true })
+		return true;
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al grabar en MongoDB desde SQLite', errorMongo], 'txSqliteCommit');
+		return false;
 	}
 
-};
+}
 
 
 module.exports = {
@@ -158,7 +144,7 @@ const _unirConDatosDeCache = (datosPrevios, datosNuevos) => {
 							};
 						}
 						if (datosNuevos['$push'][nombreDeArray]['$each'] && datosNuevos['$push'][nombreDeArray]['$each'].forEach) {
-							datosNuevos['$push'][nombreDeArray]['$each'].forEach( elemento => {
+							datosNuevos['$push'][nombreDeArray]['$each'].forEach(elemento => {
 								datosPrevios['$push'][nombreDeArray]['$each'].push(elemento);
 							});
 						} else {

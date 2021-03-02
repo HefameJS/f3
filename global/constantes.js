@@ -1,18 +1,6 @@
 'use strict';
 
 module.exports = {
-    ISAP: {
-        ERROR_TYPE_NO_SAPSYSTEM: 1,
-        ERROR_TYPE_SAP_HTTP_ERROR: 2,
-        ERROR_TYPE_SAP_UNREACHABLE: 3,
-        errorToString(error) {
-            switch (error) {
-                case module.exports.ISAP.ERROR_TYPE_NO_SAPSYSTEM: return 'NO SAP SYSTEM';
-                case module.exports.ISAP.ERROR_TYPE_SAP_HTTP_ERROR: return 'SAP HTTP ERROR';
-                case module.exports.ISAP.ERROR_TYPE_SAP_UNREACHABLE: return 'SAP UNREACHABLE';
-            }
-        }
-    },
     TX_STATUS: {
         DESCONOCIDO: -1,
         RECEPCIONADO: 1010,
@@ -75,11 +63,9 @@ module.exports = {
     },
     CODIGOS_ERROR_FEDICOM: { /* DEPRECAR */
         WARN_PROTOCOLO: 'PROTOCOL-WARN-999',
-
         WARN_NO_EXISTE_ALMACEN: 'PED-WARN-999',
         ERR_TODAS_LINEAS_ERROR: 'PED-ERR-999',
         ERR_BLOQUEO_SAP: 'PED-ERR-999',
-        
     },
     INCIDENCIA_FEDICOM: {
         ERR_PED: 'PED-ERR-999',
@@ -166,65 +152,11 @@ module.exports = {
     TX_VERSION: 1203,
 
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
-	
-    PROCESS_TITLES: {
-        CORE_MASTER: 'f3-master',
-        CORE_WORKER: 'f3-core-worker',
-        WATCHDOG: 'f3-watchdog',
-        MONITOR: 'f3-monitor'
-    },
-    PROCESS_TYPES: {
-        CORE_MASTER: 'core-master',
-        CORE_WORKER: 'core-worker',
-        WATCHDOG: 'watchdog',
-        MONITOR: 'monitor',
-        BALANCEADOR: 'balanceador'
-    },
     PROCESS_REGISTER_INTERVAL: 10000,
     PROCESS_STATUS: {
         ALIVE: 0,
         MISSING: 10,
         DEAD: 99
-    },
-    DOMINIOS: {
-        FEDICOM: 'FEDICOM',
-        TRANSFER: 'transfer_laboratorio',
-        HEFAME: 'HEFAME',
-        EMPLEADO: 'empleado',
-        FMASONLINE: 'FMAS',
-        PORTAL_HEFAME: 'PORTAL_HEFAME',
-        SAP_BACKGROUND: 'SAP_BG',
-        INTERFEDICOM: 'INTERFEDICOM'
-    },
-    FLAGS: {
-        SQLITE: 'sqlite',
-        RETRANSMISION_UPDATE: 'retransUpd',
-        RETRANSMISION_NO_UPDATE: 'retransNoUpd',
-        RETRANSMISION_UPDATE_WARN: 'retransUpdWarn',
-        STATUS_FIX1: 'statusFix1',
-        STATUS_FIX2: 'statusFix2',
-        STATUS_FIX3: 'statusFix3',
-        // WATCHDOG: 'watchdog',
-        CLON: 'clon',
-        CLONADO: 'clonado',
-        NO_SAP: 'noSap',
-        NO_FALTAS: 'noFaltas',
-        ESTUPEFACIENTE: 'estupe',
-        DUPLICADOS: 'dupes',
-        DUPLICADO_SAP: 'sapDupe',
-        BLOQUEO_CLIENTE: 'clibloq',
-        BONIFICADO: 'bonif',
-        TRANSFER:'transfer',
-        FALTATOTAL: 'faltaTotal',
-        FORMATO: 'formato',
-        DEMORADO: 'demorado',
-        VERSION: 'v',
-        TOTALES: 's',
-        TIPO: 't',
-        PUNTO_ENTREGA: 'pt',
-        GENERA_RECOGIDA: 'logistica',
-        DEVOLUCION_PARCIAL: 'devParc',
-        DEVOLUCION_RECHAZO_TOTAL: 'devRechTotal'
     },
     TIPIFICADO_FALTAS: {
         "BAJA": "desconocido",
@@ -250,7 +182,6 @@ module.exports = {
         "SERVICIO PARCIAL": "suministro",
         "SIN UNIDADES PTES": "suministro"
     },
-
 	VERSION: {
 		PROTOCOLO: '3.4.8',
 		SERVIDOR: '0.13.1',

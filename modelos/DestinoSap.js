@@ -5,6 +5,7 @@ let C = global.config;
 
 //Externas
 const crypto = require('crypto');
+const { resourceUsage } = require('process');
 
 class DestinoSap {
 	constructor(json) {
@@ -54,14 +55,15 @@ class DestinoSap {
 	 * @param {*} opciones 
 	 */
 	obtenerParametrosLlamada(opciones) {
+
 		return {
-			followAllRedirects: true,
-			json: true,
-			url: this.construirUrl(opciones.path || ''),
 			method: opciones.method ? opciones.method : (opciones.body ? 'POST' : 'GET'),
 			headers: this.generarCabeceras(),
-			body: opciones.body ? opciones.body : undefined,
-			encoding: 'latin1'
+			data: opciones.body ? opciones.body : undefined,
+			responseType: 'json',
+			responseEncoding: 'latin1',
+			url: this.construirUrl(opciones.url),
+			validateStatus: (status) => true // Hace que AXIOS resuelva siempre las llamadas aunque SAP de errores 4xx, 5xx, etc ...
 		};
 	}
 

@@ -8,14 +8,14 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const CRC = require('modelos/CRC');
 
 // Helpers
-const Validador = require('util/validador');
+const Validador = require('global/validador');
 
 
 class LineaPedidoCliente {
 
 	constructor(json, txId, numeroPosicion) {
 
-		L.xi(txId, ['Analizando linea de pedido en posicion ' + numeroPosicion])
+		L.xt(txId, ['Analizando linea de pedido en posición ' + numeroPosicion])
 
 		this.metadatos = {
 			lineaIncorrecta: false
@@ -27,17 +27,14 @@ class LineaPedidoCliente {
 		Validador.esCadenaNoVacia(json.codigoArticulo, errorFedicom, 'LIN-PED-ERR-001', 'El campo "codigoArticulo" es inválido');
 
 		// Nota: la cantidad debe ser > 0, pero en el caso de recibir una cantidad inválida, asignaremos un 1.
-		//Validador.esEnteroPositivo(json.cantidad, errorFedicom, 'LIN-PED-ERR-002','El campo "cantidad" es inválido');
 
-		// No vamos a hacer que el orden haga perder la línea completa
-		//Validador.esEnteroPositivo(json.orden, errorFedicom, 'LIN-PED-ERR-003', 'El campo "orden" es inválido');
 
 		// Si se encuentran errores:
 		// - Se describen los errores encontrados en el array de incidencias de la linea.
-		// - La posicion se marca como 'sap_ignore=true' para que SAP no la procese.
+		// - La posicion se marca como incorrecta, que hará que se incluya 'sap_ignore=true' para que SAP no la procese.
 		// - Rellenamos las faltas, si podemos
 		if (errorFedicom.tieneErrores()) {
-			L.xw(txId, ['Se han detectado errores graves en la línea', numeroPosicion, errorFedicom]);
+			L.xw(txId, ['Se han detectado errores graves en la línea - se marca para ignorar', numeroPosicion, errorFedicom]);
 			this.metadatos.lineaIncorrecta = true;
 			this.incidencias = errorFedicom.getErrores();
 
@@ -58,7 +55,7 @@ class LineaPedidoCliente {
 			if (Validador.esEnteroPositivo(json.orden)) {
 				this.orden = parseInt(json.orden);
 			} else {
-				L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden]);
+				L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden, numeroPosicion]);
 				// Si el orden no es válido o no aparece, el objeto de Pedido que contiene esta línea le asignará un orden.
 				// por eso no asignamos ningún valor por defecto
 			}
@@ -67,18 +64,25 @@ class LineaPedidoCliente {
 		// codigoArticulo
 		this.codigoArticulo = json.codigoArticulo?.trim();
 
-		// codigoUbicacion
+		// codigoUbicacion - No hacemos trim() por si los espacios significan algo
 		if (Validador.esCadenaNoVacia(json.codigoUbicacion)) {
-			this.codigoUbicacion = json.codigoUbicacion.trim();
+			this.codigoUbicacion = json.codigoUbicacion;
 		}
-
-		// cantidad. Los valores no válidos se convierten en un 1.
-		this.cantidad = parseInt(json.cantidad) || 1;
-		if (this.cantidad <= 0) this.cantidad = 1;
 
 		// cantidadBonificacion
 		if (Validador.esEnteroPositivoMayorQueCero(json.cantidadBonificacion)) {
 			this.cantidadBonificacion = parseInt(json.cantidadBonificacion);
+		}
+
+		// cantidad. Los valores no válidos se convierten en un 1.
+		this.cantidad = parseInt(json.cantidad) || null;
+		if (this.cantidad <= 0) {
+			if (!this.cantidadBonificacion) {
+				L.xw(txId, ['Se establece el valor de cantidad a 1', json.cantidad, numeroPosicion]);
+				this.cantidad = 1;
+			} else {
+				this.cantidad = 0;
+			}
 		}
 
 		// valeEstupefaciente
@@ -96,7 +100,7 @@ class LineaPedidoCliente {
 					fechaFin: cond.fechaFin.trim()
 				};
 			} else {
-				L.xw(txId, ['Se ignora el campo condicion por no ser correcto', json.condicion]);
+				L.xw(txId, ['Se ignora el campo condición por no ser correcto', json.condicion, numeroPosicion]);
 			}
 		}
 
@@ -110,7 +114,7 @@ class LineaPedidoCliente {
 			if (Validador.esFechaHora(json.fechaLimiteServicio)) {
 				this.fechaLimiteServicio = json.fechaLimiteServicio.trim();
 			} else {
-				L.xw(txId, ['El campo "fechaLimiteServicio" no va en formato Fedicom3 Date dd/mm/yyyy', json.ordenLineaAlbaran]);
+				L.xw(txId, ['El campo "fechaLimiteServicio" no va en formato Fedicom3 Date dd/mm/yyyy', json.fechaLimiteServicio, numeroPosicion]);
 			}
 		}
 
@@ -120,12 +124,12 @@ class LineaPedidoCliente {
 		}
 
 		this.#generarCRC();
-		L.xd(txId, ['Generado CRC de linea', numeroPosicion, this.crc]);
+		L.xt(txId, ['Generado CRC de linea', this.crc, numeroPosicion]);
 
 	}
 
 	esLineaCorrecta() {
-		return Boolean(!this.sap_ignore);
+		return !Boolean(this.metadatos.lineaIncorrecta);
 	}
 
 	generarJSON(generarParaSap = true) {
@@ -133,13 +137,13 @@ class LineaPedidoCliente {
 		if (this.orden || this.orden === 0) json.orden = this.orden;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.codigoUbicacion) json.codigoUbicacion = this.codigoUbicacion;
-		if (this.cantidad) {
+		if (this.cantidad >= 0) {
 			json.cantidad = this.cantidad;
-			json.cantidadFalta = json.cantidad;
+			if (this.cantidadFalta) json.cantidadFalta = this.cantidadFalta;
 		}
 		if (this.cantidadBonificacion) {
 			json.cantidadBonificacion = this.cantidadBonificacion;
-			json.cantidadBonificacionFalta = json.cantidadBonificacion;
+			if (this.cantidadBonificacionFalta) json.cantidadBonificacionFalta = this.cantidadBonificacionFalta;
 		}
 		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
 		if (this.condicion) json.condicion = {
@@ -154,7 +158,7 @@ class LineaPedidoCliente {
 		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
 		if (this.observaciones) json.observaciones = this.observaciones;
 		if (this.incidencias) json.incidencias = this.incidencias;
-		
+
 		if (generarParaSap) {
 			if (this.metadatos.lineaIncorrecta) json.sap_ignore = true;
 		}

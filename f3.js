@@ -2,6 +2,7 @@
 require('app-module-path').addPath(__dirname);
 
 
+
 console.log('Inicializando servicios Fedicom v3', new Date());
 
 require('bootstrap')().then(() => {

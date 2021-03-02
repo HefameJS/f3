@@ -1,30 +1,98 @@
 'use strict';
 //const C = global.config;
 //const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
+// Externas
+const axios = require('axios');
 
-/**
- * Condensa en un solo objeto la respuesta dada por SAP.
- * La respuesta de SAP se completa adjuntando la propiedad body el cuerpo de la respuesta
- * y una propiedad que indica si hubo error en la respuesta de SAP (codigo respuesta HTTP distinto de 2xx)
- */
-const ampliaRespuestaSap = (repuestaSap, cuerpoSap) => {
-	if (!repuestaSap) repuestaSap = { statusCode: -1, statusMessage: 'Respuesta de llamada a SAP nula' };
-	repuestaSap.body = cuerpoSap;
-	repuestaSap.errorSap = Math.floor(repuestaSap.statusCode / 100) !== 2;
-	return repuestaSap;
+const iEventos = require('interfaces/eventos/iEventos');
+
+const ERROR_TYPE_NO_SAPSYSTEM = 1;
+const ERROR_TYPE_SAP_HTTP_ERROR = 2;
+const ERROR_TYPE_SAP_UNREACHABLE = 3;
+
+class ErrorLlamadaSap {
+	constructor(tipo, codigo, mensaje) {
+		this.tipo = tipo;
+		this.codigo = codigo;
+		this.mensaje = mensaje;
+	}
+
+	esSistemaSapNoDefinido() {
+		return this.tipo === ERROR_TYPE_NO_SAPSYSTEM;
+	}
+
+	esErrorHttpSap() {
+		return this.tipo === ERROR_TYPE_SAP_HTTP_ERROR;
+	}
+
+	esSapNoAlcanzable() {
+		return this.tipo === ERROR_TYPE_SAP_UNREACHABLE;
+	}
+
+	static generarNoSapSystem() {
+		return new ErrorLlamadaSap(
+			ERROR_TYPE_NO_SAPSYSTEM,
+			null,
+			'No se encuentra definido el sistema SAP destino'
+		)
+	}
+
+	generarJSON() {
+
+		let source = 'UNK';
+		switch (this.tipo) {
+			case ERROR_TYPE_NO_SAPSYSTEM:
+				source = 'NO_SAP_SYSTEM';
+				break;
+			case ERROR_TYPE_SAP_HTTP_ERROR:
+				source = 'SAP';
+				break;
+			case ERROR_TYPE_SAP_UNREACHABLE:
+				source = 'NET';
+				break;
+		}
+
+		return {
+			source,
+			statusCode: this.codigo || null,
+			message: this.mensaje || 'Sin descripción del error'
+		}
+	}
 }
 
-const NO_SAP_SYSTEM_ERROR = {
-	type: K.ISAP.ERROR_TYPE_NO_SAPSYSTEM,
-	errno: null,
-	code: 'No se encuentra definido el sistema SAP destino'
+
+const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
+
+	iEventos.sap.incioLlamadaSap(txId, parametros);
+
+	axios(parametros)
+		// El .then se ejecuta si obtuvimos respuesta de SAP
+		.then((respuestaSap) => {
+
+			// Si SAP no retorna un codigo 2xx, rechazamos
+			if (Math.floor(respuestaSap.status / 100) !== 2) {
+				let errorSap = new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText);
+				iEventos.sap.finLlamadaSap(txId, errorSap, null);
+				reject(errorSap);
+			} else {
+				// Resolvemos el mensaje obtenido de SAP
+				iEventos.sap.finLlamadaSap(txId, null, respuestaSap);
+				resolve(respuestaSap.data);
+			}
+		})
+		// El .catch indica un error en la comunicación (por lo que sea no llegamos a SAP)
+		.catch((errorComunicacion) => {
+			let error = new ErrorLlamadaSap(ERROR_TYPE_SAP_UNREACHABLE, errorComunicacion.errno, errorComunicacion.code)
+			iEventos.sap.finLlamadaSap(txId, error, null);
+			reject(error);
+		});
 }
 
 
 
 module.exports = {
-	NO_SAP_SYSTEM_ERROR,
-	ampliaRespuestaSap
+	ErrorLlamadaSap,
+	ejecutarLlamadaSap
 }

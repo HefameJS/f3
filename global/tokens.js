@@ -1,7 +1,7 @@
 'use strict';
 const C = global.config;
 const L = global.logger;
-// const K = global.constants;
+const K = global.constants;
 
 // Externas
 const jwt = require('jsonwebtoken');
@@ -45,12 +45,9 @@ const generarTokenInterFedicom = () => {
 
 const verificarToken = (token, txId) => {
 
-	if (txId) L.xd(txId, ['Analizando token', token], 'txToken');
-	else L.d(['Analizando token', token], 'txToken');
-
 	if (!token) {
-		if (txId) L.xd(txId, ['Se rechaza porque no hay token'], 'txToken');
-		else L.d(['Se rechaza porque no hay token'], 'txToken');
+		if (txId) L.xt(txId, ['Se rechaza porque no hay token'], 'txToken');
+		else L.t(['Se rechaza porque no hay token'], 'txToken');
 		return {
 			meta: {
 				ok: false,
@@ -73,7 +70,7 @@ const verificarToken = (token, txId) => {
 		if (decoded.exp) {
 			let diff = (Date.fedicomTimestamp() / 1000) - decoded.exp;
 			if (diff > ((C.jwt.tiempoDeGracia || 10))) {
-				if (txId) L.xd(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
+				if (txId) L.xt(txId, ['Se rechaza porque el token está caducado por ' + diff + 'ms'], 'txToken');
 				// TOKEN CADUCADO
 				meta = {
 					ok: false,
@@ -83,14 +80,13 @@ const verificarToken = (token, txId) => {
 			} else {
 				// TOKEN OK
 				meta = {
-					ok: true,
-					verified: true
+					ok: true
 				}
 			}
 		} else {
 			// ¿No contiene campo 'exp'? ESTO ES UN FAKE
-			if (txId) L.xe(txId, ['El token no contiene el campo EXP !!'], 'txToken');
-			else L.e(['El token no contiene el campo EXP !!'], 'txToken');
+			if (txId) L.xt(txId, ['El token no contiene el campo EXP !!'], 'txToken');
+			else L.t(['El token no contiene el campo EXP !!'], 'txToken');
 
 			meta = {
 				ok: false,
@@ -103,8 +99,8 @@ const verificarToken = (token, txId) => {
 
 	} catch (err) {
 
-		if (txId) L.xd(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
-		L.d(['Se rechaza porque el token es invalido', err], 'txToken');
+		if (txId) L.xt(txId, ['Se rechaza porque el token es invalido', err], 'txToken');
+		L.t(['Se rechaza porque el token es invalido', err], 'txToken');
 		return {
 			meta: {
 				ok: false,
@@ -133,7 +129,7 @@ const verificarToken = (token, txId) => {
  *  - simulacionRequiereSolicitudAutenticacion: (requiere admitirSimulaciones = true) Indica si la simulación debe ir acompañada de una solicitud de autenticación. Esto hará que se busque el campo
  * 		req.body.authReq = {username: "xxxx", domain: "yyyy"} y se genere un token simulando como si la petición viniera con estas credenciales. Si no existiera, se rechaza la petición.
  */
-/*
+
 const DEFAULT_OPTS = {
 	grupoRequerido: null,
 	admitirSimulaciones: false,
@@ -146,18 +142,19 @@ const verificaPermisos = (req, res, opciones) => {
 
 	opciones = { ...DEFAULT_OPTS, ...opciones }
 
-	L.xt(txId, ['Verificando validez de token', req.token, opciones], 'txToken')
+	L.xt(txId, ['Realizando control de autorización', req.token, opciones], 'txToken')
 
 	req.token = verificarToken(req.token, txId);
-	if (req.token.meta.exception) {
-		L.xe(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
-		let cuerpoRespuesta = req.token.meta.exception.enviarRespuestaDeError(res);
+	// Primerísimo de todo, el token debe ser válido
+	if (req.token.meta.errorFedicom) {
+		L.xw(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
+		let cuerpoRespuesta = req.token.meta.errorFedicom.enviarRespuestaDeError(res);
 		return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.FALLO_AUTENTICACION };
 	}
 
 	// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
-	if (req.token.aud === K.DOMINIOS.INTERFEDICOM) {
-		if (process.type === K.PROCESS_TYPES.MONITOR) {
+	if (req.token.aud === C.dominios.INTERFEDICOM) {
+		if (process.type === K.PROCESOS.TIPOS.MONITOR) {
 			// TODO: Falta hacer control de admision por IP (req.ipOrigen)
 			L.xi(txId, ['Se acepta el token INTERFEDICOM'], 'txToken')
 			return { ok: true };
@@ -172,7 +169,7 @@ const verificaPermisos = (req, res, opciones) => {
 	// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 	if (opciones.grupoRequerido) {
 		if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
-			L.xw(txId, ['El token no tiene el permiso necesario para realizar la consulta', opciones.grupoRequerido, req.token.perms], 'txToken');
+			L.xw(txId, ['El token no tiene el permiso necesario', opciones.grupoRequerido, req.token.perms], 'txToken');
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
@@ -180,10 +177,10 @@ const verificaPermisos = (req, res, opciones) => {
 	}
 
 	// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
-	if (opciones.admitirSimulaciones && req.token.aud === K.DOMINIOS.HEFAME) {
+	if (opciones.admitirSimulaciones && req.token.aud === C.dominios.HEFAME) {
 
 		// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza al petición
-		if (C.production === true && !opciones.admitirSimulacionesEnProduccion) {
+		if (C.produccion === true && !opciones.admitirSimulacionesEnProduccion) {
 			L.xw(txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
@@ -199,10 +196,13 @@ const verificaPermisos = (req, res, opciones) => {
 		} else {
 			L.xi(txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
 
+			// Generamos un token con el usuario/dominio indicado en el campo 'authReq' del body
 			let solicitudAutenticacion = null;
-
-			if (req.body && req.body.authReq && req.body.authReq.username && req.body.authReq.domain) {
-				solicitudAutenticacion = req.body.authReq;
+			if (req.body?.authReq && req.body.authReq.username && req.body.authReq.domain) {
+				solicitudAutenticacion = {
+					usuario: req.body.authReq.username,
+					dominio: req.body.authReq.domain
+				}
 				L.xi(txId, ['La solicitid simulada viene con una solicitud de autenticación', solicitudAutenticacion], 'txToken')
 				let newToken = generarToken(txId, solicitudAutenticacion, []);
 				L.xd(txId, ['Se ha generado un token para la solicitud de autenticacion simulada', newToken], 'txToken');
@@ -222,14 +222,14 @@ const verificaPermisos = (req, res, opciones) => {
 	}
 
 
-	L.xi(txId, ['El token transmitido resultó VALIDO', req.token.sub], 'txToken');
+	L.xi(txId, ['El token transmitido es correcto y está autorizado', req.token], 'txToken');
 	return { ok: true };
 }
-*/
+
 
 module.exports = {
 	generarToken,
 	generarTokenInterFedicom,
 	verificarToken,
-	//verificaPermisos
+	verificaPermisos
 }

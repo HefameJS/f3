@@ -2,14 +2,10 @@
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Externas
 const { EJSON } = require('bson');
-
-
-// Interfaces
-const MDB = require('./iMongoConexion');
-const ObjectID = require('mongodb').ObjectID;
 
 
 
@@ -38,7 +34,7 @@ const consulta = (txId, consulta, callback) => {
 		delete filtroMongo.$or;
 	}
 
-	
+
 	if (MDB.colTx()) {
 		let cursor = MDB.colTx().find(filtroMongo);
 		if (proyeccion) cursor.project(proyeccion);
@@ -149,38 +145,35 @@ const porCrcSap = (txId, crc, callback) => {
  */
 const duplicadoDeCRC = (txId, crc, callback) => {
 
-	try {
-		crc = new ObjectID(crc);
-	} catch (excepcionObjectID) {
-		L.xe(txId, ['El CRC de la transmisión no es un ObjectID válido', crc, excepcionObjectID]);
-		callback(excepcionObjectID, null);
-		return;
-	}
-
-	if (MDB.colTx()) {
-		let fechaLimite = new Date();
-		fechaLimite.setTime(fechaLimite.getTime() - K.LIMITE_DUPLICADOS);
-
-		let consultaCRC = {
-			crc: crc,
-			createdAt: { $gt: fechaLimite }
+	return new Promise(async function (resolve, reject) {
+		try {
+			crc = new M.ObjectID(crc);
+		} catch (excepcionObjectID) {
+			L.xe(txId, ['El CRC de la transmisión no es un ObjectID válido', crc, excepcionObjectID]);
+			reject(excepcionObjectID);
+			return;
 		}
 
-		MDB.colTx().findOne(consultaCRC, { _id: 1 }, (errorMongo, resultado) => {
-			if (errorMongo) {
-				callback(errorMongo, null)
-				return;
+		try {
+			let fechaLimite = new Date();
+			fechaLimite.setTime(fechaLimite.getTime() - K.LIMITE_DUPLICADOS);
+
+			let consultaCRC = {
+				crc: crc,
+				createdAt: { $gt: fechaLimite }
 			}
-			if (resultado) {
-				callback(null, resultado._id);
-				return;
-			}
-			callback(null, false);
-			return;
-		});
-	} else {
-		callback(new Error('No conectado a MongoDB'), null);
-	}
+
+			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1 });
+
+			if (resultado) resolve(resultado._id);
+			else resolve(false);
+
+
+		} catch (errorMongo) {
+			L.xe(txId, ['Error al ejecutar la consulta de duplicados.', errorMongo]);
+			reject(errorMongo);
+		}
+	});
 };
 
 const porNumeroPedido = (txId, numeroPedido, callback) => {
@@ -262,21 +255,21 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 
 
 module.exports = {
-	consulta,
-	agregacion,
+	//consulta,
+	//agregacion,
 
-	porId,
-	porCRC,
-	porCrcSap,
+	//porId,
+	//porCRC,
+	//porCrcSap,
 
-	porNumeroPedido,
-	porNumeroDevolucion,
-	porNumeroLogistica,
+	//porNumeroPedido,
+	//porNumeroDevolucion,
+	//porNumeroLogistica,
 
 	duplicadoDeCRC,
 
-	porCRCDeConfirmacion,
-	candidatasParaRetransmitir
+	//porCRCDeConfirmacion,
+	//candidatasParaRetransmitir
 }
 
 const _consultaUnaTransmision = (txId, filtro, callback) => {

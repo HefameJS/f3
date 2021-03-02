@@ -2,6 +2,7 @@
 //const C = global.config;
 //const L = global.logger;
 //const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 // const conexionMongo = require('./iMongoConexion');
@@ -12,22 +13,29 @@
  * y si lo consigue, asume que la conexión está operativa.
  * @param {*} callback - Cuando termina la operacion, se llama con un booleano indicando si hubo exito o no
  */
-const chequeaConexion = (callback) => {
-	if (conexionMongo.colTx()) {
-		conexionMongo.colTx().findOne({}, { _id: 1 }, (err, res) => {
-			if (err) {
-				return callback(false);
+const chequeaConexion = function () {
+
+	return new Promise(async function(resolve) {
+		if (M.col.tx) {
+			try {
+				await M.col.tx.findOne({}, { _id: 1 });
+				resolve(true);
 			}
-			return callback(true);
-		});
-	} else {
-		return callback(false);
-	}
+			catch (error) {
+				resolve(false);
+			}
+		} else {
+			resolve(false);
+		}
+	});
 }
 
 
 
 module.exports = {
+	chequeaConexion,
+	transaccion: require('./iMongoTransaccion'),
+	consultaTx: require('./iMongoConsultaTx'),
 	//conexion: conexionMongo
 	/*
 	conectar: MDB.conectar,
@@ -43,7 +51,7 @@ module.exports = {
 	chequeaConexion,
 
 	// Consultas sobre las transmisiones
-	consultaTx: require('./iMongoConsultaTx'),
-	transaccion: require('./iMongoTransaccion'),
+	
+	
 	monitor: require('./iMongoMonitor')*/
 }

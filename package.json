@@ -15,6 +15,7 @@
   "dependencies": {
     "activedirectory": "^0.7.2",
     "app-module-path": "^2.2.0",
+    "axios": "^0.21.1",
     "bson": "^4.2.2",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
@@ -25,6 +26,7 @@
     "locks": "^0.2.2",
     "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
     "mongodb": "^3.6.3",
+    "node-fetch": "^2.6.1",
     "os": "^0.1.1",
     "request": "^2.88.2",
     "saslprep": "^1.0.3",
