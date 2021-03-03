@@ -69,7 +69,9 @@ module.exports = {
     },
     INCIDENCIA_FEDICOM: {
         ERR_PED: 'PED-ERR-999',
-        WARN_PED: 'PED-WARN-999'
+        WARN_PED: 'PED-WARN-999',
+		ERR_DEV: 'DEV-ERR-999',
+		WARN_DEV: 'DEV-WARN-999'
     },
     MOTIVO_DEVOLUCION: {
         "01": "Caducidad del producto",
@@ -150,7 +152,6 @@ module.exports = {
     PROTOCOL_VERSION: '3.4.8',
     SERVER_VERSION: '0.13.1',
     TX_VERSION: 1203,
-
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
     PROCESS_REGISTER_INTERVAL: 10000,
     PROCESS_STATUS: {

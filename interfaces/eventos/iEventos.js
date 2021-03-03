@@ -20,11 +20,17 @@ module.exports.descartar = (req, res, cuerpoRespuesta, error) => {
 	let txId = req.txId;
 
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.INVALIDO, K.TX_STATUS.DESCONOCIDO);
-	if (error) transaccion['$set'].clientRequest.error = error.body;
-	
+	if (error) {
+		if (error?.body) {
+			transaccion['$set'].clientRequest.body = error.body;
+			delete error.body;
+		}
+		transaccion['$set'].clientRequest.error = error;
+	}
+
 	L.xi(txId, ['Emitiendo evento de descarte'], 'txCommit');
 	iMongo.transaccion.descartar(transaccion);
-	
+
 }
 
 

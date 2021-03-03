@@ -70,7 +70,7 @@ module.exports.logisticaDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) =>
 		}
 	}
 	// Establece el flag 'DUPLICADOS' en la transaccion original
-	iFlags.set(txId, K.FLAGS.DUPLICADOS);
+	iFlags.set(txId, C.flags.DUPLICADOS);
 	iFlags.finaliza(txId, transaccionActualizacionOriginal);
 	
 

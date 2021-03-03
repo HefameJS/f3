@@ -46,7 +46,7 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 		module.exports.finClonarPedido(txIdOriginal, opcionesRetransmision.ctxId, resultadoRetransmision);
 
 		// Marcamos la transmisión original como que ha sido clonada
-		iFlags.set(txIdOriginal, K.FLAGS.CLONADO);
+		iFlags.set(txIdOriginal, C.flags.CLONADO);
 	}
 	else if (!opcionesRetransmision.noActualizarOriginal && resultadoRetransmision) {
 		// ¿Debemos actualizar la transmisión original?
@@ -61,20 +61,20 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 			}
 
 			if (advertencia) {
-				iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_UPDATE_WARN);
+				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_UPDATE_WARN);
 				L.xw(txIdOriginal, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
 			} else {
-				iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_UPDATE);
+				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_UPDATE);
 			}
 		} else {
 			// Si se habían establecido flags, las borramos, pues no queremos actualizar nada
 			// mas que añadir el flag de retransmision sin update
 			iFlags.del(txIdOriginal);
-			iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_NO_UPDATE);
+			iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
 		}
 
 	} else {
-		iFlags.set(txIdOriginal, K.FLAGS.RETRANSMISION_NO_UPDATE);
+		iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
 	}
 
 
@@ -158,7 +158,7 @@ module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 		}
 	};
 
-	iFlags.set(txId, K.FLAGS.CLON);
+	iFlags.set(txId, C.flags.CLON);
 	iFlags.finaliza(txId, transaccion);
 
 	L.xi(reqClonada.txId, ['Emitiendo COMMIT para evento InicioClonarPedido'], 'txCommit');
@@ -204,7 +204,7 @@ module.exports.cambioEstado = (txId, nuevoEstado) => {
 			}
 		};
 
-		//Flags.set(txId, K.FLAGS.WATCHDOG);
+		//Flags.set(txId, C.flags.WATCHDOG);
 		iFlags.finaliza(txId, transaccion);
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');

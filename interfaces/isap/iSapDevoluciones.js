@@ -1,99 +1,51 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-const K = global.constants;
+const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
-// Externo
-const request = require('request');
 
 // Interfaces
-const iSapComun = require('./iSapComun');
-const iEventos = require('interfaces/eventos/iEventos');
-
-// Modelos
-const DestinoSap = require('modelos/DestinoSap');
+const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
 
 
 
 
+exports.realizarDevolucion = (devolucion) => {
 
+	return new Promise((resolve, reject) => {
 
-exports.realizarDevolucion = (txId, devolucion, callback) => {
-	let destinoSap = DestinoSap.desdeNombre(devolucion.sapSystem);
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
+		let nombreSistemaSap = devolucion.sapSystem;
+		let destinoSap = C.sap.getSistema(nombreSistemaSap);
 
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_ent_ped_api/devoluciones',
-		body: devolucion
-	});
-
-	iEventos.sap.incioLlamadaSap(txId, parametrosHttp);
-
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-		iEventos.sap.finLlamadaSap(txId, errorComunicacion, respuestaSap);
-
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, respuestaSap);
+		if (!destinoSap) {
+			reject(ErrorLlamadaSap.generarNoSapSystem());
 			return;
 		}
 
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, respuestaSap);
-			return;
-		}
+		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+			url: '/api/zsd_ent_ped_api/devoluciones',
+			body: devolucion.generarJSON()
+		});
 
-		callback(null, respuestaSap);
+		ejecutarLlamadaSap(devolucion.txId, parametrosHttp, resolve, reject);
 
 	});
+
 }
 
-exports.consultaDevolucionPDF = (txId, numeroDevolucion, callback) => {
 
-	let destinoSap = DestinoSap.porDefecto();
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
+exports.consultaDevolucionPDF = (numeroDevolucion, txId) => {
 
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsf_get_document/devo_fedi/' + numeroDevolucion,
-		method: 'GET',
-	});
-	parametrosHttp.timeout = 10000;
+	return new Promise((resolve, reject) => {
 
-	L.xd(txId, ['Enviando a SAP consulta de devolución PDF', parametrosHttp]);
+		let destinoSap = C.sap.getSistemaPorDefecto();
+		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+			url: '/api/zsf_get_document/devo_fedi/' + numeroDevolucion,
+			method: 'GET',
+			timeout: 10000
+		});
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, null);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, false);
-			return;
-		}
-
-		callback(null, respuestaSap);
+		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
 
 	});
 }

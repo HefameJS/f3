@@ -13,10 +13,11 @@ const ERROR_TYPE_SAP_HTTP_ERROR = 2;
 const ERROR_TYPE_SAP_UNREACHABLE = 3;
 
 class ErrorLlamadaSap {
-	constructor(tipo, codigo, mensaje) {
+	constructor(tipo, codigo, mensaje, cuerpoRespuesta) {
 		this.tipo = tipo;
 		this.codigo = codigo;
 		this.mensaje = mensaje;
+		this.cuerpoRespuesta = cuerpoRespuesta;
 	}
 
 	esSistemaSapNoDefinido() {
@@ -70,10 +71,10 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
 	axios(parametros)
 		// El .then se ejecuta si obtuvimos respuesta de SAP
 		.then((respuestaSap) => {
-
+			
 			// Si SAP no retorna un codigo 2xx, rechazamos
 			if (Math.floor(respuestaSap.status / 100) !== 2) {
-				let errorSap = new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText);
+				let errorSap = new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
 				iEventos.sap.finLlamadaSap(txId, errorSap, null);
 				reject(errorSap);
 			} else {

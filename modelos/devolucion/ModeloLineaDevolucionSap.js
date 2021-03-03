@@ -1,22 +1,12 @@
 'use strict';
 //const C = global.config;
 const L = global.logger;
-//const K = global.constants;
-
-// Modelos
-const ErrorFedicom = require('modelos/ErrorFedicom');
-const CRC = require('modelos/CRC');
-
-// Helpers
-const Validador = require('util/validador');
-const K = require('util/constantes');
+const K = global.constants;
 
 
 class LineaDevolucionSap {
 	constructor(json, txId, numeroPosicion) {
 		L.xi(txId, ['Analizando linea de devolución en posicion ' + numeroPosicion])
-
-		
 
 		// Copiamos las propiedades de la POSICION que son relevantes		
 		this.orden = json.orden;

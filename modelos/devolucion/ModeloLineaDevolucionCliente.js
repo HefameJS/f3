@@ -1,15 +1,15 @@
 'use strict';
 //const C = global.config;
 const L = global.logger;
-//const K = global.constants;
+const K = global.constants;
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const CRC = require('modelos/CRC');
 
 // Helpers
-const Validador = require('util/validador');
-const K = require('util/constantes');
+const Validador = require('global/validador');
+
 
 class LineaDevolucionCliente {
 
@@ -50,7 +50,7 @@ class LineaDevolucionCliente {
 		this.cantidad = parseInt(json.cantidad) || 0;
 		this.codigoMotivo = json.codigoMotivo;
 
-			
+
 
 
 		// Valores que son opcionales
@@ -58,20 +58,24 @@ class LineaDevolucionCliente {
 		// Se comprobará la validez de los mismos y en caso de ser inválidos se obrará en consecuencia dependiendo del campo
 
 		// orden
-		if (Validador.esEnteroPositivo(json.orden)) {
-			this.orden = parseInt(json.orden);
-		} else {
-			L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden]);
-			// Si el orden no es válido o no aparece, el objeto de Devolucion que contiene esta línea le asignará un orden.
-			// por eso no asignamos ningún valor por defecto
+		if (Validador.existe(json.orden)) {
+			if (Validador.esEnteroPositivo(json.orden)) {
+				this.orden = parseInt(json.orden);
+			} else {
+				L.xw(txId, ['El campo "orden" no es un entero >= 0', json.orden]);
+				// Si el orden no es válido o no aparece, el objeto de Devolucion que contiene esta línea le asignará un orden.
+				// por eso no asignamos ningún valor por defecto
+			}
 		}
 
 		// ordenLineaAlbaran
-		if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
-			this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
-		} else {
-			L.xw(txId, ['El campo "ordenLineaAlbaran" no es un entero >= 0', json.ordenLineaAlbaran]);
-			// Descartamos el valor en caso de error
+		if (Validador.existe(json.ordenLineaAlbaran)) {
+			if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
+				this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
+			} else {
+				L.xw(txId, ['El campo "ordenLineaAlbaran" no es un entero >= 0', json.ordenLineaAlbaran]);
+				// Descartamos el valor en caso de error
+			}
 		}
 
 		// lote
@@ -80,10 +84,12 @@ class LineaDevolucionCliente {
 		}
 
 		// fechaCaducidad
-		if (Validador.esFecha(json.fechaCaducidad)) {
-			this.fechaCaducidad = json.fechaCaducidad.trim();
-		} else {
-			L.xw(txId, ['El campo "fechaCaducidad" no va en formato Fedicom3 Date dd/mm/yyyy', json.ordenLineaAlbaran]);
+		if (Validador.existe(json.fechaCaducidad)) {
+			if (Validador.esFecha(json.fechaCaducidad)) {
+				this.fechaCaducidad = json.fechaCaducidad.trim();
+			} else {
+				L.xw(txId, ['El campo "fechaCaducidad" no va en formato Fedicom3 Date dd/mm/yyyy', json.ordenLineaAlbaran]);
+			}
 		}
 
 		// valeEstupefaciente

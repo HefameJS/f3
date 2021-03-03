@@ -88,62 +88,41 @@ const agregacion = (txId, pipeline, callback) => {
 
 /**
  * Busca la transmisión con el ID indicado
- * @param {*} txId 
  * @param {*} id 
- * @param {*} callback 
  */
-const porId = (txId, id, callback) => {
-	try {
-		id = new ObjectID(id);
-	} catch (excepcionObjectID) {
-		L.xe(txId, ['El ID de la transmisión no es un ObjectID válido', id, excepcionObjectID]);
-		callback(excepcionObjectID, null);
-		return;
-	}
-
-	_consultaUnaTransmision(txId, { _id: id }, callback);
+const porId = async function (id) {
+	let idOid = new M.ObjectID(id);
+	return await M.col.tx.findOne({ _id: idOid });
 };
 
 /**
  * Busca la transmisión con el CRC indicado.
- * Si la intención es saber si un CRC está duplicado, es mejor utilizar la funcion 'esDuplicado()'
- * @param {*} txId 
+ * Si la intención es saber si un CRC está duplicado, es mejor utilizar la funcion 'duplicadoDeCRC()'
  * @param {*} crc 
- * @param {*} callback 
  */
-const porCRC = (txId, crc, callback) => {
-	try {
-		crc = new ObjectID(crc);
-	} catch (excepcionObjectID) {
-		L.xe(txId, ['El CRC de la transmisión no es un ObjectID válido', crc, excepcionObjectID]);
-		callback(excepcionObjectID, null);
-		return;
-	}
-
-	_consultaUnaTransmision(txId, { crc: crc }, callback);
+const porCRC = async function (crc) {
+	let crcOid = new M.ObjectID(crc);
+	return await M.col.tx.findOne({ crc: crcOid });
 };
 
 
 /**
  * Busca la transmisión con el CRC de SAP (el de 8 dígitos pasado a decimal) indicado.
- * Si la intención es saber si un CRC está duplicado, es mejor utilizar la funcion 'esDuplicado()'
- * @param {*} txId 
- * @param {*} crc 
- * @param {*} callback 
+ * Si la intención es saber si un CRC está duplicado, es mejor utilizar la funcion 'duplicadoDeCRC()'
+ * @param {*} crcSap 
  */
-const porCrcSap = (txId, crc, callback) => {
-	_consultaUnaTransmision(txId, { crcSap: crc }, callback);
+const porCrcSap = async function (crcSap) {
+	return await M.col.tx.findOne({ crcSap: crcSap });
 };
 
 
 /**
- * Busca la transmisión con el CRC dado y llama al callback con el ID de la transmisión original 
+ * Busca la transmisión con el CRC dado y retorna el ID de la transmisión original 
  * si la encuentra o false de no encontrarla.
  * @param {*} txId
  * @param {*} crc 
- * @param {*} callback 
  */
-const duplicadoDeCRC = (txId, crc, callback) => {
+const duplicadoDeCRC = (txId, crc) => {
 
 	return new Promise(async function (resolve, reject) {
 		try {
@@ -176,31 +155,31 @@ const duplicadoDeCRC = (txId, crc, callback) => {
 	});
 };
 
-const porNumeroPedido = (txId, numeroPedido, callback) => {
+const porNumeroPedido = async function (numeroPedido) {
 	let query = {
 		type: K.TX_TYPES.PEDIDO,
 		numerosPedido: numeroPedido
 	};
 
-	_consultaUnaTransmision(txId, query, callback);
+	return await M.col.tx.findOne(query);
 };
 
-const porNumeroDevolucion = (txId, numeroDevolucion, callback) => {
+const porNumeroDevolucion = async function (numeroDevolucion) {
 	let query = {
 		type: K.TX_TYPES.DEVOLUCION,
 		numeroDevolucion: numeroDevolucion
 	};
 
-	_consultaUnaTransmision(txId, query, callback);
+	return await M.col.tx.findOne(query);
 };
 
-const porNumeroLogistica = (txId, numeroLogistica, callback) => {
+const porNumeroLogistica = async function (numeroLogistica) {
 	let query = {
 		type: K.TX_TYPES.LOGISTICA,
 		numeroLogistica: numeroLogistica
 	};
 
-	_consultaUnaTransmision(txId, query, callback);
+	return await M.col.tx.findOne(query);
 };
 
 const porCRCDeConfirmacion = (crc, callback) => {
@@ -253,31 +232,20 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 }
 
 
-
 module.exports = {
 	//consulta,
 	//agregacion,
 
-	//porId,
-	//porCRC,
-	//porCrcSap,
+	porId,
+	porCRC,
+	porCrcSap,
 
-	//porNumeroPedido,
-	//porNumeroDevolucion,
-	//porNumeroLogistica,
+	porNumeroPedido,
+	porNumeroDevolucion,
+	porNumeroLogistica,
 
 	duplicadoDeCRC,
 
 	//porCRCDeConfirmacion,
 	//candidatasParaRetransmitir
-}
-
-const _consultaUnaTransmision = (txId, filtro, callback) => {
-	if (MDB.colTx()) {
-		L.xd(txId, ['Buscando transmisión', filtro], 'mongodb');
-		MDB.colTx().findOne(filtro, callback);
-	} else {
-		L.xe(txId, ['Error al localizar la transmisión'], 'mongodb');
-		callback(new Error('No conectado a MongoDB'), null);
-	}
 }

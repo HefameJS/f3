@@ -1,14 +1,13 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-const K = global.constants;
-
-const iSapComun = require('./iSapComun');
-const DestinoSap = require('modelos/DestinoSap');
-
-const request = require('request');
+const C = global.config;
+//const L = global.logger;
+//const K = global.constants;
 
 
+// Interfaces
+const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
+
+/*
 exports.consultaAlbaranJSON = (txId, numeroAlbaran, callback) => {
 
 	let destinoSap = DestinoSap.porDefecto();
@@ -87,41 +86,20 @@ exports.consultaAlbaranPDF = (txId, numeroAlbaran, callback) => {
 
 	});
 }
+*/
 
-exports.listadoAlbaranes = (txId, consultaAlbaran, callback) => {
-	let destinoSap = DestinoSap.porDefecto();
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
+exports.listadoAlbaranes = (consultaAlbaran, txId) => {
 
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
-		method: 'GET'
-	});
-	parametrosHttp.timeout = 30000;
+	return new Promise(async function (resolve, reject) {
 
+		let destinoSap = C.sap.getSistemaPorDefecto();
+		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+			url: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
+			method: 'GET',
+			timeout: 10000
+		});
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, null);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, null);
-			return;
-		}
-
-		callback(null, respuestaSap);
+		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
 
 	});
 }

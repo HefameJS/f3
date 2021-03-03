@@ -54,15 +54,16 @@ class DestinoSap {
 	 * 
 	 * @param {*} opciones 
 	 */
-	obtenerParametrosLlamada(opciones) {
+	obtenerParametrosLlamada({method, body, url, ...opciones }) {
 
 		return {
-			method: opciones.method ? opciones.method : (opciones.body ? 'POST' : 'GET'),
+			...opciones,
+			method: method ? method : (body ? 'POST' : 'GET'),
 			headers: this.generarCabeceras(),
-			data: opciones.body ? opciones.body : undefined,
+			data: body ? body : undefined,
 			responseType: 'json',
 			responseEncoding: 'latin1',
-			url: this.construirUrl(opciones.url),
+			url: this.construirUrl(url),
 			validateStatus: (status) => true // Hace que AXIOS resuelva siempre las llamadas aunque SAP de errores 4xx, 5xx, etc ...
 		};
 	}

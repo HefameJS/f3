@@ -242,7 +242,7 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
 
 				// Si el cliente está bloqueado, agregamos la incidencia de error de bloqueo en SAP y levantamos el Flag
 				if (bloqueoCliente) {
-					iFlags.set(txId, K.FLAGS.BLOQUEO_CLIENTE)
+					iFlags.set(txId, C.flags.BLOQUEO_CLIENTE)
 					incidenciasSaneadas = incidenciasSaneadas.push({
 						codigo: K.INCIDENCIA_FEDICOM.ERR_PED,
 						descripcion: 'No se pudo guardar el pedido. Contacte con su comercial.'

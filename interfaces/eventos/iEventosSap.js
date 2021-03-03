@@ -34,38 +34,6 @@ module.exports.incioLlamadaSap = (txId, parametrosLlamada) => {
 }
 
 module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
-	/*
-		respuestaSapTransaccion: El objeto que se incluye en el objeto de la transaccion como 'sapResponse'
-		puede ser de 2 formas:
-		Forma SIN error:
-			respuestaSapTransaccion = {
-				timestamp: new Date(),
-				statusCode: respuestaSap.statusCode,
-				headers: respuestaSap.headers,
-				body: respuestaSap.body
-			}
-		
-		Forma CON error:
-			Si hay un error en la llamada a SAP (error en la red como que el socket no responde, da timeout, DNS not found ...,
-				o se dan errores de protocolo como SSL):
-				respuestaSapTransaccion = {
-					timestamp: new Date(),
-					error: {
-						source: 'NET',
-						statusCode: errorLlamadaSap.errno || false,
-						message: errorLlamadaSap.message || 'Sin descripción del error'
-					}
-				}
-			Si SAP da respuesta de error (HTTP 500, 404, 401, 4xx, 5xx ...):
-				respuestaSapTransaccion = {
-					timestamp: new Date(),
-					error: {
-						source: 'SAP',
-						statusCode: respuestaSap.statusCode,
-						message: respuestaSap.statusMessage
-					}
-				}
-	*/
 
 	let respuestaSapTransaccion = {};
 
@@ -117,7 +85,8 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 	let txId = req.txId;
 	if (!datosExtra) datosExtra = {};
 
-	// NOTA: esta transacción no tiene "evento de cierre", es decir, no guardamos la respuesta que le damos a SAP porque es completamente irrelevante.
+	// NOTA: esta transacción no tiene "evento de cierre", es decir, 
+	// no guardamos la respuesta que le damos a SAP porque es completamente irrelevante.
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.CONFIRMACION_PEDIDO, K.TX_STATUS.OK)
 	transaccion['$set'].confirmingId = txIdConfirmado;
 

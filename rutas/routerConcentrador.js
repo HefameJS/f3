@@ -20,12 +20,15 @@ module.exports = (app) => {
 	const controladores = {
 		autenticacion: require('controladores/controladorAutenticacion'),
 		pedidos: require('controladores/controladorPedidos'),
+		confirmacionPedido: require('controladores/controladorConfirmacionPedido'),
+		devoluciones: require('controladores/controladorDevoluciones'),
+		albaranes: require('controladores/controladorAlbaranes'),
 	}
 	/*
-		devoluciones: require('controllers/controladorDevoluciones'),
-		albaranes: require('controllers/controladorAlbaranes'),
+		
+		
 		logistica: require('controllers/controladorLogistica'),
-		confirmacionPedido: require('controllers/controladorConfirmacionPedido'),
+		
 		retransmision: require('controllers/controladorRetransmision'),
 	}
 */
@@ -78,31 +81,33 @@ module.exports = (app) => {
 	app.route('/pedidos/:numeroPedido')
 		.get(tryCatch(controladores.pedidos.consultaPedido));
 
-	/*
+	app.route('/confirmaPedido')
+		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
+
+
+	
 	app.route('/devoluciones')
 		.get(tryCatch(controladores.devoluciones.consultaDevolucion))
 		.post(tryCatch(controladores.devoluciones.crearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
 		.get(tryCatch(controladores.devoluciones.consultaDevolucion));
-	
-	
+
+		
 	app.route('/albaranes')
 		.get(tryCatch(controladores.albaranes.listadoAlbaranes));
 	app.route('/albaranes/confirmacion')
 		.post(tryCatch(controladores.albaranes.confirmacionAlbaran));
 	app.route('/albaranes/:numeroAlbaran')
 		.get(tryCatch(controladores.albaranes.consultaAlbaran));
-	
-	
+
+
+	/*
 	//app.route('/facturas')
 	//	.get(controllers.facturas.findFacturas);
 	//app.route('/facturas/:numeroFactura')
 	//	.get(controllers.facturas.getFactura);
 	
-	
-	// Rutas no estandard
-	app.route('/confirmaPedido')
-		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
+
 	
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controladores.retransmision.retransmitePedido));
@@ -121,7 +126,7 @@ module.exports = (app) => {
 		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		iEventos.descartar(req, res, cuerpoRespuesta, null);
+		iEventos.descartar(req, res, cuerpoRespuesta);
 	});
 
 };

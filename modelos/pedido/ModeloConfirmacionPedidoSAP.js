@@ -1,11 +1,7 @@
 'use strict';
-const L = global.logger;
 //const C = global.config;
+const L = global.logger;
 const K = global.constants;
-
-// Modelos
-// const CRC = require('model/CRC');
-
 
 class ConfirmacionPedidoSAP {
 
@@ -14,10 +10,9 @@ class ConfirmacionPedidoSAP {
 		let txId = req.txId;
 		let json = req.body;
 
-		// En la confirmación de un pedido desde SAP, ahora mismo importan 3 cosas:
+		// En la confirmación de un pedido desde SAP, ahora mismo importan 2 cosas:
 		// - Lista de pedidos asociados en SAP
 		// - El CRC de SAP para la búsqueda de la transmisión que está confirmando
-
 
 
 		this.pedidosAsociadosSap = json.sap_pedidosasociados?.filter(numeroPedidoSap => numeroPedidoSap ? true : false);

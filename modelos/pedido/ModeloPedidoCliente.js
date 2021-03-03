@@ -191,7 +191,7 @@ class PedidoCliente {
 	}
 
 	#generaUrlConfirmacion() {
-		return 'http://' + HOSTNAME + '.hefame.es:' + C.http.puerto + '/confirmaPedido';
+		return 'http://' + HOSTNAME + '.hefame.es:' + C.http.puertoConcentrador + '/confirmaPedido';
 	}
 
 	/**

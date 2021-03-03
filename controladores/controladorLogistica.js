@@ -84,7 +84,7 @@ exports.crearLogistica = (req, res) => {
 					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorSap]);
 					let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
 					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-					iFlags.set(txId, K.FLAGS.NO_SAP)
+					iFlags.set(txId, C.flags.NO_SAP)
 					iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 				}
 				return;

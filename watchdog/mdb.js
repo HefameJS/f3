@@ -86,7 +86,7 @@ setInterval(() => {
 								// CASO CONGESTION: SAP da numero de pedido antes que MDB haga commit
 								else if (dbTx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO && dbTx.sapConfirms) {
 									L.xi(txId, 'Recuperando estado de pedido ya que existe confirmación del mismo por SAP', 'mdbwatch');
-									iFlags.set(txId, K.FLAGS.STATUS_FIX1);
+									iFlags.set(txId, C.flags.STATUS_FIX1);
 									iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.OK);
 									numeroRetransmisionesEnProgreso--;
 									return;
@@ -113,7 +113,7 @@ setInterval(() => {
 										// Puede ser retransmitida manualmente mas adelante.
 										if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
 											L.xw(txId, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
-											iFlags.set(txId, K.FLAGS.STATUS_FIX2);
+											iFlags.set(txId, C.flags.STATUS_FIX2);
 											iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
 											numeroRetransmisionesEnProgreso--;
 											return;
@@ -121,7 +121,7 @@ setInterval(() => {
 
 										// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
 										L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id], 'mdbwatch');
-										iFlags.set(txId, K.FLAGS.STATUS_FIX3);
+										iFlags.set(txId, C.flags.STATUS_FIX3);
 										iEventos.retransmisiones.asociarConfirmacionConPedido(txId, confirmacionPedido);
 										numeroRetransmisionesEnProgreso--;
 										return;

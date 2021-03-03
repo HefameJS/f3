@@ -1,7 +1,7 @@
 'use strict';
 //const C = global.config;
 const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
 // Externo
 const clone = require('clone');
@@ -15,7 +15,7 @@ const LineaDevolucionCliente = require('./ModeloLineaDevolucionCliente');
 const CRC = require('modelos/CRC');
 
 // Helpers
-const Validador = require('util/validador');
+const Validador = require('global/validador');
 
 
 
@@ -32,6 +32,7 @@ class DevolucionCliente {
 		let txId = req.txId;
 		let json = req.body;
 
+		this.txId = txId;
 		L.xt(txId, ['Instanciando objeto Devolucion Cliente con los datos del cuerpo HTTP', json]);
 
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de una devolucion
@@ -76,9 +77,14 @@ class DevolucionCliente {
 		// 20.10.2020 - Para evitar duplicados, vamos a generar el CRC siempre con el timestamp actual
 		this.crc = CRC.generar(this.codigoCliente, crcLineas, Date.fedicomTimestamp());
 
+		if (Validador.esCadenaNoVacia(json.sapSystem)) {
+			this.sapSystem = json.sapSystem.trim();
+		}
+
 	}
 
 	/**
+	 * TODO: Este método es de instancia no de clase.
 	 * Analiza las posiciones de devolución de la petición HTTP.
 	 * Asume que req.body.lineas es un array.
 	 * @param {*} req 
@@ -163,6 +169,18 @@ class DevolucionCliente {
 		}
 		if (this.observaciones) respuesta.observaciones = this.observaciones;
 		return respuesta;
+	}
+
+	generarJSON() {
+		let json = {
+			codigoCliente: this.codigoCliente,
+			lineas: this.lineas.map(linea => linea.generarJSON())
+		}
+		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.login) json.login = this.login;
+		if (this.crc) json.crc = this.crc;
+
+		return json;
 	}
 
 }

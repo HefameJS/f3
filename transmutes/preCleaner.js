@@ -11,7 +11,7 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const CODIGO_ERROR_PROTOCOLO = K.CODIGOS_ERROR_FEDICOM.WARN_PROTOCOLO;
 const DEPURACION_ACTIVA = (C.depurar_transmisiones ? true : false);
-const FLAG_ERROR_FORMATO = K.FLAGS.FORMATO;
+const FLAG_ERROR_FORMATO = C.flags.FORMATO;
 
 
 const _errorEncontrado = (txId, errorFedicom, mensaje) => {

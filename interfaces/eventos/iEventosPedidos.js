@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 const M = global.mongodb;
@@ -23,15 +23,14 @@ module.exports.inicioPedido = (req, pedido) => {
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO, [req.identificarUsuarioAutenticado(), pedido.crc, req.body]);
+
 }
 
 module.exports.finPedido = (res, cuerpoRespuesta, estadoFinal, datosExtra) => {
-
 	let txId = res.txId;
 	if (!datosExtra) datosExtra = {};
 
-	let transaccion = iEventosComun.generarEventoDeCierre(res, cuerpoRespuesta, estadoFinal)
-
+	let transaccion = iEventosComun.generarEventoDeCierre(res, cuerpoRespuesta, estadoFinal);
 	transaccion['$set'].numeroPedidoAgrupado = datosExtra.numeroPedidoAgrupado || undefined;
 	transaccion['$set'].numerosPedidoSAP = datosExtra.numerosPedidoSAP || [];
 	iFlags.finaliza(txId, transaccion);
@@ -75,7 +74,7 @@ module.exports.pedidoDuplicado = (req, res, cuerpoRespuesta, txIdOriginal) => {
 		}
 	}
 	// Establece el flag 'DUPLICADOS' en la transaccion original
-	iFlags.set(txIdOriginal, K.FLAGS.DUPLICADOS);
+	iFlags.set(txIdOriginal, C.flags.DUPLICADOS);
 	iFlags.finaliza(txIdOriginal, transaccionActualizacionOriginal);
 
 

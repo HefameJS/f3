@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -8,7 +8,6 @@ const iFlags = require('interfaces/iFlags');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
-const Validador = require('util/validador');
 const LineaDevolucionSap = require('./ModeloLineaDevolucionSap');
 
 
@@ -56,6 +55,7 @@ class ModeloDevolucionSap {
 			// Si el fallo del cliente lo detecta la pre-BAPI la incidencia será:
 			// {"codigo": "DEV-ERR-002", "descripcion": "El parametro CodigoClientee es invalido" }
 			if (incidencia.codigo === "DEV-ERR-002") {
+				L.xw(txId, ['Se encuentra la incidencia (DEV-ERR-002) en SAP']);
 				this.metadatos.clienteNoExiste = true;
 				incidencias.push({
 					codigo: "DEV-ERR-002",
@@ -65,6 +65,7 @@ class ModeloDevolucionSap {
 			// Pero si el fallo del cliente lo detecta la BAPI, la incidencia será:
 			// {"codigo": "", "descripcion"; "Cliente desconocido"}
 			if (incidencia.descripcion === "Cliente desconocido") {
+				L.xw(txId, ['Se encuentra la incidencia (Cliente desconocido) en SAP']);
 				this.metadatos.clienteNoExiste = true;
 				incidencias.push({
 					codigo: "DEV-ERR-002",
@@ -75,7 +76,7 @@ class ModeloDevolucionSap {
 			// Si aparece la incidencia 'Devolución duplicada', la suprimimos de la respuesta al cliente 
 			// y levantamos el flag 'DUPLICADO_SAP' {"codigo": "", "descripcion"; "Devolución duplicada"}
 			if (incidencia.descripcion === "Devolución duplicada") {
-				L.xi(txId, ['Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP']);
+				L.xw(txId, ['Se encontró la incidencia de "Devolución duplicada" en la respuesta de SAP']);
 				this.metadatos.devolucionDuplicadaSap = true;
 
 				return;
@@ -253,16 +254,16 @@ class ModeloDevolucionSap {
 
 
 		// Levantamos Flags
-		if (devolucionDuplicadaSap) iFlags.set(txId, K.FLAGS.DUPLICADO_SAP);
-		if (puntoEntrega) iFlags.set(txId, K.FLAGS.PUNTO_ENTREGA, puntoEntrega);
+		if (devolucionDuplicadaSap) iFlags.set(txId, C.flags.DUPLICADO_SAP);
+		if (puntoEntrega) iFlags.set(txId, C.flags.PUNTO_ENTREGA, puntoEntrega);
 
-		if (creaOrdenLogistica) iFlags.set(txId, K.FLAGS.GENERA_RECOGIDA);
-		if (totales.lineasEstupe) iFlags.set(txId, K.FLAGS.ESTUPEFACIENTE);
+		if (creaOrdenLogistica) iFlags.set(txId, C.flags.GENERA_RECOGIDA);
+		if (totales.lineasEstupe) iFlags.set(txId, C.flags.ESTUPEFACIENTE);
 
-		if (esRechazoTotal) iFlags.set(txId, K.FLAGS.DEVOLUCION_RECHAZO_TOTAL);
-		else if (esDevolucionParcial) iFlags.set(txId, K.FLAGS.DEVOLUCION_PARCIAL);
+		if (esRechazoTotal) iFlags.set(txId, C.flags.DEVOLUCION_RECHAZO_TOTAL);
+		else if (esDevolucionParcial) iFlags.set(txId, C.flags.DEVOLUCION_PARCIAL);
 
-		iFlags.set(txId, K.FLAGS.TOTALES, totales);
+		iFlags.set(txId, C.flags.TOTALES, totales);
 
 
 		let codigoRespuestaHttp = esRechazoTotal ? 206 : (esDevolucionParcial ? 206 : 201);

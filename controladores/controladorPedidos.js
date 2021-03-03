@@ -2,6 +2,7 @@
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iSap = require('interfaces/isap/iSap');
@@ -108,7 +109,7 @@ exports.crearPedido = async function (req, res) {
 			return;
 		}
 
-		
+
 		// Lo primero, vamos a comprobar que SAP nos haya devuelto un objeto con las faltas del pedido. 
 		// En ocasiones la conexión peta y la respuesta no puede recuperarse, por lo que tratamos este caso como que SAP está caído.
 		if (!cuerpoRespuestaSap || !cuerpoRespuestaSap.crc) {
@@ -136,8 +137,8 @@ exports.crearPedido = async function (req, res) {
 
 
 	} catch (errorLlamadaSap) {
-		console.log(errorLlamadaSap);
-		if (errorLlamadaSap?.esSistemaSapNoDefinido()) {
+		
+		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
 			L.xe(txId, ['Error al autenticar al usuario', errorLlamadaSap]);
 			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
@@ -156,7 +157,7 @@ exports.crearPedido = async function (req, res) {
 
 // GET /pedido
 // GET /pedido/:numeroPedido
-exports.consultaPedido = (req, res) => {
+exports.consultaPedido = async function (req, res) {
 
 	let txId = req.txId;
 
@@ -169,31 +170,38 @@ exports.consultaPedido = (req, res) => {
 		return;
 	}
 
+
 	let numeroPedido = (req.params ? req.params.numeroPedido : null) || (req.query ? req.query.numeroPedido : null);
 
-	iMongo.consultaTx.porCRC(txId, numeroPedido, (errorMongo, dbTx) => {
-		if (errorMongo) {
-			L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);
-			let errorFedicom = new ErrorFedicom('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
-			return;
-		}
+	if (!M.ObjectID.isValid(numeroPedido)) {
+		L.xe(txId, ['El numero de pedido indicado no es un ObjectID válido', numeroPedido]);
+		let errorFedicom = new ErrorFedicom('PED-ERR-005', 'El parámetro "numeroPedido" es inválido', 400);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.PETICION_INCORRECTA);
+		return;
+	}
 
+	try {
+		let dbTx = await iMongo.consultaTx.porCRC(numeroPedido)
 		L.xi(txId, ['Se ha recuperado el pedido de la base de datos']);
 
-		if (dbTx && dbTx.clientResponse) {
-			// TODO: Autorizacion
+		if (dbTx?.clientResponse) {
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
-			// TODO: Incluir el status original
-			res.status(200).json(cuerpoRespuestaOriginal);
+			res.status(dbTx.clientResponse.statusCode).json(cuerpoRespuestaOriginal);
 			iEventos.consultas.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
 			let errorFedicom = new ErrorFedicom('PED-ERR-001', 'El pedido solicitado no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
-	});
+	} catch (errorMongo) {
+		L.xe(txId, ['No se ha podido recuperar el pedido de la base de datos', errorMongo]);
+		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_PED, 'Ocurrió un error al recuperar el pedido', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
+		return;
+	}
+
 
 }
 
@@ -203,9 +211,9 @@ exports.actualizarPedido = (req, res) => {
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);
 
-	let errorFedicom = new ErrorFedicom('PED-ERR-999', 'No se ha implementado el servicio de actualización de pedidos', 501);
-	/*let cuerpoRespuesta = */errorFedicom.enviarRespuestaDeError(res);
-
+	let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_PED, 'No se ha implementado el servicio de actualización de pedidos', 501);
+	let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+	iEventos.descartar(req, res, cuerpoRespuesta);
 	L.xw(txId, [errorFedicom]);
 
 }

@@ -7,7 +7,7 @@ const K = global.constants;
 const iSap = require('interfaces/isap/iSap');
 const iMongo = require('interfaces/imongo/iMongo');
 const iEventos = require('interfaces/eventos/iEventos');
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iFlags = require('interfaces/iFlags');
 
 // Modelos
@@ -17,7 +17,7 @@ const DevolucionSap = require('modelos/devolucion/ModeloDevolucionSap');
 
 
 // POST /devoluciones
-exports.crearDevolucion = (req, res) => {
+exports.crearDevolucion = async function (req, res) {
 
 	let txId = req.txId;
 
@@ -30,9 +30,7 @@ exports.crearDevolucion = (req, res) => {
 		return;
 	}
 
-
 	let devolucionCliente = null;
-
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
 	try {
 		devolucionCliente = new DevolucionCliente(req);
@@ -57,21 +55,27 @@ exports.crearDevolucion = (req, res) => {
 
 	L.xd(txId, ['El contenido de la transmisión es una devolución correcta']);
 
-	iMongo.consultaTx.porCRC(txId, devolucionCliente.crc, (errorMongo, txDevolucionDuplicada) => {
-		if (errorMongo) {
-			L.xe(txId, ['Ocurrió un error al comprobar si la devolución es duplicada - se asume que no lo es', errorMongo]);
-		} else if (txDevolucionDuplicada && txDevolucionDuplicada.clientResponse && txDevolucionDuplicada.clientResponse.body) {
+	// Control de duplicados
+	// 20.10.2020 - El CRC en el modelo de DevolucionCliente se genera usando el timestamp para evitar 
+	// duplicados
+	/*
+	try {
+		let txDevolucionDuplicada = await iMongo.consultaTx.porCRC(devolucionCliente.crc);
+		if (txDevolucionDuplicada?.clientResponse?.body) {
+
 			let txIdOriginal = txDevolucionDuplicada._id;
 			let respuestaCliente = txDevolucionDuplicada.clientResponse.body;
-			L.xw(txId, ['Se ha detectado la transmisión como un duplicada', txIdOriginal]);
+			L.xi(txId, ['Detectada la transmisión de devolucion con idéntico CRC', txIdOriginal], 'crc');
+			L.xi(txIdOriginal, 'Se ha recibido una transmisión duplicada de esta con ID ' + txId, 'crc');
 
-			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'La devolución ya estaba registrada en el sistema')
+			// Añadimos la incidencia de devolución duplicada
+			let errorFedicom = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'La devolución ya estaba registrada en el sistema')
 			respuestaCliente.forEach(devolucionOriginal => {
 				// Si la devolucion original tenía número asignado, indicamos que es duplicada.
 				// Si no lleva numero, es que probablemente era un error y la dejamos tal cual.
 				if (devolucionOriginal.numeroDevolucion) {
 					if (!devolucionOriginal.incidencias || !devolucionOriginal.incidencias.push) devolucionOriginal.incidencias = [];
-					devolucionOriginal.incidencias = devolucionOriginal.incidencias.concat(errorFedicom.getErrores());
+					devolucionOriginal.incidencias = [...devolucionOriginal.incidencias, ...errorFedicom.getErrores()];
 				}
 			});
 
@@ -79,146 +83,122 @@ exports.crearDevolucion = (req, res) => {
 			iEventos.devoluciones.devolucionDuplicada(req, res, respuestaCliente, txIdOriginal);
 			return;
 		}
-
-		iEventos.devoluciones.inicioDevolucion(req, devolucionCliente);
-
-		iSap.devoluciones.realizarDevolucion(txId, devolucionCliente, (errorSap, respuestaSap) => {
-
-			if (errorSap) {
-				if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-					let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-					L.xe(txId, ['Error al grabar la devolución', errorSap]);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-					iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-				}
-				else {
-					L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorSap]);
-					let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 503);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-					iFlags.set(txId, K.FLAGS.NO_SAP)
-					iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-				}
-				return;
-			}
+	} catch (errorMongo) {
+		L.xe(txId, ['Ocurrió un error al comprobar si la devolución es duplicada - se asume que no lo es', errorMongo]);
+	}
+	*/
 
 
-			let cuerpoRespuestaSap = respuestaSap.body;
+	iEventos.devoluciones.inicioDevolucion(req, devolucionCliente);
 
-			// Lo primero, vamos a comprobar que SAP nos haya devuelto un array con objetos de devolucion
-			if (!cuerpoRespuestaSap || !cuerpoRespuestaSap.map || !cuerpoRespuestaSap.length) {
-				L.xe(txId, ['SAP devuelve un cuerpo de respuesta que no es un array. Se devuelve error genérico al cliente', cuerpoRespuestaSap]);
-				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-				iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
-				return;
-			}
+	try {
+		let cuerpoRespuestaSap = await iSap.devoluciones.realizarDevolucion(devolucionCliente);
 
-
-			let devolucionesSap = cuerpoRespuestaSap.map(cuerpoDevolucionSap => new DevolucionSap(cuerpoDevolucionSap, txId));
-
-			let {
-				cuerpoRespuestaHttp,
-				codigoRespuestaHttp,
-				estadoTransmision,
-				numerosDevolucionSap,
-				numeroDevolucion
-			} = DevolucionSap.condensar(txId, devolucionesSap, devolucionCliente);
-
-			res.status(codigoRespuestaHttp).json(cuerpoRespuestaHttp);
-			iEventos.devoluciones.finDevolucion(res, cuerpoRespuestaHttp, estadoTransmision, { numerosDevolucionSap, numeroDevolucion });
-
-		});
+		// Lo primero, vamos a comprobar que SAP nos haya devuelto un array con objetos de devolucion
+		if (!Array.isArray(cuerpoRespuestaSap)) {
+			L.xe(txId, ['SAP devuelve un cuerpo de respuesta que no es un array. Se devuelve error genérico al cliente', cuerpoRespuestaSap]);
+			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
+			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
+			return;
+		}
 
 
-	})
+		let devolucionesSap = cuerpoRespuestaSap.map(cuerpoDevolucionSap => new DevolucionSap(cuerpoDevolucionSap, txId));
+
+		let {
+			cuerpoRespuestaHttp,
+			codigoRespuestaHttp,
+			estadoTransmision,
+			numerosDevolucionSap,
+			numeroDevolucion
+		} = DevolucionSap.condensar(txId, devolucionesSap, devolucionCliente);
+
+		res.status(codigoRespuestaHttp).json(cuerpoRespuestaHttp);
+		iEventos.devoluciones.finDevolucion(res, cuerpoRespuestaHttp, estadoTransmision, { numerosDevolucionSap, numeroDevolucion });
+
+	} catch (errorLlamadaSap) {
+		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
+			L.xe(txId, ['Error al crear la devolución', errorLlamadaSap]);
+			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+		}
+		else {
+			L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorLlamadaSap]);
+			let errorFedicom = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
+			iFlags.set(txId, C.flags.NO_SAP)
+			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+		}
+	}
 
 
 }
-
-
 
 
 
 // GET /devoluciones/:numeroDevolucion
 // Cuando el content-type es JSON
-const _consultaDevolucionJSON = (req, res, numeroDevolucion) => {
+const _consultaDevolucionJSON = async function (req, res, numeroDevolucion) {
 
 	let txId = req.txId;
 
-	iMongo.consultaTx.porNumeroDevolucion(txId, numeroDevolucion, (errorMongo, dbTx) => {
-		if (errorMongo) {
-			let error = new ErrorFedicom('DEV-ERR-999', 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
-			let cuerpoRespuesta = error.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB, 'JSON');
-			return;
-		}
+	try {
+		let dbTx = await iMongo.consultaTx.porNumeroDevolucion(numeroDevolucion);
 
-		L.xi(txId, ['Se ha recuperado la devolución de la base de datos']);
+		if (dbTx?.clientResponse?.body) {
 
-		if (dbTx && dbTx.clientResponse) {
+			L.xi(txId, ['Se ha recuperado la transmisión de la base de datos']);
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
 			let documentoDevolucion = null;
 
-			if (cuerpoRespuestaOriginal && cuerpoRespuestaOriginal.find) {
+			// La consulta es solo por uno de los objetos de devolución que hay dentro de la
+			// transmisión. Lo buscamos...
+			if (Array.isArray(cuerpoRespuestaOriginal)) {
 				// Las devoluciones devuelven arrays con varios documentos de devolución dentro,
 				// buscamos el que tiene el numero de devolución concreta que buscamos.
 				documentoDevolucion = cuerpoRespuestaOriginal.find((devolucion) => {
-					return (devolucion && devolucion.numeroDevolucion === numeroDevolucion);
+					return (devolucion?.numeroDevolucion === numeroDevolucion);
 				});
 			}
 
 			if (documentoDevolucion) {
+				L.xi(txId, ['Se ha encontrado el documento solicitado']);
 				res.status(200).json(documentoDevolucion);
 				iEventos.consultas.consultaDevolucion(req, res, documentoDevolucion, K.TX_STATUS.OK, 'JSON');
 			} else {
-				L.xe(txId, ['No se encontró la devolución dentro de la transmisión.']);
+				L.xe(txId, ['No se encontró la devolución dentro de la transmisión. ¡OJO que esto no es normal!']);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, 'JSON');
 			}
 		} else {
+			L.xw(txId, ['No se ha encontrado la transmisión solicitada']);
 			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, 'JSON');
 		}
-	});
+
+	} catch (errorMongo) {
+		L.xe(txId, ['Error en la consulta a MongoDB', errorMongo])
+		let error = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
+		let cuerpoRespuesta = error.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB, 'JSON');
+		return;
+	}
 
 }
 
 // GET /devoluciones/:numeroDevolucion
 // Cuando el content-type es PDF
-const _consultaDevolucionPDF = (req, res, numDevolucion) => {
+const _consultaDevolucionPDF = async function (req, res, numDevolucion) {
 
 	let txId = req.txId;
 
-	iSap.devoluciones.consultaDevolucionPDF(txId, numDevolucion, (errorSap, respuestaSap) => {
-		if (errorSap) {
-			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				L.xe(txId, ['Error al consultar la devolución PDF', errorSap]);
-				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numDevolucion, 'PDF');
-				return;
-			}
-			else {
-				// TODO: Cuando el albarán no existe, SAP devuelve un 503. Comprobar si ocurre lo mismo con las devoluciones
-				/*if (respuestaSap.statusCode === 503) {
-					L.xe(txId, ['SAP devolvió un 503, probablemente la devolución no existe', errorSap]);
-					let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-					iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
-					return;
-				}*/
+	try {
+		let cuerpoSap = await iSap.devoluciones.consultaDevolucionPDF(numDevolucion, txId);
 
-				L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba la devolución PDF', errorSap]);
-				let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.NO_SAP, numDevolucion, 'PDF');
-				return;
-			}
-		}
-
-		let cuerpoSap = respuestaSap.body;
 
 		if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
 			L.xi(txId, ['Se obtuvo la devolución PDF en Base64 desde SAP']);
@@ -231,14 +211,37 @@ const _consultaDevolucionPDF = (req, res, numDevolucion) => {
 			return;
 		}
 		else {
-			L.xe(txId, ['Ocurrió un error al solicitar la devolución PDF', cuerpoSap]);
-			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+			L.xe(txId, ['La respuesta del PDF de SAP no es válida', cuerpoSap]);
+			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP, numDevolucion, 'PDF');
 			return;
 		}
 
-	});
+
+	} catch (errorLlamadaSap) {
+
+
+		// Cuando la devolución no existe, SAP devuelve un 500 y la incidencia:
+		// [ { id: 4, message: 'Error en la generacion del PDF' } ]
+		if (Array.isArray(errorLlamadaSap?.cuerpoRespuesta)) {
+			let incidenciaSap = errorLlamadaSap.cuerpoRespuesta[0];
+			if (incidenciaSap.id === 4 && incidenciaSap.message === 'Error en la generacion del PDF') {
+				L.xw(txId, ['SAP devolvió un 500 y la incidencia de error en la generación - Asumimos que la devolución no existe', errorLlamadaSap]);
+				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
+				return;
+			}
+		}
+
+		L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba la devolución PDF', errorLlamadaSap]);
+		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP, numDevolucion, 'PDF');
+		return;
+
+	}
 }
 
 // GET /devoluciones/:numeroDevolucion
@@ -280,13 +283,15 @@ exports.consultaDevolucion = (req, res) => {
 		}
 	}
 
-	L.xd(txId, ['Se determina el formato solicitado de la devolución', formatoDevolucion, req.headers['accept']]);
+	L.xi(txId, ['Se determina el formato solicitado de la devolución', formatoDevolucion, req.headers['accept']]);
 
 	switch (formatoDevolucion) {
 		case 'JSON':
-			return _consultaDevolucionJSON(req, res, numDevolucionSaneado);
+			_consultaDevolucionJSON(req, res, numDevolucionSaneado);
+			return;
 		case 'PDF':
-			return _consultaDevolucionPDF(req, res, numDevolucionSaneado);
+			_consultaDevolucionPDF(req, res, numDevolucionSaneado);
+			return;
 		default:
 			// Nunca vamos a llegar a este caso, pero aquí queda el tratamiento necesario por si acaso
 			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se reconoce del formato de la devolución en la cabecera "Accept"', 400);

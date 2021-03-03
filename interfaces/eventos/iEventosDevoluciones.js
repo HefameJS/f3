@@ -2,21 +2,20 @@
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
 
-// Modelos
-const ObjectID = iMongo.ObjectID;
 
 
 module.exports.inicioDevolucion = (req, devolucion) => {
 	let txId = req.txId;
 
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.DEVOLUCION, K.TX_STATUS.RECEPCIONADO)
-	transaccion['$set'].crc = new ObjectID(devolucion.crc);
+	transaccion['$set'].crc = new M.ObjectID(devolucion.crc);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearDevolucion'], 'txCommit');
 	iMongo.transaccion.grabarEnMemoria(transaccion);
@@ -70,7 +69,7 @@ module.exports.devolucionDuplicada = (req, res, cuerpoRespuesta, txIdOriginal) =
 	}
 
 	// Establece el flag 'DUPLICADOS' en la transaccion original
-	iFlags.set(txIdOriginal, K.FLAGS.DUPLICADOS);
+	iFlags.set(txIdOriginal, C.flags.DUPLICADOS);
 	iFlags.finaliza(txIdOriginal, transaccionActualizacionOriginal);
 
 
