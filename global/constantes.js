@@ -61,17 +61,15 @@ module.exports = {
         HEFAME: '0026',
         RETRANSMISOR: '9002'
     },
-    CODIGOS_ERROR_FEDICOM: { /* DEPRECAR */
-        WARN_PROTOCOLO: 'PROTOCOL-WARN-999',
-        WARN_NO_EXISTE_ALMACEN: 'PED-WARN-999',
-        ERR_TODAS_LINEAS_ERROR: 'PED-ERR-999',
-        ERR_BLOQUEO_SAP: 'PED-ERR-999',
-    },
     INCIDENCIA_FEDICOM: {
         ERR_PED: 'PED-ERR-999',
         WARN_PED: 'PED-WARN-999',
 		ERR_DEV: 'DEV-ERR-999',
-		WARN_DEV: 'DEV-WARN-999'
+		WARN_DEV: 'DEV-WARN-999',
+		ERR_ALB: 'ALB-ERR-999',
+		WARN_ALB: 'ALB-WARN-999',
+		ERR_FACT: 'FACT-ERR-999',
+		WARN_FACT: 'FACT-WARN-999'
     },
     MOTIVO_DEVOLUCION: {
         "01": "Caducidad del producto",
@@ -85,73 +83,6 @@ module.exports = {
         "09": "Defecto de calidad",
         "10": "Otros"
     },
-    PRE_CLEAN: {
-        LOGISTICA: {
-            CABECERA: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoCliente: { ignore: true },
-                numeroLogisticaOrigen: { ignore: true },
-                lineas: { ignore: true },
-                login: { ignore: true },
-                crc: { ignore: true },
-                sapSystem: { ignore: true },
-                authReq: { ignore: true },
-                ignorarTodasLineas: { ignore: true },
-                origen: { ignore: true },
-                destino: { ignore: true },
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                numeroLogistica: { remove: true },
-                fechaLogistica: { remove: true },
-                
-                // Campos que de aparecer deben ser cadenas de texto
-                tipoLogistica: { string: { max: 1 } },
-                observaciones: { string: { max: 50 } },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-            },
-            LINEAS: {
-                // Campos que al ser obligatorios se verifican en la creacion del objeto y por tanto ignoramos
-                codigoArticulo: { ignore: true },
-                sap_ignore: { ignore: true },
-
-                // Campos que son de solo salida, es decir, no deberían aparecer en las peticiones
-                descripcionArticulo: { remove: true },
-
-                // Campos que de aparecer deben ser cadenas de texto
-                observaciones: { string: { max: 50 } },
-
-                // Campos que de aparecer deben ser enteros
-                orden: { integer: {} },
-                cantidad: { integer: {} },
-
-                // Campos que deben ser array
-                incidencias: { array: {} }
-            }
-        },
-    },
-    POST_CLEAN: {
-        LOGISTICA: {
-            removeCab: ['login', 'crc', 'sap_punto_entrega', 'ignorarTodasLineas', 'sap_bloqueo_entrega', 'sap_create_logistic'],
-            removePos: ['sap_pos', 'sap_ignore'],
-            replaceCab: ['numeroLogistica', 'codigoCliente', 'numeroLogisticaOrigen', 'tipoLogistica', 'fechaLogistica'],
-            replacePos: ['codigoArticulo', 'descripcionArticulo'],
-            removeCabEmptyString: ['observaciones', 'tipoLogistica'],
-            removeCabEmptyArray: ['incidencias'],
-            removeCabZeroValue: [],
-            removeCabIfFalse: [],
-            removePosEmptyString: ['observaciones', 'descripcionArticulo'],
-            removePosEmptyArray: ['incidencias'],
-            removePosZeroValue: [],
-            removePosIfFalse: [],
-            replaceDireccionLogistica: ['codigoPostal'],
-            removeDireccionLogisticaEmptyString: ['codigo', 'nombre', 'calle', 'poblacion', 'provincia', 'codigoPostal', 'pais', 'telefono', 'email']
-        },
-    },
-    PROTOCOL_VERSION: '3.4.8',
-    SERVER_VERSION: '0.13.1',
-    TX_VERSION: 1203,
     LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
     PROCESS_REGISTER_INTERVAL: 10000,
     PROCESS_STATUS: {

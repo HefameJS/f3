@@ -1,11 +1,13 @@
 'use strict';
-let C = {};
+//const C = global.config;
 const L = require('./logger');
 //const K = global.constants;
 let M = global.mongodb;
 
 // externas
-const fs = require('fs');
+const fs = require('fs/promises');
+fs.constants = require('fs').constants;
+const SEPARADOR_DIRECTORIOS = require('path').sep;
 
 // modelos
 const DestinoSap = require('modelos/DestinoSap');
@@ -13,10 +15,37 @@ const DestinoSap = require('modelos/DestinoSap');
 // util
 const Validador = require('global/validador');
 
+const SUBDIR = {
+	LOGS: 'logs',
+	SQLITE: 'db',
+	CONFIG: 'config'
+}
 
 
 class Configuracion {
-	constructor(ficheroConfiguracion) {
+	constructor(config) {
+
+		if (!(config.produccion === true || config.produccion === false))
+			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
+
+		this.produccion = Boolean(config.produccion);
+		this.numeroWorkers = Validador.esEnteroPositivoMayorQueCero(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
+
+		// El directorio de cache sabemos que existe y que es escribible
+		// porque el objeto se instancia como Configuracion.cargarDatosFichero(rutaFichero)
+		this.directorioCache = config.directorioCache;
+
+		// Objetos complejos
+		this.mongodb = new ConfiguracionMongodb(this, config.mongodb);
+		this.pid = new ConfiguracionPid(this, config.pid);
+		this.log = new ConfiguracionLog(this, config.log);
+		this.sqlite = new ConfiguracionSqlite(this, config.sqlite);
+		this.http = new ConfiguracionHttp(this, config.http);
+
+	}
+
+	static async cargarDatosFichero(ficheroConfiguracion) {
+
 		let config;
 		try {
 			config = require(ficheroConfiguracion);
@@ -26,28 +55,37 @@ class Configuracion {
 			process.exit(1);
 		}
 
-		if (!(config.produccion === true || config.produccion === false))
-			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
+		if (!Validador.esCadenaNoVacia(config.directorioCache))
+			throw new Error("No se ha definido el nodo cache. Este nodo es obligatorio.");
 
-		this.produccion = Boolean(config.produccion);
-		this.numeroWorkers = Validador.esEnteroPositivoMayorQueCero(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
+		config.directorioCache = config.directorioCache.trim();
+		if (!config.directorioCache.endsWith(SEPARADOR_DIRECTORIOS)) {
+			config.directorioCache += SEPARADOR_DIRECTORIOS;
+		}
 
-		// Objetos complejos
-		this.mongodb = new ConfiguracionMongodb(config.mongodb);
-		this.pid = new ConfiguracionPid(config.pid);
-		this.log = new ConfiguracionLog(config.log);
-		this.sqlite = new ConfiguracionSqlite(config.sqlite);
-		this.http = new ConfiguracionHttp(config.http);
+
+		await fs.mkdir(config.directorioCache, { recursive: true, mode: 0o755 })
+		if (!(await fs.lstat(config.directorioCache)).isDirectory()) {
+			throw new Error("La ruta indicada en el nodo cache no es un directorio.");
+		}
+		await fs.access(config.directorioCache, fs.constants.W_OK | fs.constants.R_OK);
+
+		for (let DIR in SUBDIR) {
+			await fs.mkdir(config.directorioCache + SUBDIR[DIR], { recursive: true, mode: 0o755 });
+		}
+		
+
+		return new Configuracion(config);
 
 	}
 
 	async cargarDatosCluster() {
 		M = global.mongodb;
-		this.jwt = await ConfiguracionJwt.cargar();
-		this.sap = await ConfiguracionSap.cargar();
-		this.dominios = await ConfiguracionDominios.cargar();
-		this.flags = await ConfiguracionFlags.cargar();
-		this.ldap = await ConfiguracionLdap.cargar();
+		this.jwt = await ConfiguracionJwt.cargar(this);
+		this.sap = await ConfiguracionSap.cargar(this);
+		this.dominios = await ConfiguracionDominios.cargar(this);
+		this.flags = await ConfiguracionFlags.cargar(this);
+		this.ldap = await ConfiguracionLdap.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -65,46 +103,49 @@ class Configuracion {
 			}
 		}
 		else {
-			L.e(['No hay conexión con el clúster. Usamos configuración en caché'])
+			L.e(['No hay conexión con el clúster. Intentamos utilizar la caché.'])
 		}
+
+		let C = global.config;
+		let directorioCacheConfig = C.directorioCache + SUBDIR.CONFIG + SEPARADOR_DIRECTORIOS + claveObjeto + '.config';
 		if (!config) {
-			//TODO: Cargar configuración de caché
+			config = await fs.readFile(directorioCacheConfig, { encoding: 'utf8', flag: 'r' });
+			config = JSON.parse(config);
 		} else {
-			//TODO: Guardar configuración en caché
+			await fs.writeFile(directorioCacheConfig, JSON.stringify(config), { encoding: 'utf8', mode: 0o600, flag: 'w' });
 		}
 
 		return config;
 	}
-
 }
 
 class ConfiguracionMongodb {
-	constructor(config) {
-		if (!config) throw new Error("No se ha definido el nodo para MongoDB (mongodb)");
-		if (!Validador.esArrayNoVacio(config.servidores)) throw new Error("No se ha definido la lista de servidores de MongoDB (mongodb.servidores)");
-		if (!Validador.esCadenaNoVacia(config.usuario)) throw new Error("No se ha definido el usuario para MongoDB (mongodb.usuario)");
-		if (!Validador.esCadenaNoVacia(config.password)) throw new Error("No se ha definido la password para el usuario de MongoDB (mongodb.password)");
-		if (!Validador.esCadenaNoVacia(config.database)) throw new Error("No se ha definido el nombre de la base de datos de MongoDB (mongodb.database)");
+	constructor(C, nodoJson) {
+		if (!nodoJson) throw new Error("No se ha definido el nodo para MongoDB (mongodb)");
+		if (!Validador.esArrayNoVacio(nodoJson.servidores)) throw new Error("No se ha definido la lista de servidores de MongoDB (mongodb.servidores)");
+		if (!Validador.esCadenaNoVacia(nodoJson.usuario)) throw new Error("No se ha definido el usuario para MongoDB (mongodb.usuario)");
+		if (!Validador.esCadenaNoVacia(nodoJson.password)) throw new Error("No se ha definido la password para el usuario de MongoDB (mongodb.password)");
+		if (!Validador.esCadenaNoVacia(nodoJson.database)) throw new Error("No se ha definido el nombre de la base de datos de MongoDB (mongodb.database)");
 
 		// Verificación de los servidores
-		this.servidores = config.servidores
+		this.servidores = nodoJson.servidores
 			.filter(servidor => Validador.esCadenaNoVacia(servidor))
 			.map(servidor => servidor.trim());
 
-		if (!Validador.esArrayNoVacio(config.servidores)) throw new Error("No hay ningún servidor MongoDB válido en la lista de servidores (mongodb.servidores)");
+		if (!Validador.esArrayNoVacio(nodoJson.servidores)) throw new Error("No hay ningún servidor MongoDB válido en la lista de servidores (mongodb.servidores)");
 
-		this.usuario = config.usuario.trim();
-		this.password = config.password;
-		this.database = config.database.trim();
+		this.usuario = nodoJson.usuario.trim();
+		this.password = nodoJson.password;
+		this.database = nodoJson.database.trim();
 
-		if (Validador.esCadenaNoVacia(config.replicaSet)) {
-			this.replicaSet = config.replicaSet.trim();
+		if (Validador.esCadenaNoVacia(nodoJson.replicaSet)) {
+			this.replicaSet = nodoJson.replicaSet.trim();
 		}
 
-		this.intervaloReconexion = Validador.esEnteroPositivoMayorQueCero(config.intervaloReconexion) ? parseInt(config.intervaloReconexion) : 5000;
+		this.intervaloReconexion = Validador.esEnteroPositivoMayorQueCero(nodoJson.intervaloReconexion) ? parseInt(nodoJson.intervaloReconexion) : 5000;
 
 
-		this.writeConcern = (config.writeConcern === 0 || config.writeConcern === 1) ? config.writeConcern : 1;
+		this.writeConcern = (nodoJson.writeConcern === 0 || nodoJson.writeConcern === 1) ? nodoJson.writeConcern : 1;
 
 
 		/*
@@ -144,27 +185,28 @@ class ConfiguracionMongodb {
 }
 
 class ConfiguracionLog {
-	constructor(config) {
+	constructor(C, config) {
 		this.consola = Boolean(config?.consola);
-		this.directorio = config?.directorio ?? '~/log';
+		this.directorio = C.directorioCache + SUBDIR.LOGS + SEPARADOR_DIRECTORIOS;
 	}
 }
 
 class ConfiguracionPid {
-	constructor(config) {
-		this.directorio = config?.directorio ?? '~';
+	constructor(C, config) {
+		this.directorio = C.directorioCache;
 	}
 
 	getFicheroPid() {
 		return this.directorio + '/' + process.titulo + '.pid';
 	}
 
-	escribirFicheroPid() {
-		fs.writeFile(this.getFicheroPid(), '' + process.pid, (errorFicheroPid) => {
-			if (errorFicheroPid) {
-				L.e(["Error al escribir el fichero del PID", errorFicheroPid]);
-			}
-		});
+	async escribirFicheroPid() {
+		try {
+			await fs.writeFile(this.getFicheroPid(), '' + process.pid);
+		} catch (errorFicheroPid) {
+			if (L) L.e(["Error al escribir el fichero del PID", errorFicheroPid]);
+			else console.error('Error al escribir el fichero del PID', errorFicheroPid)
+		}
 	}
 
 	borrarFicheroPid() {
@@ -173,14 +215,15 @@ class ConfiguracionPid {
 }
 
 class ConfiguracionSqlite {
-	constructor(config) {
-		this.fichero = config?.fichero ?? '~/db/db.sqlite';
+	constructor(C, config) {
+		this.directorio = C.directorioCache + SUBDIR.SQLITE + SEPARADOR_DIRECTORIOS;
+		this.fichero = this.directorio + 'db.sqlite';
 	}
 }
 
 class ConfiguracionHttp {
 
-	constructor(config) {
+	constructor(C, config) {
 		this.puertoConcentrador = parseInt(config?.puertoConcentrador) || 5000;
 		this.puertoConsultas = parseInt(config?.puertoConsultas) || 5001;
 	}
@@ -189,23 +232,22 @@ class ConfiguracionHttp {
 
 class ConfiguracionJwt {
 
-	constructor(config) {
+	constructor(C, config) {
 		this.clave = config.clave;
 		this.ttl = parseInt(config.ttl) || 3600;
 		this.tiempoDeGracia = parseInt(config.tiempoDeGracia) || 60;
 	}
 
-	static async cargar() {
+	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('jwt');
-		return new ConfiguracionJwt(config);
+		return new ConfiguracionJwt(C, config);
 	}
 
 }
 
 class ConfiguracionSap {
 
-	constructor(config) {
-
+	constructor(C, config) {
 		this.nombreSistemaPorDefecto = config.sistemaPorDefecto;
 		this.destinos = []
 		config.destinos.forEach(destinoSap => {
@@ -218,9 +260,9 @@ class ConfiguracionSap {
 
 	}
 
-	static async cargar() {
+	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('sap');
-		return new ConfiguracionSap(config);
+		return new ConfiguracionSap(C, config);
 	}
 
 	getSistemaPorDefecto() {
@@ -233,22 +275,20 @@ class ConfiguracionSap {
 			return destino.id === sapsid
 		})
 	}
-	
+
 
 }
 
 class ConfiguracionDominios {
 
-	constructor(config) {
+	constructor(C, config) {
 
-		
+
 		if (!config) throw new Error("No se ha definido la configuracion de dominios de autenticacion ($.dominios)");
 		if (!config.dominios) throw new Error("No se ha definido la configuracion de dominios de autenticacion ($.dominios.dominios)");
 		if (!Object.keys(config.dominios).length) throw new Error("La lista de dominios de autenticacion está vacía ($.dominios.dominios)");
 
 		Object.assign(this, config.dominios)
-
-		
 
 		this.nombreDominioPorDefecto = config.dominioPorDefecto || Object.keys(config.dominios)[0];
 		this.principal = this[this.nombreDominioPorDefecto];
@@ -257,9 +297,9 @@ class ConfiguracionDominios {
 
 	}
 
-	static async cargar() {
+	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('dominios');
-		return new ConfiguracionDominios(config);
+		return new ConfiguracionDominios(C, config);
 	}
 
 	/**
@@ -288,32 +328,32 @@ class ConfiguracionDominios {
 
 class ConfiguracionFlags {
 
-	constructor(config) {
+	constructor(C, config) {
 		if (!config) throw new Error("No se ha definido la configuracion de flags ($.flags)");
 		if (!config.flags) throw new Error("No se ha definido la configuracion de flags ($.flags.flags)");
 		if (!Object.keys(config.flags).length) throw new Error("La lista de flags está vacía ($.flags.flags)");
 		Object.assign(this, config.flags);
 	}
 
-	static async cargar() {
+	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('flags');
-		return new ConfiguracionFlags(config);
+		return new ConfiguracionFlags(C, config);
 	}
 
 }
 
 class ConfiguracionLdap {
 
-/**C.ldap.tlsOptions = {
-		ca: [require('fs').readFileSync(C.ldap.cacert)]
-	}; */
+	/**C.ldap.tlsOptions = {
+			ca: [require('fs').readFileSync(C.ldap.cacert)]
+		}; */
 
-	constructor(config) {
+	constructor(C, config) {
 
 		if (!config) throw new Error("No se ha definido la configuracion de LDAP ($.ldap)");
 		if (!Validador.esCadenaNoVacia(config.servidor)) throw new Error("No se ha definido el servidor LDAP ($.ldap.servidor)");
 		if (!Validador.esCadenaNoVacia(config.baseBusqueda)) throw new Error("No se ha definido la base de búsqueda LDAP ($.ldap.baseBusqueda)");
-		 
+
 
 		this.servidor = config.servidor.trim();
 		this.baseBusqueda = config.baseBusqueda.trim();
@@ -325,9 +365,9 @@ class ConfiguracionLdap {
 		}
 	}
 
-	static async cargar() {
+	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('ldap');
-		return new ConfiguracionLdap(config);
+		return new ConfiguracionLdap(C, config);
 	}
 
 	/**
@@ -349,45 +389,4 @@ class ConfiguracionLdap {
 }
 
 
-
-try {
-	C = new Configuracion(process.env.F3_CONFIG_FILE || 'config.json');
-} catch (excepcion) {
-	console.error('Ocurrió un error al cargar la configuración');
-	process.exit(1);
-}
-
-
-
-// Verificando la configuración mínima.
-// Los siguientes métodos detienen la ejecución en caso de fallo
-
-// _verificadorConfiguracion.verificarSistemasSap(C);
-// _verificadorConfiguracion.verificarHttp(C);
-// _verificadorConfiguracion.verificarJWT(C);
-//_verificadorConfiguracion.verificarMongodb(C);
-//_verificadorConfiguracion.verificarSQLite(C);
-//_verificadorConfiguracion.verificarLdap(C);
-/*
-	C.ldap.tlsOptions = {
-		ca: [require('fs').readFileSync(C.ldap.cacert)]
-	};
-	*/
-
-
-/*
-
-	C.sistemaSapPorDefecto = () => {
-		return C.sap_systems[C.sap_systems.default];
-	}
-
-	C.sistemaSap = (sapsid) => {
-		if (sapsid && C.sap_systems[sapsid]) {
-			return C.sap_systems[sapsid];
-		}
-		global.logger.e("No se encuentra el sistema SAP [" + sapsid + "]");
-		return null;
-	}
-
-*/
-module.exports = C;
+module.exports = Configuracion.cargarDatosFichero;

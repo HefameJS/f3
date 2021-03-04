@@ -23,6 +23,7 @@ module.exports = (app) => {
 		confirmacionPedido: require('controladores/controladorConfirmacionPedido'),
 		devoluciones: require('controladores/controladorDevoluciones'),
 		albaranes: require('controladores/controladorAlbaranes'),
+		facturas: require('controladores/controladorFacturas'),
 	}
 	/*
 		
@@ -101,13 +102,14 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.albaranes.consultaAlbaran));
 
 
-	/*
-	//app.route('/facturas')
-	//	.get(controllers.facturas.findFacturas);
-	//app.route('/facturas/:numeroFactura')
-	//	.get(controllers.facturas.getFactura);
 	
-
+	app.route('/facturas')
+		.get(controladores.facturas.listadoFacturas);
+	app.route('/facturas/:numeroFactura')
+		.get(controladores.facturas.consultaFactura);
+	
+	
+	/*
 	
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controladores.retransmision.retransmitePedido));

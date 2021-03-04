@@ -174,7 +174,7 @@ const _registrarProceso = () => {
 
 	let datos = {
 		...filtro,
-		version: global.constants.SERVER_VERSION,
+		version: K.VERSION.SERVIDOR,
 		type: process.type,
 		status: K.PROCESS_STATUS.ALIVE,
 		timestamp: Date.fedicomTimestamp()

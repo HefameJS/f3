@@ -132,13 +132,24 @@ class LineaAlbaran {
 		this.orden = posicion.posicion;
 		this.codigoArticulo = posicion.codigo;
 		this.descripcionArticulo = posicion.descripcion;
-		if (posicion.t_lotes.length > 0) this.lotes = posicion.t_lotes.map(lote => {
+		if (posicion.t_lotes?.length > 0) this.lotes = posicion.t_lotes.map(lote => {
 			return {
 				lote: lote.lote,
 				fechaCaducidad: Date.fromSAPtoFedicomDate(lote.fecad)
 			}
 		});
-		if (posicion.t_box && posicion.t_box.length) this.cubeta = posicion.t_box;
+
+		if (posicion.t_box?.length > 0) this.cubeta = posicion.t_box
+			.filter(cubeta => cubeta.cubeta && cubeta.cantidad)
+			.map(cubeta => {
+				return {
+					codigo: cubeta.cubeta,
+					unidades: cubeta.cantidad
+				}
+			});
+
+
+
 		this.cantidadPedida = posicion.und_ped;
 		this.cantidadServida = posicion.und_serv;
 		this.cantidadBonificada = posicion.und_bonif;

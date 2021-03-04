@@ -7,9 +7,10 @@ module.exports = async function () {
 
 	// ID de instancia del proceso actual
 	process.iid = require('os').hostname() + '-' + process.pid;
+	const Configuracion = require('global/configuracion');
 
 	global.constants = require('global/constantes');
-	global.config = require('global/configuracion');
+	global.config = await Configuracion(process.env.F3_CONFIG_FILE || 'config.json');
 	global.logger = require('global/logger');
 
 	process.on('uncaughtException', (excepcionNoControlada) => {

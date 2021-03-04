@@ -13,98 +13,65 @@ const CRC = require('modelos/CRC');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const ConsultaAlbaran = require('modelos/albaran/ModeloConsultaAlbaran');
 const Albaran = require('modelos/albaran/ModeloAlbaran');
-// const ConfirmacionAlbaran = require('modelos/albaran/ModeloConfirmacionAlbaran');
+const ConfirmacionAlbaran = require('modelos/albaran/ModeloConfirmacionAlbaran');
 
 
 
-const _consultaAlbaranPDF = (req, res, numAlbaran) => {
+const _consultaAlbaranPDF = async function (req, res, numAlbaran) {
 
 	let txId = req.txId;
 
-	iSap.albaranes.consultaAlbaranPDF(txId, numAlbaran, (errorSap, respuestaSap) => {
-		if (errorSap) {
-			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				L.xe(txId, ['Error al consultar el albarán PDF', errorSap]);
-				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numAlbaran, 'PDF');
+	try {
+		let cuerpoSap = await iSap.albaranes.consultaAlbaranPDF(numAlbaran, txId);
+
+		if (cuerpoSap && Array.isArray(cuerpoSap) && cuerpoSap.length > 0) {
+			if (cuerpoSap[0].pdf_file) {
+				L.xi(txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
+				let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
+
+				res.setHeader('Content-Type', 'application/pdf');
+				res.setHeader('Content-Disposition', 'attachment; filename=' + numAlbaran + '.pdf');
+				res.status(200).send(buffer);
+				iEventos.consultas.consultaAlbaran(req, res, { pdf: numAlbaran, bytes: buffer.length }, K.TX_STATUS.OK, numAlbaran, 'PDF');
 				return;
 			}
-			else {
-				// Cuando el albarán no existe, SAP devuelve un 503 
-				if (respuestaSap.statusCode === 503) {
-					L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
-					let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-					iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'PDF');
-					return;
-				}
-				L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán PDF', errorSap]);
-				let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
+			// Si el PDF no existe, SAP genera un error de la forma
+			//[{"id":2,"message":"No se ha encontrado el documento indicado"}]]
+			else if (cuerpoSap[0].id === 2 && cuerpoSap[0].message === 'No se ha encontrado el documento indicado') {
+				L.xw(txId, ['SAP ha mandado el mensaje de que el albarán no existe', cuerpoSap]);
+				let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'No se encontró el albarán', 404);
 				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.NO_SAP, numAlbaran, 'PDF');
+				iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'PDF');
 				return;
 			}
 		}
 
-		let cuerpoSap = respuestaSap.body;
+		L.xe(txId, ['Ocurrió un error al solicitar el albarán PDF a SAP', cuerpoSap]);
+		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_ALB, 'Ocurrió un error en la búsqueda del albarán', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_RESPUESTA_SAP, numAlbaran, 'PDF');
+		return;
 
-		if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
-			L.xi(txId, ['Se obtuvo el albarán PDF en Base64 desde SAP']);
-			let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
+	} catch (errorSap) {
+		L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán PDF', errorSap]);
+		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_ALB, 'Ocurrió un error en la búsqueda del albarán', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP, numAlbaran, 'PDF');
+		return;
+	}
 
-			res.setHeader('Content-Type', 'application/pdf');
-			res.setHeader('Content-Disposition', 'attachment; filename=' + numAlbaran + '.pdf');
-			res.status(200).send(buffer);
-			iEventos.consultas.consultaAlbaran(req, res, { pdf: numAlbaran, bytes: buffer.length }, K.TX_STATUS.OK, numAlbaran, 'PDF');
-			return;
-		}
-		else {
-			L.xe(txId, ['Ocurrió un error al solicitar el albarán PDF', cuerpoSap]);
-			let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'No se encontró el albarán', 404);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'PDF');
-			return;
-		}
-
-	});
 }
 
-const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
+const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoArray) {
 	let txId = req.txId;
 
-	iSap.albaranes.consultaAlbaranJSON(txId, numAlbaran, (errorSap, respuestaSap) => {
+	try {
+		let cuerpoSap = await iSap.albaranes.consultaAlbaranJSON(numAlbaran, txId);
 
-		if (errorSap) {
-			if (errorSap.type === K.ISAP.ERROR_TYPE_NO_SAPSYSTEM) {
-				L.xe(txId, ['Error al consultar albarán JSON', errorSap]);
-				let errorFedicom = new ErrorFedicom('HTTP-400', errorSap.code, 400);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numAlbaran, 'JSON');
-				return;
-			}
-			else {
-				// Cuando el albarán no existe, SAP devuelve un 503 
-				if (respuestaSap && respuestaSap.statusCode === 503) {
-					L.xe(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
-					let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-					iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'JSON');
-					return;
-				}
-				L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', errorSap]);
-				let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.NO_SAP, numAlbaran, 'JSON');
-				return;
-			}
-		}
-
-		let cuerpoSap = respuestaSap.body;
-
-		if (cuerpoSap && cuerpoSap.t_pos) {
-			let datosAlbaran = new Albaran(cuerpoSap)
-			if (asArray) datosAlbaran = [datosAlbaran]
+		// Comprobamos que SAP haya devuelto al menos un objeto con el campo de posiciones
+		if (cuerpoSap?.t_pos) {
+			let datosAlbaran = new Albaran(cuerpoSap);
+			if (devolverComoArray) datosAlbaran = [datosAlbaran];
 			res.status(200).json(datosAlbaran);
 			iEventos.consultas.consultaAlbaran(req, res, { json: numAlbaran }, K.TX_STATUS.OK, numAlbaran, 'JSON');
 		} else {
@@ -113,7 +80,26 @@ const _consultaAlbaranJSON = (req, res, numAlbaran, asArray) => {
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'JSON');
 		}
-	})
+
+	} catch (errorSap) {
+
+		// Cuando el albarán no existe, SAP devuelve un código HTTP 503 y en el cuerpo de respuesta:
+		// {type: 'E', id: 'E202004011151', .... , message: 'La informacion no esta disponible..'
+		if (errorSap?.codigo === 503 && errorSap?.cuerpoRespuesta?.message === 'La informacion no esta disponible..') {
+			L.xw(txId, ['SAP devolvió un 503, probablemente el albarán no existe', errorSap]);
+			let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'JSON');
+			return;
+		}
+
+		L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', errorSap]);
+		let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP, numAlbaran, 'JSON');
+		return;
+	}
+
 }
 
 // GET /albaranes/:numeroAlbaran
@@ -146,7 +132,7 @@ const consultaAlbaran = (req, res) => {
 
 
 	// Detección del formato solicitado
-	let formatoAlbaran = 'JSON';
+	let formatoAlbaran;
 
 	if (req.headers['accept']) {
 		switch (req.headers['accept'].toLowerCase()) {
@@ -155,7 +141,7 @@ const consultaAlbaran = (req, res) => {
 		}
 	}
 
-	L.xd(txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept']]);
+	L.xi(txId, ['Se determina el formato solicitado del albarán', formatoAlbaran, req.headers['accept']]);
 
 	switch (formatoAlbaran) {
 		case 'JSON':
@@ -164,7 +150,7 @@ const consultaAlbaran = (req, res) => {
 			return _consultaAlbaranPDF(req, res, numAlbaranSaneado);
 		default:
 			// Nunca vamos a llegar a este caso, pero aquí queda el tratamiento necesario por si acaso
-			let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
+			let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_ALB, 'No se reconoce del formato de albarán en la cabecera "Accept"', 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, numAlbaranSaneado, null);
 			return;
@@ -344,15 +330,12 @@ const confirmacionAlbaran = (req, res) => {
 	// Verificación del token del usuario
 	let estadoToken = iTokens.verificaPermisos(req, res, {
 		admitirSimulaciones: true,
-		simulacionRequiereSolicitudAutenticacion: true,
-		admitirSimulacionesEnProduccion: false
+		simulacionRequiereSolicitudAutenticacion: true
 	});
 	if (!estadoToken.ok) {
 		iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, estadoToken.respuesta, estadoToken.motivo);
 		return;
 	}
-
-
 
 	let confirmacionAlbaran = null;
 	L.xd(txId, ['Analizando el contenido de la transmisión']);
@@ -360,15 +343,16 @@ const confirmacionAlbaran = (req, res) => {
 		confirmacionAlbaran = new ConfirmacionAlbaran(req);
 	} catch (excepcion) {
 		let errorFedicom = new ErrorFedicom(excepcion);
-		L.xe(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
+		L.xw(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
 
 	L.xd(txId, ['El contenido de la transmisión es una solicitud de confirmacion de albarán correcta', confirmacionAlbaran]);
-	res.status(200).json(confirmacionAlbaran);
-	iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, confirmacionAlbaran, K.TX_STATUS.OK, { albaranConfirmado: confirmacionAlbaran.numeroAlbaran });
+	let cuerpoRespuestaCliente = confirmacionAlbaran.generarJSON();
+	res.status(200).json(cuerpoRespuestaCliente);
+	iEventos.confirmacionAlbaran.confirmarAlbaran(req, res, cuerpoRespuestaCliente, K.TX_STATUS.OK, { albaranConfirmado: confirmacionAlbaran.numeroAlbaran });
 
 }
 

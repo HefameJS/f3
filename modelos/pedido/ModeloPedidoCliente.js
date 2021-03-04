@@ -209,7 +209,7 @@ class PedidoCliente {
 				} else {
 					L.xw(this.txId, ['No se reconce el código de almacén indicado - Se elimina el campo para que SAP lo elija']);
 					delete this.codigoAlmacenServicio;
-					this.addIncidencia(K.CODIGOS_ERROR_FEDICOM.WARN_NO_EXISTE_ALMACEN, 'No se reconoce el código de almacén indicado - Se le asigna su almacén habitual');
+					this.addIncidencia(K.INCIDENCIA_FEDICOM.WARN_PED, 'No se reconoce el código de almacén indicado - Se le asigna su almacén habitual');
 				}
 			}
 
@@ -254,7 +254,7 @@ class PedidoCliente {
 	generarRespuestaDeTodasLasLineasSonInvalidas() {
 
 		let errorFedicom = {
-			codigo: K.CODIGOS_ERROR_FEDICOM.ERR_TODAS_LINEAS_ERROR,
+			codigo: K.INCIDENCIA_FEDICOM.ERR_PED,
 			descripcion: 'Existen errores en todas las líneas, el pedido no se procesa.'
 		};
 

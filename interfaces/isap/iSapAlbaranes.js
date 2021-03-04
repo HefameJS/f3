@@ -7,86 +7,43 @@ const C = global.config;
 // Interfaces
 const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
 
-/*
-exports.consultaAlbaranJSON = (txId, numeroAlbaran, callback) => {
 
-	let destinoSap = DestinoSap.porDefecto();
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
+exports.consultaAlbaranJSON = (numeroAlbaran, txId) => {
 
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
-		method: 'GET'
-	});
-	parametrosHttp.timeout = 20000;
+	return new Promise(async function (resolve, reject) {
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+		let destinoSap = C.sap.getSistemaPorDefecto();
+		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+			url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
+			method: 'GET',
+			timeout: 20000
+		});
 
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, null);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, null);
-			return;
-		}
-
-		callback(null, respuestaSap);
-
+		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
 
 	});
+
 }
 
-exports.consultaAlbaranPDF = (txId, numeroAlbaran, callback) => {
 
-	let destinoSap = DestinoSap.porDefecto();
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
 
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsf_get_document/proforma/' + numeroAlbaran,
-		method: 'GET',
-	});
-	parametrosHttp.timeout = 10000;
+exports.consultaAlbaranPDF = (numeroAlbaran, txId) => {
 
-	L.xd(txId, ['Enviando a SAP consulta de albarán PDF', parametrosHttp]);
+	return new Promise(async function (resolve, reject) {
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+		let destinoSap = C.sap.getSistemaPorDefecto();
+		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+			url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
+			method: 'GET',
+			timeout: 10000
+		});
 
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, null);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, false);
-			return;
-		}
-
-		callback(null, respuestaSap);
+		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
 
 	});
+
 }
-*/
+
 
 exports.listadoAlbaranes = (consultaAlbaran, txId) => {
 

@@ -62,7 +62,7 @@ const extenderSolicitudHttp = (req, res) => {
 
 	res.setHeader('X-TxID', txId);
 	res.setHeader('Software-ID', K.SOFTWARE_ID.HEFAME);
-	res.setHeader('Content-Api-Version', K.PROTOCOL_VERSION);
+	res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
 	if (req.headers && req.headers['x-forwarded-for'])
 		req.ipOrigen = req.headers['x-forwarded-for'];
 	else

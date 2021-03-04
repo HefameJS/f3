@@ -27,6 +27,7 @@ exports.retransmitePedido = (req, res) => {
 		forzarAlmacen: req.query.almacen ? req.query.almacen : undefined,
 		sistemaSAP: req.query.sistemaSAP ? req.query.sistemaSAP : undefined
 	}
+	
 	retransmitirPedido(txId, opcionesRetransmision, (err, rtxId, ctxId) => {
 		res.status(200);
 		if (err) {

@@ -69,7 +69,7 @@ exports.crearDevolucion = async function (req, res) {
 			L.xi(txIdOriginal, 'Se ha recibido una transmisión duplicada de esta con ID ' + txId, 'crc');
 
 			// Añadimos la incidencia de devolución duplicada
-			let errorFedicom = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'La devolución ya estaba registrada en el sistema')
+			let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'La devolución ya estaba registrada en el sistema')
 			respuestaCliente.forEach(devolucionOriginal => {
 				// Si la devolucion original tenía número asignado, indicamos que es duplicada.
 				// Si no lleva numero, es que probablemente era un error y la dejamos tal cual.
@@ -126,7 +126,7 @@ exports.crearDevolucion = async function (req, res) {
 		}
 		else {
 			L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
+			let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
 			iFlags.set(txId, C.flags.NO_SAP)
 			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
@@ -182,7 +182,7 @@ const _consultaDevolucionJSON = async function (req, res, numeroDevolucion) {
 
 	} catch (errorMongo) {
 		L.xe(txId, ['Error en la consulta a MongoDB', errorMongo])
-		let error = new ErrorFedicom(K.INCIDENCIAS_FEDICOM.ERR_DEV, 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
+		let error = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'No se pudo obtener la devolución - Inténtelo de nuevo mas tarde', 500);
 		let cuerpoRespuesta = error.enviarRespuestaDeError(res);
 		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB, 'JSON');
 		return;
@@ -264,7 +264,7 @@ exports.consultaDevolucion = (req, res) => {
 	// Saneado del número de devolucion
 	let numDevolucion = req.params.numeroDevolucion;
 	if (!numDevolucion) {
-		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'El parámetro "numeroDevolucion" es obligatorio', 400);
+		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'El parámetro "numeroDevolucion" es obligatorio', 400);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA, null);
 		return;

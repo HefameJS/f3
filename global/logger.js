@@ -5,6 +5,7 @@ let C = global.config;
 
 
 const util = require('util');
+//const fs = require('fs');
 
 const TRACE = 'TRC';
 const DEBUG = 'DBG';
@@ -43,7 +44,8 @@ class Logger {
 		let hora = Date.toShortTime(evento.timestamp);
 		let mensaje = (evento.txId ? evento.txId + '|' : '') + hora + '|' + evento.nivel + '|' + evento.categoria + '|' + JSON.stringify(evento.datos)
 
-		/*fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
+		/*
+		fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
 			if (err) {
 				console.log(mensaje)
 				console.log('###', err)

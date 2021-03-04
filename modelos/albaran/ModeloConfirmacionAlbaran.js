@@ -6,8 +6,8 @@ const L = global.logger;
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
-// Helpers
-const FieldChecker = require('util/fieldChecker');
+// Utiles
+const Validador = require('global/validador');
 
 /**
  * Esta clase representa una confirmacion de las lineas de un albarán.
@@ -29,89 +29,117 @@ class ConfirmacionAlbaran {
 
 		let txId = req.txId;
 		let json = req.body;
+		this.txId = txId;
+
+		this.metadatos = {
+			ignorarTodasLineas: true
+		}
 
 		// SANEADO OBLIGATORIO
 		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkExistsAndNotEmptyString(json.numeroAlbaran, errorFedicom, 'CONF-ERR-001', 'El parámetro "numeroAlbaran" es inválido');
-		FieldChecker.checkExistsAndDate(json.fechaAlbaran, errorFedicom, 'CONF-ERR-002', 'El parámetro "fechaAlbaran" es inválido');
-		FieldChecker.checkExistsAndNonEmptyArray(json.lineas, errorFedicom, 'LOG-ERR-004', 'El campo "lineas" no puede estar vacío');
+		Validador.esCadenaNoVacia(json.numeroAlbaran, errorFedicom, 'CONF-ERR-001', 'El parámetro "numeroAlbaran" es inválido');
+		Validador.esFecha(json.fechaAlbaran, errorFedicom, 'CONF-ERR-002', 'El parámetro "fechaAlbaran" es inválido');
+		Validador.esArrayNoVacio(json.lineas, errorFedicom, 'CONF-ERR-004', 'El parámetro "lineas" es inválido');
 
 		if (errorFedicom.tieneErrores()) {
-			L.xe(txId, 'La confirmación del albarán contiene errores de cabecera. Se aborta el procesamiento de la misma');
+			L.xw(txId, 'La confirmación del albarán contiene errores de cabecera. Se aborta el procesamiento de la misma');
 			throw errorFedicom;
 		}
-		// FIN DE SANEADO
 
-		// COPIA DE PROPIEDADES
-		Object.assign(this, json);
+		// Copiamos la información del mensaje
+		this.numeroAlbaran = json.numeroAlbaran.trim();
+		this.fechaAlbaran = json.fechaAlbaran.trim();
+		this.#analizarPosiciones(json.lineas);
 
-		// INFORMACION DE LOGIN INCLUIDA EN LA CONFIRMACION
-		/*
+
 		this.login = {
 			username: req.token.sub,
 			domain: req.token.aud
 		}
-		*/
 
-		// SANEADO DE LINEAS
-		let [lineas/*, ignorarTodasLineas*/] = _analizarPosiciones(txId, json);
-		this.lineas = lineas;
-		// this.ignorarTodasLineas = ignorarTodasLineas;
-		
+	}
+
+	#analizarPosiciones(json) {
+		this.lineas = [];
+		let ordenes = [];
+
+
+		json.forEach((linea, i) => {
+			let nuevaLinea = new LineaConfirmacionAlbaran(linea, this.txId, i);
+			this.lineas.push(nuevaLinea);
+
+			if (!nuevaLinea.metadatos.ignorar)
+				this.metadatos.ignorarTodasLineas = false;
+
+			if (nuevaLinea.orden) {
+				ordenes.push(parseInt(nuevaLinea.orden));
+			}
+		})
+
+		let siguienteOrdinal = 1;
+		this.lineas.forEach((linea) => {
+			if (!linea.orden) {
+				while (ordenes.includes(siguienteOrdinal)) {
+					siguienteOrdinal++;
+				}
+				linea.orden = siguienteOrdinal;
+				siguienteOrdinal++;
+			}
+		});
+	}
+
+	generarJSON() {
+		return {
+			numeroAlbaran: this.numeroAlbaran,
+			fechaAlbaran: this.fechaAlbaran,
+			lineas: this.lineas.map(linea => linea.generarJSON())
+		}
 	}
 }
 
 
-
-const _analizarPosiciones = (txId, json) => {
-	let lineas = [];
-	let ordenes = [];
-	let ignorarTodasLineas = true;
-
-	json.lineas.forEach((linea, i) => {
-		let nuevaLinea = new LineaConfirmacionAlbaran(txId, linea);
-		lineas.push(nuevaLinea);
-		if (!nuevaLinea.sap_ignore) ignorarTodasLineas = false;
-
-		if (nuevaLinea.orden) {
-			ordenes.push(parseInt(nuevaLinea.orden));
-		}
-	})
-
-	let nextOrder = 1;
-	lineas.forEach((linea) => {
-		if (!linea.orden) {
-			while (ordenes.includes(nextOrder)) {
-				nextOrder++;
-			}
-			linea.orden = nextOrder;
-			nextOrder++;
-		}
-	});
-
-	return [lineas, ignorarTodasLineas];
-}
-
-
-
+/*
+ * 		{
+ * 			codigoArticulo: "84021545454574",
+ * 			lote: "16L4534",
+ * 			fechaCaducidad: "01/05/2017"
+ * 		}
+ */
 class LineaConfirmacionAlbaran {
-	constructor(txId, posicion) {
+	constructor(json, txId, numeroPosicion) {
 
-		// COPIA DE PROPIEDADES
-		Object.assign(this, posicion);
+		L.xt(txId, ['Analizando linea de confirmación en posición ' + numeroPosicion])
+		this.metadatos = {
+			ignorar: false
+		}
 
 		let errorFedicom = new ErrorFedicom();
 
-		FieldChecker.checkExistsAndNotEmptyString(posicion.codigoArticulo, errorFedicom, 'LIN-CONF-ERR-001', 'El campo "codigoArticulo" es obligatorio');
-		FieldChecker.checkDate(posicion.fechaCaducidad, errorFedicom, 'LIN-CONF-ERR-003', 'El campo "fechaCaducidad" es inválido');
-		
+		Validador.esCadenaNoVacia(json.codigoArticulo, errorFedicom, 'LIN-CONF-ERR-001', 'El campo "codigoArticulo" es obligatorio');
+		Validador.esFecha(json.fechaCaducidad, errorFedicom, 'LIN-CONF-ERR-003', 'El campo "fechaCaducidad" es inválido');
+
 		// Si hay error, añadimos las incidencias a la linea 
 		if (errorFedicom.tieneErrores()) {
+			L.xw(txId, ['Se descarta la línea de confirmación de albaran por errores en la misma.', numeroPosicion, this.incidencias]);
 			this.incidencias = errorFedicom.getErrores();
-			L.xw(txId, ['Se ha descartado la línea de logística por errores en la misma.', this.incidencias]);
+			this.metadatos.ignorar = true;
 		}
 
+		this.codigoArticulo = json.codigoArticulo.trim();
+		this.lote = json.lote;
+		this.fechaCaducidad = json.fechaCaducidad;
+
+	}
+
+	generarJSON() {
+		let json = {
+			codigoArticulo: this.codigoArticulo,
+			fechaCaducidad: this.fechaCaducidad
+		}
+		if (this.lote) json.lote = this.lote
+		if (this.incidencias) json.incidencias = this.incidencias;
+		return json;
 	}
 }
 

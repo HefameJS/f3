@@ -31,7 +31,7 @@ const finaliza = (txId, mdbQuery) => {
     let flags = get(txId);
     del(txId);
 
-    flags[C.flags.VERSION] = K.TX_VERSION;
+    flags[C.flags.VERSION] = K.VERSION.TRANSMISION;
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
     
