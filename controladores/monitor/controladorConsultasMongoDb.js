@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iMongo = require('interfaces/imongo/iMongo');
 
 // Modelos
@@ -12,23 +12,28 @@ const EstadoReplicaSet = require('modelos/monitor/ModeloEstadoReplicaSet')
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // GET /mongodb/colecciones
-const getNombresColecciones = (req, res) => {
+const getNombresColecciones = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de LISTA DE COLECCIONES de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getNombresColecciones((errorMongo, colecciones) => {
-		if (errorMongo) {
-			L.e(['Error al obtener la lista de colecciones', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de colecciones');
-		} else {
-			res.status(200).send(colecciones);
-		}
-	})
+	try {
+		let colecciones = await iMongo.monitorMongo.getNombresColecciones();
+		res.status(200).send(colecciones);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener la lista de colecciones', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de colecciones');
+	}
 }
 
 // GET /mongodb/colecciones/:colName ? [datosExtendidos=true]
-const getColeccion = (req, res) => {
+const getColeccion = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de COLECCION de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
@@ -40,12 +45,8 @@ const getColeccion = (req, res) => {
 
 	let consultarDatosExtendidos = (req.query.datosExtendidos === 'true');
 
-	iMongo.monitor.getColeccion(req.params.colName, (errorMongo, datosColeccion) => {
-		if (errorMongo) {
-			L.e(['Error al obtener los datos de la colección', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los datos de la colección');
-			return;
-		}
+	try {
+		let datosColeccion = await iMongo.monitorMongo.getColeccion(req.params.colName);
 
 		if (!consultarDatosExtendidos) {
 			if (datosColeccion.wiredTiger) delete datosColeccion.wiredTiger;
@@ -56,92 +57,96 @@ const getColeccion = (req, res) => {
 		delete datosColeccion.ok;
 		delete datosColeccion.operationTime;
 
-		return res.status(200).json(datosColeccion);
+		res.status(200).json(datosColeccion);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener los datos de la colección', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los datos de la colección');
+	}
 
-	});
 }
 
 // GET /mongodb/database
-const getDatabase = (req, res) => {
+const getDatabase = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de DATABASE de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getDatabase((errorMongo, estadisticasDb) => {
-		if (errorMongo) {
-			L.e(['Error al obtener estadísticas de la base de datos', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener estadísticas de la base de datos');
-			return;
-		}
-
+	try {
+		let estadisticasDb = await iMongo.monitorMongo.getDatabase();
 		delete estadisticasDb['$clusterTime'];
 		delete estadisticasDb.ok;
 		delete estadisticasDb.operationTime;
+		res.status(200).json(estadisticasDb);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener estadísticas de la base de datos', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener estadísticas de la base de datos');
+	}
 
-		return res.status(200).json(estadisticasDb);
-
-	});
 }
 
 // GET /mongodb/operaciones
-const getOperaciones = (req, res) => {
+const getOperaciones = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de OPERACIONES de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getOperaciones((errorMongo, operaciones) => {
-		if (errorMongo) {
-			L.e(['Error al obtener la lista de operaciones', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de operaciones');
-			return;
-		}
+	try {
+		let operaciones = await iMongo.monitorMongo.getOperaciones();
+		res.status(200).json(operaciones);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener la lista de operaciones', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de operaciones');
+	}
 
-		return res.status(200).json(operaciones);
-
-	});
 }
 
 // GET /mongodb/replicaSet
-const getReplicaSet = (req, res) => {
+const getReplicaSet = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de REPLICA SET de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	iMongo.monitor.getReplicaSet((errorMongo, datosReplicaSet) => {
-		if (errorMongo) {
-			L.e(['Error al obtener el estado del clúster', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener el estado del clúster');
-			return;
-		}
-
+	try {
+		let datosReplicaSet = await iMongo.monitorMongo.getReplicaSet();
 		let estadoReplicaSet = new EstadoReplicaSet(datosReplicaSet);
-		return res.status(200).json( estadoReplicaSet );
-
-	});
+		return res.status(200).json(estadoReplicaSet);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener el estado del clúster', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener el estado del clúster');
+	}
 }
 
 // GET /mongodb/logs ? [tipo=(global|rs|startupWarnings)]
-const getLogs = (req, res) => {
+const getLogs = async function (req, res) {
+
+	let txId = req.txId;
+	L.xi(txId, ['Consulta de LOGS de Mongodb']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
 	let tipoLog = req.query.tipo ? req.query.tipo : 'global';
 
-	iMongo.monitor.getLogs(tipoLog, (errorMongo, logs) => {
-		if (errorMongo) {
-			L.e(['Error al obtener los logs', errorMongo]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los logs');
-			return;
-		}
-
+	try {
+		let logs = await iMongo.monitorMongo.getLogs(tipoLog);
 		delete logs['$clusterTime'];
 		delete logs.ok;
 		delete logs.operationTime;
-
 		return res.status(200).json(logs);
-
-	});
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener los logs', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener los logs');
+		return;
+	}
 }
 
 module.exports = {

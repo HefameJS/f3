@@ -36,6 +36,7 @@ module.exports = {
 	chequeaConexion,
 	transaccion: require('./iMongoTransaccion'),
 	consultaTx: require('./iMongoConsultaTx'),
+	monitorMongo: require('./iMongoMonitor'),
 	//conexion: conexionMongo
 	/*
 	conectar: MDB.conectar,
@@ -53,5 +54,5 @@ module.exports = {
 	// Consultas sobre las transmisiones
 	
 	
-	monitor: require('./iMongoMonitor')*/
+	*/
 }

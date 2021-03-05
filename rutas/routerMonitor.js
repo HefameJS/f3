@@ -7,8 +7,7 @@ const L = global.logger;
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
-const extensionesExpress = require('util/extensionesExpress');
-const tryCatch = require('rutas/tryCatchWrapper');
+const { extenderSolicitudHttp, tryCatch } = require('global/extensiones/extensionesExpress');
 
 
 
@@ -24,11 +23,12 @@ module.exports = (app) => {
 	 */
 	app.use((errorExpress, req, res, next) => {
 		if (errorExpress) {
-			[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+
+			[req, res] = extenderSolicitudHttp(req, res);
 			let txId = req.txId;
 
-			L.e('** Recibiendo transmisión erronea ' + txId + ' desde ' + req.ipOrigen);
-			L.xe(txId, ['** OCURRIO UN ERROR AL PARSEAR LA TRANSMISION Y SE DESCARTA', errorExpress]);
+			L.w('Se recibe transmisión erronea ' + txId + ' desde ' + req.ipOrigen);
+			L.xw(txId, ['Se descarta la transmisión por ser errónea', errorExpress]);
 
 			let errorFedicom = new ErrorFedicom(errorExpress);
 			errorFedicom.enviarRespuestaDeError(res);
@@ -38,18 +38,21 @@ module.exports = (app) => {
 	});
 
 
+	// Generamos txId y añadimos cabeceras comunes.
+	// Tambien añadimos funcionalidades a req y res
 	app.use((req, res, next) => {
-		[req, res] = extensionesExpress.extenderSolicitudHttp(req, res);
+
+		[req, res] = extenderSolicitudHttp(req, res);
 		let txId = req.txId;
 
-		L.i('** Recibiendo transmisión ' + txId + ' desde ' + req.ip);
+		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.ipOrigen);
 		L.xt(txId, 'Iniciando procesamiento de la transmisión');
 
 		next();
 	});
 
 
-	/* RUTAS NUEVAS v1 */
+	// RUTAS NUEVAS v1
 
 	// Consulta de transmisiones
 	app.route('/v1/transmisiones')
@@ -57,7 +60,7 @@ module.exports = (app) => {
 
 	app.route('/v1/agregacion')
 		.put(tryCatch(controladores.consultas.agregaciones.consultaAgregaciones));
-
+/*
 	// Consulta de balanceadores de carga HTTP
 	app.route('/v1/balanceadores')
 		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
@@ -69,7 +72,7 @@ module.exports = (app) => {
 	// Consulta de procesos registrados
 	app.route('/v1/procesos')
 		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
-
+*/
 	// MongoDB
 	app.route('/v1/mongodb/colecciones')
 		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones));
@@ -83,7 +86,7 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet));
 	app.route('/v1/mongodb/logs')
 		.get(tryCatch(controladores.consultas.mongodb.getLogs)); // ? [tipo = (global | rs | startupWarnings)]
-
+/*
 	// SQLite
 	app.route('/v1/sqlite')
 		.put(tryCatch(controladores.consultas.sqlite.consultaRegistros));
@@ -106,16 +109,15 @@ module.exports = (app) => {
 
 	app.route('/v1/dumps/:idDump')
 		.get(tryCatch(controladores.consultas.dumps.consultaDump));
+*/
 
-
-	/* Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta. */
+	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
 		let txId = req.txId;
-
 		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		errorFedicom.enviarRespuestaDeError(res);
-
 	});
+
 
 };

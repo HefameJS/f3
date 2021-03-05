@@ -25,13 +25,15 @@ require('bootstrap')().then(() => {
 	let worker;
 
 	// Lanzamiento de los workers
+	/*
 	L.i(['Lanzando procesos worker', C.numeroWorkers], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WORKER + '.js' });
 	for (let i = 0; i < C.numeroWorkers; i++) {
 		worker = cluster.fork();
 		worker.tipo = K.PROCESOS.TIPOS.WORKER;
 	}
-
+	*/
+	
 
 	// Lanzamiento del watchdog
 	/*
@@ -40,6 +42,15 @@ require('bootstrap')().then(() => {
 	worker = cluster.fork();
 	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG;
 	*/
+
+
+	// Lanzamiento del monitor
+	L.i(['Lanzando procesos monitor'], 'cluster');
+	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.MONITOR + '.js' });
+	worker = cluster.fork();
+	worker.tipo = K.PROCESOS.TIPOS.MONITOR;
+	
+
 
 	// require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
 

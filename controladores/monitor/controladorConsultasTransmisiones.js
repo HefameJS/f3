@@ -3,8 +3,11 @@
 const L = global.logger;
 //const K = global.constants;
 
+// Externas
+const { EJSON } = require('bson');
+
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iMongo = require('interfaces/imongo/iMongo');
 
 // Modelos
@@ -24,7 +27,7 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
  * }
  * NOTA: El campo filtro espera un objeto EJSON
  */
-const consultaTransmisiones = (req, res) => {
+const consultaTransmisiones = async function (req, res) {
 
 	let txId = req.txId;
 
@@ -33,17 +36,28 @@ const consultaTransmisiones = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-
 	let consulta = req.body;
 
-	iMongo.consultaTx.consulta(txId, consulta, (errorMongo, resultado) => {
-		if (errorMongo) {
-			L.e(['Ocurrió un error al realizar la consulta a mongoDB', errorMongo])
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al realizar la consulta');
-			return;
-		}
+	L.xt(txId, ['Analizando consulta', consulta]);
+
+	try {
+		if (consulta.filtro) consulta.filtro = EJSON.deserialize(consulta.filtro, { relaxed: false })
+	} catch (errorDeserializadoEJSON) {
+		L.xw(txId, ['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al interpretar la consulta');
+		return;
+	}
+
+	L.xt(txId, ['Consulta analizada', consulta]);
+
+	try {
+		let resultado = await iMongo.consultaTx.consulta(consulta);
 		res.status(200).json(resultado);
-	});
+	} catch (errorMongo) {
+		L.e(['Ocurrió un error al realizar la consulta a mongoDB', errorMongo])
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al realizar la consulta');
+		return;
+	}
 
 }
 

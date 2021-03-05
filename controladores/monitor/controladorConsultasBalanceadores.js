@@ -7,7 +7,7 @@ const K = global.constants;
 const lock = require('locks');
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iApache = require('interfaces/apache/iapache');
 const iRegistroProcesos = require('interfaces/procesos/iRegistroProcesos');
 

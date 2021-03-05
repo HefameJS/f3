@@ -8,7 +8,7 @@ const lock = require('locks');
 const request = require('request');
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iProcesos = require('interfaces/procesos/iRegistroProcesos');
 
 // 

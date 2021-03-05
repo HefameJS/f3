@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 
 // Helpers
 const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;

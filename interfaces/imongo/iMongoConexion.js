@@ -43,6 +43,7 @@ const conexion = async function () {
 		conectado: cliente ? true : false,
 		cliente,
 		bd: baseDatos,
+		getBD: (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) },
 		col: colecciones
 	}
 

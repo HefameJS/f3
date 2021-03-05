@@ -9,9 +9,7 @@ const { EJSON } = require('bson');
 
 
 
-const consulta = (txId, consulta, callback) => {
-
-	L.xi(txId, consulta);
+const consulta = async function (consulta) {
 
 	let filtro = consulta.filtro || {};
 	let proyeccion = consulta.proyeccion || null;
@@ -19,71 +17,36 @@ const consulta = (txId, consulta, callback) => {
 	let skip = consulta.skip || 0;
 	let limite = Math.min(consulta.limite || 50, 50);
 
-	let filtroMongo = {}
-	try {
-		filtroMongo = EJSON.deserialize(filtro, { relaxed: false });
-	} catch (errorDeserializadoEJSON) {
-		L.e(['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
-		callback(new Error('La consulta no es válida'), null);
-		return;
-	}
-
 
 	// No se admiten '$or' vacíos, mongo peta
-	if (filtroMongo.$or && filtroMongo.$or.length === 0) {
-		delete filtroMongo.$or;
+	if (filtro.$or && filtro.$or.length === 0) {
+		delete filtro.$or;
 	}
 
 
-	if (MDB.colTx()) {
-		let cursor = MDB.colTx().find(filtroMongo);
-		if (proyeccion) cursor.project(proyeccion);
-		if (orden) cursor.sort(orden);
-		if (skip) cursor.skip(skip);
-		if (limite) cursor.limit(limite);
+	let cursor = M.col.tx.find(filtro);
+	if (proyeccion) cursor.project(proyeccion);
+	if (orden) cursor.sort(orden);
+	if (skip) cursor.skip(skip);
+	if (limite) cursor.limit(limite);
 
-		cursor.count(false, (errorMongoCount, count) => {
-			if (errorMongoCount) return callback(errorMongoCount, null);
 
-			cursor.toArray((errorMongoToArray, resultados) => {
-				if (errorMongoToArray) return callback(errorMongoToArray, null);
+	let count = await cursor.count(false);
+	let resultados = await cursor.toArray();
 
-				return callback(null, {
-					resultados: resultados,
-					limite: limite,
-					skip: skip,
-					total: count
-				});
-
-			});
-		});
-
-	} else {
-		callback(new Error('No conectado a MongoDB'), null);
+	return {
+		resultados: resultados,
+		limite: limite,
+		skip: skip,
+		total: count
 	}
+
+
 }
 
 
-const agregacion = (txId, pipeline, callback) => {
-
-	L.xi(txId, 'Realizando agregación');
-	L.xd(txId, ['Consulta de agregación', pipeline]);
-
-	try {
-		pipeline = EJSON.deserialize(pipeline, { relaxed: false });
-	} catch (errorDeserializadoEJSON) {
-		L.e(['Error en la deserialización de la consulta EJSON', errorDeserializadoEJSON])
-		callback(new Error('La consulta de agregación no es válida'), null);
-		return;
-	}
-
-
-	if (MDB.colTx()) {
-		MDB.colTx().aggregate(pipeline).toArray(callback);
-	} else {
-		callback(new Error('No conectado a MongoDB'), null);
-	}
-
+const agregacion = async function (pipeline) {
+	return await M.col.tx.aggregate(pipeline).toArray();
 }
 
 /**
@@ -233,8 +196,8 @@ const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
 
 
 module.exports = {
-	//consulta,
-	//agregacion,
+	consulta,
+	agregacion,
 
 	porId,
 	porCRC,

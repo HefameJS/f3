@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iSap = require('interfaces/isap/iSap');
 const iMonitor = require('interfaces/ifedicom/iMonitor');
 

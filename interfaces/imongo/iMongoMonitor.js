@@ -2,96 +2,45 @@
 //const C = global.config;
 //const L = global.logger;
 //const K = global.constants;
-
-// Interfaces
-const MDB = require('./iMongoConexion');
+const M = global.mongodb;
 
 
-const getReplicaSet = (callback) => {
-	let db = MDB.db('admin');
-	if (db) {
-		db.command({ "replSetGetStatus": 1 }, callback)
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
-	}
-
+const getReplicaSet = async function () {
+	let db = M.getBD('admin');
+	return await db.command({ "replSetGetStatus": 1 })
 }
 
-const getColeccion = (nombreColeccion, callback) => {
-	let db = MDB.db();
-	if (db) {
-		db.command({ collStats: nombreColeccion }, callback);
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
-	}
+const getColeccion = async function (nombreColeccion) {
+	let db = M.getBD();
+	return await db.command({ collStats: nombreColeccion });
 }
 
 
-const getNombresColecciones = (callback) => {
-	let db = MDB.db();
-	if (db) {
-		db.command({ listCollections: 1, nameOnly: true }, (err, data) => {
-			if (err) {
-				callback(err, null);
-				return;
-			}
+const getNombresColecciones = async function () {
+	let db = M.getBD();
+	let nombresColecciones = await db.command({ listCollections: 1, nameOnly: true })
 
-			if (data && data.cursor && data.cursor.firstBatch) {
-				let collections = [];
-				data.cursor.firstBatch.forEach(element => {
-					collections.push(element.name);
-				});
-				callback(false, collections);
-				return;
-			}
-			callback('data.cursor.firstBatch no existe', null);
-			return;
-		});
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
+	if (nombresColecciones?.cursor?.firstBatch) {
+		return nombresColecciones.cursor.firstBatch.map(element => element.name);
+	} else {
+		throw new Error('data.cursor.firstBatch no existe')
 	}
 }
 
-const getDatabase = (callback) => {
-	let db = MDB.db();
-	if (db) {
-		db.command({ dbStats: 1 }, callback);
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
-	}
+const getDatabase = async function () {
+	let db = M.getBD();
+	return await db.command({ dbStats: 1 });
 }
 
-const getOperaciones = (callback) => {
-	let db = MDB.db('admin');
-	if (db) {
-		db.executeDbAdminCommand({ currentOp: true, "$all": true }, (err, operations) => {
-			if (err) {
-				callback(err, null);
-				return;
-			}
-
-			callback(false, operations.inprog);
-			return;
-		});
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
-	}
+const getOperaciones = async function () {
+	let db = M.getBD('admin');
+	let operaciones = await db.executeDbAdminCommand({ currentOp: true, "$all": true });
+	return operaciones.inprog;
 }
 
-
-const getLogs = (tipoLog, callback) => {
-	let db = MDB.db('admin');
-	if (db) {
-		db.executeDbAdminCommand({ getLog: tipoLog }, callback);
-	}
-	else {
-		callback({ error: 'No conectado a MongoDB' }, null)
-	}
+const getLogs = async function (tipoLog) {
+	let db = M.getBD('admin');
+	return await db.executeDbAdminCommand({ getLog: tipoLog });
 }
 
 module.exports = {

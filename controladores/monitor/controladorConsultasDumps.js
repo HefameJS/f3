@@ -7,7 +7,7 @@ const L = global.logger;
 const OS = require('os');
 
 // Interfaces
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iMonitor = require('interfaces/ifedicom/iMonitor');
 
 // Modelos

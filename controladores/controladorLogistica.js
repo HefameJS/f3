@@ -7,7 +7,7 @@ const K = global.constants;
 const iSap = require('interfaces/isap/iSap');
 const iMongo = require('interfaces/imongo/iMongo');
 const iEventos = require('interfaces/eventos/iEventos');
-const iTokens = require('util/tokens');
+const iTokens = require('global/tokens');
 const iFlags = require('interfaces/iFlags');
 
 // Modelos
