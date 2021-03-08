@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
@@ -45,7 +45,7 @@ class LineaPedidoSap {
 		// Tipificado del motivo de la falta
 		this.incidencias?.forEach(incidencia => {
 			if (incidencia.descripcion) {
-				this.metadatos.tipoFalta = K.TIPIFICADO_FALTAS[incidencia.descripcion];
+				this.metadatos.tipoFalta = C.pedidos.tipificadoFaltas[incidencia.descripcion];
 			}
 		})
 

@@ -1,7 +1,8 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iMongo = require('interfaces/imongo/iMongo');
@@ -9,13 +10,12 @@ const iSap = require('interfaces/isap/iSap');
 const iEventos = require('interfaces/eventos/iEventos');
 
 // Modelos
-const ObjectID = iMongo.ObjectID;
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const PedidoCliente = require('modelos/pedido/ModeloPedidoCliente');
 const PedidoSap = require('modelos/pedido/ModeloPedidoSap');
 
 // Helpers
-const extensionesExpress = require('util/extensionesExpress');
+const extensionesExpress = require('global/extensiones/extensionesExpress');
 
 
 const estadosRetransmitibles = [
@@ -49,7 +49,7 @@ const retransmitirPedido = (txIdOriginal, opcionesRetransmision, callback) => {
     opcionesRetransmision.sistemaSAP = opcionesRetransmision.sistemaSAP ? opcionesRetransmision.sistemaSAP : undefined;
     opcionesRetransmision.noActualizarOriginal = opcionesRetransmision.noActualizarOriginal ? opcionesRetransmision.noActualizarOriginal : false;
 
-    let txIdRetransmision = new ObjectID();
+    let txIdRetransmision = new M.ObjectID();
 
     L.xi(txIdRetransmision, ['Retransmisión de pedido con ID ' + txIdOriginal, opcionesRetransmision]);
 
@@ -321,7 +321,7 @@ const _construyeRespuestaCliente = (txId, codigoEstadoHttp, cuerpoRespuesta) => 
         statusCode: codigoEstadoHttp,
         headers: {
             'x-txid': txId,
-            'software-id': K.SOFTWARE_ID.HEFAME,
+			'software-id': C.softwareId.servidor,
             'content-api-version': K.VERSION.PROTOCOLO,
             'content-type': 'application/json; charset=utf-8',
             'content-length': cuerpoRespuesta ? '' + cuerpoRespuesta.length : '0'

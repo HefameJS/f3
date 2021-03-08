@@ -57,10 +57,6 @@ module.exports = {
         CONSULTA_LOGISTICA: 51,
         LOGISTICA_DUPLICADA: 52
     },
-    SOFTWARE_ID: {
-        HEFAME: '0026',
-        RETRANSMISOR: '9002'
-    },
     INCIDENCIA_FEDICOM: {
         ERR_PED: 'PED-ERR-999',
         WARN_PED: 'PED-WARN-999',
@@ -71,49 +67,6 @@ module.exports = {
 		ERR_FACT: 'FACT-ERR-999',
 		WARN_FACT: 'FACT-WARN-999'
     },
-    MOTIVO_DEVOLUCION: {
-        "01": "Caducidad del producto",
-        "02": "Retirado por alerta sanitaria",
-        "03": "Falta género",
-        "04": "Mal estado",
-        "05": "Mal servido",
-        "06": "No interesa",
-        "07": "Mal anotado",
-        "08": "Error en el precio",
-        "09": "Defecto de calidad",
-        "10": "Otros"
-    },
-    LIMITE_DUPLICADOS: 7 * 24 * 60 * 60 * 1000,
-    PROCESS_REGISTER_INTERVAL: 10000,
-    PROCESS_STATUS: {
-        ALIVE: 0,
-        MISSING: 10,
-        DEAD: 99
-    },
-    TIPIFICADO_FALTAS: {
-        "BAJA": "desconocido",
-        "BAJA HEFAME": "desconocido",
-        "DESCONOCIDO": "desconocido",
-        "RECHAZADO CLIENTE": "desconocido",
-        "POR ENCARGO": "noPermitido",
-        "POR OPERADOR/WEB": "noPermitido",
-        "NO PERMITIDO EN TIPO DE PEDIDO": "noPermitido",
-        "ESTUPEFACIENTE": "estupe",
-        "NUMERO VALE INCORRECTO": "estupe",
-        "ENTREGA BLOQUEADA PARA O.T.": "stock",
-        "NO HAY EXISTENCIAS": "stock",
-        "PASADO A OTRO ALMACÉN": "stock",
-        "RETRASO TRATAMIENTO ENTRADAS": "stock",
-        "SERVICIO CENTRALIZADO": "stock",
-        "SIN EXISTENCIAS": "stock",
-        "UBICACIÓN PICKING VACÍA": "stock",
-        "EXCESO UNIDADES POR LINEA": "suministro",
-        "FALTA DE SUMINISTRO": "suministro",
-        "LIMITE EXISTENCIAS": "suministro",
-        "RETRASO SERVICIO": "suministro",
-        "SERVICIO PARCIAL": "suministro",
-        "SIN UNIDADES PTES": "suministro"
-    },
 	VERSION: {
 		PROTOCOLO: '3.4.8',
 		SERVIDOR: '0.13.1',
@@ -123,13 +76,13 @@ module.exports = {
 		TITULOS: {
 			MASTER: 'f3-master',
 			WORKER: 'f3-worker',
-			WATCHDOG: 'f3-watchdog',
+			WATCHDOG_PEDIDOS: 'f3-w-pedidos',
 			MONITOR: 'f3-monitor'
 		},
 		TIPOS: {
 			MASTER: 'master',
 			WORKER: 'worker',
-			WATCHDOG: 'watchdog',
+			WATCHDOG_PEDIDOS: 'watchdogPedidos',
 			MONITOR: 'monitor',
 			BALANCEADOR: 'balanceador'
 		},

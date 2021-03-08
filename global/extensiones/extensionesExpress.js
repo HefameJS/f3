@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 const M = global.mongodb;
@@ -61,7 +61,7 @@ const extenderSolicitudHttp = (req, res) => {
 	req.txId = res.txId = txId;
 
 	res.setHeader('X-TxID', txId);
-	res.setHeader('Software-ID', K.SOFTWARE_ID.HEFAME);
+	res.setHeader('Software-ID', C.softwareId.servidor);
 	res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
 	if (req.headers && req.headers['x-forwarded-for'])
 		req.ipOrigen = req.headers['x-forwarded-for'];
@@ -104,7 +104,7 @@ const extenderSolicitudRetransmision = (req) => {
 		})
 	}
 
-	nuevasCabeceras['software-id'] = K.SOFTWARE_ID.RETRANSMISOR
+	nuevasCabeceras['software-id'] = C.softwareId.retransmisor;
 	reqClon.headers = nuevasCabeceras;
 
 	// Deben devolverse como funciones ya que aun no se han analizado los datos de la petición

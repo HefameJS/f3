@@ -46,15 +46,15 @@ exports.confirmaPedido = async function(req, res) {
 
 		if (!dbTxConfirmada) {
 			L.xw(txId, ['No se ha encontrado el pedido que se está confirmando - Se deja pendiete de asociar a pedido', confirmacionPedidoSAP.crcSap]);
-			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+			iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO, { crcSap: confirmacionPedidoSAP.crcSap});
 		} else {
 			let originalTxId = dbTxConfirmada._id;
 			L.xi(txId, ['Se selecciona la transmisión para confirmar con ID', originalTxId], 'confirm');
-			iEventos.sap.confirmacionPedido(req, originalTxId, confirmacionPedidoSAP.estadoTransmision, { numerosPedidoSAP: confirmacionPedidoSAP.pedidosAsociadosSap });
+			iEventos.sap.confirmacionPedido(req, originalTxId, confirmacionPedidoSAP.estadoTransmision, { numerosPedidoSAP: confirmacionPedidoSAP.pedidosAsociadosSap, crcSap: confirmacionPedidoSAP.crcSap });
 		}
 	} catch (errorMongo) {
 		L.xe(txId, ['No se ha podido recuperar la transmisión a confirmar - Se deja pendiente de asociar a pedido', errorMongo]);
-		iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO);
+		iEventos.sap.errorConfirmacionPedido(req, res, K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO, { crcSap: confirmacionPedidoSAP.crcSap });
 	}
 
 	res.status(202).json({ ok: true });

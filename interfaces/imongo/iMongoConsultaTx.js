@@ -1,11 +1,8 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 const M = global.mongodb;
-
-// Externas
-const { EJSON } = require('bson');
 
 
 
@@ -98,7 +95,7 @@ const duplicadoDeCRC = (txId, crc) => {
 
 		try {
 			let fechaLimite = new Date();
-			fechaLimite.setTime(fechaLimite.getTime() - K.LIMITE_DUPLICADOS);
+			fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
 
 			let consultaCRC = {
 				crc: crc,
@@ -119,47 +116,39 @@ const duplicadoDeCRC = (txId, crc) => {
 };
 
 const porNumeroPedido = async function (numeroPedido) {
-	let query = {
+	let filtro = {
 		type: K.TX_TYPES.PEDIDO,
 		numerosPedido: numeroPedido
 	};
 
-	return await M.col.tx.findOne(query);
+	return await M.col.tx.findOne(filtro);
 };
 
 const porNumeroDevolucion = async function (numeroDevolucion) {
-	let query = {
+	let filtro = {
 		type: K.TX_TYPES.DEVOLUCION,
 		numeroDevolucion: numeroDevolucion
 	};
 
-	return await M.col.tx.findOne(query);
+	return await M.col.tx.findOne(filtro);
 };
 
 const porNumeroLogistica = async function (numeroLogistica) {
-	let query = {
+	let filtro = {
 		type: K.TX_TYPES.LOGISTICA,
 		numeroLogistica: numeroLogistica
 	};
 
-	return await M.col.tx.findOne(query);
+	return await M.col.tx.findOne(filtro);
 };
 
-const porCRCDeConfirmacion = (crc, callback) => {
+const porCRCDeConfirmacion = async function (crcSap) {
 	let filtro = {
 		type: K.TX_TYPES.CONFIRMACION_PEDIDO,
-		"clientRequest.body.crc": crc.substr(0, 8).toUpperCase()
+		crcSap: crcSap
 	};
 
-	// No podemos llamar a _consultaUnaTransmision = (txId, filtro, callback) 
-	// porque no tenemos txId
-	if (MDB.colTx()) {
-		L.d(['Buscando transmisión', filtro], 'mongodb');
-		MDB.colTx().findOne(filtro, callback);
-	} else {
-		L.e(['Error al localizar la transmisión'], 'mongodb');
-		callback(new Error('No conectado a MongoDB'), null);
-	}
+	return await M.col.tx.findOne(filtro);
 };
 
 /**
@@ -168,30 +157,24 @@ const porCRCDeConfirmacion = (crc, callback) => {
  * @param {*} antiguedadMinima Solo retornará como candidatas aquellas candidatas que tengan más de este número de segundos.
  * @param {*} callback 
  */
-const candidatasParaRetransmitir = (limite, antiguedadMinima, callback) => {
-	if (MDB.colTx()) {
+const candidatasParaRetransmitir = async function (limite, antiguedadMinima) {
 
-		let consulta = {
-			type: K.TX_TYPES.PEDIDO,		// Solo los pedidos son candidatos a retransmisión automática
-			'$or': [
-				{							// Que o bien estén en estado NO SAP ...
-					status: K.TX_STATUS.NO_SAP
-				},
-				{							// .. o que esten en un estado intermedio durante al menos 'antiguedadMinima' segundos.
-					status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO] },
-					modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - (1000 * antiguedadMinima)) }
-				}
-			]
-		};
+	let consulta = {
+		type: K.TX_TYPES.PEDIDO,		// Solo los pedidos son candidatos a retransmisión automática
+		'$or': [
+			{							// Que o bien estén en estado NO SAP ...
+				status: K.TX_STATUS.NO_SAP
+			},
+			{							// .. o que esten en un estado intermedio durante al menos 'antiguedadMinima' segundos.
+				status: { '$in': [K.TX_STATUS.RECEPCIONADO, K.TX_STATUS.ESPERANDO_INCIDENCIAS, K.TX_STATUS.INCIDENCIAS_RECIBIDAS, K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO] },
+				modifiedAt: { $lt: new Date(Date.fedicomTimestamp() - antiguedadMinima) }
+			}
+		]
+	};
 
-		limite = limite || 10;
+	limite = limite || 10;
+	return await M.col.tx.find(consulta).limit(limite).toArray();
 
-		L.t(['Consultando MDB por candidatos para retransmitir'], 'mongodb');
-		MDB.colTx().find(consulta).limit(limite).toArray(callback);
-	} else {
-		L.e(['Error al buscar candidatos a retransmitir. No está conectado a mongodb'], 'mongodb');
-		callback(new Error('No conectado a MongoDB'), null);
-	}
 }
 
 
@@ -209,6 +192,6 @@ module.exports = {
 
 	duplicadoDeCRC,
 
-	//porCRCDeConfirmacion,
-	//candidatasParaRetransmitir
+	porCRCDeConfirmacion,
+	candidatasParaRetransmitir
 }

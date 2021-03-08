@@ -1,7 +1,7 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -27,7 +27,7 @@ class LineaDevolucionCliente {
 		Validador.esCadenaNoVacia(json.codigoMotivo, errorFedicom, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio');
 
 		// Verificamos que el codigoMotivo es un código válido definido en el protocolo.
-		let descripcionMotivo = K.MOTIVO_DEVOLUCION[json.codigoMotivo.trim()];
+		let descripcionMotivo = C.devoluciones.motivos[json.codigoMotivo.trim()];
 		if (!descripcionMotivo) {
 			L.xe(txId, ['El campo "codigoMotivo" no tiene un valor válido', json.codigoMotivo]);
 			errorFedicom.insertar('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');

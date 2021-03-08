@@ -25,34 +25,38 @@ require('bootstrap')().then(() => {
 	let worker;
 
 	// Lanzamiento de los workers
-	/*
+	
 	L.i(['Lanzando procesos worker', C.numeroWorkers], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WORKER + '.js' });
 	for (let i = 0; i < C.numeroWorkers; i++) {
 		worker = cluster.fork();
 		worker.tipo = K.PROCESOS.TIPOS.WORKER;
 	}
-	*/
+	
+	
+	
 	
 
 	// Lanzamiento del watchdog
-	/*
-	L.i(['Lanzando procesos watchdog'], 'cluster');
-	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG + '.js' });
+	
+	L.i(['Lanzando proceso WATCHDOG PEDIDOS'], 'cluster');
+	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS + '.js' });
 	worker = cluster.fork();
-	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG;
-	*/
+	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS;
+	
 
 
 	// Lanzamiento del monitor
+	/*
 	L.i(['Lanzando procesos monitor'], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.MONITOR + '.js' });
 	worker = cluster.fork();
 	worker.tipo = K.PROCESOS.TIPOS.MONITOR;
+	*/
 	
-
-
-	// require('interfaces/procesos/iRegistroProcesos').iniciarIntervaloRegistro();
+	let registradorProcesos = require('interfaces/procesos/registradorProcesos');
+	registradorProcesos();
+	
 
 	cluster.on('exit', (workerMuerto, code, signal) => {
 		L.f(['Un worker ha muerto. Vamos a intentar levantarlo', workerMuerto.id, workerMuerto.tipo, code, signal], 'cluster');

@@ -1,12 +1,12 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = require('./logger');
 //const K = global.constants;
 let M = global.mongodb;
 
 // externas
-const fs = require('fs/promises');
-fs.constants = require('fs').constants;
+const fs = require('fs/promises'); fs.constants = require('fs').constants;
+const OS = require('os')
 const SEPARADOR_DIRECTORIOS = require('path').sep;
 
 // modelos
@@ -25,6 +25,8 @@ const SUBDIR = {
 class Configuracion {
 	constructor(config) {
 
+		this.listeners = [];
+
 		if (!(config.produccion === true || config.produccion === false))
 			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
 
@@ -42,6 +44,11 @@ class Configuracion {
 		this.sqlite = new ConfiguracionSqlite(this, config.sqlite);
 		this.http = new ConfiguracionHttp(this, config.http);
 
+	}
+
+	registrarListener(funcion) {
+		if (funcion && typeof funcion === 'function')
+			this.listeners.push(funcion);
 	}
 
 	static async cargarDatosFichero(ficheroConfiguracion) {
@@ -73,7 +80,7 @@ class Configuracion {
 		for (let DIR in SUBDIR) {
 			await fs.mkdir(config.directorioCache + SUBDIR[DIR], { recursive: true, mode: 0o755 });
 		}
-		
+
 
 		return new Configuracion(config);
 
@@ -86,6 +93,10 @@ class Configuracion {
 		this.dominios = await ConfiguracionDominios.cargar(this);
 		this.flags = await ConfiguracionFlags.cargar(this);
 		this.ldap = await ConfiguracionLdap.cargar(this);
+		this.pedidos = await ConfiguracionPedidos.cargar(this);
+		this.devoluciones = await ConfiguracionDevoluciones.cargar(this);
+		this.softwareId = await ConfiguracionSoftwareId.cargar(this);
+		this.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -387,6 +398,67 @@ class ConfiguracionLdap {
 
 
 }
+
+class ConfiguracionPedidos {
+	constructor(C, config) {
+
+		this.umbralLineasCrc = parseInt(config.umbralLineasCrc) || 10;
+		this.antiguedadDuplicadosMaxima = parseInt(config.antiguedadDuplicadosMaxima) || 604800000;
+		this.tipificadoFaltas = { ...config.tipificadoFaltas };
+
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('pedidos');
+		return new ConfiguracionPedidos(C, config);
+	}
+}
+
+class ConfiguracionDevoluciones {
+	constructor(C, config) {
+		this.motivos = { ...config.motivos };
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('devoluciones');
+		return new ConfiguracionDevoluciones(C, config);
+	}
+}
+
+class ConfiguracionSoftwareId {
+	constructor(C, config) {
+		this.servidor = config.servidor;
+		this.retransmisor = config.retransmisor;
+		this.codigos = { ...config.codigos };
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('softwareId');
+		return new ConfiguracionSoftwareId(C, config);
+	}
+}
+
+class ConfiguracionWatchdogPedidos {
+	constructor(C, config) {
+		this.servidor = config.servidor;
+		this.intervalo = (parseInt(config.intervalo) || 5) * 1000;
+		this.antiguedadMinima = (parseInt(config.antiguedadMinima) || 300) * 1000;
+		this.transmisionesSimultaneas = parseInt(config.transmisionesSimultaneas) || 10;
+		this.numeroPingsSap = parseInt(config.numeroPingsSap) || 3;
+		this.intervaloPingsSap = (parseInt(config.intervaloPingsSap) || 5) * 1000;
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('watchdogPedidos');
+		return new ConfiguracionWatchdogPedidos(C, config);
+	}
+
+	soyMaestro() {
+		return OS.hostname().toLowerCase() === this.servidor;
+	}
+}
+
+
 
 
 module.exports = Configuracion.cargarDatosFichero;

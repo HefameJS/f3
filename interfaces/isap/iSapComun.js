@@ -71,7 +71,7 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
 	axios(parametros)
 		// El .then se ejecuta si obtuvimos respuesta de SAP
 		.then((respuestaSap) => {
-			
+
 			// Si SAP no retorna un codigo 2xx, rechazamos
 			if (Math.floor(respuestaSap.status / 100) !== 2) {
 				let errorSap = new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
@@ -91,9 +91,25 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
 		});
 }
 
+const ejecutarLlamadaSapSinEventos = async function (parametros) {
+
+	try {
+		let respuestaSap = await axios(parametros);
+		// Si SAP no retorna un codigo 2xx, rechazamos
+		if (Math.floor(respuestaSap.status / 100) !== 2) {
+			throw new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
+		} else {
+			return respuestaSap.data;
+		}
+	} catch (errorComunicacion) {
+		throw new ErrorLlamadaSap(ERROR_TYPE_SAP_UNREACHABLE, errorComunicacion.errno, errorComunicacion.code)
+	}
+}
+
 
 
 module.exports = {
 	ErrorLlamadaSap,
-	ejecutarLlamadaSap
+	ejecutarLlamadaSap,
+	ejecutarLlamadaSapSinEventos
 }

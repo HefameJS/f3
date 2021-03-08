@@ -1,54 +1,39 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-const K = global.constants;
+const C = global.config;
+const L = global.logger;
+//const K = global.constants;
 
 // Externo
-const request = require('request');
-
-// Interfaces
-const iEventos = require('interfaces/eventos/iEventos');
-
-// Modelos
-const DestinoSap = require('modelos/DestinoSap');
+const axios = require('axios');
 
 // Helpers
-const iSapComun = require('./iSapComun');
+const { ErrorLlamadaSap, ejecutarLlamadaSapSinEventos } = require('./iSapComun');
 
 
-const ping = (nombreSistemaSap, callback) => {
-	let destinoSap = DestinoSap.desdeNombre(nombreSistemaSap);
+
+const ping = async function (nombreSistemaSap = null) {
+
+
+	let destinoSap = C.sap.getSistema(nombreSistemaSap);
+
 	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
+		L.w(['El sistema destino no está definido', ErrorLlamadaSap.generarNoSapSystem()])
+		return false;
 	}
 
 	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_ent_ped_api/pedidos/avalibity' /* AVALIBITY is gud englis */
+		url: '/api/zsd_ent_ped_api/pedidos/avalibity',
+		timeout: 1000
 	});
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
+	try {
+		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp);
+		return Boolean(respuestaSap?.message === 'Servicio Disponible');
+	} catch (errorComunicacion) {
+		L.w(['El ping a SAP devuelve un error', errorComunicacion])
+		return false;
+	}
 
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
-
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, false, destinoSap.urlBase);
-			return;
-		}
-
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, false, destinoSap.urlBase);
-			return;
-		}
-
-		callback(null, true, destinoSap.urlBase);
-
-	});
 }
 
 

@@ -1,7 +1,7 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
 
 class LineaDevolucionSap {
@@ -15,7 +15,7 @@ class LineaDevolucionSap {
 		this.codigoArticulo = json.codigoarticulo || null;
 		this.cantidad = parseInt(json.cantidad);
 		this.codigoMotivo = json.codigomotivo || null;
-		this.descripcionMotivo = K.MOTIVO_DEVOLUCION[this.codigoMotivo] || null;
+		this.descripcionMotivo = C.devoluciones.motivos[this.codigoMotivo] || null;
 		this.lote = json.lote || null;
 		this.fechaCaducidad = json.fechacaducidad || null;
 		this.valeEstupefaciente = json.valeestupefaciente || null;

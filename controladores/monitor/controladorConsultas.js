@@ -11,7 +11,7 @@ module.exports = {
 	//procesos: require('controladores/monitor/controladorConsultasProcesos'),
 	mongodb: require('controladores/monitor/controladorConsultasMongoDb'),
 	//balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
-	sqlite: require('controladores/monitor/controladorConsultasSQLite'),
+	//sqlite: require('controladores/monitor/controladorConsultasSQLite'),
 	//dumps: require('controladores/monitor/controladorConsultasDumps')
 
 }

@@ -70,25 +70,26 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
-module.exports.errorConfirmacionPedido = (req, res, estado) => {
+module.exports.errorConfirmacionPedido = (req, res, estado, {crcSap}) => {
 
 	let txId = req.txId;
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, {}, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)
-
+	transaccion['$set'].crcSap = crcSap;
+	
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.CONFIRMACION_PEDIDO, estado, [req.body]);
 }
 
-module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, datosExtra) => {
+module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, { crcSap, numerosPedidoSAP}) => {
 
 	let txId = req.txId;
-	if (!datosExtra) datosExtra = {};
 
 	// NOTA: esta transacción no tiene "evento de cierre", es decir, 
 	// no guardamos la respuesta que le damos a SAP porque es completamente irrelevante.
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.CONFIRMACION_PEDIDO, K.TX_STATUS.OK)
 	transaccion['$set'].confirmingId = txIdConfirmado;
+	transaccion['$set'].crcSap = crcSap;
 
 
 	let transaccionActualizacionConfirmada = {
@@ -101,7 +102,7 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 			status: estadoTransmisionConfirmada
 		},
 		$set: {
-			numerosPedidoSAP: datosExtra.numerosPedidoSAP
+			numerosPedidoSAP: numerosPedidoSAP
 		},
 		$push: {
 			sapConfirms: {
@@ -116,5 +117,5 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 	iMongo.transaccion.grabar(transaccion);
 	iMongo.transaccion.grabar(transaccionActualizacionConfirmada);
 
-	L.evento(txIdConfirmado, K.TX_TYPES.CONFIRMACION_PEDIDO, estadoTransmisionConfirmada, datosExtra.numerosPedidoSAP);
+	L.evento(txIdConfirmado, K.TX_TYPES.CONFIRMACION_PEDIDO, estadoTransmisionConfirmada, numerosPedidoSAP);
 }
