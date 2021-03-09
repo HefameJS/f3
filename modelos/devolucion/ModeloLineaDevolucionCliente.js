@@ -24,13 +24,21 @@ class LineaDevolucionCliente {
 		Validador.esFecha(json.fechaAlbaran, errorFedicom, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
 		Validador.esCadenaNoVacia(json.codigoArticulo, errorFedicom, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio');
 		Validador.esEnteroPositivoMayorQueCero(json.cantidad, errorFedicom, 'LIN-PED-ERR-004', 'El campo "cantidad" es incorrecto');
-		Validador.esCadenaNoVacia(json.codigoMotivo, errorFedicom, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio');
+
+
 
 		// Verificamos que el codigoMotivo es un código válido definido en el protocolo.
-		let descripcionMotivo = C.devoluciones.motivos[json.codigoMotivo.trim()];
-		if (!descripcionMotivo) {
-			L.xe(txId, ['El campo "codigoMotivo" no tiene un valor válido', json.codigoMotivo]);
-			errorFedicom.insertar('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
+		// 09-03-2021 Si viene un entero o un string de longitud 1, convertimos a string con relleno de 0 a la izquierda.
+		let codigoMotivoSaneado;
+		if (Validador.existe(json.codigoMotivo, errorFedicom, 'LIN-DEV-ERR-005', 'El campo "codigoMotivo" es obligatorio')) {
+			codigoMotivoSaneado = json.codigoMotivo.toString().trim();
+			if (codigoMotivoSaneado.length === 1) codigoMotivoSaneado = codigoMotivoSaneado.padStart(2, '0');
+
+			let descripcionMotivo = C.devoluciones.motivos[codigoMotivoSaneado];
+			if (!descripcionMotivo) {
+				L.xe(txId, ['El campo "codigoMotivo" no tiene un valor válido', json.codigoMotivo]);
+				errorFedicom.add('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
+			}
 		}
 
 		// Si se encuentran errores:

@@ -46,10 +46,10 @@ module.exports = () => {
 			}
 
 			L.w(['Se han encontrado transmisiones para recuperar', candidatos.length]);
-			
+
 			L.t([`Lanzando ${C.watchdogPedidos.numeroPingsSap} PINGs a SAP con intervalo de ${C.watchdogPedidos.intervaloPingsSap} ms`]);
 
-			for (let i = 0 ; i < C.watchdogPedidos.numeroPingsSap ; i++) {
+			for (let i = 0; i < C.watchdogPedidos.numeroPingsSap; i++) {
 				let sapDisponible = await iSap.ping();
 				if (!sapDisponible) {
 					L.w(['SAP indica que no está disponible', i]);
@@ -60,7 +60,7 @@ module.exports = () => {
 				await (new Promise(resolve => setTimeout(() => resolve(true), C.watchdogPedidos.intervaloPingsSap)));
 
 			}
-			
+
 			L.i(['SAP indica que está listo para recibir pedidos, procedemos a mandar la tanda']);
 
 			candidatos.forEach((dbTx) => {
@@ -73,11 +73,12 @@ module.exports = () => {
 				// CASO TIPICO: No ha entrado a SAP
 				if (dbTx.status === K.TX_STATUS.NO_SAP) {
 					L.xi(txId, 'Retransmitiendo pedido por encontrarse en estado NO_SAP', 'mdbwatch');
-					//retransmitirPedido(txId, null, (err, rtxId) => {
-					setTimeout( () => {
-						numeroRetransmisionesEnProgreso--;
-					}, 1000);
-					return;
+					//
+					retransmitirPedido(txId, null)
+						.then(resultado => L.xi(txId, ['Resultado de la retransmisión', resultado]))
+						.catch(error => L.xw(txId, ['Error en la retransmisión', error]))
+						.finally(() => numeroRetransmisionesEnProgreso--);
+
 				}
 				// CASO CONGESTION: SAP da numero de pedido antes que MDB haga commit de la transmisión originaria
 				else if (dbTx.status === K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO && dbTx.sapConfirms) {
@@ -98,28 +99,28 @@ module.exports = () => {
 
 					L.xi(txId, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
 					iMongo.consultaTx.porCRCDeConfirmacion(dbTx.crcSap)
-					.then((confirmacionPedido) => {
-						// Si no hay confirmación, la transmisión se pone en estado de ESPERA_AGOTADA.
-						// Puede ser retransmitida manualmente mas adelante.
-						if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
-							L.xw(txId, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
-							iFlags.set(txId, C.flags.STATUS_FIX2);
-							iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
+						.then((confirmacionPedido) => {
+							// Si no hay confirmación, la transmisión se pone en estado de ESPERA_AGOTADA.
+							// Puede ser retransmitida manualmente mas adelante.
+							if (!confirmacionPedido || !confirmacionPedido.clientRequest || !confirmacionPedido.clientRequest.body) {
+								L.xw(txId, 'No hay confirmación y se agotó la espera de la confirmación del pedido', 'mdbwatch');
+								iFlags.set(txId, C.flags.STATUS_FIX2);
+								iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.PEDIDO.ESPERA_AGOTADA);
+								numeroRetransmisionesEnProgreso--;
+								return;
+							}
+
+							// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
+							L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id], 'mdbwatch');
+							iFlags.set(txId, C.flags.STATUS_FIX3);
+							iEventos.retransmisiones.asociarConfirmacionConPedido(txId, confirmacionPedido);
 							numeroRetransmisionesEnProgreso--;
 							return;
-						}
-
-						// Tenemos la transmisión de confirmación. Hay que actualizar la transmisión del pedido original para reflejarlo.
-						L.xi(txId, ['Se procede a recuperar el pedido en base a la confirmacion de SAP con ID ' + confirmacionPedido._id], 'mdbwatch');
-						iFlags.set(txId, C.flags.STATUS_FIX3);
-						iEventos.retransmisiones.asociarConfirmacionConPedido(txId, confirmacionPedido);
-						numeroRetransmisionesEnProgreso--;
-						return;
-					}).catch((errorMongo) => {
-						L.xi(txId, ['Error al buscar la confirmación del pedido - Abortamos recuperación', errorMongo], 'mdbwatch');
-						numeroRetransmisionesEnProgreso--;
-						return;
-					});
+						}).catch((errorMongo) => {
+							L.xi(txId, ['Error al buscar la confirmación del pedido - Abortamos recuperación', errorMongo], 'mdbwatch');
+							numeroRetransmisionesEnProgreso--;
+							return;
+						});
 
 				}
 				// CASO ERROR: La transmisión falló durante el proceso

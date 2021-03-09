@@ -139,7 +139,7 @@ exports.crearPedido = async function (req, res) {
 	} catch (errorLlamadaSap) {
 		
 		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
-			L.xe(txId, ['Error al autenticar al usuario', errorLlamadaSap]);
+			L.xe(txId, ['Error al llamar a SAP, el sistema no está definido', errorLlamadaSap]);
 			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);

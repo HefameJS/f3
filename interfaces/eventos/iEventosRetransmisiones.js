@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -83,6 +83,18 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 	iMongo.transaccion.grabar(transaccionDeActualizacion);
 	L.xi(txIdOriginal, ['Emitiendo COMMIT para evento Retransmision'], 'txCommit');
 	L.evento(txIdOriginal, K.TX_TYPES.RETRANSMISION_PEDIDO, estadoNuevo, [resultadoRetransmision]);
+
+	return {
+		rtxId: txIdRetransmision,
+		rtxEstado: estadoRetransmision,
+		rtxMensaje: mensajeError || 'Retransmisión OK',
+		txId: txIdOriginal,
+		txEstado: estadoNuevo,
+		httpEstado: resultadoRetransmision?.clientResponse?.statusCode,
+		httpRespuesta: resultadoRetransmision?.clientResponse?.body,
+		
+	}
+
 }
 
 /**

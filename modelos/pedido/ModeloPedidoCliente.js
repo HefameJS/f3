@@ -5,6 +5,7 @@ const K = global.constants;
 
 // Externo
 const HOSTNAME = require('os').hostname();
+const { v4: uuidv4 } = require('uuid');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -332,11 +333,13 @@ class PedidoCliente {
 	 * Regenera el CRC del pedido.
 	 * Este CRC siempre se genera utilizando el numeroPedidoOrigen y nunca las líneas.
 	 */
-	regenerarCrc() {
+	inventarCRC() {
+		this.numeroPedidoOrigen = uuidv4();
 		this.crc = CRC.generar(this.codigoCliente, this.numeroPedidoOrigen);
 		this.crcDeLineas = false;
-		L.xd(this.txId, ['Se regenera el CRC para el pedido usando el numeroPedidoOrigen', this.crc], 'txCRC')
+		L.xd(this.txId, ['Se inventan el CRC y el numeroPedidoOrigenpara', this.crc, this.numeroPedidoOrigen], 'txCRC')
 	}
+
 
 
 	/**

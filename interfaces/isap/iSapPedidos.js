@@ -5,7 +5,7 @@ const K = global.constants;
 
 
 // Interfaces
-const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
+const { ejecutarLlamadaSapSinEventos, ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
 // const iEventos = require('interfaces/eventos/iEventos');
 
 const realizarPedido = (pedido) => {
@@ -31,19 +31,16 @@ const realizarPedido = (pedido) => {
 
 }
 
-/*
-const retransmitirPedido = (pedido, callback) => {
 
+const retransmitirPedido = async function (pedido) {
 
-	let destinoSap = DestinoSap.desdeNombre(pedido.sapSystem);
-	if (!destinoSap) {
-		callback(iSapComun.NO_SAP_SYSTEM_ERROR, null);
-		return;
-	}
+	let nombreSistemaSap = pedido.sapSystem;
+	let destinoSap = C.sap.getSistema(nombreSistemaSap);
+	if (!destinoSap) throw ErrorLlamadaSap.generarNoSapSystem();
 
 	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-		path: '/api/zsd_ent_ped_api/pedidos',
-		body: pedido
+		url: '/api/zsd_ent_ped_api/pedidos',
+		body: pedido.generarJSON()
 	});
 
 	let peticionASap = {
@@ -54,31 +51,19 @@ const retransmitirPedido = (pedido, callback) => {
 		url: parametrosHttp.url
 	}
 
-	request(parametrosHttp, (errorComunicacion, respuestaSap, cuerpoSap) => {
-		respuestaSap = iSapComun.ampliaRespuestaSap(respuestaSap, cuerpoSap);
+	try {
+		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp);
+		return { respuestaSap, peticionASap }
+	} catch (errorLlamadaSap) {
+		throw { errorLlamadaSap, peticionASap }
+	}
 
-		if (errorComunicacion) {
-			errorComunicacion.type = K.ISAP.ERROR_TYPE_SAP_UNREACHABLE;
-			callback(errorComunicacion, respuestaSap, peticionASap);
-			return;
-		}
 
-		if (respuestaSap.errorSap) {
-			callback({
-				type: K.ISAP.ERROR_TYPE_SAP_HTTP_ERROR,
-				errno: respuestaSap.statusCode,
-				code: respuestaSap.statusMessage
-			}, respuestaSap, peticionASap);
-			return;
-		}
-
-		callback(null, respuestaSap, peticionASap);
-	});
 
 }
-*/
+
 
 module.exports = {
 	realizarPedido,
-	//retransmitirPedido
+	retransmitirPedido
 }
