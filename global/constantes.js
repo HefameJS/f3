@@ -12,6 +12,7 @@ module.exports = {
         NO_SAP: 3110,
         RECHAZADO_SAP: 3120,
         ERROR_RESPUESTA_SAP: 3130,
+		MAX_RETRANSMISIONES: 8110,
         OK: 9900,
         PEDIDO: {
             ESPERANDO_NUMERO_PEDIDO: 8010,
@@ -77,14 +78,15 @@ module.exports = {
 			MASTER: 'f3-master',
 			WORKER: 'f3-worker',
 			WATCHDOG_PEDIDOS: 'f3-w-pedidos',
+			WATCHDOG_SQLITE: 'f3-w-sqlite',
 			MONITOR: 'f3-monitor'
 		},
 		TIPOS: {
 			MASTER: 'master',
 			WORKER: 'worker',
 			WATCHDOG_PEDIDOS: 'watchdogPedidos',
-			MONITOR: 'monitor',
-			BALANCEADOR: 'balanceador'
+			WATCHDOG_SQLITE: 'watchdogSqlite',
+			MONITOR: 'monitor'
 		},
 	}
 }

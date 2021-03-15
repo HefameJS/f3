@@ -2,20 +2,21 @@
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 
 
 // Interfaces
 const iMongo = require('interfaces/imongo/iMongo');
 const iSap = require('interfaces/isap/iSap');
-//const iEventos = require('interfaces/eventos/iEventos');
-//const iFlags = require('interfaces/iFlags');
+const iEventos = require('interfaces/eventos/iEventos');
+const iFlags = require('interfaces/iFlags');
 
 // Helpers
 const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;
 
 
-let idIntervalo = null;
+
 let numeroRetransmisionesEnProgreso = 0;
 let intervaloEnEjecucion = false;
 
@@ -25,7 +26,7 @@ let intervaloEnEjecucion = false;
 module.exports = () => {
 
 
-	idIntervalo = setInterval(async () => {
+	let idIntervalo = setInterval(async () => {
 
 		if (numeroRetransmisionesEnProgreso || intervaloEnEjecucion) {
 			// L.t(['Ya existe otro intervalo en ejecucion', numeroRetransmisionesEnProgreso, intervaloEnEjecucion]);
@@ -38,7 +39,10 @@ module.exports = () => {
 
 		try {
 
-			let candidatos = await iMongo.consultaTx.candidatasParaRetransmitir(C.watchdogPedidos.transmisionesSimultaneas, C.watchdogPedidos.antiguedadMinima);
+			let candidatos = await iMongo.consultaTx.candidatasParaRetransmitir(
+				C.watchdogPedidos.transmisionesSimultaneas, 
+				C.watchdogPedidos.antiguedadMinima);
+
 			L.t(['Candidatos a retransmitir', candidatos.length]);
 			if (!candidatos || candidatos.length === 0) {
 				intervaloEnEjecucion = false;
@@ -63,12 +67,32 @@ module.exports = () => {
 
 			L.i(['SAP indica que está listo para recibir pedidos, procedemos a mandar la tanda']);
 
-			candidatos.forEach((dbTx) => {
+			candidatos.forEach(async (dbTx) => {
 
 				let txId = dbTx._id;
 				numeroRetransmisionesEnProgreso++;
 
+				try {
+					await M.col.tx.updateOne({ _id: new M.ObjectID(txId) }, { $inc: { intentosRetransmitir: 1 } });
+					let intentosDeRetransmision = (await M.col.tx.findOne({ _id: new M.ObjectID(txId) }, { intentosRetransmitir: 1 })).intentosRetransmitir;
+					L.xi(txId, ['El numero de retransmisiones de la transmision es', intentosDeRetransmision]);
+					if (intentosDeRetransmision > C.watchdogPedidos.maximoReintentos) {
+						L.xw(txId, ['Se ha alcanzado el número máximo de retransmisiones', intentosDeRetransmision]);
+						iFlags.set(txId, C.flags.MAXIMO_RETRANSMISIONES_ALCANZADO);
+						iEventos.retransmisiones.cambioEstado(txId, K.TX_STATUS.MAX_RETRANSMISIONES);
+						numeroRetransmisionesEnProgreso--;
+						return;s
+					}
+				} catch (errorMongo) {
+					L.xe(txId, ['Error al consultar/incrementar el numero de reintentos de la transmision', errorMongo]);
+					numeroRetransmisionesEnProgreso--;
+					return;
+				}
+
+
 				L.xt(txId, ['La transmisión ha sido identificada como recuperable'], 'mdbwatch');
+
+
 
 				// CASO TIPICO: No ha entrado a SAP
 				if (dbTx.status === K.TX_STATUS.NO_SAP) {
@@ -96,7 +120,6 @@ module.exports = () => {
 					//* la transmisión, pero esta no se haya actualizado. Por ejemplo, en casos de congestión, puede que el commit
 					//* de la confirmación se procese antes que el de la propia transmisión, lo que deja a la confirmación en el 
 					//* estado NO_EXISTE_PEDIDO o ERROR_INTERNO.
-
 					L.xi(txId, 'Pedido sin confirmar por SAP - Buscamos si hay confirmación perdida para el mismo', 'mdbwatch');
 					iMongo.consultaTx.porCRCDeConfirmacion(dbTx.crcSap)
 						.then((confirmacionPedido) => {
@@ -121,16 +144,14 @@ module.exports = () => {
 							numeroRetransmisionesEnProgreso--;
 							return;
 						});
-
 				}
 				// CASO ERROR: La transmisión falló durante el proceso
 				else {
 					L.xi(txId, 'La transmisión está en un estado inconsistente - La retransmitimos a SAP', 'mdbwatch');
-
-					retransmitirPedido(txId, null, (err, rtxId) => {
-						numeroRetransmisionesEnProgreso--;
-					});
-					return;
+					retransmitirPedido(txId, null)
+						.then(resultado => L.xi(txId, ['Resultado de la retransmisión', resultado]))
+						.catch(error => L.xw(txId, ['Error en la retransmisión', error]))
+						.finally(() => numeroRetransmisionesEnProgreso--);
 				}
 			});
 

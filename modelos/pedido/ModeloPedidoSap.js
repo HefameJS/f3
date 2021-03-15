@@ -57,9 +57,6 @@ class PedidoSap {
 		this.#sanearIncidenciasSap(json.incidencias);
 		this.alertas = json.alertas?.length > 0 ? json.alertas : null;
 
-
-
-
 		this.#establecerFlags();
 	}
 
@@ -70,10 +67,10 @@ class PedidoSap {
 			 * y activa el flag C.flags.DUPLICADO_SAP si la encuentra
 			 */
 			if (!inc.codigo && inc.descripcion === 'Pedido duplicado') {
+				L.xw(this.txId, ['SAP ha indicado que el pedido es duplicado']);
 				this.metadatos.pedidoDuplicadoSap = true;
 				return false;
 			}
-
 			return (inc.descripcion);
 		}).map(inc => {
 			return {
@@ -168,7 +165,7 @@ class PedidoSap {
 
 		// Si es un pedido inmediato, SAP debe haber devuelto los numeros de pedido asociados si o si
 		if (this.metadatos.pedidoProcesado) {
-			if (numerosPedidoSAP) {
+			if (this.metadatos.pedidosAsociadosSap) {
 				return K.TX_STATUS.OK;
 			} else {
 				return K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;

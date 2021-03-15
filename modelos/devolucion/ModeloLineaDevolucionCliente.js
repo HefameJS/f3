@@ -16,12 +16,10 @@ class LineaDevolucionCliente {
 	constructor(json, txId, numeroPosicion) {
 
 
-		L.xi(txId, ['Analizando linea de devolución en posicion ' + numeroPosicion])
+		L.xi(txId, ['Analizando linea de devolución en posicion ', numeroPosicion])
 		// Comprobamos los campos mínimos que deben aparecer en cada POSICION de una devolucion
 		let errorFedicom = new ErrorFedicom();
-		// Estos campos son obligatorios:
-		Validador.esCadenaNoVacia(json.numeroAlbaran, errorFedicom, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
-		Validador.esFecha(json.fechaAlbaran, errorFedicom, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
+		// Estos campos son obligatorios siempre
 		Validador.esCadenaNoVacia(json.codigoArticulo, errorFedicom, 'LIN-DEV-ERR-003', 'El campo "codigoArticulo" es obligatorio');
 		Validador.esEnteroPositivoMayorQueCero(json.cantidad, errorFedicom, 'LIN-PED-ERR-004', 'El campo "cantidad" es incorrecto');
 
@@ -39,6 +37,14 @@ class LineaDevolucionCliente {
 				L.xe(txId, ['El campo "codigoMotivo" no tiene un valor válido', json.codigoMotivo]);
 				errorFedicom.add('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
 			}
+		}
+
+		// Los campos "numeroAlbaran" y "fechaAlbaran" son opcionales en determinados motivos de devolución
+		if (!C.devoluciones.motivoExentoDeAlbaran(codigoMotivoSaneado)) {
+			Validador.esCadenaNoVacia(json.numeroAlbaran, errorFedicom, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
+			Validador.esFecha(json.fechaAlbaran, errorFedicom, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
+		} else {
+			L.xi(txId, ['La línea tiene un codigo de motivo exento de prensentar numeroAlbaran y fechaAlbaran', numeroPosicion]);
 		}
 
 		// Si se encuentran errores:

@@ -34,6 +34,9 @@ const realizarPedido = (pedido) => {
 
 const retransmitirPedido = async function (pedido) {
 
+
+
+
 	let nombreSistemaSap = pedido.sapSystem;
 	let destinoSap = C.sap.getSistema(nombreSistemaSap);
 	if (!destinoSap) throw ErrorLlamadaSap.generarNoSapSystem();
@@ -43,19 +46,22 @@ const retransmitirPedido = async function (pedido) {
 		body: pedido.generarJSON()
 	});
 
+
 	let peticionASap = {
 		timestamp: new Date(),
 		method: parametrosHttp.method,
 		headers: parametrosHttp.headers,
-		body: parametrosHttp.body,
+		body: parametrosHttp.data,
 		url: parametrosHttp.url
 	}
 
 	try {
-		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp);
-		return { respuestaSap, peticionASap }
+		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp, true);
+		respuestaSap.peticion = peticionASap;
+		return respuestaSap;
 	} catch (errorLlamadaSap) {
-		throw { errorLlamadaSap, peticionASap }
+		errorLlamadaSap.peticion = peticionASap;
+		throw errorLlamadaSap;
 	}
 
 

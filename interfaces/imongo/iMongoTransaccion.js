@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 const M = global.mongodb;
@@ -17,7 +17,7 @@ const descartar = async function (transaccion) {
 	let txId = transaccion['$setOnInsert']._id;
 
 	try {
-		await M.col.discard.updateOne({ _id: txId }, transaccion, { upsert: true, w: 0 });
+		await M.col.discard.updateOne({ _id: txId }, transaccion, { upsert: true });
 		L.xd(txId, ['Commit OK'], 'mdbCommitDiscard');
 		return true;
 	} catch (errorMongo) {
@@ -33,6 +33,7 @@ const grabar = async function (transaccion, noAgregarConCache) {
 
 	let transaccionEnCache = cacheTransacciones.get(txId);
 	if (transaccionEnCache && !noAgregarConCache) {
+		cacheTransacciones.del(txId);
 		transaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
 	}
 
@@ -44,10 +45,6 @@ const grabar = async function (transaccion, noAgregarConCache) {
 		L.xe(txId, ['Error al hacer COMMIT', errorMongo], 'mdbCommit');
 		iSQLite.grabarTransaccion(transaccion);
 		return false;
-	} finally {
-		if (transaccionEnCache) {
-			cacheTransacciones.del(txId);
-		}
 	}
 
 };
@@ -57,7 +54,7 @@ const grabarEnMemoria = async function (transaccion) {
 	let txId = transaccion['$setOnInsert']._id;
 	let transaccionEnCache = cacheTransacciones.get(txId);
 	let nuevaTransaccion = _unirConDatosDeCache(transaccionEnCache, transaccion);
-	cacheTransacciones.put(txId, nuevaTransaccion, 5000, (key, value) => {
+	cacheTransacciones.put(txId, nuevaTransaccion, 10000, (key, value) => {
 		L.xw(key, ['Se fuerza COMMIT por timeout'], 'mdbCommit');
 		grabar(value);
 	});

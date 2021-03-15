@@ -36,23 +36,5 @@ module.exports = {
 	chequeaConexion,
 	transaccion: require('./iMongoTransaccion'),
 	consultaTx: require('./iMongoConsultaTx'),
-	monitorMongo: require('./iMongoMonitor'),
-	//conexion: conexionMongo
-	/*
-	conectar: MDB.conectar,
-	// Acceso a propiedades de la conexión en crudo
-	ObjectID: MDB.ObjectID,
-	cliente: MDB.cliente,
-	db: MDB.db,
-	colTx: MDB.colTx,
-	colDiscard: MDB.colDiscard,
-	colControl: MDB.colControl,
-	colConfiguracion: MDB.colConfiguracion,
-
-	chequeaConexion,
-
-	// Consultas sobre las transmisiones
-	
-	
-	*/
+	monitorMongo: require('./iMongoMonitor')
 }

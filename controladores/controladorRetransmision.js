@@ -19,7 +19,7 @@ exports.retransmitePedido = (req, res) => {
 	// Verificacion del estado del token
 	let estadoToken = iTokens.verificaPermisos(req, res, { requiereGrupo: 'FED3_RETRANSMISION' });
 	if (!estadoToken.ok) return;
-	
+
 	let opcionesRetransmision = {
 		force: (req.query.forzar === 'si') ? true : false,
 		noActualizarOriginal: (req.query.noActualizarOriginal === 'si') ? true : false,
@@ -27,23 +27,18 @@ exports.retransmitePedido = (req, res) => {
 		forzarAlmacen: req.query.almacen ? req.query.almacen : undefined,
 		sistemaSAP: req.query.sistemaSAP ? req.query.sistemaSAP : undefined
 	}
-	
-	retransmitirPedido(txId, opcionesRetransmision, (err, rtxId, ctxId) => {
-		res.status(200);
-		if (err) {
-			res.json({
-				ok: false,
-				err: err
-			});
-			return;
-		}
-		res.json({
-			ok: true,
-			data: { otxId: txId, rtxId, ctxId }
-		});
-		return;
 
 
-	});
+	retransmitirPedido(txId, opcionesRetransmision)
+		.then(resultado => {
+			L.xi(txId, ['Resultado de la retransmisión', resultado])
+			res.status(200).send(resultado);
+		})
+		.catch(error => {
+			L.xw(txId, ['Error en la retransmisión', error])
+			res.status(200).send(error);
+		})
+
+
 
 }

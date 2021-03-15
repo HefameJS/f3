@@ -155,10 +155,11 @@ const porCRCDeConfirmacion = async function (crcSap) {
  * Obtiene las transmisiones que son candidatas para ser retransmitidas por el watchdog
  * @param {*} limite Se retornarán como máximo este número de candidatas. Por defecto 10.
  * @param {*} antiguedadMinima Solo retornará como candidatas aquellas candidatas que tengan más de este número de segundos.
- * @param {*} callback 
+ * @param {*} numeroMaximoReintentos Solo retornará aquellas candidatas que no se hayan retransmitido mas de N veces.
  */
 const candidatasParaRetransmitir = async function (limite, antiguedadMinima) {
 
+	
 	let consulta = {
 		type: K.TX_TYPES.PEDIDO,		// Solo los pedidos son candidatos a retransmisión automática
 		'$or': [

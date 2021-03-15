@@ -7,6 +7,21 @@
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
+global.mongodb = {
+	ObjectID: null,
+	conectado: false,
+	cliente: null,
+	bd: null,
+	getBD: (nombreDb) => { return null },
+	col: {
+		tx: null,
+		discard: null,
+		control: null,
+		configuracion: null
+	}
+}
+
+
 const conexion = async function () {
 	let C = global.config;
 	let L = global.logger;
@@ -22,15 +37,17 @@ const conexion = async function () {
 		configuracion: null
 	};
 
+	let opcionesColeccion1 = { writeConcern: { w: 1, wtimeout: 1000 } }
+	let opcionesColeccion2 = { writeConcern: { w: 0, wtimeout: 1000 } }
+
 	try {
 		cliente = await cliente.connect();
 		baseDatos = cliente.db(C.mongodb.database);
-		colecciones.tx = baseDatos.collection('tx');
-		colecciones.discard = baseDatos.collection('discard');
-		colecciones.control = baseDatos.collection('control');
-		colecciones.configuracion = baseDatos.collection('configuracion');
+		colecciones.tx = baseDatos.collection('tx', opcionesColeccion1);
+		colecciones.discard = baseDatos.collection('discard', opcionesColeccion2);
+		colecciones.control = baseDatos.collection('control', opcionesColeccion1);
+		colecciones.configuracion = baseDatos.collection('configuracion', opcionesColeccion1);
 		L.i(['Conexión a MongoDB establecida'], 'mongodb')
-
 	}
 	catch (error) {
 		L.f(['Error en la conexión a de MongoDB', C.mongodb.getUrl(), error], 'mongodb')
@@ -38,15 +55,15 @@ const conexion = async function () {
 		setTimeout(() => conexion(), C.mongodb.intervaloReconexion)
 	}
 
-	global.mongodb = {
-		ObjectID,
-		conectado: cliente ? true : false,
-		cliente,
-		bd: baseDatos,
-		getBD: (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) },
-		col: colecciones
-	}
-
+	global.mongodb.ObjectID = ObjectID;
+	global.mongodb.conectado = cliente ? true : false;
+	global.mongodb.cliente = cliente;
+	global.mongodb.bd = baseDatos
+	global.mongodb.getBD = (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) }
+	global.mongodb.col.tx = colecciones.tx;
+	global.mongodb.col.discard = colecciones.discard;
+	global.mongodb.col.control = colecciones.control;
+	global.mongodb.col.configuracion = colecciones.configuracion;
 	return global.mongodb;
 }
 

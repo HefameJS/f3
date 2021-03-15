@@ -64,7 +64,7 @@ class ErrorLlamadaSap {
 }
 
 
-const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
+const ejecutarLlamadaSap = (txId, parametros, resolve, reject, respuestaHttpCompleta = false) => {
 
 	iEventos.sap.incioLlamadaSap(txId, parametros);
 
@@ -80,7 +80,7 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
 			} else {
 				// Resolvemos el mensaje obtenido de SAP
 				iEventos.sap.finLlamadaSap(txId, null, respuestaSap);
-				resolve(respuestaSap.data);
+				resolve(respuestaHttpCompleta ? respuestaSap : respuestaSap.data);
 			}
 		})
 		// El .catch indica un error en la comunicación (por lo que sea no llegamos a SAP)
@@ -91,7 +91,7 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject) => {
 		});
 }
 
-const ejecutarLlamadaSapSinEventos = async function (parametros) {
+const ejecutarLlamadaSapSinEventos = async function (parametros, respuestaHttpCompleta = false) {
 
 	try {
 		let respuestaSap = await axios(parametros);
@@ -99,7 +99,7 @@ const ejecutarLlamadaSapSinEventos = async function (parametros) {
 		if (Math.floor(respuestaSap.status / 100) !== 2) {
 			throw new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
 		} else {
-			return respuestaSap.data;
+			return respuestaHttpCompleta ? respuestaSap : respuestaSap.data;
 		}
 	} catch (errorComunicacion) {
 		throw new ErrorLlamadaSap(ERROR_TYPE_SAP_UNREACHABLE, errorComunicacion.errno, errorComunicacion.code)

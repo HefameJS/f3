@@ -24,13 +24,14 @@ module.exports = (app) => {
 		devoluciones: require('controladores/controladorDevoluciones'),
 		albaranes: require('controladores/controladorAlbaranes'),
 		facturas: require('controladores/controladorFacturas'),
+		retransmision: require('controladores/controladorRetransmision'),
 	}
 	/*
 		
 		
 		logistica: require('controllers/controladorLogistica'),
 		
-		retransmision: require('controllers/controladorRetransmision'),
+		
 	}
 */
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -109,11 +110,11 @@ module.exports = (app) => {
 		.get(controladores.facturas.consultaFactura);
 	
 	
-	/*
+	
 	
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controladores.retransmision.retransmitePedido));
-	
+	/*
 	app.route('/logistica')
 		.post(tryCatch(controladores.logistica.crearLogistica))
 		.get(tryCatch(controladores.logistica.consultaLogistica));

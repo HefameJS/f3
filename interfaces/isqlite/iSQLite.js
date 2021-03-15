@@ -23,25 +23,29 @@ const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
  * Graba en la base de datos SQLite la transacción MongoDB pasada.
  * @param {*} transaccion 
  */
-const grabarTransaccion = (transaccion) => {
+const grabarTransaccion = function (transaccion) {
 
-	let uid = (new ObjectID()).toHexString();
-	let txId = transaccion['$setOnInsert']._id;
-	let txIdHexadecimal = txId.toHexString();
+	return new Promise((resolve, reject) => {
+		let uid = (new ObjectID()).toHexString();
+		let txId = transaccion['$setOnInsert']._id;
+		let txIdHexadecimal = txId.toHexString();
 
-
-	// Para serializar correctamente objetos como ObjectIDs y Dates
-	// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
-	// https://www.npmjs.com/package/bson
-	let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
-
-	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], (err) => {
-		if (err) {
-			L.xf(txId, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
-			return;
-		}
-		L.xw(txId, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
+		// Para serializar correctamente objetos como ObjectIDs y Dates
+		// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
+		// https://www.npmjs.com/package/bson
+		let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
+		db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], (err) => {
+			if (err) {
+				L.xf(txId, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
+				resolve(false);
+			} else {
+				L.xw(txId, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
+				resolve(true);
+			}
+		});
 	});
+
+
 
 }
 
@@ -51,21 +55,23 @@ const grabarTransaccion = (transaccion) => {
  * @param {*} numeroFallosMaximo 
  * @param {*} callback 
  */
-const numeroEntradasPendientes = (callback) => {
+const numeroEntradasPendientes = () => {
 
-	db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.watchdog.sqlite.maxRetries || 10], (errorSQLite, resultados) => {
-		if (errorSQLite) {
-			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
-			return callback(errorSQLite, null);
-		}
+	return new Promise((resolve, reject) => {
+		db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.watchdog.sqlite.maxRetries || 10], (errorSQLite, resultados) => {
+			if (errorSQLite) {
+				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+				reject(errorSQLite);
+			}
+			else if (resultados && resultados[0] && resultados[0].count >= 0) {
+				resolve(resultados[0].count);
+			}
+			else {
+				L.e(['Error en la respuesta', resultados], 'sqlite');
+				reject(new Error('Error al contar las líneas'), null);
+			}
 
-		if (resultados && resultados[0] && resultados[0].count >= 0) {
-			return callback(null, resultados[0].count);
-		}
-
-		L.e(['Error en la respuesta', resultados], 'sqlite');
-		return callback(new Error('Error al contar las líneas'), null);
-
+		});
 	});
 }
 
@@ -77,29 +83,33 @@ const numeroEntradasPendientes = (callback) => {
  * @param {*} numeroFallosMaximo
  * @param {*} callback
  */
-const obtenerEntradas = (numeroFallosMaximo, callback) => {
+const obtenerEntradas = (numeroFallosMaximo) => {
 
-	if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
+	return new Promise((resolve, reject) => {
 
-	db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (errorSQLite, entradas) => {
-		if (errorSQLite) {
-			L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
-			return callback(errorSQLite, null);
-		}
+		if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
 
-		if (entradas && entradas.length) {
-			// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
-			// los convertimos de vuelta a BSON
-			let entradasSaneadas = entradas.map(entrada => {
-				entrada.data = EJSON.parse(entrada.data, { relaxed: false });
-				return entrada;
-			});
-			return callback(null, entradasSaneadas);
-		}
-		L.e(['Se devuelve lista de entradas vacía', entradas], 'sqlite');
-		return callback(null, []);
+		db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (errorSQLite, entradas) => {
+			if (errorSQLite) {
+				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+				reject(errorSQLite);
+			}
+			else if (entradas && entradas.length) {
+				// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
+				// los convertimos de vuelta a BSON
+				let entradasSaneadas = entradas.map(entrada => {
+					entrada.data = EJSON.parse(entrada.data, { relaxed: false });
+					return entrada;
+				});
+				resolve(entradasSaneadas);
+			} else {
+				L.d(['Se devuelve lista de entradas vacía', entradas], 'sqlite');
+				resolve([]);
+			}
 
-	});
+		});
+	})
+
 }
 
 /**
@@ -107,14 +117,22 @@ const obtenerEntradas = (numeroFallosMaximo, callback) => {
  * @param {*} uid 
  * @param {*} callback 
  */
-const eliminarEntrada = (uid, callback) => {
-	db.run('DELETE FROM tx WHERE uid = ?', [uid], (errorSQLite) => {
-		if (errorSQLite) {
-			L.f(["*** Fallo al borrar la entrada de la base de datos de respaldo", errorSQLite], 'sqlite');
-			return callback(errorSQLite, 0);
-		}
-		return callback(null, this.changes);
+const eliminarEntrada = (uid) => {
+
+	return new Promise((resolve, reject) => {
+
+		db.run('DELETE FROM tx WHERE uid = ?', [uid], (errorSQLite) => {
+			if (errorSQLite) {
+				L.f(["*** Fallo al borrar la entrada de la base de datos de respaldo", errorSQLite], 'sqlite');
+				reject(errorSQLite);
+			} else {
+				resolve(this.changes)
+			}
+		});
+
 	});
+
+
 }
 
 /**
@@ -124,15 +142,18 @@ const eliminarEntrada = (uid, callback) => {
  * @param {*} uid 
  * @param {*} callback 
  */
-const incrementarNumeroDeIntentos = (uid, callback) => {
-	db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], (errorSQLite) => {
-		if (errorSQLite) {
-			L.f(["*** Fallo al incrementar el número de intentos para la entrada", errorSQLite], 'sqlite');
-			return callback(errorSQLite, 0);
+const incrementarNumeroDeIntentos = (uid) => {
 
-		}
-		return callback(null, this.changes);
-	});
+	return new Promise((resolve, reject) => {
+		db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], (errorSQLite) => {
+			if (errorSQLite) {
+				L.f(["*** Fallo al incrementar el número de intentos para la entrada", errorSQLite], 'sqlite');
+				reject(errorSQLite);
+			} else {
+				resolve(this.changes);
+			}
+		});
+	})
 }
 
 /**
@@ -158,7 +179,7 @@ const recuentoRegistros = (callback) => {
 		}
 
 		mutex.lock(() => {
-			
+
 			peticionesPendientes--;
 			console.log('peticionesPendientes', peticionesPendientes, respuesta);
 			if (peticionesPendientes === 0) {

@@ -4,7 +4,7 @@
   "main": "f3.js",
   "scripts": {
     "service": "nohup node f3.js >> console.log 2>> console.err &",
-    "test": "nodemon f3.js"
+    "test": "nodemon --trace-warnings f3.js"
   },
   "keywords": [
     "fedicom",
@@ -25,7 +25,7 @@
     "jsonwebtoken": "^8.5.1",
     "locks": "^0.2.2",
     "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
-    "mongodb": "^3.6.3",
+    "mongodb": "^3.6.4",
     "node-fetch": "^2.6.1",
     "os": "^0.1.1",
     "request": "^2.88.2",

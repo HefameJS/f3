@@ -2,13 +2,13 @@
 const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
 
 // Modelos
-const ObjectID = iMongo.ObjectID;
 const ConfirmacionPedidoSAP = require('modelos/pedido/ModeloConfirmacionPedidoSAP');
 
 
@@ -89,10 +89,9 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 		rtxEstado: estadoRetransmision,
 		rtxMensaje: mensajeError || 'Retransmisión OK',
 		txId: txIdOriginal,
-		txEstado: estadoNuevo,
+		txEstado: estadoNuevo ? estadoNuevo : undefined,
 		httpEstado: resultadoRetransmision?.clientResponse?.statusCode,
 		httpRespuesta: resultadoRetransmision?.clientResponse?.body,
-		
 	}
 
 }
@@ -156,7 +155,7 @@ module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 			status: K.TX_STATUS.RECEPCIONADO
 		},
 		$set: {
-			crc: new ObjectID(pedidoClonado.crc),
+			crc: new M.ObjectID(pedidoClonado.crc),
 			authenticatingUser: reqClonada.identificarUsuarioAutenticado(),
 			client: reqClonada.identificarClienteSap(),
 			iid: global.instanceID,
@@ -191,7 +190,7 @@ module.exports.finClonarPedido = (txIdOriginal, txIdClonado, resultadoRetransmis
 		},
 		$set: {
 			...resultadoRetransmision,
-			originalTxId: new ObjectID(txIdOriginal)
+			originalTxId: new M.ObjectID(txIdOriginal)
 		}
 	}
 
@@ -221,7 +220,7 @@ module.exports.cambioEstado = (txId, nuevoEstado) => {
 
 		L.xi(txId, ['Emitiendo COMMIT para evento StatusFix'], 'txCommit');
 		iMongo.transaccion.grabar(transaccion);
-		L.evento(txId, K.TX_TYPES.ARREGLO_ESTADO, nuevoEstado, ['StatusFix']);
+		L.evento(txId, K.TX_TYPES.ARREGLO_ESTADO, nuevoEstado, ['StatusFix', nuevoEstado]);
 	}
 }
 

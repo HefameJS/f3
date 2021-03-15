@@ -34,16 +34,22 @@ require('bootstrap')().then(() => {
 	}
 	
 	
-	
-	
 
 	// Lanzamiento del watchdog
-	
+	/*
 	L.i(['Lanzando proceso WATCHDOG PEDIDOS'], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS + '.js' });
 	worker = cluster.fork();
 	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS;
-	
+	*/
+
+	// Lanzamiento del watchdog
+	/*
+	L.i(['Lanzando proceso WATCHDOG SQLITE'], 'cluster');
+	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG_SQLITE + '.js' });
+	worker = cluster.fork();
+	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG_SQLITE;
+	*/
 
 
 	// Lanzamiento del monitor
@@ -55,7 +61,7 @@ require('bootstrap')().then(() => {
 	*/
 	
 	let registradorProcesos = require('interfaces/procesos/registradorProcesos');
-	registradorProcesos();
+//	registradorProcesos();
 	
 
 	cluster.on('exit', (workerMuerto, code, signal) => {

@@ -166,13 +166,9 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	L.xi(txIdRetransmision, ['Transmitimos a SAP el pedido']);
 
 	try {
-		let { respuestaSap, solicitudASap } = await iSap.pedidos.retransmitirPedido(pedidoCliente);
-
-		// TODO: AQUI RESPUESTA SAP ES EL BODY Y NO CONTIENE LAS CABECERAS
-		
-		console.log('RTX SAP OK', respuestaSap, solicitudASap)
-		// respuestaSap = _construyeRespuestaSap(respuestaSap);
-
+		let respuestaSap = await iSap.pedidos.retransmitirPedido(pedidoCliente, true);
+		let peticionASap = respuestaSap.peticion;
+		respuestaSap = _construyeRespuestaSap(respuestaSap);
 		let cuerpoRespuestaSap = respuestaSap.body;
 
 		// Si la respuesta de SAP es un array ...
@@ -198,7 +194,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 			let respuestaCliente = _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 409, incidenciasSaneadas)
 
 			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-				sapRequest: solicitudASap,
+				sapRequest: peticionASap,
 				sapResponse: respuestaSap,
 				clientResponse: respuestaCliente,
 				status: K.TX_STATUS.RECHAZADO_SAP
@@ -206,7 +202,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 
 		} // +RETURN
 
-		// Lo primero, vamos a comprobar que SAP nos haya devuelto un objeto con las faltas del pedido. En ocasiones la conexión peta y la respuesta no 
+		// Vamos a comprobar que SAP nos haya devuelto un objeto con las faltas del pedido. En ocasiones la conexión peta y la respuesta no 
 		// puede recuperarse, por lo que tratamos este caso como que SAP está caído.
 		if (!cuerpoRespuestaSap || !cuerpoRespuestaSap.crc) {
 			L.xe(txIdRetransmision, ['SAP devuelve un cuerpo de respuesta que no es un objeto válido. Se devuelve error de faltas simuladas', cuerpoRespuestaSap]);
@@ -214,7 +210,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 
 			L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
 			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-				sapRequest: solicitudASap,
+				sapRequest: peticionASap,
 				sapResponse: respuestaSap,
 				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
 				status: K.TX_STATUS.NO_SAP
@@ -222,13 +218,12 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 
 		} // +RETURN
 
-
 		// Si la respuesta de SAP es un Objeto, lo procesamos y mandamos las faltas al cliente
-		let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente.crc, txIdNuevo);
+		let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente.crc, txIdNuevo || txIdOriginal);
 		L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
 
 		return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-			sapRequest: solicitudASap,
+			sapRequest: peticionASap,
 			sapResponse: respuestaSap,
 			clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, pedidoSap.generarJSON()),
 			status: pedidoSap.getEstadoTransmision(),
@@ -236,13 +231,13 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 			numeroPedidoAgrupado: pedidoSap.getNumeroPedidoAgrupado()
 		});
 
-	} catch (errorSap) {
-		// TODO: OJO, AQUI PODEMOS HACER UN DEE DEE MEGA DOO DOO EN LA DECONSTRUCCION SI LA EXCEPCION
-		// NO LA HEMOS LEVANTADO NOSOTROS !!!
-		console.log('RTX SAP CATCH', errorSap)
-		let { errorLlamadaSap, solicitudASap } = errorSap;
+	} catch (errorLlamadaSap) {
+
+		let peticionASap = errorLlamadaSap.peticion;
+		delete errorLlamadaSap.peticion;
 
 		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
+
 			L.xe(txIdRetransmision, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
 			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
 
@@ -250,44 +245,49 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 			L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
 
 			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-				sapRequest: solicitudASap,
+				sapRequest: peticionASap,
 				sapResponse: errorLlamadaSap,
 				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 400, errorFedicom.getErrores()),
 				status: K.TX_STATUS.PETICION_INCORRECTA
 			});
 
-		}
+		} else {
 
-		L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
+			L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
+			let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+			L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+			L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
 
-		let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+				sapRequest: peticionASap,
+				sapResponse: errorLlamadaSap,
+				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
+				status: K.TX_STATUS.NO_SAP
+			});
 
-		L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
-		L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
+		} 
 
-		return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-			sapRequest: solicitudASap,
-			sapResponse: errorLlamadaSap,
-			clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
-			status: K.TX_STATUS.NO_SAP
-		});
-
-
-
-
-		return {
-			rtxId: txIdRetransmision,
-			rtxEstado: K.TX_STATUS.RETRANSMISION.OK,
-			rtxMensaje: 'Retransmisión OK',
-			txId: txIdNuevo || txIdOriginal,
-			txEstado: K.TX_STATUS.NO_SAP,
-			httpEstado: 201,
-			httpRespuesta: respuestaCliente
-		}
 	}
 
 }
 
+
+
+/**
+ * Construye el campo 'sapResponse' de la transmisión para almacenarlo en MongoDB
+ * @param {*} errorSap 
+ * @param {*} respuestaSap 
+ */
+const _construyeRespuestaSap = (respuestaSap) => {
+
+	return {
+		timestamp: new Date(),
+		statusCode: respuestaSap.status,
+		headers: respuestaSap.headers,
+		body: respuestaSap.data
+	}
+
+}
 
 const _construyeRespuestaCliente = (txId, codigoEstadoHttp, cuerpoRespuesta) => {
 	return {

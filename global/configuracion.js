@@ -155,19 +155,6 @@ class ConfiguracionMongodb {
 
 		this.intervaloReconexion = Validador.esEnteroPositivoMayorQueCero(nodoJson.intervaloReconexion) ? parseInt(nodoJson.intervaloReconexion) : 5000;
 
-
-		this.writeConcern = (nodoJson.writeConcern === 0 || nodoJson.writeConcern === 1) ? nodoJson.writeConcern : 1;
-
-
-		/*
-			connectTimeoutMS: 5000,
-			serverSelectionTimeoutMS: 5000,
-			w: C.mongodb.writeconcern || 1,
-			wtimeout: 1000,
-			useUnifiedTopology: true,
-			appname: global.instanceID,
-			loggerLevel: 'warn'
-		*/
 	}
 
 
@@ -185,10 +172,8 @@ class ConfiguracionMongodb {
 		return {
 			connectTimeoutMS: 5000,
 			serverSelectionTimeoutMS: 5000,
-			w: this.writeConcern,
-			wtimeout: 1000,
 			useUnifiedTopology: true,
-			appname: global.instanceID,
+			appname: process.iid,
 			loggerLevel: 'warn'
 		};
 	}
@@ -417,11 +402,16 @@ class ConfiguracionPedidos {
 class ConfiguracionDevoluciones {
 	constructor(C, config) {
 		this.motivos = { ...config.motivos };
+		this.motivosExtentosAlbaran = config.motivosExtentosAlbaran || [];
 	}
 
 	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('devoluciones');
 		return new ConfiguracionDevoluciones(C, config);
+	}
+
+	motivoExentoDeAlbaran(motivo) {
+		return this.motivosExtentosAlbaran.includes(motivo);
 	}
 }
 
@@ -446,6 +436,7 @@ class ConfiguracionWatchdogPedidos {
 		this.transmisionesSimultaneas = parseInt(config.transmisionesSimultaneas) || 10;
 		this.numeroPingsSap = parseInt(config.numeroPingsSap) || 3;
 		this.intervaloPingsSap = (parseInt(config.intervaloPingsSap) || 5) * 1000;
+		this.maximoReintentos = parseInt(config.maximoReintentos) || 5;
 	}
 
 	static async cargar(C) {
