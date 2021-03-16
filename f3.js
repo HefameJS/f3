@@ -25,13 +25,16 @@ require('bootstrap')().then(() => {
 	let worker;
 
 	// Lanzamiento de los workers
-	
+	/*
 	L.i(['Lanzando procesos worker', C.numeroWorkers], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WORKER + '.js' });
 	for (let i = 0; i < C.numeroWorkers; i++) {
 		worker = cluster.fork();
 		worker.tipo = K.PROCESOS.TIPOS.WORKER;
 	}
+	*/
+	
+	
 	
 	
 
@@ -53,15 +56,15 @@ require('bootstrap')().then(() => {
 
 
 	// Lanzamiento del monitor
-	/*
+	
 	L.i(['Lanzando procesos monitor'], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.MONITOR + '.js' });
 	worker = cluster.fork();
 	worker.tipo = K.PROCESOS.TIPOS.MONITOR;
-	*/
+	
 	
 	let registradorProcesos = require('interfaces/procesos/registradorProcesos');
-//	registradorProcesos();
+	registradorProcesos();
 	
 
 	cluster.on('exit', (workerMuerto, code, signal) => {

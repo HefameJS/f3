@@ -33,9 +33,9 @@ const generarToken = (txId, autenticacion, permisos) => {
 
 const generarTokenInterFedicom = () => {
 	let datosToken = {
-		sub: global.iid,
+		sub: process.iid,
 		aud: C.dominios.INTERFEDICOM,
-		exp: Math.ceil((Date.fedicomTimestamp() / 1000) + C.jwt.ttl)
+		exp: 9999999999999
 	};
 
 	let token = jwt.sign(datosToken, C.jwt.clave);
@@ -154,7 +154,7 @@ const verificaPermisos = (req, res, opciones) => {
 
 	// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
 	if (req.token.aud === C.dominios.INTERFEDICOM) {
-		if (process.type === K.PROCESOS.TIPOS.MONITOR) {
+		if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
 			// TODO: Falta hacer control de admision por IP (req.ipOrigen)
 			L.xi(txId, ['Se acepta el token INTERFEDICOM'], 'txToken')
 			return { ok: true };

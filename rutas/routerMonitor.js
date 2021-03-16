@@ -68,11 +68,11 @@ module.exports = (app) => {
 	app.route('/v1/balanceadores/:servidor')
 		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
 		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
-
+*/
 	// Consulta de procesos registrados
 	app.route('/v1/procesos')
 		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
-*/
+
 	// MongoDB
 	app.route('/v1/mongodb/colecciones')
 		.get(tryCatch(controladores.consultas.mongodb.getNombresColecciones));
@@ -86,7 +86,7 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.mongodb.getReplicaSet));
 	app.route('/v1/mongodb/logs')
 		.get(tryCatch(controladores.consultas.mongodb.getLogs)); // ? [tipo = (global | rs | startupWarnings)]
-/*
+
 	// SQLite
 	app.route('/v1/sqlite')
 		.put(tryCatch(controladores.consultas.sqlite.consultaRegistros));
@@ -102,7 +102,7 @@ module.exports = (app) => {
 	app.route('/v1/sap/sistemas/:nombreSistema')
 		.get(tryCatch(controladores.consultas.sap.consultaSistema));
 
-
+/*
 	// Dumps de procesos
 	app.route('/v1/dumps')
 		.get(tryCatch(controladores.consultas.dumps.listadoDumps));

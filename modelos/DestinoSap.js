@@ -80,8 +80,7 @@ class DestinoSap {
 			puerto: this.puerto,
 			https: this.https,
 			prefijo: this.prefijo,
-			urlBase: this.urlBase,
-			sistemaPorDefecto: (this.id === C.sap.nombreSistemaPorDefecto)
+			urlBase: this.urlBase
 		}
 	}
 

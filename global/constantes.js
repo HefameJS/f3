@@ -69,8 +69,8 @@ module.exports = {
 		WARN_FACT: 'FACT-WARN-999'
     },
 	VERSION: {
-		PROTOCOLO: '3.4.8',
-		SERVIDOR: '0.13.1',
+		PROTOCOLO: '3.4.9',
+		SERVIDOR: '0.13.2',
 		TRANSMISION: 1203,
 	},
 	PROCESOS: {

@@ -160,42 +160,16 @@ const incrementarNumeroDeIntentos = (uid) => {
  * Genera un recuento del número de entradas que hay en la base de datos agrupadas por el numero de veces que han sido intentadas enviar a MongoDB
  * @param {*} callback 
  */
-const recuentoRegistros = (callback) => {
+const recuentoRegistros = () => {
 
-	let umbralIntentosMaximos = C.watchdog.sqlite.maxRetries || 10;
+	return new Promise((resolve, reject) => {
+		let umbralIntentosMaximos = C.sqlite.maxRetries || 10;
 
-	let respuesta = { pendientes: 0, totales: 0, umbral: umbralIntentosMaximos };
-	let errorPendiente = null;
-	let peticionesPendientes = 2;
-	let mutex = lock.createMutex();
+		db.all('select case when retryCount between 0 and ? then "pendientes" else "expiradas" end as estado, count(*) as cantidad from tx group by estado;', [umbralIntentosMaximos], (errorSQLite, resultados) => {
 
-	const funcionAgrupacion = (error, tipo, cantidad) => {
-
-		console.log('agrupacion', error, tipo, cantidad);
-		if (error) {
-			errorPendiente = error;
-		} else {
-			respuesta[tipo] = cantidad;
-		}
-
-		mutex.lock(() => {
-
-			peticionesPendientes--;
-			console.log('peticionesPendientes', peticionesPendientes, respuesta);
-			if (peticionesPendientes === 0) {
-				callback(errorPendiente, respuesta);
-			}
-			mutex.unlock();
-		})
-
-	}
-
-	db.get('SELECT count(*) as cantidad FROM tx', [], (errorSQLite, resultados) => {
-		funcionAgrupacion(errorSQLite, 'totales', resultados.cantidad);
-	});
-
-	db.get('SELECT count(*) as cantidad FROM tx WHERE retryCount < ?', [umbralIntentosMaximos], (errorSQLite, resultados) => {
-		funcionAgrupacion(errorSQLite, 'pendientes', resultados.cantidad);
+			if (errorSQLite) reject(errorSQLite)
+			else resolve(resultados)
+		});
 	});
 }
 
@@ -232,53 +206,59 @@ const recuentoRegistros = (callback) => {
  */
 const consultaRegistros = (opciones, callback) => {
 
-	let sql = 'SELECT uid, txid, data as transaccion, retryCount as intentos FROM tx';
-	let sqlContador = 'SELECT count(*) as count FROM tx';
-	let valores = []
+	return new Promise((resolve, reject) => {
 
-	let limite = Math.min(opciones.limite || 50, 50);
-	let skip = Math.max(opciones.skip || 0, 0);
+		let sql = 'SELECT uid, txid, data as transaccion, retryCount as intentos FROM tx';
+		let sqlContador = 'SELECT count(*) as count FROM tx';
+		let valores = []
 
-	if (opciones.filtro) {
-		sql += ' ' + opciones.filtro.sql;
-		sqlContador += ' ' + opciones.filtro.sql;
-		valores = opciones.filtro.valores;
-	}
-	if (opciones.orden) sql += ' ORDER BY ' + opciones.orden
-	sql += ' LIMIT ' + limite;
-	sql += ' OFFSET ' + skip;
+		let limite = Math.min(opciones.limite || 50, 50);
+		let skip = Math.max(opciones.skip || 0, 0);
 
-	L.t(['Consulta SQLite', sql, valores], 'sqlite');
-
-
-	db.get(sqlContador, valores, (errorContadorSQLite, filaNumeroEntradas) => {
-		if (errorContadorSQLite) {
-			L.f(['Fallo al contar el número de entradas en la base de datos', errorContadorSQLite], 'sqlite');
-			return callback(errorSQLite, null);
+		if (opciones.filtro) {
+			sql += ' ' + opciones.filtro.sql;
+			sqlContador += ' ' + opciones.filtro.sql;
+			valores = opciones.filtro.valores;
 		}
-		let numeroEntradas = filaNumeroEntradas.count;
+		if (opciones.orden) sql += ' ORDER BY ' + opciones.orden
+		sql += ' LIMIT ' + limite;
+		sql += ' OFFSET ' + skip;
 
-		db.all(sql, valores, (errorSQLite, entradas) => {
-			if (errorSQLite) {
-				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
-				return callback(errorSQLite, null);
+		L.t(['Consulta SQLite', sql, valores], 'sqlite');
+
+
+		db.get(sqlContador, valores, (errorContadorSQLite, filaNumeroEntradas) => {
+			if (errorContadorSQLite) {
+				L.f(['Fallo al contar el número de entradas en la base de datos', errorContadorSQLite], 'sqlite');
+				reject(errorSQLite);
+				return;
 			}
+			let numeroEntradas = filaNumeroEntradas.count;
 
-			if (entradas) {
-				// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
-				// los convertimos de vuelta a BSON
-				let entradasSaneadas = entradas.map(entrada => {
-					entrada.transaccion = EJSON.parse(entrada.transaccion, { relaxed: false });
-					return entrada;
-				});
-				return callback(null, {
-					resultados: entradasSaneadas,
-					limite: limite,
-					skip: skip,
-					total: numeroEntradas
-				});
-			}
+			db.all(sql, valores, (errorSQLite, entradas) => {
+				if (errorSQLite) {
+					L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+					reject(errorSQLite);
+					return;
+				}
 
+				if (entradas) {
+					// Como se guardan en SQLite los datos de las transacciones como un Extended JSON "stringificado",
+					// los convertimos de vuelta a BSON
+					let entradasSaneadas = entradas.map(entrada => {
+						entrada.transaccion = EJSON.parse(entrada.transaccion, { relaxed: false });
+						return entrada;
+					});
+					resolve({
+						resultados: entradasSaneadas,
+						limite: limite,
+						skip: skip,
+						total: numeroEntradas
+					});
+					return;
+				}
+
+			});
 		});
 	});
 }

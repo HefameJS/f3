@@ -59,6 +59,7 @@ const conexion = async function () {
 	global.mongodb.conectado = cliente ? true : false;
 	global.mongodb.cliente = cliente;
 	global.mongodb.bd = baseDatos
+	global.mongodb.db = baseDatos
 	global.mongodb.getBD = (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) }
 	global.mongodb.col.tx = colecciones.tx;
 	global.mongodb.col.discard = colecciones.discard;

@@ -2,104 +2,41 @@
 //const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Externas
-const lock = require('locks');
-const request = require('request');
+const axios = require('axios');
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iProcesos = require('interfaces/procesos/iRegistroProcesos');
 
 // 
-let tokenIntermonitor = null;
+const tokenIntermonitor = iTokens.generarTokenInterFedicom();
 
-/**
- * Condensa en un solo objeto la respuesta dada por un monitor remoto.
- * La respuesta se completa adjuntando la propiedad body el cuerpo de la respuesta
- * y una propiedad que indica si hubo error en la respuesta (codigo respuesta HTTP distinto de 2xx)
- */
-const _ampliaRespuestaMonitor = (repuestaMonitor, cuerpoMonitor) => {
-	if (!repuestaMonitor) repuestaMonitor = { statusCode: -1, statusMessage: 'Respuesta de llamada InterMonitor nula' };
-	repuestaMonitor.body = cuerpoMonitor;
-	repuestaMonitor.error = Math.floor(repuestaMonitor.statusCode / 100) !== 2;
-	return repuestaMonitor;
-}
 
-const _obtenerTokenIntermonitor = () => {
 
-	if (!tokenIntermonitor) {
-		tokenIntermonitor = iTokens.generarTokenInterFedicom();
-		return tokenIntermonitor;
+module.exports.llamadaMonitorRemoto = async function (destino, ruta, opciones) {
+
+	let parametros = opciones || {};
+
+	parametros.url = 'http://' + destino + ':5001' + ruta;
+	parametros.responseType = 'json';
+	parametros.headers = {
+		...(opciones?.headers || {}),
+		Authorization: 'Bearer ' + tokenIntermonitor,
 	}
 
-	let estadoToken = iTokens.verificarToken(tokenIntermonitor);
-	if (!estadoToken.meta.ok) {
-		tokenIntermonitor = iTokens.generarTokenInterFedicom();
-		return tokenIntermonitor;
-	} else {
-		return tokenIntermonitor;
+	try {
+		let respuesta = await axios(parametros);
+		return respuesta.data;
+	} catch (error) {
+		throw new Error(error.message);
 	}
 
 }
-_obtenerTokenIntermonitor();
-
-/**
- * Realiza la llamada intermonitor al destino indicado.
- * @param {*} destino 
- * @param {*} ruta 
- * @param {*} callback 
- */
-const _realizarLlamadaAMonitor = (destino, ruta, opciones, callback) => {
-
-	let parametrosLlamada = opciones;
-
-	parametrosLlamada.followAllRedirects = true;
-	parametrosLlamada.uri = 'http://' + destino + ':5001' + ruta;
-	parametrosLlamada.json = true;
-	parametrosLlamada.headers = {
-		...parametrosLlamada.headers,
-		Authorization: 'Bearer ' + _obtenerTokenIntermonitor(),
-	}
 
 
-	L.e(['Realizando llamada a monitor remoto', parametrosLlamada], 'iMonitor');
-
-	request(parametrosLlamada, (errorLlamada, repuestaMonitor, cuerpoMonitor) => {
-
-		repuestaMonitor = _ampliaRespuestaMonitor(repuestaMonitor, cuerpoMonitor);
-
-		if (errorLlamada) {
-			L.e(['Ocurrió un error en la llamada al monitor remoto', destino, errorLlamada], 'iMonitor');
-			callback(errorLlamada, repuestaMonitor)
-			return;
-		}
-
-		if (repuestaMonitor.error) {
-			L.e(['El monitor remoto retornó un mensaje de error', destino, repuestaMonitor.statusCode], 'iMonitor');
-			callback({
-				errno: repuestaMonitor.statusCode,
-				code: repuestaMonitor.statusMessage
-			}, repuestaMonitor)
-			return;
-		}
-
-		callback(null, repuestaMonitor);
-
-	});
-
-}
-
-
-/**
- * Realiza la llamada intermonitor a la lista de destinos pasada.
- * IMPRESCINDIBLE QUE LA LISTA DE DESTINOS SEA UN ARRAY Y CONTENGA AL MENOS UN DESTINO.
- * @param {*} destinos Array con los nombres de los destinos.
- * @param {*} ruta 
- * @param {*} callback 
- */
-const _llamadaAMultiplesDestinos = (destinos, ruta, opciones, callback) => {
-
+module.exports.llamadaMonitorMultiple = async function (destinos, ruta, opciones) {
 
 	L.d(['Se procede a realizar la llamada a multiples destinos', destinos, ruta]);
 
@@ -109,93 +46,30 @@ const _llamadaAMultiplesDestinos = (destinos, ruta, opciones, callback) => {
 		return;
 	}
 
-	let mutex = lock.createMutex();
-	let respuestasAlglomeradas = {};
-	let respuestasPendientes = destinos.length;
+	let promesas = destinos.map(destino => module.exports.llamadaMonitorRemoto(destino, ruta, opciones));
+	let respuestas = await Promise.allSettled(promesas);
 
-	let funcionAlglomeradora = (destino, error, respuesta) => {
-
-		respuestasAlglomeradas[destino] = {}
-
-		if (error) {
-			respuestasAlglomeradas[destino].ok = false;
-			if (respuesta.body) respuestasAlglomeradas[destino].error = respuesta.body;
-			else respuestasAlglomeradas[destino].error = error;
-		} else {
-			respuestasAlglomeradas[destino].ok = !respuesta.error;
-			if (respuesta.body) respuestasAlglomeradas[destino].respuesta = respuesta.body;
+	let resultado = {};
+	for (let i = 0; i < destinos.length; i++) {
+		resultado[destinos[i]] = {
+			ok: respuestas[i].status === "fulfilled",
+			respuesta: respuestas[i].value ?? respuestas[i].reason?.message
 		}
-
-
-		mutex.lock(() => {
-			respuestasPendientes--;
-			if (respuestasPendientes === 0) {
-				callback(null, respuestasAlglomeradas);
-			}
-			mutex.unlock();
-		});
 	}
 
-	destinos.forEach(destino => {
-		_realizarLlamadaAMonitor(destino, ruta, opciones, (errorLlamada, respuestaLlamada) => {
-			funcionAlglomeradora(destino, errorLlamada, respuestaLlamada);
-		})
-	});
-}
-
-
-/**
- * Realiza la llamada intermonitor a la lista de destinos pasada.
- * Puede pasarse un único destino como un string, o una lista de destinos en un array de strings
- * Si no se indica ningún destino, se busca en el registro de procesos todos los procesos de tipo monitor.
- * @param {*} destinos 
- * @param {*} ruta 
- * @param {*} opciones
- * @param {*} callback 
- */
-const realizarLlamadaMultiple = (destinos, ruta, opciones, callback) => {
-
-	if (typeof opciones === 'function') {
-		callback = opciones;
-		opciones = {};
-	}
-
-
-	if (destinos && destinos.forEach && destinos.length > 0) {
-		// Destinos es un array con al menos una posicion.
-		_llamadaAMultiplesDestinos(destinos, ruta, opciones, callback);
-		return;
-	} else if (destinos) {
-		// Destinos no es vacío, pero no es un array,
-		_llamadaAMultiplesDestinos([destinos], ruta, opciones, callback);
-		return;
-	} else {
-
-		iProcesos.consultaProcesos(K.PROCESS_TYPES.MONITOR, null, (errorProcesos, procesos) => {
-			if (errorProcesos) {
-				L.e(['No se pudieron obtener los procesos de tipo monitor', errorProcesos])
-				callback(errorProcesos, null);
-				return;
-			}
-
-			let destinos = procesos.map(proceso => proceso.host);
-			if (destinos && destinos.forEach && destinos.length > 0) {
-				_llamadaAMultiplesDestinos(destinos, ruta, opciones, callback);
-				return;
-			} else {
-				L.e(['No se obtuvieron procesos de tipo monitor'])
-				callback(new Error('No se obtuvieron procesos de tipo monitor'), null);
-				return;
-			}
-
-
-		});
-	}
-
+	return resultado;
 
 }
 
 
-module.exports = {
-	realizarLlamadaMultiple
+module.exports.llamadaTodosMonitores = async function (ruta, opciones) {
+
+	let monitores = await M.db.collection('instancias')
+		.find({ 'procesos.tipo': K.PROCESOS.TIPOS.MONITOR })
+		.project({ _id: 1 })
+		.toArray();
+	monitores = monitores.map(monitor => monitor._id);
+
+	return await module.exports.llamadaMonitorMultiple(monitores, ruta, opciones)
+
 }

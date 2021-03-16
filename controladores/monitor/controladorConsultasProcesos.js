@@ -2,20 +2,20 @@
 //const C = global.config;
 const L = global.logger;
 //const K = global.constants;
+const M = global.mongodb;
 
 // Externas
 const OS = require('os');
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iRegistroProcesos = require('interfaces/procesos/iRegistroProcesos')
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 
-// GET /procesos ? [servidor=<host-proceso>] & [tipo=<tipo-proceso>]
-const listadoProcesos = (req, res) => {
+// GET /procesos 
+module.exports.listadoProcesos = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta de procesos']);
@@ -25,30 +25,18 @@ const listadoProcesos = (req, res) => {
 	if (!estadoToken.ok) return;
 
 
-	let tipoProceso = req.query.tipo ? req.query.tipo : null;
-	let servidor = req.query.servidor ? req.query.servidor : null;
+	try {
+		let instancias = await M.db.collection('instancias').find({}).toArray();
+		let respuesta = {};
+		instancias.forEach(({ _id, ...datosInstancia }) => {
+			respuesta[_id] = datosInstancia;
+		});
 
-	if (servidor === 'local') {
-		servidor = OS.hostname();
+		res.status(200).json(respuesta);
+	} catch (errorMongo) {
+		L.xe(txId, ['Error al obtener la lista de procesos', errorMongo]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de procesos');
 	}
 
-	iRegistroProcesos.consultaProcesos(tipoProceso, servidor, (errorRegistroProcesos, procesos) => {
-		if (errorRegistroProcesos) {
-			L.xe(txId, ['Error al obtener la lista de procesos', errorRegistroProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al obtener la lista de procesos');
-			return;
-		}
-		L.xi(txId, ['Obtenida lista de procesos']);
-		res.status(200).json(procesos);
-		return;
-
-	})
-
-
 }
 
-
-
-module.exports = {
-	listadoProcesos
-}

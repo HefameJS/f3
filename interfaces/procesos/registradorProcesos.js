@@ -20,7 +20,7 @@ module.exports = () => {
 
 	CLAVE_MONGODB = { _id: OS.hostname().toLowerCase() };
 	DATOS_INSTANCIA = {
-		timestamp: Date.fedicomTimestamp(),
+		inicio: Date.fedicomTimestamp(),
 		version: {
 			protocolo: K.VERSION.PROTOCOLO,
 			servidor: K.VERSION.SERVIDOR,
@@ -34,7 +34,8 @@ module.exports = () => {
 			$setOnInsert: CLAVE_MONGODB,
 			$set: {
 				...DATOS_INSTANCIA,
-				subprocesos: Object.values(cluster.workers).map(worker => {
+				timestamp: Date.fedicomTimestamp(),
+				procesos: Object.values(cluster.workers).map(worker => {
 					return {
 						id: worker.id,
 						tipo: worker.tipo,
@@ -47,7 +48,7 @@ module.exports = () => {
 		try {
 			intervaloRegistroEnEjecucion = true;
 			await M.bd.collection('instancias').updateOne(CLAVE_MONGODB, datosInstancia, { upsert: 1 })
-			// L.t(['Instancia registrada', datosInstancia['$set']]);
+			//L.t(['Instancia registrada', datosInstancia['$set']]);
 		} catch (errorMongo) {
 			L.e(['Capturado error en el registro de la instancia', errorMongo]);
 		} finally {

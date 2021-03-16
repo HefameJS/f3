@@ -24,7 +24,7 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
  * 		offset: 150
  * }
  */
-const consultaRegistros = (req, res) => {
+const consultaRegistros = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta de registros de SQLite']);
@@ -35,36 +35,30 @@ const consultaRegistros = (req, res) => {
 	let opcionesConsulta = req.body || {};
 
 	if (req.query.servidor === 'local') {
-
-		iSQLite.consultaRegistros(opcionesConsulta, (errorSQLite, registros) => {
-
-			if (errorSQLite) {
-				L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar los registros de SQLite');
-				return;
-			}
-
+		try {
+			let registros = await iSQLite.consultaRegistros(opcionesConsulta)
 			res.status(200).json(registros);
-
-		});
-
+		} catch (errorSQLite) {
+			L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar los registros de SQLite');
+			return;
+		}
 	} else {
-
-		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/sqlite?servidor=local', {method: 'PUT', body: req.body}, (errorLlamada, respuestasRemotas) => {
-			if (errorLlamada) {
-				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada]);
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
-				return;
-			}
+		try {
+			let respuestasRemotas = await iMonitor.llamadaTodosMonitores('/v1/sqlite?servidor=local', { method: 'PUT', body: req.body });
 			res.status(200).send(respuestasRemotas);
-		})
+		} catch (errorLlamada) {
+			L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada]);
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+			return;
+		}
 
 	}
 
 }
 
 // GET /sqlite/recuento
-const recuentoRegistros = (req, res) => {
+const recuentoRegistros = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta del recuento de entradas de la base de datos SQLite']);
@@ -74,28 +68,27 @@ const recuentoRegistros = (req, res) => {
 
 
 	if (req.query.servidor === 'local') {
-		iSQLite.recuentoRegistros((errorSQLite, recuento) => {
+		try {
+			let recuento = await iSQLite.recuentoRegistros();
+			let resultado = {};
+			recuento.forEach(elemento => {
+				resultado[elemento.estado] = elemento.cantidad;
+			});
 
-			if (errorSQLite) {
-				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorSQLite])
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
-			}
+			res.status(200).json(resultado);
+		} catch (errorSQLite) {
+			L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorSQLite])
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+		}
+	} else {
+		try {
+			let recuento = await iMonitor.llamadaTodosMonitores('/v1/sqlite/recuento?servidor=local');
 
 			res.status(200).json(recuento);
-
-		});
-	}
-	else {
-
-		iMonitor.realizarLlamadaMultiple(req.query.servidor, '/v1/sqlite/recuento?servidor=local', (errorLlamada, respuestasRemotas) => {
-			if (errorLlamada) {
-				L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada]);
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
-				return;
-			}
-			res.status(200).send(respuestasRemotas);
-		})
-
+		} catch (errorLlamada) {
+			L.xe(txId, ['Ocurrió un error al obtener el recuento de registros SQLite', errorLlamada])
+			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al obtener el recuento de registros SQLite');
+		}
 	}
 
 }
