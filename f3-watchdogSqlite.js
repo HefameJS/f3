@@ -22,8 +22,7 @@ require('bootstrap')().then(() => {
 
 
 	let funcionWatchdog = require('watchdog/watchdogSqlite');
-
-	let idIntervalo = funcionWatchdog();
+	funcionWatchdog();
 
 
 });

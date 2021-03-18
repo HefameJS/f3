@@ -8,7 +8,7 @@ const OS = require('os');
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iMonitor = require('interfaces/ifedicom/iMonitor');
+const iMonitor = require('interfaces/iMonitor');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

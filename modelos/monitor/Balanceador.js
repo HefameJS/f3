@@ -3,12 +3,15 @@
 const L = global.logger;
 //const K = global.constants;
 
-// Externas
-const request = require('request');
 
-/**
- * Esta clase extrae los datos de un enlace 
- */
+const OS = require('os');
+const axios = require('axios');
+const { URLSearchParams } = require('url');
+
+
+
+
+
 class MatchEnlace {
 
 	constructor(match) {
@@ -19,15 +22,15 @@ class MatchEnlace {
 					 1: URL (de aqui extraeremos w (worker), b (balancer) y nonce)				 						  2: Ignorado					  3        4		5:factor  6:conjut  7:estado         8:n_elegido  9:busy    10:load   11:entrada(MB)  12:salida(MB)                                            
 					 
 		for <a href="/balancer-manager?b=sapt01&amp;nonce=26887741-cf60-3869-1ac3-ef42298b258f">balancer://sapt01</a>
-		             -------------------------------------------------------------------------  -----------------
-                     14: URL (de aqui extraeremos b (balancer) y nonce)                         15: Ignorado
+					 -------------------------------------------------------------------------  -----------------
+					 14: URL (de aqui extraeremos b (balancer) y nonce)                         15: Ignorado
 		*/
 
 
 		// Si el match 14 existe, es el caso balanceador y contiene la URL del balanceador
 		// en caso contrario, es el caso worker, y la URL viene en el match 1
 		if (match[14]) {
-			
+
 			this.url = new URL('http://dummy' + match[14].replace(/&amp;/g, '&'));
 		} else {
 			this.url = new URL('http://dummy' + match[1].replace(/&amp;/g, '&'));
@@ -70,7 +73,8 @@ class MatchEnlace {
 	}
 }
 
-class Balanceador {
+
+class BalanceadorApache {
 	constructor(enlace) {
 		this.nombre = enlace.getNombreBalanceador();
 		this.nonce = enlace.getNonce();
@@ -82,7 +86,7 @@ class Balanceador {
 	}
 }
 
-class Worker {
+class WorkerApache {
 	constructor(enlace) {
 		this.nombre = enlace.getDestino();
 		let extra = enlace.getExtra();
@@ -104,11 +108,7 @@ class Worker {
 	}
 }
 
-/**
- * Transorma los datos obtenidos de las consultas al balanceador (en HTML) en un objeto Balanceador de JS.
- * @param {string} data 
- */
-const _analizaDatosBalanceador = (data) => {
+const _analizaDatosBalanceadores = (data) => {
 
 	/**
 	 * Esta REGEX tiene dos partes:
@@ -125,9 +125,9 @@ const _analizaDatosBalanceador = (data) => {
 		let enlace = new MatchEnlace(match)
 
 		if (enlace.isBalanceador()) {
-			balanceadores[enlace.getNombreBalanceador()] = new Balanceador(enlace);
+			balanceadores[enlace.getNombreBalanceador()] = new BalanceadorApache(enlace);
 		} else {
-			balanceadores[enlace.getNombreBalanceador()].addDestino(new Worker(enlace));
+			balanceadores[enlace.getNombreBalanceador()].addDestino(new WorkerApache(enlace));
 		}
 
 		match = regex.exec(data);
@@ -136,88 +136,102 @@ const _analizaDatosBalanceador = (data) => {
 }
 
 
-const consultaBalanceador = (urlBaseServidor, callback) => {
 
-	let parametrosLlamada = {
-		followAllRedirects: true,
-		uri: urlBaseServidor + '/balancer-manager',
-		headers: {
-			referer: urlBaseServidor + '/balancer-manager',
-		}
+
+
+class Balanceador {
+
+	constructor(datos) {
+		this.nombre = datos.nombre;
+		this.base = datos.base;
+		this.proxy = datos.proxy;
+		this.tipo = datos.tipo;
 	}
 
-	L.i(["Consultando balanceadores del servidor", urlBaseServidor])
-
-	request(parametrosLlamada, (errorLlamada, respuestaHttp, cuerpoHttp) => {
-
-		if (errorLlamada) {
-			callback(errorLlamada, null);
-			return;
-		}
-
-		if (respuestaHttp.statusCode !== 200) {
-			callback({
-				errno: respuestaHttp.statusCode,
-			}, null);
-			return;
-		}
-
-		callback(null, _analizaDatosBalanceador(cuerpoHttp));
-
-	});
-}
-
-const actualizarWorker = (urlBaseServidor, balanceador, worker, nonce, estado, loadFactor, callback) => {
-
-	if (!estado) estado = {}
-	if (!loadFactor) loadFactor = "1"
-
-	let urlencoded = new URLSearchParams();
-	urlencoded.append("w_lf", loadFactor);
-	//urlencoded.append("w_ls", "0");
-	//urlencoded.append("w_wr", "");
-	//urlencoded.append("w_rr", "");
-	//urlencoded.append("w_status_I", "0");
-	//urlencoded.append("w_status_N", "0");
-	//urlencoded.append("w_status_D", "0");
-	urlencoded.append("w_status_H", (estado.standby ? "1" : "0"));
-	urlencoded.append("w_status_S", (estado.stop ? "1" : "0"));
-	urlencoded.append("w", worker);
-	urlencoded.append("b", balanceador);
-	urlencoded.append("nonce", nonce);
-
-	let parametrosLlamada = {
-		followAllRedirects: true,
-		uri: urlBaseServidor + '/balancer-manager',
-		method: 'POST',
-		headers: {
-			referer: urlBaseServidor + '/balancer-manager',
-		},
-		body: urlencoded.toString()
+	#esLocal() {
+		if (!this.proxy) return true;
+		return OS.hostname().toLowerCase() === this.proxy;
 	}
 
-	L.i(["Actualizando worker del balanceador del servidor", urlBaseServidor, urlencoded])
+	async consultaEstado() {
 
-	request(parametrosLlamada, (errorLlamada, respuestaHttp, cuerpoHttp) => {
+		if (this.#esLocal()) {
 
-		if (errorLlamada) {
-			callback(errorLlamada, null);
-			return;
+			let parametrosLlamada = {
+				url: this.base + '/balancer-manager',
+				headers: {
+					referer: this.base + '/balancer-manager',
+				}
+			}
+
+			let respuesta = await axios(parametrosLlamada);
+			let cuerpoHttp = respuesta.data;
+			return {
+				nombre: this.nombre,
+				url: this.base,
+				tipo: this.tipo,
+				proxy: this.proxy,
+				balanceadores: _analizaDatosBalanceadores(cuerpoHttp)
+			}
+
+		} else {
+			const iMonitor = require('interfaces/iMonitor');
+			return await iMonitor.llamadaMonitorRemoto(this.proxy, '/v1/balanceadores/' + this.nombre)
 		}
 
-		if (respuestaHttp.statusCode !== 200) {
-			callback({
-				errno: respuestaHttp.statusCode,
-			}, null);
-			return;
+	}
+
+	async actualizarEstado(grupoBalanceo, worker, estado = {}, peso = "1") {
+
+		if (this.#esLocal()) {
+
+			let estadoActual = await this.consultaEstado();
+			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
+
+			if (!nonce) {
+				throw new Error('Imposible encontrar el nonce para el grupo de balanceo')
+			}
+
+			let urlEncodedParams = new URLSearchParams();
+			urlEncodedParams.append("w_lf", peso);
+			//urlEncodedParams.append("w_ls", "0");
+			//urlEncodedParams.append("w_wr", "");
+			//urlEncodedParams.append("w_rr", "");
+			urlEncodedParams.append("w_status_I", (estado.ignoreError ? "1" : "0"));
+			urlEncodedParams.append("w_status_N", (estado.draining ? "1" : "0"));
+			urlEncodedParams.append("w_status_D", (estado.disabled ? "1" : "0"));
+			urlEncodedParams.append("w_status_H", (estado.standby ? "1" : "0"));
+			urlEncodedParams.append("w_status_S", (estado.stop ? "1" : "0"));
+			urlEncodedParams.append("w", worker);
+			urlEncodedParams.append("b", grupoBalanceo);
+			urlEncodedParams.append("nonce", nonce);
+
+			let parametrosLlamada = {
+				url: this.base + '/balancer-manager',
+				method: 'POST',
+				headers: {
+					referer: this.base + '/balancer-manager'
+				},
+				data: urlEncodedParams.toString()
+				
+			}
+
+			let respuesta = await axios(parametrosLlamada);
+
+
+			let cuerpoHttp = respuesta.data;
+			return {
+				nombre: this.nombre,
+				url: this.base,
+				tipo: this.tipo,
+				proxy: this.proxy,
+				balanceadores: _analizaDatosBalanceadores(cuerpoHttp)
+			}
 		}
+		return null;
+	}
 
-		callback(null, _analizaDatosBalanceador(cuerpoHttp));
 
-	});
 }
 
-module.exports = {
-	consultaBalanceador,
-	actualizarWorker
-}
+module.exports = Balanceador;

@@ -5,13 +5,13 @@ const C = global.config;
 
 // Externo
 const ActiveDirectory = require('activedirectory');
-const clone = require('clone');
 
 const autenticar = function (txId, solicitudAutenticacion) {
 
 	return new Promise((resolve, reject) => {
 
 		let configuracionLdap = C.ldap.getParametrosActiveDirectory(solicitudAutenticacion);
+
 		let activeDirectory = new ActiveDirectory(configuracionLdap);
 		
 		activeDirectory.authenticate(configuracionLdap.username, configuracionLdap.password, (authErr, authResult) => {
@@ -20,14 +20,15 @@ const autenticar = function (txId, solicitudAutenticacion) {
 				return;
 			}
 
-			activeDirectory.getGroupMembershipForUser(solicitudAutenticacion.username, (errorLdap, gruposAd) => {
+			activeDirectory.getGroupMembershipForUser(solicitudAutenticacion.usuario, (errorLdap, gruposAd) => {
 				if (errorLdap || !gruposAd || !gruposAd.forEach) {
 					reject(errorLdap);
 					return;
 				}
 
-				let grupos = gruposAd.filter(grupoAd => (grupoAd.cn && grupoAd.cn.startsWith(C.ldap.prefijoGrupos)));
-
+				let grupos = gruposAd
+								.filter(grupoAd => (grupoAd.cn && grupoAd.cn.startsWith(C.ldap.prefijoGrupos)))
+								.map(grupoAd => grupoAd.cn)
 				resolve(grupos);
 			})
 		});

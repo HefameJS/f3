@@ -10,7 +10,7 @@ module.exports = {
 	sap: require('controladores/monitor/controladorConsultasSap'),
 	procesos: require('controladores/monitor/controladorConsultasProcesos'),
 	mongodb: require('controladores/monitor/controladorConsultasMongoDb'),
-	//balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
+	balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
 	sqlite: require('controladores/monitor/controladorConsultasSQLite'),
 	//dumps: require('controladores/monitor/controladorConsultasDumps')
 

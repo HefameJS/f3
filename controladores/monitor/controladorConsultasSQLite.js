@@ -5,8 +5,8 @@ const L = global.logger;
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iMonitor = require('interfaces/ifedicom/iMonitor');
-const iSQLite = require('interfaces/isqlite/iSQLite');
+const iMonitor = require('interfaces/iMonitor');
+const iSQLite = require('interfaces/iSQLite');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

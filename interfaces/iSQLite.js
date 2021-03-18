@@ -51,14 +51,14 @@ const grabarTransaccion = function (transaccion) {
 
 /**
  * Devuelve el número de entradas que hay en la base de datos y que están pendientes de ser enviadas.
- * Solo se cuentan aquellas que se han intentado salvar en MongoDB y han fallado menos de las veces indicadas en C.watchdog.sqlite.maxRetries (por defecto 10). 
+ * Solo se cuentan aquellas que se han intentado salvar en MongoDB y han fallado menos de las veces indicadas en C.sqlite.maximoReintentos (por defecto 10).
  * @param {*} numeroFallosMaximo 
  * @param {*} callback 
  */
 const numeroEntradasPendientes = () => {
 
 	return new Promise((resolve, reject) => {
-		db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.watchdog.sqlite.maxRetries || 10], (errorSQLite, resultados) => {
+		db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.sqlite.maximoReintentos], (errorSQLite, resultados) => {
 			if (errorSQLite) {
 				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
 				reject(errorSQLite);
@@ -78,18 +78,34 @@ const numeroEntradasPendientes = () => {
 
 /**
  * Devuelve los datos de todas las entradas que haya en la base de datos SQLite.
- * Si se indica un número de fallos positivo, se retornan solo aquellas que se han intentado salvar en MongoDB y han fallado
- * menos de las veces indicadas. Este parámetro es útil para obtener solo aquellas que son candidatas para pasarlas a MongoDB.
+ * Si se indica un número de fallos positivo, se retornan solo aquellas que se han intentado 
+ * salvar en MongoDB y han fallado menos de las veces indicadas. Este parámetro es útil 
+ * para obtener solo aquellas que son candidatas para pasarlas a MongoDB.
  * @param {*} numeroFallosMaximo
- * @param {*} callback
  */
-const obtenerEntradas = (numeroFallosMaximo) => {
+const obtenerEntradas = (numeroFallosMaximo, limite) => {
 
 	return new Promise((resolve, reject) => {
 
-		if (!numeroFallosMaximo) numeroFallosMaximo = Infinity;
+		let sql = 'SELECT * FROM tx';
+		let parametrosSql = [];
+		numeroFallosMaximo = parseInt(numeroFallosMaximo);
+		limite = parseInt(limite);
 
-		db.all('SELECT * FROM tx WHERE retryCount < ?', [numeroFallosMaximo], (errorSQLite, entradas) => {
+		if (numeroFallosMaximo > 0) {
+			sql += ' WHERE retryCount < ?';
+			parametrosSql.push(numeroFallosMaximo);
+		}
+
+		sql += ' ORDER BY uid';
+
+		if (limite > 0) {
+			sql += ' LIMIT ' + limite;
+		}
+
+		
+
+		db.all(sql, parametrosSql, (errorSQLite, entradas) => {
 			if (errorSQLite) {
 				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
 				reject(errorSQLite);
@@ -115,7 +131,6 @@ const obtenerEntradas = (numeroFallosMaximo) => {
 /**
  * Elimina de la base de datos SQLite la entrada con el UID indicado.
  * @param {*} uid 
- * @param {*} callback 
  */
 const eliminarEntrada = (uid) => {
 
@@ -137,10 +152,9 @@ const eliminarEntrada = (uid) => {
 
 /**
  * Actualiza en la base de datos la entrada con el UID indicado para aumentar su campo 'retryCount' en uno.
- * Cuando este valor alcanza el umbral configurado en 'C.watchdog.sqlite.maxRetries', se deja de intentar pasar
+ * Cuando este valor alcanza el umbral configurado en 'C.sqlite.maximoReintentos', se deja de intentar pasar
  * la entrada de SQLite a MongoDB.
  * @param {*} uid 
- * @param {*} callback 
  */
 const incrementarNumeroDeIntentos = (uid) => {
 
@@ -157,16 +171,15 @@ const incrementarNumeroDeIntentos = (uid) => {
 }
 
 /**
- * Genera un recuento del número de entradas que hay en la base de datos agrupadas por el numero de veces que han sido intentadas enviar a MongoDB
- * @param {*} callback 
+ * Genera un recuento del número de entradas que hay en la base de datos agrupadas por 
+ * el numero de veces que han sido intentadas enviar a MongoDB
  */
 const recuentoRegistros = () => {
 
 	return new Promise((resolve, reject) => {
-		let umbralIntentosMaximos = C.sqlite.maxRetries || 10;
+		let umbralIntentosMaximos = C.sqlite.maximoReintentos;
 
-		db.all('select case when retryCount between 0 and ? then "pendientes" else "expiradas" end as estado, count(*) as cantidad from tx group by estado;', [umbralIntentosMaximos], (errorSQLite, resultados) => {
-
+		db.all('SELECT CASE WHEN retryCount BETWEEN 0 AND ? THEN "pendientes" ELSE "expiradas" END AS estado, count(*) AS cantidad FROM tx GROUP BY estado;', [umbralIntentosMaximos], (errorSQLite, resultados) => {
 			if (errorSQLite) reject(errorSQLite)
 			else resolve(resultados)
 		});

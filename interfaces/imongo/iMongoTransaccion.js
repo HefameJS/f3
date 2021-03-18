@@ -8,7 +8,7 @@ const M = global.mongodb;
 const MemoryCache = require('memory-cache');
 
 // Interfaces
-const iSQLite = require('interfaces/isqlite/iSQLite');
+const iSQLite = require('interfaces/iSQLite');
 
 
 const cacheTransacciones = new MemoryCache.Cache();

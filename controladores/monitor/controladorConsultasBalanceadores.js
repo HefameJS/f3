@@ -1,22 +1,20 @@
 'use strict';
 const C = global.config;
 const L = global.logger;
-const K = global.constants;
+//const K = global.constants;
 
 // Externas
-const lock = require('locks');
+
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iApache = require('interfaces/apache/iapache');
-const iRegistroProcesos = require('interfaces/procesos/iRegistroProcesos');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 
-// GET /balanceadores ? [servidor=f3dev1] & [tipo=sap|fedicom]
-const listadoBalanceadores = (req, res) => {
+// GET /balanceadores ? [tipo=sap|fedicom]
+const listadoBalanceadores = async function (req, res) {
 
 	let txId = req.txId;
 
@@ -25,65 +23,30 @@ const listadoBalanceadores = (req, res) => {
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
-	let subtipoBalanceador = req.query.tipo || null;
-	let servidor = req.query.servidor || null;
+	let tipoBalanceador = req.query.tipo || null;
 
-	iRegistroProcesos.consultaProcesos(K.PROCESS_TYPES.BALANCEADOR, servidor, (errorConsultaProcesos, balanceadores) => {
-		if (errorConsultaProcesos) {
-			L.xe(txId, ['Ocurrió un error al consultar la lista de procesos de tipo balanceador', errorConsultaProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'Ocurrió un error al consultar la lista de procesos de tipo balanceador');
-			return;
+
+	let balanceadores = C.balanceador.balanceadores;
+	if (tipoBalanceador)
+		balanceadores = balanceadores.filter(balanceador => balanceador.tipo === tipoBalanceador);
+
+	let promesas = balanceadores.map(balanceador => balanceador.consultaEstado());
+	let resultados = await Promise.allSettled(promesas);
+
+	resultados = resultados.map(resultado => {
+		return {
+			ok: resultado.status === 'fulfilled',
+			resultado: resultado.value || resultado.reason.message
 		}
+	})
+	res.status(200).json(resultados);
 
-		if (subtipoBalanceador) {
-			balanceadores = balanceadores.filter(balanceador => balanceador.subtype === subtipoBalanceador);
-		}
-
-		if (!balanceadores.length) {
-			L.xi(txId, ['No se encontraron balanceadores']);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se encontraron balanceadores', 404);
-			return;
-		}
-
-		L.xd(txId, ['Se van a consultar los balanceadores', balanceadores])
-
-		let datosBalanceadores = []
-		let consultasPendientes = balanceadores.length;
-		let mutex = lock.createMutex();
-
-		const funcionAgregacion = (balanceador, errorConsultaBalanceador, datosBalanceo) => {
-			if (errorConsultaBalanceador) {
-				L.xe(txId, ['Error al consultar el balanceador', balanceador, errorConsultaBalanceador.message]);
-				balanceador.ok = false;
-				balanceador.error = 'Error al consultar el balanceador: ' + errorConsultaBalanceador.message;
-				datosBalanceadores.push(balanceador);
-			} else {
-				balanceador.ok = true;
-				balanceador.balanceadores = datosBalanceo;
-				datosBalanceadores.push(balanceador);
-			}
-
-			mutex.lock(() => {
-				consultasPendientes--;
-				if (consultasPendientes === 0) {
-					res.status(200).json(datosBalanceadores);
-				}
-				mutex.unlock();
-			})
-
-		}
-
-		balanceadores.forEach(balanceador => {
-			iApache.consultaBalanceador(balanceador.url, (errorApache, datosBalanceador) => {
-				funcionAgregacion(balanceador, errorApache, datosBalanceador);
-			})
-		})
-
-	});
 }
 
+
+
 // GET /balanceadores/:servidor
-const consultaBalanceador = (req, res) => {
+const consultaBalanceador = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Petición de consulta de un balanceador', req.params.servidor]);
@@ -99,40 +62,22 @@ const consultaBalanceador = (req, res) => {
 		return;
 	}
 
-	iRegistroProcesos.consultaProcesos(K.PROCESS_TYPES.BALANCEADOR, servidor, (errorConsultaProcesos, balanceadores) => {
-		if (errorConsultaProcesos) {
-			L.xe(txId, ['No se pudo obtener la información del balanceado', errorConsultaProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se pudo obtener la información del balanceador');
-			return;
-		}
+	let balanceador = C.balanceador.get(servidor);
+	if (!balanceador) {
+		L.xi(txId, ['El balanceador indicado no existe']);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'El balanceador indicado no existe', 404);
+		return;
+	}
 
-		if (balanceadores.length === 0) {
-			L.xi(txId, ['No se encontró el balanceador']);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se encontró el balanceador', 404);
-			return;
-		}
-
-		if (balanceadores.length > 1) {
-			L.xw(txId, ['La consulta de procesos de tipo balanceador retornó mas de un balanceador, lo cual no está permitido', errorConsultaProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'La consulta de procesos de tipo balanceador retornó mas de un balanceador, lo cual no está permitido - Utiliza el filtro tipo=[sap|fedicom] para afinar la búsqueda', 400);
-			return;
-		}
+	try {
+		let datosBalanceador = await balanceador.consultaEstado();
+		res.status(200).json(datosBalanceador);
+	} catch (errorConsulta) {
+		L.xe(txId, ['La consulta del estado ha fallado', errorConsulta]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al consultar el estado del balanceador', 500);
+	}
 
 
-		let balanceador = balanceadores[0];
-
-		iApache.consultaBalanceador(balanceador.url, (errorApache, datosBalanceador) => {
-			if (errorApache) {
-				L.e(['Error al consultar el balanceador', balanceador, errorApache.message]);
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al consultar el balanceador: ' + errorApache.message);
-			} else {
-				balanceador.ok = true;
-				balanceador.balanceadores = datosBalanceador;
-				res.status(200).json(balanceador);
-			}
-		})
-
-	})
 
 }
 
@@ -149,7 +94,8 @@ const consultaBalanceador = (req, res) => {
 		peso: 1
 	}
  */
-const actualizaBalanceador = (req, res) => {
+
+const actualizaBalanceador = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Petición para actualizar un balanceador', req.params.servidor]);
@@ -165,42 +111,24 @@ const actualizaBalanceador = (req, res) => {
 		return;
 	}
 
-	iRegistroProcesos.consultaProcesos(K.PROCESS_TYPES.BALANCEADOR, servidor, (errorConsultaProcesos, balanceadores) => {
-		if (errorConsultaProcesos) {
-			L.xe(txId, ['Ocurrió un error al consultar la lista de procesos de tipo balanceador', errorConsultaProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se pudo acceder a la información del balanceador');
-			return;
-		}
+	let balanceador = C.balanceador.get(servidor);
+	if (!balanceador) {
+		L.xi(txId, ['El balanceador indicado no existe']);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'El balanceador indicado no existe', 404);
+		return;
+	}
 
-		if (balanceadores.length === 0) {
-			L.xi(txId, ['No se encontró el balanceador']);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se encontró el balanceador', 404);
-			return;
-		}
+	let peticion = req.body || {};
 
-		if (balanceadores.length > 1) {
-			L.xw(txId, ['La consulta de procesos de tipo balanceador retornó mas de un balanceador, lo cual no está permitido', errorConsultaProcesos]);
-			ErrorFedicom.generarYEnviarErrorMonitor(res, 'La consulta de procesos de tipo balanceador retornó mas de un balanceador, lo cual no está permitido - Utiliza el filtro tipo=[sap|fedicom] para afinar la búsqueda', 400);
-			return;
-		}
+	try {
+		let resultado = await balanceador.actualizarEstado(peticion.grupoBalanceo, peticion.worker, peticion.estado, peticion.peso);
+		res.status(200).json(resultado);
+	} catch (errorBalanceador) {
+		L.xe(txId, ['Error al actualizar el balanceador', errorBalanceador]);
+		ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al actualizar el balanceador', 500);
+	}
 
-		let balanceador = balanceadores[0];
-		let peticion = req.body;
 
-		L.xi(txId, ['Solicitud de cambio de balanceador', peticion])
-
-		iApache.actualizarWorker(balanceador.url, peticion.balanceador, peticion.worker, peticion.nonce, peticion.estado, peticion.peso, (errorApache, datosBalancadorNuevos) => {
-			if (errorApache) {
-				L.e(['Error al cambiar el estado del balanceador', errorApache]);
-				ErrorFedicom.generarYEnviarErrorMonitor(res, 'Error al cambiar el estado del balanceador: ' + errorApache.message);
-			} else {
-				balanceador.ok = true;
-				balanceador.balanceadores = datosBalancadorNuevos;
-				res.status(200).json(balanceador);
-			}
-		})
-
-	})
 
 }
 

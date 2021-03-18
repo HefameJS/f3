@@ -11,6 +11,7 @@ const SEPARADOR_DIRECTORIOS = require('path').sep;
 
 // modelos
 const DestinoSap = require('modelos/DestinoSap');
+const Balanceador = require('modelos/monitor/Balanceador');
 
 // util
 const Validador = require('global/validador');
@@ -97,6 +98,8 @@ class Configuracion {
 		this.devoluciones = await ConfiguracionDevoluciones.cargar(this);
 		this.softwareId = await ConfiguracionSoftwareId.cargar(this);
 		this.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar(this);
+		this.sqlite = await ConfiguracionSqlite.cargar(this);
+		this.balanceador = await ConfiguracionBalanceadores.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -215,6 +218,17 @@ class ConfiguracionSqlite {
 		this.directorio = C.directorioCache + SUBDIR.SQLITE + SEPARADOR_DIRECTORIOS;
 		this.fichero = this.directorio + 'db.sqlite';
 	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('watchdogSqlite');
+		C.sqlite.maximoReintentos = parseInt(config.maximoReintentos) || 10;
+		C.sqlite.insercionesSimultaneas = parseInt(config.insercionesSimultaneas) || 10;
+		C.sqlite.intervalo = (parseInt(config.intervalo) || 10) * 1000;
+		return C.sqlite;
+	}
+
+
+
 }
 
 class ConfiguracionHttp {
@@ -374,10 +388,10 @@ class ConfiguracionLdap {
 	getParametrosActiveDirectory(solicitudAutenticacion) {
 		return {
 			url: this.servidor,
+			tlsOptions: this.opcionesTls,
 			baseDN: this.baseBusqueda,
 			username: solicitudAutenticacion.dominio + '\\' + solicitudAutenticacion.usuario,
-			password: solicitudAutenticacion.clave,
-			tlsOptions: this.opcionesTls
+			password: solicitudAutenticacion.clave
 		}
 	}
 
@@ -449,7 +463,21 @@ class ConfiguracionWatchdogPedidos {
 	}
 }
 
+class ConfiguracionBalanceadores {
 
+	constructor(C, config) {
+		this.balanceadores = config.balanceadores.map(balanceador => new Balanceador(balanceador));
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('balanceador');
+		return new ConfiguracionBalanceadores(C, config);
+	}
+
+	get(nombre) {
+		return this.balanceadores.find( b => b.nombre === nombre)
+	}
+}
 
 
 module.exports = Configuracion.cargarDatosFichero;

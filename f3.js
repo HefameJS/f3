@@ -25,29 +25,27 @@ require('bootstrap')().then(() => {
 	let worker;
 
 	// Lanzamiento de los workers
-	/*
+
 	L.i(['Lanzando procesos worker', C.numeroWorkers], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WORKER + '.js' });
 	for (let i = 0; i < C.numeroWorkers; i++) {
 		worker = cluster.fork();
 		worker.tipo = K.PROCESOS.TIPOS.WORKER;
 	}
-	*/
 	
 	
+		/*
 	
 	
 
 	// Lanzamiento del watchdog
-	/*
 	L.i(['Lanzando proceso WATCHDOG PEDIDOS'], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS + '.js' });
 	worker = cluster.fork();
 	worker.tipo = K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS;
-	*/
 
-	// Lanzamiento del watchdog
-	/*
+	// Lanzamiento del watchdog SQLITE
+	
 	L.i(['Lanzando proceso WATCHDOG SQLITE'], 'cluster');
 	cluster.setupMaster({ exec: 'f3-' + K.PROCESOS.TIPOS.WATCHDOG_SQLITE + '.js' });
 	worker = cluster.fork();

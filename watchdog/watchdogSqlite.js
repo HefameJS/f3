@@ -5,7 +5,7 @@ const L = global.logger;
 
 // Interfaces
 const iMongo = require('interfaces/imongo/iMongo');
-const iSQLite = require('interfaces/isqlite/iSQLite');
+const iSQLite = require('interfaces/iSQLite');
 
 
 let hayOperacionesEnProceso = false;
@@ -17,14 +17,14 @@ module.exports = () => {
 
 		if (hayOperacionesEnProceso || numeroOperacionesEnEjecucion) return;
 
-		let intentosMaximosDeEnvio = 10; // TODO: Obtener de C.watchdogSqlite
 		hayOperacionesEnProceso = true;
+
 		L.t(['Arrancando intervalo']);
 
 		// Comprobacion de si hay entradas pendientes en SQLite
 		let entradas;
 		try {
-			entradas = await iSQLite.obtenerEntradas(intentosMaximosDeEnvio);
+			entradas = await iSQLite.obtenerEntradas(C.sqlite.maximoReintentos, C.sqlite.insercionesSimultaneas);
 			if (!entradas || entradas.length === 0) {
 				L.t('No se encontraron entradas en la base de datos de respaldo');
 				hayOperacionesEnProceso = false;
@@ -75,7 +75,7 @@ module.exports = () => {
 
 							// Log de cuando una entrada agota el número de transmisiones
 
-							if (row.retryCount === intentosMaximosDeEnvio + 1)
+							if (row.retryCount === C.sqlite.maximoReintentos + 1)
 								L.xw(row.txid, ['Se ha alcanzado el número máximo de retransmisiones para la entrada', row.uid], 'sqlitewatch');
 						} catch (errorSQLite) {
 							L.xe(row.txid, ['Error al incrementar el contador de intentos de reenvío para la entrada', row.uid], 'sqlitewatch')
@@ -92,7 +92,7 @@ module.exports = () => {
 
 		hayOperacionesEnProceso = false;
 
-	}, 5000)
+	}, C.sqlite.intervalo)
 
 	return idIntervalo;
 }

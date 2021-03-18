@@ -60,15 +60,15 @@ module.exports = (app) => {
 
 	app.route('/v1/agregacion')
 		.put(tryCatch(controladores.consultas.agregaciones.consultaAgregaciones));
-/*
+
 	// Consulta de balanceadores de carga HTTP
 	app.route('/v1/balanceadores')
-		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
+		.get(tryCatch(controladores.consultas.balanceadores.listadoBalanceadores));	// ? [tipo=<tipo-proceso>]
 
 	app.route('/v1/balanceadores/:servidor')
 		.get(tryCatch(controladores.consultas.balanceadores.consultaBalanceador))
 		.put(tryCatch(controladores.consultas.balanceadores.actualizaBalanceador));
-*/
+
 	// Consulta de procesos registrados
 	app.route('/v1/procesos')
 		.get(tryCatch(controladores.consultas.procesos.listadoProcesos)); // ? [tipo=<tipo-proceso>] & [servidor=<host-proceso>]
