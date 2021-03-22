@@ -197,7 +197,7 @@ start() {
 }
 
 stop() {
-	PIDFILE=$CACHE_DIR/f3-master.pid	
+	PIDFILE=$CACHEDIR/f3-master.pid	
 	echo -e "\n$C_RED # DETENIENDO PROCESOS DEL CONCENTRADOR FEDICOM 3 #$C_RESET\n"
 	echo -e "\t- Detendiendo proceso master con PID $(cat $PIDFILE 2>/dev/null) ..."
 	kill $(cat $PIDFILE 2>/dev/null) 2>/dev/null
