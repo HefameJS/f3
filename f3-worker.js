@@ -1,29 +1,20 @@
 'use strict';
 require('app-module-path').addPath(__dirname);
-
+global.constants = require('global/constantes');
+const K = global.constants;
 
 console.log('Inicializando servicios Fedicom v3', new Date());
 
-require('bootstrap')().then(() => {
+require('bootstrap')(K.PROCESOS.TIPOS.WORKER).then(() => {
 
 	const C = global.config;
 	const L = global.logger;
-	const K = global.constants;
 
 	// externas
-	const cluster = require('cluster');
 	const express = require('express');
 	const cors = require('cors');
 
 	const routerConcentrador = require('rutas/routerConcentrador');
-
-	process.worker = cluster.worker.id;
-	process.titulo = K.PROCESOS.TITULOS.WORKER + '-' + process.worker;
-	process.tipo = K.PROCESOS.TIPOS.WORKER;
-	C.pid.escribirFicheroPid();
-
-	L.i(['Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker }], 'cluster');
-
 
 	let app = express();
 	app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));

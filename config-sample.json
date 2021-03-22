@@ -3,27 +3,21 @@
 	"numeroWorkers": 1,
 	"mongodb": {
 		"servidores": [
-			"server1.hefame.es:27017",
-			"server2.hefame.es:27017"
+			"f3dev2.hefame.es:27017",
+			"f3dev1.hefame.es:27017"
 		],
-		"usuario": "fedi",
+		"usuario": "fedicom3",
 		"password": "password",
 		"database": "fedicom3",
 		"replicaSet": "fedicom3-dev",
 		"intervaloReconexion": 5000
 	},
-	"pid": {
-		"directorio": "~/cache"
-	},
+	"directorioCache": "C:\\Users\\Alejandro_AC.HEFAME\\Desktop\\f3cache",
 	"log": {
-		"consola": true,
-		"directorio": "~/cache/log"
+		"consola": true
 	},
 	"http": {
 		"puertoConcentrador": 5000,
 		"puertoConsultas": 5001
-	},
-	"sqlite": {
-		"fichero": "~/cache/f3.sqlite"
 	}
 }

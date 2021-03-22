@@ -5,7 +5,7 @@ let C = global.config;
 
 
 const util = require('util');
-//const fs = require('fs');
+const fs = require('fs');
 
 const TRACE = 'TRC';
 const DEBUG = 'DBG';
@@ -37,20 +37,22 @@ class Logger {
 
 	}
 
+	#generarNombreFichero(dump = false) {
+		return C.log.directorio + process.titulo + '-' + process.iid + '-' + Date.toSapDate() + (dump ? '.dump' : '.log')
+	}
+
 	grabarLog(evento) {
 
 		C = global.config;
-
 		let hora = Date.toShortTime(evento.timestamp);
 		let mensaje = (evento.txId ? evento.txId + '|' : '') + hora + '|' + evento.nivel + '|' + evento.categoria + '|' + JSON.stringify(evento.datos)
-
-		/*
-		fs.appendFile(_obtenerFicheroLog(evento.timestamp), mensaje + '\n', (err) => {
+		
+		fs.appendFile(this.#generarNombreFichero(), mensaje + '\n', (err) => {
 			if (err) {
 				console.log(mensaje)
 				console.log('###', err)
 			}
-		})*/
+		})
 
 		if (C.log.consola) {
 			if (evento.nivel === ERROR || evento.nivel === FATAL)
@@ -68,7 +70,6 @@ class Logger {
 	logGeneral(datos, nivel, categoria) {
 		categoria = categoria || 'server';
 		let evento = new Evento({ nivel, datos, categoria })
-
 		this.grabarLog(evento);
 	};
 
@@ -109,12 +110,12 @@ class Logger {
 			message += util.inspect(req.body)
 		}
 
-		/*fs.appendFileSync(_obtenerFicheroLog(new Date(), true), message, (err) => {
+		fs.appendFileSync(this.#generarNombreFichero(true), message, (err) => {
 			if (err) {
 				console.error(message)
 				console.error('###', err)
 			}
-		})*/
+		})
 
 		if (C.log.consola) {
 			console.log('DUMP GENERADO')

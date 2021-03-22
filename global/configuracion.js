@@ -354,10 +354,6 @@ class ConfiguracionFlags {
 
 class ConfiguracionLdap {
 
-	/**C.ldap.tlsOptions = {
-			ca: [require('fs').readFileSync(C.ldap.cacert)]
-		}; */
-
 	constructor(C, config) {
 
 		if (!config) throw new Error("No se ha definido la configuracion de LDAP ($.ldap)");
