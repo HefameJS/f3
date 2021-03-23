@@ -57,27 +57,34 @@ class PedidoSap {
 		this.#sanearIncidenciasSap(json.incidencias);
 		this.alertas = json.alertas?.length > 0 ? json.alertas : null;
 
+		L.xt(this.txId, ['Metadatos', this.metadatos]);
+
 		this.#establecerFlags();
 	}
 
 	#sanearIncidenciasSap(incidenciasJson) {
+		L.xt(this.txId, ['Saneando incidencias de SAP', incidenciasJson]);
 		this.incidencias = incidenciasJson?.length === 0 ? null : incidenciasJson.filter(inc => {
 			/**
 			 * Elimina en las indidencias de cabecera una que sea exactamente {codigo: "", "descripcion": "Pedido duplicado"}
 			 * y activa el flag C.flags.DUPLICADO_SAP si la encuentra
 			 */
+			L.xt(this.txId, ['INCIDENCIA', inc]);
 			if (!inc.codigo && inc.descripcion === 'Pedido duplicado') {
 				L.xw(this.txId, ['SAP ha indicado que el pedido es duplicado']);
 				this.metadatos.pedidoDuplicadoSap = true;
 				return false;
 			}
-			return (inc.descripcion);
+			return Boolean(inc.descripcion);
 		}).map(inc => {
 			return {
 				codigo: inc.codigo || K.INCIDENCIA_FEDICOM.ERR_PED,
 				descripcion: inc.descripcion
 			}
 		});
+		
+		L.xt(this.txId, ['Incidencias saneadas', this.incidencias]);
+		
 
 	}
 

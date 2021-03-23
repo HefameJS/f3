@@ -82,7 +82,7 @@ exports.crearPedido = async function (req, res) {
 
 		let cuerpoRespuestaSap = await iSap.pedidos.realizarPedido(pedidoCliente);
 
-		// Si la respuesta de SAP es un array ...
+		// Si la respuesta de SAP es un array de incidencias
 		if (Array.isArray(cuerpoRespuestaSap)) {
 
 			L.xw(txId, ['SAP devuelve un cuerpo de respuesta que es un array con errores de rechazo', cuerpoRespuestaSap]);
