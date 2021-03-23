@@ -52,6 +52,7 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 		// ¿Debemos actualizar la transmisión original?
 		let [actualizar, advertencia] = _actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
 		if (actualizar) {
+			L.xw(txIdOriginal, ['ADVERTENCIA: La transmisión original se actualiza como resultado de la retransmisión']);
 			transaccionDeActualizacion['$set'] = { modifiedAt: new Date() };
 			datosRetransmitidos.oldValues = {};
 
@@ -62,14 +63,21 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 
 			if (advertencia) {
 				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_UPDATE_WARN);
-				L.xw(txIdOriginal, ['** ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
+				L.xw(txIdOriginal, ['ADVERTENCIA: La respuesta del pedido que se dió a la farmacia ha cambiado']);
 			} else {
 				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_UPDATE);
 			}
 		} else {
+			L.xi(txIdOriginal, ['La transmisión original NO se actualiza']);
 			// Si se habían establecido flags, las borramos, pues no queremos actualizar nada
-			// mas que añadir el flag de retransmision sin update
+			// mas que añadir el flag de retransmision sin update, y en todo caso, si SAP ha indicado
+			// que el pedido es duplicado, dejar ese flag.
+			let flags = iFlags.get(txIdOriginal);
+
 			iFlags.del(txIdOriginal);
+			if (flags[C.flags.DUPLICADO_SAP]) {
+				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
+			}
 			iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
 		}
 

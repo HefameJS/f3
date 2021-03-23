@@ -12,43 +12,39 @@ cacheFlags.countStats(false);
 
 const set = (txId, flagName, value = true ) => {
 
-    if (!txId) { L.e('No se ha especificado ID de transmisión'); return; }
-    if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
+    if (!txId) { L.e('No se ha especificado ID de transmisión', 'iFlags'); return; }
+	if (!flagName) { L.e('No se ha especificado nombre del flag', 'iFlags'); return; }
 
-	L.xt(txId, ['Estableciendo flag', flagName, value, txId]);
+	L.xt(txId, ['Estableciendo flag', flagName, value, txId], 'iFlags');
 
     txId = new M.ObjectID(txId);
     let flags = cacheFlags.get(txId) || {};
     flags[flagName] = value;
 
-	L.xt(txId, ['Flags hasta el momento', flags]);
-
     cacheFlags.put(txId, flags);
 }
 
 const get = (txId) => {
-	L.xt(txId, ['Consulta flags', txId])
     let flags = cacheFlags.get(new M.ObjectID(txId));
     return flags || {};
 }
 
 const finaliza = (txId, mdbQuery) => {
     let flags = get(txId);
-    del(txId);
-
     flags[C.flags.VERSION] = K.VERSION.TRANSMISION;
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
 
-	L.xd(txId, ['Finalizando flags', flags, txId]);
+	L.xd(txId, ['Finalizando flags', flags, txId], 'iFlags');
     
     for (let flag in flags) {
         mdbQuery.$set['flags.' + flag] = flags[flag];
     }
+	del(txId);
 }
 
 const del = (txId) => {
-	L.xt(txId, ['Borrando flags', txId]);
+	L.xt(txId, ['Borrando flags', txId], 'iFlags');
     cacheFlags.del(new M.ObjectID(txId));
 }
 
