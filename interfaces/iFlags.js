@@ -15,6 +15,8 @@ const set = (txId, flagName, value = true ) => {
     if (!txId) { L.e('No se ha especificado ID de transmisión'); return; }
     if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
 
+	L.xt(txId, ['Estableciendo flag', flagName, value]);
+
     txId = new M.ObjectID(txId);
     let flags = cacheFlags.get(txId) || {};
     flags[flagName] = value;
@@ -34,6 +36,8 @@ const finaliza = (txId, mdbQuery) => {
     flags[C.flags.VERSION] = K.VERSION.TRANSMISION;
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
+
+	L.xt(txId, ['Escribiendo flags', flags]);
     
     for (let flag in flags) {
         mdbQuery.$set['flags.' + flag] = flags[flag];
