@@ -76,7 +76,7 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 
 			iFlags.del(txIdOriginal);
 			if (flags[C.flags.DUPLICADO_SAP]) {
-				iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
+				iFlags.set(txIdOriginal, C.flags.DUPLICADO_SAP);
 			}
 			iFlags.set(txIdOriginal, C.flags.RETRANSMISION_NO_UPDATE);
 		}
