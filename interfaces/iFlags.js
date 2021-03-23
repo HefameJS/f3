@@ -21,6 +21,8 @@ const set = (txId, flagName, value = true ) => {
     let flags = cacheFlags.get(txId) || {};
     flags[flagName] = value;
 
+	L.xt(txId, ['Flags hasta el momento', flags]);
+
     cacheFlags.put(txId, flags);
 }
 
