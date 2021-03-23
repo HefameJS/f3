@@ -15,7 +15,7 @@ const set = (txId, flagName, value = true ) => {
     if (!txId) { L.e('No se ha especificado ID de transmisión'); return; }
     if (!flagName) { L.e('No se ha especificado nombre del flag'); return; }
 
-	L.xt(txId, ['Estableciendo flag', flagName, value]);
+	L.xt(txId, ['Estableciendo flag', flagName, value, txId]);
 
     txId = new M.ObjectID(txId);
     let flags = cacheFlags.get(txId) || {};
@@ -27,6 +27,7 @@ const set = (txId, flagName, value = true ) => {
 }
 
 const get = (txId) => {
+	L.xt(txId, ['Consulta flags', txId])
     let flags = cacheFlags.get(new M.ObjectID(txId));
     return flags || {};
 }
@@ -39,7 +40,7 @@ const finaliza = (txId, mdbQuery) => {
 
     if (!mdbQuery.$set) mdbQuery.$set = {};
 
-	L.xt(txId, ['Escribiendo flags', flags]);
+	L.xd(txId, ['Finalizando flags', flags, txId]);
     
     for (let flag in flags) {
         mdbQuery.$set['flags.' + flag] = flags[flag];
@@ -47,6 +48,7 @@ const finaliza = (txId, mdbQuery) => {
 }
 
 const del = (txId) => {
+	L.xt(txId, ['Borrando flags', txId]);
     cacheFlags.del(new M.ObjectID(txId));
 }
 
