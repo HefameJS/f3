@@ -7,7 +7,6 @@ const L = global.logger;
 const { EJSON } = require('bson');
 const ObjectID = require('mongodb').ObjectID;
 const sqlite3 = require('sqlite3').verbose();
-const lock = require('locks');
 
 const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
 	if (err) {
