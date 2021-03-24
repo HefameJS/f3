@@ -16,7 +16,7 @@ exports.consultaAlbaranJSON = (numeroAlbaran, txId) => {
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
 			method: 'GET',
-			timeout: 20000
+			timeout: C.sap.timeout.consultaAlbaranJSON
 		});
 
 		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
@@ -35,7 +35,7 @@ exports.consultaAlbaranPDF = (numeroAlbaran, txId) => {
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
 			method: 'GET',
-			timeout: 10000
+			timeout: C.sap.timeout.consultaAlbaranPDF
 		});
 
 		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
@@ -53,7 +53,7 @@ exports.listadoAlbaranes = (consultaAlbaran, txId) => {
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
 			method: 'GET',
-			timeout: 10000
+			timeout: C.sap.timeout.listadoAlbaranes
 		});
 
 		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);

@@ -23,7 +23,8 @@ const verificarCredenciales = function (solicitudAutenticacion) {
 
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zverify_fedi_credentials',
-			body: solicitudAutenticacion.generarJSON()
+			body: solicitudAutenticacion.generarJSON(),
+			timeout: C.sap.timeout.verificarCredenciales
 		});
 
 		ejecutarLlamadaSap(solicitudAutenticacion.txId, parametrosHttp, resolve, reject);

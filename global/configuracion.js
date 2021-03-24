@@ -268,6 +268,15 @@ class ConfiguracionSap {
 			return destino.id === this.nombreSistemaPorDefecto
 		})
 
+		this.timeout = {
+			verificarCredenciales: (parseInt(config.timeout?.verificarCredenciales) || 5) * 1000,
+			realizarPedido: (parseInt(config.timeout?.realizarPedido) || 30) * 1000,
+			realizarDevolucion: (parseInt(config.timeout?.realizarDevolucion) || 15) * 1000,
+			consultaDevolucionPDF: (parseInt(config.timeout?.consultaDevolucionPDF) || 10) * 1000,
+			consultaAlbaranJSON: (parseInt(config.timeout?.consultaAlbaranJSON) || 10) * 1000,
+			consultaAlbaranPDF: (parseInt(config.timeout?.consultaAlbaranPDF) || 10) * 1000,
+			listadoAlbaranes: (parseInt(config.timeout?.listadoAlbaranes) || 30) * 1000,
+		}
 	}
 
 	static async cargar(C) {
@@ -285,7 +294,6 @@ class ConfiguracionSap {
 			return destino.id === sapsid
 		})
 	}
-
 
 }
 
@@ -471,7 +479,7 @@ class ConfiguracionBalanceadores {
 	}
 
 	get(nombre) {
-		return this.balanceadores.find( b => b.nombre === nombre)
+		return this.balanceadores.find(b => b.nombre === nombre)
 	}
 }
 

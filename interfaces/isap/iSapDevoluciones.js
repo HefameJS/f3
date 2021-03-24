@@ -24,7 +24,8 @@ exports.realizarDevolucion = (devolucion) => {
 
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsd_ent_ped_api/devoluciones',
-			body: devolucion.generarJSON()
+			body: devolucion.generarJSON(),
+			timeout: C.sap.timeout.realizarDevolucion
 		});
 
 		ejecutarLlamadaSap(devolucion.txId, parametrosHttp, resolve, reject);
@@ -42,7 +43,7 @@ exports.consultaDevolucionPDF = (numeroDevolucion, txId) => {
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsf_get_document/devo_fedi/' + numeroDevolucion,
 			method: 'GET',
-			timeout: 10000
+			timeout: C.sap.timeout.consultaDevolucionPDF
 		});
 
 		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);

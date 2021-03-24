@@ -22,7 +22,8 @@ const realizarPedido = (pedido) => {
 
 		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 			url: '/api/zsd_ent_ped_api/pedidos',
-			body: pedido.generarJSON()
+			body: pedido.generarJSON(),
+			timeout: C.sap.timeout.realizarPedido
 		});
 
 		ejecutarLlamadaSap(pedido.txId, parametrosHttp, resolve, reject);
@@ -34,16 +35,14 @@ const realizarPedido = (pedido) => {
 
 const retransmitirPedido = async function (pedido) {
 
-
-
-
 	let nombreSistemaSap = pedido.sapSystem;
 	let destinoSap = C.sap.getSistema(nombreSistemaSap);
 	if (!destinoSap) throw ErrorLlamadaSap.generarNoSapSystem();
 
 	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
 		url: '/api/zsd_ent_ped_api/pedidos',
-		body: pedido.generarJSON()
+		body: pedido.generarJSON(),
+		timeout: C.sap.timeout.realizarPedido
 	});
 
 
@@ -63,8 +62,6 @@ const retransmitirPedido = async function (pedido) {
 		errorLlamadaSap.peticion = peticionASap;
 		throw errorLlamadaSap;
 	}
-
-
 
 }
 
