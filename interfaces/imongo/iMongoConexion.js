@@ -15,7 +15,7 @@ global.mongodb = {
 	getBD: (nombreDb) => { return null },
 	col: {
 		tx: null,
-		discard: null,
+		descartes: null,
 		control: null,
 		configuracion: null
 	}
@@ -32,7 +32,7 @@ const conexion = async function () {
 	let baseDatos = null;
 	let colecciones = {
 		tx: null,
-		discard: null,
+		descartes: null,
 		control: null,
 		configuracion: null
 	};
@@ -44,7 +44,7 @@ const conexion = async function () {
 		cliente = await cliente.connect();
 		baseDatos = cliente.db(C.mongodb.database);
 		colecciones.tx = baseDatos.collection('tx', opcionesColeccion1);
-		colecciones.discard = baseDatos.collection('discard', opcionesColeccion2);
+		colecciones.descartes = baseDatos.collection('descartes', opcionesColeccion2);
 		colecciones.control = baseDatos.collection('control', opcionesColeccion1);
 		colecciones.configuracion = baseDatos.collection('configuracion', opcionesColeccion1);
 		L.i(['Conexión a MongoDB establecida'], 'mongodb')
@@ -62,7 +62,7 @@ const conexion = async function () {
 	global.mongodb.db = baseDatos
 	global.mongodb.getBD = (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) }
 	global.mongodb.col.tx = colecciones.tx;
-	global.mongodb.col.discard = colecciones.discard;
+	global.mongodb.col.descartes = colecciones.descartes;
 	global.mongodb.col.control = colecciones.control;
 	global.mongodb.col.configuracion = colecciones.configuracion;
 	return global.mongodb;

@@ -17,11 +17,11 @@ const descartar = async function (transaccion) {
 	let txId = transaccion['$setOnInsert']._id;
 
 	try {
-		await M.col.discard.updateOne({ _id: txId }, transaccion, { upsert: true });
-		L.xd(txId, ['Commit OK'], 'mdbCommitDiscard');
+		await M.col.descartes.updateOne({ _id: txId }, transaccion, { upsert: true });
+		L.xd(txId, ['Commit Descarte OK'], 'mdbCommitDescarte');
 		return true;
 	} catch (errorMongo) {
-		L.xe(txId, ['Error al hacer COMMIT DISCARD', errorMongo], 'mdbCommitDiscard');
+		L.xe(txId, ['Error al hacer COMMIT Descarte', errorMongo], 'mdbCommitDescarte');
 	}
 
 	return false;
