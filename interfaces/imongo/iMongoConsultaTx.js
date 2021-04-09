@@ -72,9 +72,14 @@ const porCRC = async function (crc) {
  * @param {*} crcSap 
  */
 const porCrcSap = async function (crcSap) {
-	return await M.col.tx.findOne({ crcSap: crcSap });
-};
+	let fechaLimite = new Date();
+	fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
 
+	return await M.col.tx.findOne({ 
+		createdAt: { $gt: fechaLimite },
+		crcSap: crcSap 
+	});
+};
 
 /**
  * Busca la transmisión con el CRC dado y retorna el ID de la transmisión original 
@@ -98,8 +103,8 @@ const duplicadoDeCRC = (txId, crc) => {
 			fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
 
 			let consultaCRC = {
-				crc: crc,
-				createdAt: { $gt: fechaLimite }
+				createdAt: { $gt: fechaLimite },
+				crc: crc
 			}
 
 			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1 });
