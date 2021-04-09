@@ -156,6 +156,10 @@ class LineaAlbaran {
 		this.precioPvp = posicion.precio_pvp;
 		this.precioNeto = posicion.precio_neto;
 		this.precioAlbaran = posicion.precio_alb;
+
+		this.importeNeto = this.precioNeto * this.cantidadServida;
+		this.importeBruto = this.precioAlbaran * this.cantidadServida;
+
 		if (posicion.imp_porcent > 0) this.impuesto = new Impuesto(posicion);
 
 		if (posicion.des_importe > 0) this.descuento = [{
