@@ -406,7 +406,7 @@ class ConfiguracionPedidos {
 	constructor(C, config) {
 
 		this.umbralLineasCrc = parseInt(config.umbralLineasCrc) || 10;
-		this.antiguedadDuplicadosMaxima = parseInt(config.antiguedadDuplicadosMaxima) || 604800000;
+		this.antiguedadDuplicadosMaxima = (parseInt(config.antiguedadDuplicadosMaxima) || 10080) * 60000;
 		this.tipificadoFaltas = { ...config.tipificadoFaltas };
 
 	}
