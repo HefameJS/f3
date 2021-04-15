@@ -189,7 +189,8 @@ class Balanceador {
 			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
 
 			if (!nonce) {
-				throw new Error('Imposible encontrar el nonce para el grupo de balanceo')
+				L.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
+				throw new Error('Imposible encontrar el nonce para el grupo de balanceo');
 			}
 
 			let urlEncodedParams = new URLSearchParams();
