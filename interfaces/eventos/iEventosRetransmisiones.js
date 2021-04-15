@@ -168,6 +168,7 @@ module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 		},
 		$set: {
 			crc: new M.ObjectID(pedidoClonado.crc),
+			crcSap: parseInt(pedidoClonado.crc.substring(0, 8), 16),
 			authenticatingUser: reqClonada.identificarUsuarioAutenticado(),
 			client: reqClonada.identificarClienteSap(),
 			iid: process.iid,
