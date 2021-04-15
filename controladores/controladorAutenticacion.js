@@ -20,7 +20,7 @@ const SolicitudAutenticacion = require('modelos/autenticacion/SolicitudAutentica
 
 
 // POST /authenticate
-const autenticar = function (req, res) {
+const autenticar = async function (req, res) {
 
 	let txId = req.txId;
 
@@ -136,7 +136,7 @@ const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res)
 
 
 // GET /authenticate
-const verificarToken = (req, res) => {
+const verificarToken = async function (req, res) {
 	
 	if (req.token) {
 		let tokenData = iTokens.verificarToken(req.token);

@@ -103,7 +103,7 @@ const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoA
 }
 
 // GET /albaranes/:numeroAlbaran
-const consultaAlbaran = (req, res) => {
+const consultaAlbaran = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
@@ -322,7 +322,7 @@ const listadoAlbaranes = async function (req, res) {
 }
 
 // POST /albaranes/confirmacion
-const confirmacionAlbaran = (req, res) => {
+const confirmacionAlbaran = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONFIRMACION DE ALBARAN']);

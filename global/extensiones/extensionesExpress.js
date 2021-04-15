@@ -121,11 +121,11 @@ const extenderSolicitudRetransmision = (req) => {
  * @param {*} funcionControlador 
  * @returns 
  */
-const tryCatch = (funcionControlador) => {
-	let controlador = (req, res) => {
+const tryCatch =  (funcionControlador) => {
+	let controlador = async (req, res) => {
 		let txId = req.txId;
 		try {
-			funcionControlador(req, res);
+			await funcionControlador(req, res);
 		} catch (excepcion) {
 			let errorFedicom = new ErrorFedicom(excepcion);
 			L.xf(txId, ['Ocurrió un error al ejecutar la petición', errorFedicom])

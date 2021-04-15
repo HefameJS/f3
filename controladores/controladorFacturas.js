@@ -21,7 +21,7 @@ const enviarErrorFacturaNoImplementada = (res) => {
 
 
 // GET /facturas/:numeroFactura
-const consultaFactura = (req, res) => {
+const consultaFactura = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE FACTURA']);

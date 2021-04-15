@@ -214,7 +214,7 @@ exports.consultaPedido = async function (req, res) {
 }
 
 // PUT /pedido
-exports.actualizarPedido = (req, res) => {
+exports.actualizarPedido = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como ACTUALIZACIÓN DE PEDIDO']);

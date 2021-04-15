@@ -51,7 +51,7 @@ const pruebaConexion = async function (req, res) {
 }
 
 // GET /sap/sistemas
-const consultaSistemas = (req, res) => {
+const consultaSistemas = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta de los sistemas SAP']);
@@ -66,7 +66,7 @@ const consultaSistemas = (req, res) => {
 
 
 // GET /sap/sistemas/:nombreSistema
-const consultaSistema = (req, res) => {
+const consultaSistema = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta de sistema SAP', req.params.nombreSistema]);

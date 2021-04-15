@@ -10,7 +10,7 @@ const iTokens = require('global/tokens');
 const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;
 
 // GET /retransmitir/:txId
-exports.retransmitePedido = (req, res) => {
+exports.retransmitePedido = async function (req, res) {
 
 	let txId = req.params.txId;
 

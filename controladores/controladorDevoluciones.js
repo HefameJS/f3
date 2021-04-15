@@ -245,7 +245,7 @@ const _consultaDevolucionPDF = async function (req, res, numDevolucion) {
 }
 
 // GET /devoluciones/:numeroDevolucion
-exports.consultaDevolucion = (req, res) => {
+exports.consultaDevolucion = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE DEVOLUCION']);
