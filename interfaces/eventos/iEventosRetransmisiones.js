@@ -156,6 +156,7 @@ module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 
 	let txId = reqClonada.txId;
 
+	// TODO: Buscar la manera de utilizar iEventosComun.generarEventoDeApertura(req, tipo, estado)
 	let transaccion = {
 		$setOnInsert: {
 			_id: txId,
@@ -169,7 +170,7 @@ module.exports.inicioClonarPedido = (reqClonada, pedidoClonado) => {
 			crc: new M.ObjectID(pedidoClonado.crc),
 			authenticatingUser: reqClonada.identificarUsuarioAutenticado(),
 			client: reqClonada.identificarClienteSap(),
-			iid: global.instanceID,
+			iid: process.iid,
 			type: K.TX_TYPES.PEDIDO,
 			clientRequest: {
 				authentication: reqClonada.token,
