@@ -96,7 +96,8 @@ class ErrorFedicom {
 
 	enviarRespuestaDeError(expressRes, codigoHttp) {
 		codigoHttp = codigoHttp || this.codigoRespuestaHttp || CODIGO_HTTP_POR_DEFECTO;
-		expressRes.status(codigoHttp).json(this.listaErroresFedicom);
+		if (!expressRes.headersSent)
+			expressRes.status(codigoHttp).json(this.listaErroresFedicom);
 		return this.listaErroresFedicom;
 	}
 
