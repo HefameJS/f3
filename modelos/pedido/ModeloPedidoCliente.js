@@ -281,7 +281,8 @@ class PedidoCliente {
 
 		let errorFedicom = {
 			codigo: 'PED-WARN-001',
-			descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información'
+			//descripcion: 'Pedido recibido pero pendiente de tramitar - Consulte o reintente más tarde para obtener toda la información'
+			descripcion: 'Su pedido se ha recibido correctamente, pero no hemos podido informar las faltas.'
 		};
 
 		let respuesta = {
