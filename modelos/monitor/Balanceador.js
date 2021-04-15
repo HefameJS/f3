@@ -189,7 +189,7 @@ class Balanceador {
 			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
 
 			if (!nonce) {
-				L.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
+				global.logger.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
 				throw new Error('Imposible encontrar el nonce para el grupo de balanceo');
 			}
 
