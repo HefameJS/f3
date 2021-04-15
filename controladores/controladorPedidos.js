@@ -63,10 +63,17 @@ exports.crearPedido = async function (req, res) {
 		if (txIdOriginal) {
 			L.xi(txId, ['Detectada la transmisión de pedido con idéntico CRC', txIdOriginal], 'crc');
 			L.xi(txIdOriginal, 'Se ha recibido una transmisión duplicada de este pedido con ID ' + txId, 'crc');
-			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
-			return;
+
+			if (txIdOriginal.status === K.TX_STATUS.RECHAZADO_SAP) {
+				L.xi(txId, ['La transmisión original fue rechazada por SAP, no la tomamos como repetida', txIdOriginal.status]);
+				iFlags.set(txId, C.flags.REINTENTO_CLIENTE, txIdOriginal._id);
+			} else {
+				let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
+				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
+				return;
+			}
+
 		} else {
 			L.xt(txId, ['No se ha detectado pedido duplicado'], 'crc');
 		}
@@ -137,7 +144,7 @@ exports.crearPedido = async function (req, res) {
 
 
 	} catch (errorLlamadaSap) {
-		
+
 		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
 			L.xe(txId, ['Error al llamar a SAP, el sistema no está definido', errorLlamadaSap]);
 			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
