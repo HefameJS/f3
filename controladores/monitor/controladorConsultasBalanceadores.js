@@ -84,9 +84,8 @@ const consultaBalanceador = async function (req, res) {
 // PUT /balanceadores/:servidor
 /**
 	{
-		balanceador: "sapt01", 
+		grupoBalanceo: "sapt01",
 		worker: "http://sap1t01:8000", 
-		nonce: "xxx", 
 		estado: {
 			stop: false, 
 			standby: false
