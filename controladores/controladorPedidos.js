@@ -58,13 +58,14 @@ exports.crearPedido = async function (req, res) {
 
 	// Control de duplicados
 	try {
-		let txIdOriginal = await iMongo.consultaTx.duplicadoDeCRC(txId, pedidoCliente.crc);
+		let txOriginal = await iMongo.consultaTx.duplicadoDeCRC(txId, pedidoCliente.crc);
+		txIdOriginal = txOriginal._id;
 
 		if (txIdOriginal) {
 			L.xi(txId, ['Detectada la transmisión de pedido con idéntico CRC', txIdOriginal], 'crc');
 			L.xi(txIdOriginal, 'Se ha recibido una transmisión duplicada de este pedido con ID ' + txId, 'crc');
 
-			if (txIdOriginal.status === K.TX_STATUS.RECHAZADO_SAP) {
+			if (txOriginal.status === K.TX_STATUS.RECHAZADO_SAP) {
 				L.xi(txId, ['La transmisión original fue rechazada por SAP, no la tomamos como repetida', txIdOriginal.status]);
 				iFlags.set(txId, C.flags.REINTENTO_CLIENTE, txIdOriginal._id);
 			} else {

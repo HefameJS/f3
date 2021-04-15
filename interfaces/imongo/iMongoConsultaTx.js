@@ -82,7 +82,7 @@ const porCrcSap = async function (crcSap) {
 };
 
 /**
- * Busca la transmisión con el CRC dado y retorna el ID de la transmisión original 
+ * Busca la transmisión con el CRC dado y retorna el ID y el estado de la transmisión original 
  * si la encuentra o false de no encontrarla.
  * @param {*} txId
  * @param {*} crc 
@@ -107,9 +107,9 @@ const duplicadoDeCRC = (txId, crc) => {
 				crc: crc
 			}
 
-			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1 });
+			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1, status: 1 });
 
-			if (resultado) resolve(resultado._id);
+			if (resultado) resolve(resultado);
 			else resolve(false);
 
 
