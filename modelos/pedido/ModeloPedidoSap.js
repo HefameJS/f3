@@ -103,13 +103,13 @@ class PedidoSap {
 			totales.lineas++;
 			if (lineaSap.incidencias) totales.lineasIncidencias++;
 			if (lineaSap.servicioDemorado) totales.lineasDemorado++;
-			if (lineaSap.cantidad) totales.cantidad += linea.cantidad;
-			if (lineaSap.cantidadBonificacion) totales.cantidadBonificacion += linea.cantidadBonificacion;
-			if (lineaSap.cantidadFalta) totales.cantidadFalta += linea.cantidadFalta;
-			if (lineaSap.cantidadBonificacionFalta) totales.cantidadBonificacionFalta += linea.cantidadBonificacionFalta;
+			if (lineaSap.cantidad) totales.cantidad += lineaSap.cantidad;
+			if (lineaSap.cantidadBonificacion) totales.cantidadBonificacion += lineaSap.cantidadBonificacion;
+			if (lineaSap.cantidadFalta) totales.cantidadFalta += lineaSap.cantidadFalta;
+			if (lineaSap.cantidadBonificacionFalta) totales.cantidadBonificacionFalta += lineaSap.cantidadBonificacionFalta;
 			if (lineaSap.metadatos.estupefaciente) {
 				totales.lineasEstupe++;
-				totales.cantidadEstupe += linea.cantidad;
+				totales.cantidadEstupe += lineaSap.cantidad;
 			}
 
 			return lineaSap;
