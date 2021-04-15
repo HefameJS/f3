@@ -50,7 +50,7 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 	}
 	else if (!opcionesRetransmision.noActualizarOriginal && resultadoRetransmision) {
 		// ¿Debemos actualizar la transmisión original?
-		let [actualizar, advertencia] = _actualizarTransmisionOriginal(estadoOriginal, estadoNuevo);
+		let [actualizar, advertencia] = _actualizarTransmisionOriginal(estadoOriginal, estadoNuevo, txIdOriginal);
 		if (actualizar) {
 			L.xw(txIdOriginal, ['ADVERTENCIA: La transmisión original se actualiza como resultado de la retransmisión']);
 			transaccionDeActualizacion['$set'] = { modifiedAt: new Date() };
@@ -107,11 +107,14 @@ module.exports.retransmitirPedido = (txIdRetransmision, dbTx, opcionesRetransmis
 /**
  * Esta funcion nos ayuda a decidir si la retransmisión debe actualizar la transmisión original.
  * Se basa en la tabla definida en el manual:
- * 		https://fedicom3-app.hefame.es/documentacion/manual/retransmit
+ * 		https://fediwiki.hefame.es/funcional/flujos/retransmision
  * @param {number} estadoOriginal El estado original de la transmisión
  * @param {number} estadoNuevo El estado resultante de la retransmisión
  */
-const _actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo) => {
+const _actualizarTransmisionOriginal = (estadoOriginal, estadoNuevo, txId) => {
+
+	L.xt(txId, ['Deliberando si se actualiza la transmisión original y si se debe advertir.', estadoOriginal, estadoNuevo]);
+
 	if (!estadoNuevo) return [false, false];
 	if (!estadoOriginal) return [true, false];
 
