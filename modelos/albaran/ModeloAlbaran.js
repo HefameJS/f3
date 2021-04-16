@@ -68,7 +68,7 @@ class Albaran {
 
 
 		//  Se hace recuento de impuestos y totales al tratar las lineas
-		
+
 		let sumatorioImpuestos = {};
 		this.totales = {
 			lineas: 0,
@@ -158,8 +158,8 @@ class LineaAlbaran {
 		this.precioNeto = posicion.precio_neto;
 		this.precioAlbaran = posicion.precio_alb;
 
-		this.importeLineaNeto = this.precioNeto * this.cantidadServida;
-		this.importeLineaBruto = this.precioAlbaran * this.cantidadServida;
+		this.importeLineaNeto = Math.round(this.precioNeto * this.cantidadServida * 100) / 100;
+		this.importeLineaBruto = Math.round(this.precioAlbaran * this.cantidadServida * 100) / 100;
 
 		if (posicion.imp_porcent > 0) this.impuesto = new Impuesto(posicion);
 
