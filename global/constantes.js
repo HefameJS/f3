@@ -70,7 +70,7 @@ module.exports = {
 	},
 	VERSION: {
 		PROTOCOLO: '3.4.10',
-		SERVIDOR: '0.13.2',
+		SERVIDOR: '0.13.3',
 		TRANSMISION: 1203,
 	},
 	PROCESOS: {
