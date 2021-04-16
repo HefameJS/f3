@@ -68,7 +68,7 @@ class Albaran {
 
 
 		//  Se hace recuento de impuestos y totales al tratar las lineas
-		this.impuestos = [];
+		
 		let sumatorioImpuestos = {};
 		this.totales = {
 			lineas: 0,
@@ -81,7 +81,7 @@ class Albaran {
 			precioPvp: 0,
 			precioNeto: 0,
 			precioAlbaran: 0,
-			impuestos: this.impuestos
+			impuestos: []
 		}
 
 
@@ -120,7 +120,7 @@ class Albaran {
 		this.totales.precioAlbaran = Math.round(this.totales.precioAlbaran * 100) / 100
 
 		for (let tipoImpuesto in sumatorioImpuestos) {
-			this.impuestos.push(sumatorioImpuestos[tipoImpuesto]);
+			this.totales.impuestos.push(sumatorioImpuestos[tipoImpuesto]);
 		}
 
 	}
