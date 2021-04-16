@@ -5,58 +5,47 @@ const C = global.config;
 
 
 // Interfaces
-const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
+const { ejecutarLlamadaSapSinEventos } = require('./iSapComun');
 
 
-exports.consultaAlbaranJSON = (numeroAlbaran, txId) => {
+exports.consultaAlbaranJSON = async function (numeroAlbaran, txId) {
 
-	return new Promise(async function (resolve, reject) {
-
-		let destinoSap = C.sap.getSistemaPorDefecto();
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
-			method: 'GET',
-			timeout: C.sap.timeout.consultaAlbaranJSON
-		});
-
-		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
-
+	let destinoSap = C.sap.getSistemaPorDefecto();
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+		url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
+		method: 'GET',
+		timeout: C.sap.timeout.consultaAlbaranJSON
 	});
 
+	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
 }
 
 
 
-exports.consultaAlbaranPDF = (numeroAlbaran, txId) => {
+exports.consultaAlbaranPDF = async function (numeroAlbaran, txId) {
 
-	return new Promise(async function (resolve, reject) {
 
-		let destinoSap = C.sap.getSistemaPorDefecto();
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
-			method: 'GET',
-			timeout: C.sap.timeout.consultaAlbaranPDF
-		});
-
-		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
-
+	let destinoSap = C.sap.getSistemaPorDefecto();
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+		url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
+		method: 'GET',
+		timeout: C.sap.timeout.consultaAlbaranPDF
 	});
+
+	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
 
 }
 
 
-exports.listadoAlbaranes = (consultaAlbaran, txId) => {
+exports.listadoAlbaranes = async function (consultaAlbaran, txId) {
 
-	return new Promise(async function (resolve, reject) {
-
-		let destinoSap = C.sap.getSistemaPorDefecto();
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
-			method: 'GET',
-			timeout: C.sap.timeout.listadoAlbaranes
-		});
-
-		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
-
+	let destinoSap = C.sap.getSistemaPorDefecto();
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+		url: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
+		method: 'GET',
+		timeout: C.sap.timeout.listadoAlbaranes
 	});
+
+	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
+
 }

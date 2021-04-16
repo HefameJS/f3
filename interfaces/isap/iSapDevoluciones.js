@@ -5,7 +5,7 @@ const C = global.config;
 
 
 // Interfaces
-const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
+const { ejecutarLlamadaSapSinEventos, ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
 
 
 
@@ -35,18 +35,15 @@ exports.realizarDevolucion = (devolucion) => {
 }
 
 
-exports.consultaDevolucionPDF = (numeroDevolucion, txId) => {
+exports.consultaDevolucionPDF = async function (numeroDevolucion, txId) {
 
-	return new Promise((resolve, reject) => {
-
-		let destinoSap = C.sap.getSistemaPorDefecto();
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsf_get_document/devo_fedi/' + numeroDevolucion,
-			method: 'GET',
-			timeout: C.sap.timeout.consultaDevolucionPDF
-		});
-
-		ejecutarLlamadaSap(txId, parametrosHttp, resolve, reject);
-
+	let destinoSap = C.sap.getSistemaPorDefecto();
+	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+		url: '/api/zsf_get_document/devo_fedi/' + numeroDevolucion,
+		method: 'GET',
+		timeout: C.sap.timeout.consultaDevolucionPDF
 	});
+
+	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
+
 }

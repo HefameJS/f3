@@ -92,18 +92,22 @@ const ejecutarLlamadaSap = (txId, parametros, resolve, reject, respuestaHttpComp
 }
 
 const ejecutarLlamadaSapSinEventos = async function (parametros, respuestaHttpCompleta = false) {
+	let respuestaSap;
 
+	if (!parametros.validateStatus) validateStatus = (status) => true;
 	try {
-		let respuestaSap = await axios(parametros);
-		// Si SAP no retorna un codigo 2xx, rechazamos
-		if (Math.floor(respuestaSap.status / 100) !== 2) {
-			throw new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
-		} else {
-			return respuestaHttpCompleta ? respuestaSap : respuestaSap.data;
-		}
+		respuestaSap = await axios(parametros);
 	} catch (errorComunicacion) {
 		throw new ErrorLlamadaSap(ERROR_TYPE_SAP_UNREACHABLE, errorComunicacion.errno, errorComunicacion.code)
 	}
+
+	// Si SAP no retorna un codigo 2xx, rechazamos
+	if (Math.floor(respuestaSap.status / 100) !== 2) {
+		throw new ErrorLlamadaSap(ERROR_TYPE_SAP_HTTP_ERROR, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
+	} else {
+		return respuestaHttpCompleta ? respuestaSap : respuestaSap.data;
+	}
+
 }
 
 
