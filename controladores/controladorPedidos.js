@@ -195,7 +195,7 @@ exports.consultaPedido = async function (req, res) {
 
 		if (dbTx?.clientResponse) {
 			let cuerpoRespuestaOriginal = dbTx.clientResponse.body;
-			res.status(dbTx.clientResponse.statusCode).json(cuerpoRespuestaOriginal);
+			res.status(200).json(cuerpoRespuestaOriginal);
 			iEventos.consultas.consultaPedido(req, res, cuerpoRespuestaOriginal, K.TX_STATUS.OK);
 		} else {
 			let errorFedicom = new ErrorFedicom('PED-ERR-001', 'El pedido solicitado no existe', 404);
@@ -203,7 +203,7 @@ exports.consultaPedido = async function (req, res) {
 			iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE);
 		}
 	} catch (errorMongo) {
-		L.xe(txId, ['No se ha podido recuperar el pedido de la base de datos', errorMongo]);
+		L.xe(txId, ['No se ha podido recuperar el pedido', errorMongo]);
 		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_PED, 'Ocurrió un error al recuperar el pedido', 500);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 		iEventos.consultas.consultaPedido(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.ERROR_DB);
