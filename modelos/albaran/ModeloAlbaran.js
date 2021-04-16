@@ -154,11 +154,12 @@ class LineaAlbaran {
 		this.cantidadServida = posicion.und_serv;
 		this.cantidadBonificada = posicion.und_bonif;
 		this.precioPvp = posicion.precio_pvp;
+
 		this.precioNeto = posicion.precio_neto;
 		this.precioAlbaran = posicion.precio_alb;
 
-		this.importeNeto = this.precioNeto * this.cantidadServida;
-		this.importeBruto = this.precioAlbaran * this.cantidadServida;
+		this.importeLineaNeto = this.precioNeto * this.cantidadServida;
+		this.importeLineaBruto = this.precioAlbaran * this.cantidadServida;
 
 		if (posicion.imp_porcent > 0) this.impuesto = new Impuesto(posicion);
 
