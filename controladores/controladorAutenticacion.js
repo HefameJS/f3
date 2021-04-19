@@ -145,8 +145,7 @@ const verificarToken = async function (req, res) {
 		let tokenData = { meta: { ok: false, error: 'No se incluye token' } };
 		res.status(200).send({token: req.token, token_data: tokenData});
 	}
-	
-	res.status(200).send({ ful: 'pereful' });
+
 }
 
 
