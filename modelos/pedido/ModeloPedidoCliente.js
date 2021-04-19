@@ -131,10 +131,11 @@ class PedidoCliente {
 		}
 
 
-		// 15.02.2021 - Para pedidos de mas de 10 líneas, vamos a generar el CRC en función de las propias
+		// 15.02.2021 - Para pedidos de mas de (C.pedidos.umbralLineasCrc) líneas, vamos a generar el CRC en función de las propias
 		// líneas y no del numeroPedidoOrigen.
+		// 19.04.2021 - Se incluye el código de almacén de servicio 
 		if (this.lineas.length > C.pedidos.umbralLineasCrc ) {
-			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas);
+			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas, this.codigoAlmacenServicio);
 			this.metadatos.crcDeLineas = true;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando las lineas del mismo', this.crc], 'txCRC')
 		} else {

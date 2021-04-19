@@ -122,7 +122,7 @@ const extenderSolicitudRetransmision = (req) => {
  * @returns 
  */
 const tryCatch =  (funcionControlador) => {
-	let controlador = async (req, res) => {
+	let controlador = async function (req, res) {
 		let txId = req.txId;
 		try {
 			await funcionControlador(req, res);
@@ -136,6 +136,7 @@ const tryCatch =  (funcionControlador) => {
 	}
 	return controlador;
 }
+
 
 module.exports = {
 	extenderSolicitudHttp,
