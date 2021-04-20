@@ -58,7 +58,7 @@ exports.crearPedido = async function (req, res) {
 
 	// Control de duplicados
 	try {
-		let txOriginal = await iMongo.consultaTx.duplicadoDeCRC(txId, pedidoCliente.crc);
+		let txOriginal = await iMongo.consultaTx.duplicadoDeCRC(txId, pedidoCliente);
 		let txIdOriginal = txOriginal._id;
 
 		if (txIdOriginal) {

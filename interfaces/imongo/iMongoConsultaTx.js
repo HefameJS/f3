@@ -85,22 +85,24 @@ const porCrcSap = async function (crcSap) {
  * Busca la transmisión con el CRC dado y retorna el ID y el estado de la transmisión original 
  * si la encuentra o false de no encontrarla.
  * @param {*} txId
- * @param {*} crc 
+ * @param {*} pedido 
  */
-const duplicadoDeCRC = (txId, crc) => {
+const duplicadoDeCRC = async function(txId, pedido) {
 
-	return new Promise(async function (resolve, reject) {
+		let crc;
+	
 		try {
-			crc = new M.ObjectID(crc);
+			crc = new M.ObjectID(pedido?.crc);
 		} catch (excepcionObjectID) {
-			L.xe(txId, ['El CRC de la transmisión no es un ObjectID válido', crc, excepcionObjectID]);
-			reject(excepcionObjectID);
-			return;
+			L.xe(txId, ['El CRC de la transmisión no es un ObjectID válido', pedido?.crc, excepcionObjectID]);
+			throw excepcionObjectID;
 		}
 
 		try {
 			let fechaLimite = new Date();
-			fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
+
+			let margenDeTiempo = pedido?.metadatos?.crcDeLineas ? C.pedidos.antiguedadDuplicadosPorLineas : C.pedidos.antiguedadDuplicadosMaxima;
+			fechaLimite.setTime(fechaLimite.getTime() - margenDeTiempo);
 
 			let consultaCRC = {
 				createdAt: { $gt: fechaLimite },
@@ -108,16 +110,12 @@ const duplicadoDeCRC = (txId, crc) => {
 			}
 
 			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1, status: 1 });
-
-			if (resultado) resolve(resultado);
-			else resolve(false);
-
+			return resultado || false;
 
 		} catch (errorMongo) {
 			L.xe(txId, ['Error al ejecutar la consulta de duplicados.', errorMongo]);
-			reject(errorMongo);
+			throw errorMongo;
 		}
-	});
 };
 
 const porNumeroPedido = async function (numeroPedido) {

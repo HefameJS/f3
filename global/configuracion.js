@@ -15,6 +15,7 @@ const Balanceador = require('modelos/monitor/Balanceador');
 
 // util
 const Validador = require('global/validador');
+const { runInThisContext } = require('vm');
 
 const SUBDIR = {
 	LOGS: 'logs',
@@ -407,6 +408,7 @@ class ConfiguracionPedidos {
 
 		this.umbralLineasCrc = parseInt(config.umbralLineasCrc) || 10;
 		this.antiguedadDuplicadosMaxima = (parseInt(config.antiguedadDuplicadosMaxima) || 10080) * 60000;
+		this.antiguedadDuplicadosPorLineas = (parseInt(config.antiguedadDuplicadosPorLineas) || 180) * 60000;
 		this.tipificadoFaltas = { ...config.tipificadoFaltas };
 
 	}
