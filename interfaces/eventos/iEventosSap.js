@@ -70,26 +70,30 @@ module.exports.finLlamadaSap = (txId, errorLlamadaSap, respuestaSap) => {
 	iMongo.transaccion.grabarEnMemoria(transaccion);
 }
 
-module.exports.errorConfirmacionPedido = (req, res, estado, {crcSap}) => {
+module.exports.errorConfirmacionPedido = (req, res, estado, datosExtra = {}) => {
 
 	let txId = req.txId;
-	let transaccion = iEventosComun.generarEventoCompleto(req, res, {}, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)
-	transaccion['$set'].crcSap = crcSap;
-	
+	let { crcSap } = datosExtra;
+
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, {}, K.TX_TYPES.CONFIRMACION_PEDIDO, estado)	
+	if (crcSap) transaccion['$set'].crcSap = crcSap;
+
 	L.xi(txId, ['Emitiendo COMMIT para evento ErrorConfirmacionPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txId, K.TX_TYPES.CONFIRMACION_PEDIDO, estado, [req.body]);
 }
 
-module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, { crcSap, numerosPedidoSAP}) => {
+module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfirmada, datosExtra = {}) => {
 
 	let txId = req.txId;
+	let { crcSap, numerosPedidoSAP } = datosExtra;
 
 	// NOTA: esta transacción no tiene "evento de cierre", es decir, 
 	// no guardamos la respuesta que le damos a SAP porque es completamente irrelevante.
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.CONFIRMACION_PEDIDO, K.TX_STATUS.OK)
+
 	transaccion['$set'].confirmingId = txIdConfirmado;
-	transaccion['$set'].crcSap = crcSap;
+	if (crcSap) transaccion['$set'].crcSap = crcSap;
 
 
 	let transaccionActualizacionConfirmada = {
