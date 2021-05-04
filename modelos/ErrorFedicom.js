@@ -38,6 +38,12 @@ class ErrorFedicom {
 			return this;
 		}
 
+		// Se llama pasando un objeto de incidencia Fedicom3 {codigo: "String", descripcion: "String"}
+		if (error && error.codigo && error.descripcion && typeof error.codigo === 'string' && typeof error.descripcion === 'string') {
+			this.listaErroresFedicom.push({ codigo: error.codigo, descripcion: error.descripcion });
+			return this;
+		}
+
 		// Se llama utilizando un error devuelto por Express
 		if (error && error.type && error.statusCode) {
 			this.codigoRespuestaHttp = parseInt(error.statusCode) || this.codigoRespuestaHttp;
