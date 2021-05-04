@@ -101,6 +101,7 @@ class Configuracion {
 		this.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar(this);
 		this.sqlite = await ConfiguracionSqlite.cargar(this);
 		this.balanceador = await ConfiguracionBalanceadores.cargar(this);
+		this.logistica = await ConfiguracionLogistica.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -485,5 +486,18 @@ class ConfiguracionBalanceadores {
 	}
 }
 
+
+class ConfiguracionLogistica {
+	constructor(C, config) {
+
+		this.tiposAdmitidos = { ...config.tiposAdmitidos };
+
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('logistica');
+		return new ConfiguracionLogistica(C, config);
+	}
+}
 
 module.exports = Configuracion.cargarDatosFichero;

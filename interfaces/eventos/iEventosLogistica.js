@@ -1,15 +1,13 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
+const M = global.mongodb;
 
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iFlags');
-
-// Modelos
-const ObjectID = iMongo.ObjectID;
 
 
 module.exports.inicioLogistica = (req, logistica) => {
@@ -17,7 +15,7 @@ module.exports.inicioLogistica = (req, logistica) => {
 	let txId = req.txId;
 
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.LOGISTICA, K.TX_STATUS.RECEPCIONADO);
-	transaccion['$set'].crc = new ObjectID(logistica.crc);
+	transaccion['$set'].crc = new M.ObjectID(logistica.crc);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento inicioLogistica'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -41,7 +39,7 @@ module.exports.finLogistica = (res, cuerpoRespuesta, estadoFinal, datosExtra) =>
 module.exports.errorLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let txId = req.txId;
-	let transaccion = iEventosComun.generarEventoCompleto(res, res, cuerpoRespuesta, K.TX_TYPES.LOGISTICA, estadoFinal);
+	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.LOGISTICA, estadoFinal);
 	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento errorLogistica'], 'txCommit');

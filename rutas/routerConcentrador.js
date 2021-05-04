@@ -25,15 +25,9 @@ module.exports = (app) => {
 		albaranes: require('controladores/controladorAlbaranes'),
 		facturas: require('controladores/controladorFacturas'),
 		retransmision: require('controladores/controladorRetransmision'),
+		logistica: require('controladores/controladorLogistica'),
 	}
-	/*
-		
-		
-		logistica: require('controllers/controladorLogistica'),
-		
-		
-	}
-*/
+
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	// Detecta errores comunes en las peticiones entrantes tales como:
 	//  - Errores en el parseo del JSON entrante.
@@ -114,14 +108,14 @@ module.exports = (app) => {
 	
 	app.route('/retransmitir/:txId')
 		.get(tryCatch(controladores.retransmision.retransmitePedido));
-	/*
+	
 	app.route('/logistica')
 		.post(tryCatch(controladores.logistica.crearLogistica))
 		.get(tryCatch(controladores.logistica.consultaLogistica));
-	
+
 	app.route('/logistica/:numeroLogistica')
 		.get(tryCatch(controladores.logistica.consultaLogistica));
-*/
+
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
