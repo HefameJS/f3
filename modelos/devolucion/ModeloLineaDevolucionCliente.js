@@ -35,7 +35,7 @@ class LineaDevolucionCliente {
 			let descripcionMotivo = C.devoluciones.motivos[codigoMotivoSaneado];
 			if (!descripcionMotivo) {
 				L.xe(txId, ['El campo "codigoMotivo" no tiene un valor válido', json.codigoMotivo]);
-				errorFedicom.add('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
+				errorFedicom.insertar('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
 			}
 		}
 
