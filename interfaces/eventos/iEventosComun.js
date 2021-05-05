@@ -25,12 +25,15 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 			clientRequest: {
 				authentication: req.token,
 				ip: req.ipOrigen,
-				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,
 				route: req.route.path,
 				headers: req.headers,
-				body: req.body
+				body: req.body,
+				ssl: {
+					protocolo: req.protocoloSSL,
+					suite: req.suiteSSL
+				}
 			}
 		}
 	}
