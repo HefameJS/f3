@@ -245,7 +245,7 @@ class PedidoCliente {
 	 * Indica si al menos existe una línea en el pedido que pueda mandarse a SAP
 	 */
 	contieneLineasValidas() {
-		return !this.errorEnTodasLineas;
+		return !this.metadatos.todasLineasInvalidas;
 	}
 
 	/**
