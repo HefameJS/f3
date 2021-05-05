@@ -17,10 +17,22 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
  * @param {*} req 
  */
 const _identificarUsuarioAutenticado = (req) => {
-	if (req.token?.sub) return req.token.sub;
-	if (req.body?.user) return req.body.user
 
-	return undefined;
+	if (req.token?.sub) {
+		return {
+			usuario: req.token.sub,
+			dominio: req.token.aud
+		}
+	}
+
+	if (req.body?.user) {
+		return {
+			usuario: req.body.user,
+			dominio: req.body.domain || C.dominos.nombreDominioPorDefecto
+		}
+	}
+
+	return null;
 }
 
 /**
@@ -69,6 +81,13 @@ const extenderSolicitudHttp = (req, res) => {
 		req.ipOrigen = req.ip
 
 	req.ipOrigen = _limpiarIp(req.ipOrigen);
+
+	if (req.headers && req.headers['x-ssl-protocol'])
+		req.protocoloSSL = req.headers['x-ssl-protocol'];
+	
+	if (req.headers && req.headers['x-ssl-cipher'])
+		req.suiteSSL = req.headers['x-ssl-cipher'];
+
 
 	// Deben devolverse como funciones ya que aun no se han analizado los datos de la petición
 	req.identificarClienteSap = () => _identificarClienteSap(req);
