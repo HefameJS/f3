@@ -112,7 +112,7 @@ module.exports.confirmacionPedido = (req, txIdConfirmado, estadoTransmisionConfi
 			sapConfirms: {
 				txId: txId,
 				timestamp: new Date(),
-				sapSystem: req.identificarUsuarioAutenticado()
+				sapSystem: req.identificarUsuarioAutenticado().usuario
 			}
 		}
 	}

@@ -18,7 +18,7 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 			status: estado
 		},
 		$set: {
-			authenticatingUser: req.identificarUsuarioAutenticado(),
+			authenticatingUser: req.identificarUsuarioAutenticado().usuario,
 			client: req.identificarClienteSap(),
 			iid: process.iid,
 			type: tipo,
@@ -77,7 +77,7 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 			status: estado
 		},
 		$set: {
-			authenticatingUser: req.identificarUsuarioAutenticado(),
+			authenticatingUser: req.identificarUsuarioAutenticado().usuario,
 			client: req.identificarClienteSap(),
 			iid: process.iid,
 			type: tipo,
