@@ -27,8 +27,8 @@ const _identificarUsuarioAutenticado = (req) => {
 
 	if (req.body?.user) {
 		return {
-			usuario: req.body.user,
-			dominio: req.body.domain || C.dominios.nombreDominioPorDefecto
+			usuario: req.body.user.trim?.(),
+			dominio: req.body.domain?.trim?.() || C.dominios.nombreDominioPorDefecto
 		}
 	}
 
