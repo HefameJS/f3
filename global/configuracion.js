@@ -33,7 +33,11 @@ class Configuracion {
 			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
 
 		this.produccion = Boolean(config.produccion);
-		this.numeroWorkers = Validador.esEnteroPositivoMayorQueCero(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
+		this.numeroWorkers = Validador.esEnteroPositivo(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
+
+		this.sinWatchdogPedidos = Boolean(config.sinWatchdogPedidos);
+		this.sinWatchdogSqlite = Boolean(config.sinWatchdogSqlite);
+		this.sinMonitor = Boolean(config.sinMonitor);
 
 		// El directorio de cache sabemos que existe y que es escribible
 		// porque el objeto se instancia como Configuracion.cargarDatosFichero(rutaFichero)
