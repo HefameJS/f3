@@ -14,21 +14,20 @@ const clone = require('clone');
  * @param {*} cab 
  */
 const _unificacionAtributosSap = (cab) => {
-	if (cab.proforma) {
-
+	if (cab.proforma) { // Si cab.proforma, es formato de LISTADO
 		cab.albaran = cab.proforma;
-		cab.fecha_imp = cab.erdat;
-		cab.hora_imp = cab.abhov;
 		if (cab.factura) cab.numero_factura = cab.factura;
 		if (cab.factura && cab.fe_fact) cab.fecha_factura = cab.fe_fact;
 		cab.cod_almacen = cab.yy_centro;
 		cab.almacen = undefined;
-		cab.numero_entrega = cab.order_del;
+		cab.numero_entrega = cab.entrega;
 		cab.operador = cab.bsark;
-		cab.ruta = cab.yylzone;
-
+		cab.ruta = parseInt(cab.yylzone) + '';
 		cab.numero_pedido = cab.vbeln;
 		cab.clase = cab.konda;
+		cab.clase_pedido = cab.konda_descr;
+	} else {// Si no, es formato de CONSULTA DIRECTA
+		cab.kunnr = cab.kunnr_sol;
 	}
 	return cab;
 }
@@ -46,8 +45,8 @@ class Albaran {
 
 		this.codigoCliente = cab.kunnr;
 		this.numeroAlbaran = cab.albaran;
-		this.fechaAlbaran = Date.fromSAPtoFedicomDate(cab.fecha_imp) || undefined;
-		this.horaAlbaran = cab.hora_imp;
+		this.fechaAlbaran = Date.fromSAPtoFedicomDate(cab.erdat) || undefined;
+		this.horaAlbaran = cab.erzet;
 		if (cab.numero_factura) this.numeroFactura = cab.numero_factura;
 		if (cab.numero_factura && this.fecha_factura) this.fechaFactura = Date.fromSAPtoFedicomDate(cab.fecha_factura) || undefined;
 		this.codigoAlmacen = cab.cod_almacen;
