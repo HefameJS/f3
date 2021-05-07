@@ -3,25 +3,14 @@ const C = global.config;
 const L = global.logger;
 //const K = global.constants;
 
-// Externo
-const axios = require('axios');
-
 // Helpers
-const { ErrorLlamadaSap, ejecutarLlamadaSapSinEventos } = require('./iSapComun');
+const { ejecutarLlamadaSapSinEventos } = require('./iSapComun');
 
 
 
-const ping = async function (nombreSistemaSap = null) {
+const ping = async function () {
 
-
-	let destinoSap = C.sap.getSistema(nombreSistemaSap);
-
-	if (!destinoSap) {
-		L.w(['El sistema destino no está definido', ErrorLlamadaSap.generarNoSapSystem()])
-		return false;
-	}
-
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsd_ent_ped_api/pedidos/avalibity',
 		timeout: 1000
 	});
@@ -39,7 +28,7 @@ const ping = async function (nombreSistemaSap = null) {
 
 
 module.exports = {
-	ping: ping,
+	ping,
 	autenticacion: require('./iSapAutenticacion'),
 	pedidos: require('./iSapPedidos'),
 	devoluciones: require('./iSapDevoluciones'),

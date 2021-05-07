@@ -9,27 +9,23 @@ const iSap = require('interfaces/isap/iSap');
 const iMonitor = require('interfaces/iMonitor');
 
 // Modelos
-const DestinoSap = require('modelos/DestinoSap');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 
 
-// GET /sap/conexion ? [nombreSistemaSap=<nombreSistema>] & [servidor=local]
-const pruebaConexion = async function (req, res) {
+// GET /sap/conexion ? [servidor=local]
+exports.pruebaConexion = async function (req, res) {
 
 	let txId = req.txId;
 	L.xi(txId, ['Consulta del estado de la comunicación con SAP']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
-
-	let nombreSistemaSap = req.query.nombreSistemaSap || C.sap.nombreSistemaPorDefecto;
-
 	if (req.query.servidor === 'local') {
 
 		try {
-			let estaConectado = await iSap.ping(nombreSistemaSap);
-			let respuesta = { nombreSistema: nombreSistemaSap, disponible: estaConectado || false }
+			let estaConectado = await iSap.ping();
+			let respuesta = { disponible: estaConectado || false }
 			res.status(200).json(respuesta);
 		}
 		catch (errorSap) {
@@ -39,7 +35,7 @@ const pruebaConexion = async function (req, res) {
 	else {
 
 		try {
-			let respuestasRemotas = await iMonitor.llamadaTodosMonitores('/v1/sap/conexion?nombreSistemaSap=' + (nombreSistemaSap || '') + '&servidor=local');
+			let respuestasRemotas = await iMonitor.llamadaTodosMonitores('/v1/sap/conexion?servidor=local');
 			res.status(200).send(respuestasRemotas);
 		} catch (errorLlamada) {
 			L.xe(txId, ['Ocurrió un error al obtener el estado de la conexión a SAP', errorLlamada]);
@@ -50,48 +46,16 @@ const pruebaConexion = async function (req, res) {
 	}
 }
 
-// GET /sap/sistemas
-const consultaSistemas = async function (req, res) {
+
+// GET /sap/destino
+exports.consultaDestino = async function (req, res) {
 
 	let txId = req.txId;
-	L.xi(txId, ['Consulta de los sistemas SAP']);
+	L.xi(txId, ['Consulta del destino SAP']);
 
 	let estadoToken = iTokens.verificaPermisos(req, res);
 	if (!estadoToken.ok) return;
 
+	res.status(200).json(C.sap.destino.describirSistema());
 
-	let resupuesta = C.sap.destinos.map( destino => destino.describirSistema() )
-	res.status(200).json(resupuesta);
-}
-
-
-// GET /sap/sistemas/:nombreSistema
-const consultaSistema = async function (req, res) {
-
-	let txId = req.txId;
-	L.xi(txId, ['Consulta de sistema SAP', req.params.nombreSistema]);
-
-	let estadoToken = iTokens.verificaPermisos(req, res);
-	if (!estadoToken.ok) return;
-
-	let nombreSistemaSap = req.params.nombreSistema;
-
-	if (nombreSistemaSap === 'default') {
-		nombreSistemaSap = C.sap.nombreSistemaPorDefecto;
-	}
-
-	let sistemaSap = C.sap.getSistema(nombreSistemaSap);
-
-	if (sistemaSap) {
-		res.status(200).json(sistemaSap.describirSistema());
-	} else {
-		ErrorFedicom.generarYEnviarErrorMonitor(res, 'No se encuentra el sistema SAP');
-	}
-
-}
-
-module.exports = {
-	pruebaConexion,
-	consultaSistemas,
-	consultaSistema
 }

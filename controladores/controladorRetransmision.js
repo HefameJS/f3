@@ -25,7 +25,6 @@ exports.retransmitePedido = async function (req, res) {
 		noActualizarOriginal: (req.query.noActualizarOriginal === 'si') ? true : false,
 		regenerateCRC: (req.query.regenerateCRC === 'si') ? true : false,
 		forzarAlmacen: req.query.almacen ? req.query.almacen : undefined,
-		sistemaSAP: req.query.sistemaSAP ? req.query.sistemaSAP : undefined
 	}
 
 

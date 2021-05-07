@@ -47,7 +47,6 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	opcionesRetransmision.force = opcionesRetransmision.force ? opcionesRetransmision.force : false;
 	opcionesRetransmision.regenerateCRC = opcionesRetransmision.regenerateCRC ? opcionesRetransmision.regenerateCRC : false;
 	opcionesRetransmision.forzarAlmacen = opcionesRetransmision.forzarAlmacen ? opcionesRetransmision.forzarAlmacen : undefined;
-	opcionesRetransmision.sistemaSAP = opcionesRetransmision.sistemaSAP ? opcionesRetransmision.sistemaSAP : undefined;
 	opcionesRetransmision.noActualizarOriginal = opcionesRetransmision.noActualizarOriginal ? opcionesRetransmision.noActualizarOriginal : false;
 
 	let txIdRetransmision = new M.ObjectID();
@@ -117,13 +116,6 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	L.xt(txIdRetransmision, ['OK: El contenido de la transmisión es un pedido correcto', pedidoCliente]);
 
 
-	if (opcionesRetransmision.sistemaSAP) {
-		L.xd(txIdRetransmision, ['Se cambia el sistema SAP al que enviamos el pedido [' + (pedidoCliente.sapSystem || '<n/a>') + '] => [' + opcionesRetransmision.sistemaSAP + ']']);
-		pedidoCliente.sapSystem = opcionesRetransmision.sistemaSAP;
-		// Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
-		opcionesRetransmision.regenerateCRC = true;
-	}
-
 	if (opcionesRetransmision.forzarAlmacen) {
 		L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedidoCliente.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
 		pedidoCliente.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
@@ -146,7 +138,6 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 		// Además del nuevo numeroPedidoOrigen, si se ha establecido un almacen nuevo y/o un sistema SAP nuevo, 
 		// debemos tambien cambiarlo en el cuerpo de la petición.
 		req.body.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
-		if (pedidoCliente.sapSystem) req.body.sapSystem = pedidoCliente.sapSystem;
 		if (pedidoCliente.codigoAlmacenServicio) req.body.codigoAlmacenServicio = pedidoCliente.codigoAlmacenServicio;
 
 		txIdNuevo = req.txId;
@@ -237,36 +228,17 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 		let peticionASap = errorLlamadaSap.peticion;
 		delete errorLlamadaSap.peticion;
 
-		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
+		L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
+		let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+		L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
+		L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
 
-			L.xe(txIdRetransmision, ['No se puede retransmitir porque no se encuentra el sistema SAP destino']);
-			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
-
-			L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
-			L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
-
-			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-				sapRequest: peticionASap,
-				sapResponse: errorLlamadaSap,
-				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 400, errorFedicom.getErrores()),
-				status: K.TX_STATUS.PETICION_INCORRECTA
-			});
-
-		} else {
-
-			L.xe(txIdRetransmision, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
-			let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
-			L.xi(txIdOriginal, ['La retransmisión con ID ' + txIdRetransmision + ' finaliza con éxito']);
-			L.xi(txIdRetransmision, ['Finaliza la retransmisión']);
-
-			return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
-				sapRequest: peticionASap,
-				sapResponse: errorLlamadaSap,
-				clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
-				status: K.TX_STATUS.NO_SAP
-			});
-
-		} 
+		return iEventos.retransmisiones.retransmitirPedido(txIdRetransmision, dbTx, opcionesRetransmision, K.TX_STATUS.RETRANSMISION.OK, null, {
+			sapRequest: peticionASap,
+			sapResponse: errorLlamadaSap,
+			clientResponse: _construyeRespuestaCliente(txIdNuevo || txIdOriginal, 201, respuestaFaltasSimuladas),
+			status: K.TX_STATUS.NO_SAP
+		});
 
 	}
 

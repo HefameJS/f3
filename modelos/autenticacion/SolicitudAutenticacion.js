@@ -22,7 +22,6 @@ const Validador = require('global/validador');
  * 	- domain - Indica el dominio de autenticación del usuario. Por defecto se usa FEDICOM o TRANSFER
  *  - noCache - Indica que la comprobación de las credenciales no se haga nunca en cache, ni se cachee la respuesta
  *  - debug - La respuesta incluirá la información del token en formato legible
- *  - sapSystem - Fuerza el desvío de la petición al sistema SAP indicado
  */
 class SolicitudAutenticacion {
 
@@ -62,9 +61,6 @@ class SolicitudAutenticacion {
 
 		// debug - Indica si la respuesta a la petición debe incluir los datos del token en crudo
 		if (json.debug) this.debug = Boolean(json.debug);
-
-		// sapSystem - Permite indicar un sistema SAP que no sea el sistema por defecto
-		if (Validador.esCadenaNoVacia(json.sapSystem)) this.sapSystem = json.sapSystem.trim();
 
 	}
 

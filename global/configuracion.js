@@ -265,18 +265,12 @@ class ConfiguracionSap {
 
 	constructor(C, config) {
 		this.nombreSistemaPorDefecto = config.sistemaPorDefecto;
-		this.destinos = []
-		config.destinos.forEach(destinoSap => {
-			this.destinos.push(new DestinoSap(destinoSap))
-		});
-
-		this.destinoPorDefecto = this.destinos.find(destino => {
-			return destino.id === this.nombreSistemaPorDefecto
-		})
-
+		this.destino = new DestinoSap(config.destino);
+		
 		this.timeout = {
 			verificarCredenciales: (parseInt(config.timeout?.verificarCredenciales) || 5) * 1000,
 			realizarPedido: (parseInt(config.timeout?.realizarPedido) || 30) * 1000,
+			realizarLogistica: (parseInt(config.timeout?.realizarLogistica) || 30) * 1000,
 			realizarDevolucion: (parseInt(config.timeout?.realizarDevolucion) || 15) * 1000,
 			consultaDevolucionPDF: (parseInt(config.timeout?.consultaDevolucionPDF) || 10) * 1000,
 			consultaAlbaranJSON: (parseInt(config.timeout?.consultaAlbaranJSON) || 10) * 1000,
@@ -288,17 +282,6 @@ class ConfiguracionSap {
 	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('sap');
 		return new ConfiguracionSap(C, config);
-	}
-
-	getSistemaPorDefecto() {
-		return this.destinoPorDefecto;
-	}
-
-	getSistema(sapsid) {
-		if (!sapsid) return this.destinoPorDefecto;
-		return this.destinos.find(destino => {
-			return destino.id === sapsid
-		})
 	}
 
 }

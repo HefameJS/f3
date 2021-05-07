@@ -77,10 +77,6 @@ class DevolucionCliente {
 		// 20.10.2020 - Para evitar duplicados, vamos a generar el CRC siempre con el timestamp actual
 		this.crc = CRC.generar(this.codigoCliente, crcLineas, Date.fedicomTimestamp());
 
-		if (Validador.esCadenaNoVacia(json.sapSystem)) {
-			this.sapSystem = json.sapSystem.trim();
-		}
-
 	}
 
 	/**

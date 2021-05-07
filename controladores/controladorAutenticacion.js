@@ -96,20 +96,11 @@ const _autenticarContraSAP = async function (txId, solicitudAutenticacion, res) 
 		}
 
 	} catch (errorLlamadaSap) {
-		
-		if (errorLlamadaSap?.esSistemaSapNoDefinido()) {
-			L.xe(txId, ['Error al autenticar al usuario', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-		} else {
-			L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', errorLlamadaSap]);
-			let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
-			res.status(201).json(cuerpoRespuesta);
-			iFlags.set(txId, C.flags.NO_SAP);
-			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-		}
-
+		L.xe(txId, ['Ocurrió un error en la llamada a SAP - Se genera token no verificado', errorLlamadaSap]);
+		let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
+		res.status(201).json(cuerpoRespuesta);
+		iFlags.set(txId, C.flags.NO_SAP);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 	}
 
 }
@@ -137,13 +128,13 @@ const _autenticarContraLDAP = async function (txId, solicitudAutenticacion, res)
 
 // GET /authenticate
 const verificarToken = async function (req, res) {
-	
+
 	if (req.token) {
 		let tokenData = iTokens.verificarToken(req.token);
-		res.status(200).send({token: req.token, token_data: tokenData});
+		res.status(200).send({ token: req.token, token_data: tokenData });
 	} else {
 		let tokenData = { meta: { ok: false, error: 'No se incluye token' } };
-		res.status(200).send({token: req.token, token_data: tokenData});
+		res.status(200).send({ token: req.token, token_data: tokenData });
 	}
 
 }

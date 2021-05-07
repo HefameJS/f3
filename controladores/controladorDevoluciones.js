@@ -118,19 +118,13 @@ exports.crearDevolucion = async function (req, res) {
 		iEventos.devoluciones.finDevolucion(res, cuerpoRespuestaHttp, estadoTransmision, { numerosDevolucionSap, numeroDevolucion });
 
 	} catch (errorLlamadaSap) {
-		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
-			L.xe(txId, ['Error al crear la devolución', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-		}
-		else {
-			L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-			iFlags.set(txId, C.flags.NO_SAP)
-			iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-		}
+
+		L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la devolución', errorLlamadaSap]);
+		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
+		iFlags.set(txId, C.flags.NO_SAP)
+		iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+
 	}
 
 

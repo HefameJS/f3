@@ -146,19 +146,13 @@ exports.crearPedido = async function (req, res) {
 
 	} catch (errorLlamadaSap) {
 
-		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
-			L.xe(txId, ['Error al llamar a SAP, el sistema no está definido', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.mensaje, 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-		} else {
-			L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
-			let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
-			res.status(202).json(respuestaFaltasSimuladas);
-			iFlags.set(txId, C.flags.NO_SAP);
-			iFlags.set(txId, C.flags.NO_FALTAS);
-			iEventos.pedidos.finPedido(res, respuestaFaltasSimuladas, K.TX_STATUS.NO_SAP);
-		}
+		L.xe(txId, ['Incidencia en la comunicación con SAP - Se simulan las faltas del pedido', errorLlamadaSap]);
+		let respuestaFaltasSimuladas = pedidoCliente.gererarRespuestaFaltasSimuladas();
+		res.status(202).json(respuestaFaltasSimuladas);
+		iFlags.set(txId, C.flags.NO_SAP);
+		iFlags.set(txId, C.flags.NO_FALTAS);
+		iEventos.pedidos.finPedido(res, respuestaFaltasSimuladas, K.TX_STATUS.NO_SAP);
+
 	}
 
 }

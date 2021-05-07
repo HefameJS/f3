@@ -96,11 +96,9 @@ module.exports = (app) => {
 
 	// SAP
 	app.route('/v1/sap/conexion')
-		.get(tryCatch(controladores.consultas.sap.pruebaConexion)); // ? [nombreSistemaSap = <nombreSistema>]
-	app.route('/v1/sap/sistemas')
-		.get(tryCatch(controladores.consultas.sap.consultaSistemas));
-	app.route('/v1/sap/sistemas/:nombreSistema')
-		.get(tryCatch(controladores.consultas.sap.consultaSistema));
+		.get(tryCatch(controladores.consultas.sap.pruebaConexion));
+	app.route('/v1/sap/destino')
+		.get(tryCatch(controladores.consultas.sap.consultaDestino));
 
 /*
 	// Dumps de procesos

@@ -1,50 +1,32 @@
 'use strict';
 const C = global.config;
-const L = global.logger;
-const K = global.constants;
+//const L = global.logger;
+//const K = global.constants;
 
 
 // Interfaces
-const { ejecutarLlamadaSapSinEventos, ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
-// const iEventos = require('interfaces/eventos/iEventos');
+const { ejecutarLlamadaSapSinEventos, ejecutarLlamadaSap } = require('./iSapComun');
 
-const realizarPedido = (pedido) => {
+exports.realizarPedido = async function (pedido) {
 
-	return new Promise((resolve, reject) => {
-
-		let nombreSistemaSap = pedido.sapSystem;
-		let destinoSap = C.sap.getSistema(nombreSistemaSap);
-
-		if (!destinoSap) {
-			reject(ErrorLlamadaSap.generarNoSapSystem());
-			return;
-		}
-
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsd_ent_ped_api/pedidos',
-			body: pedido.generarJSON(),
-			timeout: C.sap.timeout.realizarPedido
-		});
-
-		ejecutarLlamadaSap(pedido.txId, parametrosHttp, resolve, reject);
-
-	});
-
-}
-
-
-const retransmitirPedido = async function (pedido) {
-
-	let nombreSistemaSap = pedido.sapSystem;
-	let destinoSap = C.sap.getSistema(nombreSistemaSap);
-	if (!destinoSap) throw ErrorLlamadaSap.generarNoSapSystem();
-
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsd_ent_ped_api/pedidos',
 		body: pedido.generarJSON(),
 		timeout: C.sap.timeout.realizarPedido
 	});
 
+	return await ejecutarLlamadaSap(pedido.txId, parametrosHttp);
+
+}
+
+
+exports.retransmitirPedido = async function (pedido) {
+
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
+		url: '/api/zsd_ent_ped_api/pedidos',
+		body: pedido.generarJSON(),
+		timeout: C.sap.timeout.realizarPedido
+	});
 
 	let peticionASap = {
 		timestamp: new Date(),
@@ -65,8 +47,3 @@ const retransmitirPedido = async function (pedido) {
 
 }
 
-
-module.exports = {
-	realizarPedido,
-	retransmitirPedido
-}

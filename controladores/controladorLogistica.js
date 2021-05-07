@@ -136,21 +136,12 @@ exports.crearLogistica = async function (req, res) {
 
 
 	} catch (errorLlamadaSap) {
-
-		if (errorLlamadaSap?.esSistemaSapNoDefinido && errorLlamadaSap.esSistemaSapNoDefinido()) {
-			let errorFedicom = new ErrorFedicom('HTTP-400', errorLlamadaSap.code, 400);
-			L.xe(txId, ['Error al grabar la petición de logística', errorLlamadaSap]);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
-		} else {
-			L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
-			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
-			iFlags.set(txId, C.flags.NO_SAP)
-			iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
-		}
+		L.xe(txId, ['Incidencia en la comunicación con SAP - No se graba la solicitud de logística', errorLlamadaSap]);
+		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
+		iFlags.set(txId, C.flags.NO_SAP)
+		iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
 		return;
-
 	}
 }
 

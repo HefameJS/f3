@@ -8,10 +8,9 @@ const C = global.config;
 const { ejecutarLlamadaSapSinEventos } = require('./iSapComun');
 
 
-exports.consultaAlbaranJSON = async function (numeroAlbaran, txId) {
+exports.consultaAlbaranJSON = async function (numeroAlbaran) {
 
-	let destinoSap = C.sap.getSistemaPorDefecto();
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
 		method: 'GET',
 		timeout: C.sap.timeout.consultaAlbaranJSON
@@ -22,11 +21,9 @@ exports.consultaAlbaranJSON = async function (numeroAlbaran, txId) {
 
 
 
-exports.consultaAlbaranPDF = async function (numeroAlbaran, txId) {
+exports.consultaAlbaranPDF = async function (numeroAlbaran) {
 
-
-	let destinoSap = C.sap.getSistemaPorDefecto();
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
 		method: 'GET',
 		timeout: C.sap.timeout.consultaAlbaranPDF
@@ -39,8 +36,7 @@ exports.consultaAlbaranPDF = async function (numeroAlbaran, txId) {
 
 exports.listadoAlbaranes = async function (consultaAlbaran, txId) {
 
-	let destinoSap = C.sap.getSistemaPorDefecto();
-	let parametrosHttp = destinoSap.obtenerParametrosLlamada({
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsd_orderlist_api/query_tree/?query=' + consultaAlbaran.toQueryString(),
 		method: 'GET',
 		timeout: C.sap.timeout.listadoAlbaranes

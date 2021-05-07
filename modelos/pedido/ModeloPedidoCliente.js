@@ -117,10 +117,6 @@ class PedidoCliente {
 			domain: req.token.aud
 		}
 
-		if (Validador.esCadenaNoVacia(json.sapSystem)) {
-			this.sapSystem = json.sapSystem.trim();
-		}
-
 
 		// Limpieza del código del cliente.
 		// Si tiene mas de 10 dígitos lo truncamos a 10, ya que SAP da error 500 (Imposibol, SAP no falla nunca!)
@@ -325,7 +321,6 @@ class PedidoCliente {
 			respuesta.sap_url_confirmacion = this.#generaUrlConfirmacion();
 			respuesta.crc = this.crc;
 			respuesta.login = this.login;
-			if (this.sapSystem) respuesta.sapSystem = this.sapSystem;
 		}
 
 		return respuesta;

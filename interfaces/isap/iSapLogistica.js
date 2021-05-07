@@ -5,33 +5,16 @@ const C = global.config;
 
 
 // Interfaces
-const { ejecutarLlamadaSap, ErrorLlamadaSap } = require('./iSapComun');
+const { ejecutarLlamadaSap } = require('./iSapComun');
 
 
-const realizarLogistica = (logistica) => {
+exports.realizarLogistica = async function (logistica) {
 
-	return new Promise((resolve, reject) => {
-
-		let nombreSistemaSap = logistica.sapSystem;
-		let destinoSap = C.sap.getSistema(nombreSistemaSap);
-
-		if (!destinoSap) {
-			reject(ErrorLlamadaSap.generarNoSapSystem());
-			return;
-		}
-
-		let parametrosHttp = destinoSap.obtenerParametrosLlamada({
-			url: '/api/zsd_ent_ped_api/logistica',
-			body: logistica.generarJSON(),
-			timeout: C.sap.timeout.realizarLogistica
-		});
-
-		ejecutarLlamadaSap(logistica.txId, parametrosHttp, resolve, reject);
-
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
+		url: '/api/zsd_ent_ped_api/logistica',
+		body: logistica.generarJSON(),
+		timeout: C.sap.timeout.realizarLogistica
 	});
 
-}
-
-module.exports = {
-	realizarLogistica
+	return await ejecutarLlamadaSap(logistica.txId, parametrosHttp);
 }
