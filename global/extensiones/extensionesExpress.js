@@ -48,19 +48,60 @@ const _identificarClienteSap = (req) => {
 	return undefined;
 }
 
-const _limpiarIp = (ip) => {
-	if (ip && ip.startsWith('::ffff:'))
+/**
+ * Identifica el código del programa de farmacia que realiza la transmisión y lo devuelve normalizado.
+ * @param {*} req 
+ * @returns 
+ */
+const _identificarProgramaFarmacia = (req) => {
+	if (req.headers?.['software-id'])
+		return parseInt(req.headers?.['software-id']) || null;
+	return null;
+}
+
+/**
+ * Obtiene y normaliza la dirección IP origen de la transmisión
+ * @param {*} req 
+ */
+const _obtenerDireccionIp = (req) => {
+	let ip = req.ip;
+
+	if (req.headers && req.headers['x-forwarded-for'])
+		ip = req.headers['x-forwarded-for'];
+
+	if (ip === '::1')
+	 return '127.0.0.1'
+	
+	if (ip?.startsWith?.('::ffff:'))		
 		return ip.slice(7, ip.length);
+
 	return ip;
 }
+
+/**
+ * Obtiene la configuración SSL de la conexión entrante
+ * @param {*} req 
+ * @returns 
+ */
+const _obtenerDatosSSL = (req) => {
+
+	let tmp = {
+		protocoloSSL: null,
+		suiteSSL: null
+	}
+
+	if (req.headers?.['x-ssl-protocol']) tmp.protocoloSSL = req.headers['x-ssl-protocol'];
+	if (req.headers?.['x-ssl-cipher']) tmp.suiteSSL = req.headers['x-ssl-cipher'];
+
+	return tmp;
+}
+
 
 /**
  * Amplia los objetos de solicitud y respuesta HTTP de Express con utilidades que
  * necesitaremos durante el flujo.
  * 	- req.txId, res.txId -> Genera el ID único de transmisión
- * 	- Establece cabeceras de respuesta estándard Fedicom: Software-ID, Content-Api-Version
- * 	- Establece cabeceras de respuesta no estándard: X-TxID
- *  - req.ipOrigen -> Determina la IP de origen de la solicitud, incluso si la petición entra por proxy inverso.
+ * 	- Establece cabeceras de respuesta : X-TxID, Software-ID, Content-Api-Version
  * 	- req.identificarClienteSap -> Funcion que determina el código de cliente SAP del cuerpo del mensaje si existe.
  * 	- req.identificarUsuarioAutenticado -> Funcion que determina el código de cliente autenticado en el token, si existe.
  *  * 
@@ -75,23 +116,22 @@ const extenderSolicitudHttp = (req, res) => {
 	res.setHeader('X-TxID', txId);
 	res.setHeader('Software-ID', C.softwareId.servidor);
 	res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
-	if (req.headers && req.headers['x-forwarded-for'])
-		req.ipOrigen = req.headers['x-forwarded-for'];
-	else
-		req.ipOrigen = req.ip
-
-	req.ipOrigen = _limpiarIp(req.ipOrigen);
-
-	if (req.headers && req.headers['x-ssl-protocol'])
-		req.protocoloSSL = req.headers['x-ssl-protocol'];
-	
-	if (req.headers && req.headers['x-ssl-cipher'])
-		req.suiteSSL = req.headers['x-ssl-cipher'];
-
 
 	// Deben devolverse como funciones ya que aun no se han analizado los datos de la petición
 	req.identificarClienteSap = () => _identificarClienteSap(req);
 	req.identificarUsuarioAutenticado = () => _identificarUsuarioAutenticado(req);
+	req.identificarProgramaFarmacia = () => _identificarProgramaFarmacia(req);
+	req.obtenerDireccionIp = () => _obtenerDireccionIp(req);
+	req.obtenerDatosSSL = () => _obtenerDatosSSL(req);
+
+	req.generaFlagsTransmision = () => {
+		return {
+			ip: req.obtenerDireccionIp(),
+			autenticacion: req.identificarUsuarioAutenticado(),
+			programa: req.identificarProgramaFarmacia(),
+			ssl: req.obtenerDatosSSL()
+		}
+	}
 
 	return [req, res];
 }
@@ -114,7 +154,7 @@ const extenderSolicitudRetransmision = (req) => {
 
 	let reqClon = clone(req);
 	reqClon.txId = new M.ObjectID();
-	reqClon.ipOrigen = 'RTX';
+	reqClon.ip = 'RTX';
 	let nuevasCabeceras = {};
 	// Solo necesitamos la cabecera 'Authorization'
 	if (reqClon.headers) {
@@ -129,6 +169,21 @@ const extenderSolicitudRetransmision = (req) => {
 	// Deben devolverse como funciones ya que aun no se han analizado los datos de la petición
 	reqClon.identificarClienteSap = () => _identificarClienteSap(reqClon);
 	reqClon.identificarUsuarioAutenticado = () => _identificarUsuarioAutenticado(reqClon);
+	reqClon.identificarProgramaFarmacia = () => _identificarProgramaFarmacia(reqClon);
+	reqClon.obtenerDireccionIp = () => _obtenerDireccionIp(reqClon);
+	reqClon.obtenerDatosSSL = () => _obtenerDatosSSL(reqClon);
+
+	req.generaFlagsTransmision = () => {
+
+		return {
+			"transmision.ip": req.obtenerDireccionIp(),
+			"transmision.autenticacion": req.identificarUsuarioAutenticado(),
+			"transmision.programa": req.identificarProgramaFarmacia(),
+			"transmision.ssl": req.obtenerDatosSSL()
+		}
+
+	}
+
 	return reqClon;
 
 }
@@ -140,7 +195,7 @@ const extenderSolicitudRetransmision = (req) => {
  * @param {*} funcionControlador 
  * @returns 
  */
-const tryCatch =  (funcionControlador) => {
+const tryCatch = (funcionControlador) => {
 	let controlador = async function (req, res) {
 		let txId = req.txId;
 		try {

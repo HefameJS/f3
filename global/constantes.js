@@ -75,8 +75,8 @@ module.exports = {
 	},
 	VERSION: {
 		PROTOCOLO: '3.4.10',
-		SERVIDOR: '0.13.3',
-		TRANSMISION: 1203,
+		SERVIDOR: '0.14.1',
+		TRANSMISION: 1401,
 	},
 	PROCESOS: {
 		getTitulo: function (tipo) {

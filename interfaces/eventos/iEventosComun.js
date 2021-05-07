@@ -4,10 +4,16 @@
 //const K = global.constants;
 
 
+const iFlags = require('interfaces/iFlags');
+
+
 
 const generarEventoDeApertura = (req, tipo, estado) => {
 
 	let txId = req.txId;
+
+	iFlags.set(txId, 'transmision', req.generaFlagsTransmision());
+
 	return {
 		$setOnInsert: {
 			_id: txId,
@@ -24,16 +30,12 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ipOrigen,
+				ip: req.obtenerDireccionIp(),
 				method: req.method,
 				url: req.originalUrl,
 				route: req.route.path,
 				headers: req.headers,
-				body: req.body,
-				ssl: {
-					protocolo: req.protocoloSSL,
-					suite: req.suiteSSL
-				}
+				body: req.body
 			}
 		}
 	}
@@ -67,6 +69,8 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 
 	let txId = req.txId;
 
+	iFlags.set(txId, 'transmision', req.generaFlagsTransmision());
+	
 	return {
 		$setOnInsert: {
 			_id: txId,
@@ -83,7 +87,7 @@ const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 			type: tipo,
 			clientRequest: {
 				authentication: req.token,
-				ip: req.ipOrigen,
+				ip: req.obtenerDireccionIp(),
 				protocol: req.protocol,
 				method: req.method,
 				url: req.originalUrl,

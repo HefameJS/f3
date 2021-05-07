@@ -155,7 +155,7 @@ const verificaPermisos = (req, res, opciones) => {
 	// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
 	if (req.token.aud === C.dominios.INTERFEDICOM) {
 		if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
-			// TODO: Falta hacer control de admision por IP (req.ipOrigen)
+			// TODO: Falta hacer control de admision por IP origen
 			L.xi(txId, ['Se acepta el token INTERFEDICOM'], 'txToken')
 			return { ok: true };
 		}

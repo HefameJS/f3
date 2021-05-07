@@ -27,7 +27,7 @@ module.exports = (app) => {
 			[req, res] = extenderSolicitudHttp(req, res);
 			let txId = req.txId;
 
-			L.w('Se recibe transmisión erronea ' + txId + ' desde ' + req.ipOrigen);
+			L.w('Se recibe transmisión erronea ' + txId + ' desde ' + req.obtenerDireccionIp());
 			L.xw(txId, ['Se descarta la transmisión por ser errónea', errorExpress]);
 
 			let errorFedicom = new ErrorFedicom(errorExpress);
@@ -45,7 +45,7 @@ module.exports = (app) => {
 		[req, res] = extenderSolicitudHttp(req, res);
 		let txId = req.txId;
 
-		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.ipOrigen);
+		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
 		L.xt(txId, 'Iniciando procesamiento de la transmisión');
 
 		next();
