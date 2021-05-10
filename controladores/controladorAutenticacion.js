@@ -33,7 +33,7 @@ const autenticar = async function (req, res) {
 	} catch (excepcion) {
 		let errorFedicom = new ErrorFedicom(excepcion);
 		L.xw(txId, ['Ocurrió un error al analizar la petición', errorFedicom]);
-		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res, 400);
 		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}

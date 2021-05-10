@@ -39,7 +39,7 @@ exports.crearPedido = async function (req, res) {
 		// La generación del objeto puede causar una excepción si la petición no era correcta.
 		let errorFedicom = new ErrorFedicom(excepcion);
 		L.xw(txId, ['Ocurrió un error al analizar la petición', errorFedicom])
-		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res, 400);
 		iEventos.pedidos.errorPedido(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
 		return;
 	}
