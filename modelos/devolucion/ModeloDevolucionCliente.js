@@ -3,9 +3,6 @@
 const L = global.logger;
 //const K = global.constants;
 
-// Externo
-const clone = require('clone');
-
 // Interfaces
 const iFlags = require('interfaces/iFlags');
 
