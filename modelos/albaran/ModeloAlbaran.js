@@ -80,6 +80,8 @@ class Albaran {
 			precioPvp: 0,
 			precioNeto: 0,
 			precioAlbaran: 0,
+			precioPvf: 0,
+			precioPvl: 0,
 			impuestos: []
 		}
 
@@ -101,6 +103,8 @@ class Albaran {
 			this.totales.precioPvp += (linea.cantidadServida * linea.precioPvp);
 			this.totales.precioNeto += (linea.cantidadServida * linea.precioNeto);
 			this.totales.precioAlbaran += (linea.cantidadServida * linea.precioAlbaran);
+			this.totales.precioPvf += (linea.cantidadServida * linea.precioPvf);
+			this.totales.precioPvl += (linea.cantidadServida * linea.precioPvl);
 
 			if (linea.impuesto) {
 				let impuesto = linea.impuesto;
@@ -117,6 +121,9 @@ class Albaran {
 		this.totales.precioPvp = Math.round(this.totales.precioPvp * 100) / 100
 		this.totales.precioNeto = Math.round(this.totales.precioNeto * 100) / 100
 		this.totales.precioAlbaran = Math.round(this.totales.precioAlbaran * 100) / 100
+		this.totales.precioPvf = Math.round(this.totales.precioPvf * 100) / 100
+		this.totales.precioPvl = Math.round(this.totales.precioPvl * 100) / 100
+
 
 		for (let tipoImpuesto in sumatorioImpuestos) {
 			this.totales.impuestos.push(sumatorioImpuestos[tipoImpuesto]);
@@ -131,6 +138,7 @@ class LineaAlbaran {
 		this.orden = posicion.posicion;
 		this.codigoArticulo = posicion.codigo;
 		this.descripcionArticulo = posicion.descripcion;
+
 		if (posicion.t_lotes?.length > 0) this.lotes = posicion.t_lotes.map(lote => {
 			return {
 				lote: lote.lote,
@@ -147,15 +155,15 @@ class LineaAlbaran {
 				}
 			});
 
-
-
 		this.cantidadPedida = posicion.und_ped;
 		this.cantidadServida = posicion.und_serv;
 		this.cantidadBonificada = posicion.und_bonif;
 		this.precioPvp = posicion.precio_pvp;
-
 		this.precioNeto = posicion.precio_neto;
 		this.precioAlbaran = posicion.precio_alb;
+		this.precioPvf = this.precioNeto;
+		this.precioPvl = 0;
+		
 
 		this.importeLineaNeto = Math.round(this.precioNeto * this.cantidadServida * 100) / 100;
 		this.importeLineaBruto = Math.round(this.precioAlbaran * this.cantidadServida * 100) / 100;
