@@ -32,7 +32,10 @@ const _identificarUsuarioAutenticado = (req) => {
 		}
 	}
 
-	return null;
+	return {
+		usuario: null,
+		dominio: null
+	};
 }
 
 /**
