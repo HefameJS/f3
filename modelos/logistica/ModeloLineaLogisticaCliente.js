@@ -64,6 +64,12 @@ class LineaLogisticaCliente {
 			}
 		}
 
+		// descripcionArticulo
+		if (Validador.esCadenaNoVacia(json.descripcionArticulo)) {
+			this.descripcionArticulo = json.descripcionArticulo.trim();
+		}
+
+
 		// observaciones
 		if (Validador.esCadenaNoVacia(json.observaciones)) {
 			this.observaciones = json.observaciones.trim();
@@ -80,6 +86,7 @@ class LineaLogisticaCliente {
 
 		if (this.orden || this.orden === 0) json.orden = this.orden;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
+		if (this.descripcionArticulo) json.descripcionArticulo = this.descripcionArticulo;
 		if (this.cantidad >= 0) json.cantidad = this.cantidad;
 
 

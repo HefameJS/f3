@@ -16,9 +16,12 @@ class LineaLogisticaSap {
 
 		this.codigoArticulo = json.codigoarticulo || null;
 		this.descripcionArticulo = json.descripcionarticulo || null;
+		this.codigoBarras = json.codbar || null;
+		this.localizador = json.localizador || null;
 
 		this.cantidad = parseInt(json.cantidad);
 		this.observaciones = json.observaciones || null;
+
 		this.incidencias = json.incidencias?.length === 0 ? null : json.incidencias;
 		
 	}
@@ -29,10 +32,11 @@ class LineaLogisticaSap {
 
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.descripcionArticulo) json.descripcionArticulo = this.descripcionArticulo;
-		
 		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
-		if (this.incidencias) json.incidencias = this.incidencias;
+		if (this.codigoBarras) json.codigoBarras = this.codigoBarras;
+		if (this.localizador) json.localizador = this.localizador;
 
+		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.observaciones) json.observaciones = this.observaciones;
 		return json;
 	}

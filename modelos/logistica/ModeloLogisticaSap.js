@@ -37,11 +37,14 @@ class LogisticaSap {
 
 		this.tipoLogistica = json.tipologistica || null;
 		this.fechaLogistica = Date.toFedicomDateTime();
+		this.fechaRecogidaSolicitada = json.fecharecogidasolicitada || null;
 
 		this.origen = new DireccionLogistica(txId, json.origen);
 		this.destino = new DireccionLogistica(txId, json.destino);
 
 		this.observaciones = json.observaciones || null;
+		this.servicio = json.servicio || null;
+
 		this.#extraerLineas(json.lineas);
 		this.#sanearIncidenciasSap(json.incidencias);
 
@@ -129,10 +132,12 @@ class LogisticaSap {
 		if (this.numeroLogisticaOrigen) json.numeroLogisticaOrigen = this.numeroLogisticaOrigen;
 		if (this.tipoLogistica) json.tipoLogistica = this.tipoLogistica;
 		if (this.fechaLogistica) json.fechaLogistica = this.fechaLogistica;
+		if (this.fechaRecogidaSolicitada) json.fechaRecogidaSolicitada = this.fechaRecogidaSolicitada;
 		if (this.origen) json.origen = this.origen.generarJSON();
 		if (this.destino) json.destino = this.destino.generarJSON();
 
 		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.servicio) json.servicio = this.servicio;
 		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
 		if (this.incidencias) json.incidencias = this.incidencias;
 		

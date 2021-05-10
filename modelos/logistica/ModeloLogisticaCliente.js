@@ -81,6 +81,11 @@ class LogisticaCliente {
 			this.observaciones = json.observaciones.trim();
 		}
 
+		// fechaRecogidaSolicitada
+		if (Validador.esFechaHora(json.fechaRecogidaSolicitada)) {
+			this.fechaRecogidaSolicitada = json.fechaRecogidaSolicitada.trim();
+		}
+
 
 		// Copiamos las líneas, no sin antes analizarlas.
 		this.#analizarPosiciones(req);
@@ -174,9 +179,11 @@ class LogisticaCliente {
 		respuesta.codigoCliente = this.codigoCliente;
 		respuesta.numeroLogisticaOrigen = this.numeroLogisticaOrigen;
 		respuesta.tipoLogistica = this.tipoLogistica;
+		
+		respuesta.origen = this.origen.generarJSON(generarParaSap);
+		respuesta.destino = this.destino.generarJSON(generarParaSap);
 
-		respuesta.origen = this.origen.generarJSON();
-		respuesta.destino = this.destino.generarJSON();
+		if (this.fechaRecogidaSolicitada) respuesta.fechaRecogidaSolicitada = this.fechaRecogidaSolicitada;
 		if (this.observaciones) respuesta.observaciones = this.observaciones;
 		
 		respuesta.lineas = this.lineas.map(l => l.generarJSON(generarParaSap));

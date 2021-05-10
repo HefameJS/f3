@@ -16,21 +16,86 @@ class DireccionLogistica {
 			errores: null // Null o un array de errores Fedicom si se detectan
 		}
 
-		// Comprobamos los campos mínimos que deben aparecer en una dirección
-		let errorFedicom = new ErrorFedicom();
-		Validador.esCadenaNoVacia(json.codigo, errorFedicom, 'LOG-ERR-999', 'El campo "codigo" es obligatorio en la dirección');
+		// Copiamos las propiedades de la dirección que son relevantes
+		this.codigo = json.codigo.trim();
 
-		// Si se encuentran errores:
-		// - Se describen los errores encontrados en el array de incidencias y se lanza una excepción.
-		if (errorFedicom.tieneErrores()) {
-			this.metadatos.errores = errorFedicom.getErrores();
-			return;
+		let tmp;
+
+		tmp = json.codigo;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.codigo = tmp.trim();
 		}
 
 
+		tmp = json.cif || json.CIF;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.cif = tmp.trim();
+		}
 
-		// Copiamos las propiedades de la dirección que son relevantes
-		this.codigo = json.codigo.trim();
+		tmp = json.soe || json.SOE;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.soe = tmp.trim();
+		}
+
+		tmp = json.nombre;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.nombre = tmp.trim();
+		}
+
+		tmp = json.calle;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.calle = tmp.trim();
+		}
+
+		tmp = json.poblacion;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.poblacion = tmp.trim();
+		}
+
+		tmp = json.provincia;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.provincia = tmp.trim();
+		}
+
+		tmp = json.codigoPostal || json.codigopostal;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.codigoPostal = tmp.trim();
+		}
+
+		tmp = json.pais;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.pais = tmp.trim();
+		}
+
+		tmp = json.telefono;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.telefono = tmp.trim();
+		}
+
+		tmp = json.email;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.email = tmp.trim();
+		}
+
+		tmp = json.codigoAlmacen || json.werks;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.codigoAlmacen = tmp.trim();
+		}
+
+		tmp = json.descripcionAlmacen || json.werks_name;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.descripcionAlmacen = tmp.trim();
+		}
+
+		tmp = json.ruta;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.ruta = tmp.trim();
+		}
+
+		tmp = json.descripcionRuta || json.ruta_desc;
+		if (Validador.esCadenaNoVacia(tmp)) {
+			this.descripcionRuta = tmp.trim();
+		}
 
 	}
 
@@ -42,10 +107,24 @@ class DireccionLogistica {
 		return this.metadatos.errores;
 	}
 
-	generarJSON() {
+	generarJSON(generarParaSap = true) {
 		let respuesta = {}
 
-		respuesta.codigo = this.codigo;
+		if (this.codigo) respuesta.codigo = this.codigo;
+		if (this.cif) respuesta.cif = this.cif;
+		if (this.soe) respuesta.soe = this.soe;
+		if (this.nombre) respuesta.nombre = this.nombre;
+		if (this.calle) respuesta.calle = this.calle;
+		if (this.poblacion) respuesta.poblacion = this.poblacion;
+		if (this.provincia) respuesta.provincia = this.provincia;
+		if (this.codigoPostal) respuesta.codigoPostal = this.codigoPostal;
+		if (this.pais) respuesta.pais = this.pais;
+		if (this.telefono) respuesta.telefono = this.telefono;
+		if (this.email) respuesta.email = this.email;
+		if (this.codigoAlmacen) respuesta.codigoAlmacen = this.codigoAlmacen;
+		if (this.descripcionAlmacen) respuesta.descripcionAlmacen = this.descripcionAlmacen;
+		if (this.ruta) respuesta.ruta = this.ruta;
+		if (this.descripcionRuta) respuesta.descripcionRuta = this.descripcionRuta;
 
 		return respuesta;
 	}
