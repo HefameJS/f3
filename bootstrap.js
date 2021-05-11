@@ -8,6 +8,8 @@ module.exports = async function (tipoProceso) {
 	const cluster = require('cluster');
 	const K = global.constants;
 
+	K.VERSION.GIT = await require('global/git').obtenerCommitHash();
+
 	// ID de instancia del proceso actual
 	process.tipo = tipoProceso;
 	process.iid = require('os').hostname() + '-' + process.pid;
