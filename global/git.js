@@ -8,37 +8,39 @@
 
 const fs = require('fs').promises;
 
+const cacheMetadatosGit = {
+	commit: null,
+	timestamp: 0,
+	fecha: ""
+}
+
 const obtenerCommitHash = async function () {
+
+	if (cacheMetadatosGit.commit) {
+		return cacheMetadatosGit;
+	}
 
 	try {
 		let commitHash = (await fs.readFile('.git/HEAD')).toString().trim();
-		console.log(commitHash);
 		let stats = {};
 		if (commitHash.indexOf(':') === -1) {
 			stats = await fs.stat('.git/HEAD');
 		} else {
-			
 			let ficheroHEAD = '.git/' + commitHash.substring(5);
-			
 			commitHash = (await fs.readFile(ficheroHEAD)).toString().trim();
 			stats = await fs.stat(ficheroHEAD);
 		}
 
-
-		return {
-			commit: commitHash,
-			timestamp: stats?.mtimeMs,
-			fecha: stats?.mtime
-		}
+		cacheMetadatosGit.commit = commitHash;
+		cacheMetadatosGit.timestamp = stats?.mtimeMs;
+		cacheMetadatosGit.fecha = stats?.mtime;
 
 	} catch (errorFs) {
-		return {
-			commit: null,
-			timestamp: 0,
-			fecha: ""
-		}
+		L.e(['Excepción al obtener información del repositorio GIT', errorFs]);
 	}
 
+
+	return cacheMetadatosGit;
 
 
 }
