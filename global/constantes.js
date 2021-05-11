@@ -1,5 +1,8 @@
 'use strict';
 
+const git = require('global/git');
+const os = require('os');
+
 module.exports = {
 	TX_STATUS: {
 		DESCONOCIDO: -1,
@@ -73,10 +76,12 @@ module.exports = {
 		ERR_LOG: 'LOG-ERR-999',
 		WARN_LOG: 'LOG-WARN-999'
 	},
+	HOSTNAME: os.hostname().toLowerCase(),
 	VERSION: {
 		PROTOCOLO: '3.4.10',
-		SERVIDOR: '0.14.1',
-		TRANSMISION: 1401,
+		SERVIDOR: '0.14.2',
+		TRANSMISION: 1402,
+		GIT: {}
 	},
 	PROCESOS: {
 		getTitulo: function (tipo) {
