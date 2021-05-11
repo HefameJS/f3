@@ -8,15 +8,36 @@ const M = global.mongodb;
 
 const cluster = require('cluster');
 const OS = require('os');
+const fs = require('fs');
 
 let DATOS_INSTANCIA = {};
 let CLAVE_MONGODB = {};
 let idIntervalo = null;
 
+
+const _obtenerGitCommitHash = function () {
+	let commitHash = fs.readFileSync('.git/HEAD').toString().trim();
+	let stats = {};
+	if (commitHash.indexOf(':') === -1) {
+		stats = fs.statSync('.git/HEAD');
+	} else {
+		let ficheroHEAD = '.git/' + commitHash.substring(5);
+		commitHash = fs.readFileSync(ficheroHEAD).toString().trim();
+		stats = fs.statSync(ficheroHEAD);
+	}
+
+	return {
+		commit: commitHash,
+		timestamp: stats?.mtimeMs,
+		fecha: stats?.mtime
+	}
+}
+
 let intervaloRegistroEnEjecucion = false;
 
 
 module.exports = () => {
+
 
 	CLAVE_MONGODB = { _id: OS.hostname().toLowerCase() };
 	DATOS_INSTANCIA = {
@@ -24,7 +45,8 @@ module.exports = () => {
 		version: {
 			protocolo: K.VERSION.PROTOCOLO,
 			servidor: K.VERSION.SERVIDOR,
-			baseDatos: K.VERSION.TRANSMISION
+			baseDatos: K.VERSION.TRANSMISION,
+			git: _obtenerGitCommitHash()
 		}
 	}
 
