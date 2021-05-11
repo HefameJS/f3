@@ -99,6 +99,15 @@ const _obtenerDatosSSL = (req) => {
 	return tmp;
 }
 
+/**
+ * Obtiene el nombre del balanceador de carga que recogió la petición, si existe.
+ * @param {} req 
+ * @returns 
+ */
+const _obtenerNombreBalanceador = (req) => {
+	return req.headers?.['x-balanceador']?.toLowerCase?.() || null;
+} 
+
 
 /**
  * Amplia los objetos de solicitud y respuesta HTTP de Express con utilidades que
@@ -126,13 +135,15 @@ const extenderSolicitudHttp = (req, res) => {
 	req.identificarProgramaFarmacia = () => _identificarProgramaFarmacia(req);
 	req.obtenerDireccionIp = () => _obtenerDireccionIp(req);
 	req.obtenerDatosSSL = () => _obtenerDatosSSL(req);
+	req.obtenerNombreBalanceador = () => _obtenerNombreBalanceador(req);
 
 	req.generaFlagsTransmision = () => {
 		return {
 			ip: req.obtenerDireccionIp(),
 			autenticacion: req.identificarUsuarioAutenticado(),
 			programa: req.identificarProgramaFarmacia(),
-			ssl: req.obtenerDatosSSL()
+			ssl: req.obtenerDatosSSL(),
+			balanceador: req.obtenerNombreBalanceador()
 		}
 	}
 
