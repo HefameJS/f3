@@ -109,6 +109,14 @@ const _obtenerNombreBalanceador = (req) => {
 } 
 
 
+const _obtenerDatosConcentrador = (req) => {
+	return {
+		servidor: K.HOSTNAME,
+		pid: process.pid,
+		version: K.VERSION.SERVIDOR,
+		git: K.VERSION.GIT
+	}
+}
 /**
  * Amplia los objetos de solicitud y respuesta HTTP de Express con utilidades que
  * necesitaremos durante el flujo.
@@ -136,6 +144,7 @@ const extenderSolicitudHttp = (req, res) => {
 	req.obtenerDireccionIp = () => _obtenerDireccionIp(req);
 	req.obtenerDatosSSL = () => _obtenerDatosSSL(req);
 	req.obtenerNombreBalanceador = () => _obtenerNombreBalanceador(req);
+	req.obtenerDatosConcentrador = () => _obtenerDatosConcentrador(req);
 
 	req.generaFlagsTransmision = () => {
 		return {
@@ -143,7 +152,8 @@ const extenderSolicitudHttp = (req, res) => {
 			autenticacion: req.identificarUsuarioAutenticado(),
 			programa: req.identificarProgramaFarmacia(),
 			ssl: req.obtenerDatosSSL(),
-			balanceador: req.obtenerNombreBalanceador()
+			balanceador: req.obtenerNombreBalanceador(),
+			concentrador: req.obtenerDatosConcentrador()
 		}
 	}
 
