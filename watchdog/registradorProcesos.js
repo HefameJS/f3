@@ -8,7 +8,6 @@ const M = global.mongodb;
 
 const cluster = require('cluster');
 const OS = require('os');
-const git = require('global/git');
 
 let DATOS_INSTANCIA = {};
 let CLAVE_MONGODB = {};
@@ -29,7 +28,7 @@ module.exports = async function() {
 			protocolo: K.VERSION.PROTOCOLO,
 			servidor: K.VERSION.SERVIDOR,
 			baseDatos: K.VERSION.TRANSMISION,
-			git: await git.obtenerCommitHash()
+			git: K.VERSION.GIT
 		}
 	}
 
