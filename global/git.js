@@ -1,6 +1,6 @@
 'use strict';
 //const C = global.config;
-//const L = global.logger;
+const L = global.logger;
 //const K = global.constants;
 //const M = global.mongodb;
 
@@ -10,8 +10,7 @@ const fs = require('fs').promises;
 
 const cacheMetadatosGit = {
 	commit: null,
-	timestamp: 0,
-	fecha: ""
+	timestamp: 0
 }
 
 const obtenerCommitHash = async function () {
@@ -32,11 +31,10 @@ const obtenerCommitHash = async function () {
 		}
 
 		cacheMetadatosGit.commit = commitHash;
-		cacheMetadatosGit.timestamp = stats?.mtimeMs;
-		cacheMetadatosGit.fecha = stats?.mtime;
+		cacheMetadatosGit.timestamp = Math.floor(stats?.mtimeMs);
 
 	} catch (errorFs) {
-		L.e(['Excepción al obtener información del repositorio GIT', errorFs]);
+		console.error('Excepción al obtener información del repositorio GIT', errorFs);
 	}
 
 
