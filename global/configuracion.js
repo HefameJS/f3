@@ -15,7 +15,6 @@ const Balanceador = require('modelos/monitor/Balanceador');
 
 // util
 const Validador = require('global/validador');
-const { runInThisContext } = require('vm');
 
 const SUBDIR = {
 	LOGS: 'logs',
@@ -110,14 +109,14 @@ class Configuracion {
 
 	static async cargarObjetoCluster(claveObjeto) {
 
-		L.d(['Leyendo configuracion del clúster', claveObjeto]);
+		// L.d(['Leyendo configuracion del clúster', claveObjeto]);
 
 		let config = null;
 
 		if (M.conectado) {
 			try {
 				config = await M.col.configuracion.findOne({ _id: claveObjeto });
-				L.i(['Obtenida configuración del clúster', claveObjeto], 'config');
+				// L.i(['Obtenida configuración del clúster', claveObjeto], 'config');
 			} catch (errorMongo) {
 				L.e(['Ocurrió un error en la consulta. Usamos configuración en caché', errorMongo])
 			}

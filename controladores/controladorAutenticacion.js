@@ -8,7 +8,7 @@ const iSap = require('interfaces/isap/iSap');
 const iLdap = require('interfaces/iLdap');
 const iTokens = require('global/tokens');
 const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 const iEventos = require('interfaces/eventos/iEventos');
 
 

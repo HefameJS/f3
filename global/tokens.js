@@ -7,7 +7,7 @@ const K = global.constants;
 const jwt = require('jsonwebtoken');
 
 // Interfaces
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

@@ -5,7 +5,7 @@ const K = global.constants;
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

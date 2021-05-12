@@ -7,7 +7,7 @@ const M = global.mongodb;
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 
 module.exports.inicioLogistica = (req, logistica) => {

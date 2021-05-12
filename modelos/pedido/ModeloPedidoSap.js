@@ -4,7 +4,7 @@ const L = global.logger;
 const K = global.constants;
 
 // Interfaces
-const iFlags = require('interfaces/iFlags')
+const iFlags = require('interfaces/iflags/iFlags')
 
 // Modelos
 const LineaPedidoSap = require('./ModeloLineaPedidoSap');

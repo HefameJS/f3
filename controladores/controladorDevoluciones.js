@@ -8,7 +8,7 @@ const iSap = require('interfaces/isap/iSap');
 const iMongo = require('interfaces/imongo/iMongo');
 const iEventos = require('interfaces/eventos/iEventos');
 const iTokens = require('global/tokens');
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

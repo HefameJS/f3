@@ -4,7 +4,7 @@
 //const K = global.constants;
 
 
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 
 

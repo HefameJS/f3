@@ -10,7 +10,7 @@ const M = global.mongodb;
 const iMongo = require('interfaces/imongo/iMongo');
 const iSap = require('interfaces/isap/iSap');
 const iEventos = require('interfaces/eventos/iEventos');
-const iFlags = require('interfaces/iFlags');
+const iFlags = require('interfaces/iflags/iFlags');
 
 // Helpers
 const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;

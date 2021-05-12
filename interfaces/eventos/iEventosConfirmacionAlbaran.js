@@ -6,7 +6,6 @@ const K = global.constants;
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
-//const iFlags = require('interfaces/iFlags');
 
 
 
