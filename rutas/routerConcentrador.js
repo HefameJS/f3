@@ -5,6 +5,7 @@ const L = global.logger;
 
 // Interfaces
 const iEventos = require('interfaces/eventos/iEventos');
+const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -57,6 +58,8 @@ module.exports = (app) => {
 
 		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
 		L.xt(txId, 'Iniciando procesamiento de la transmisión');
+
+		iFlags.transmision.generaFlags(req);
 
 		next();
 	});

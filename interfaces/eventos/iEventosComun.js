@@ -12,8 +12,6 @@ const generarEventoDeApertura = (req, tipo, estado) => {
 
 	let txId = req.txId;
 
-	iFlags.set(txId, 'transmision', req.generaFlagsTransmision());
-
 	return {
 		$setOnInsert: {
 			_id: txId,
@@ -68,8 +66,6 @@ const generarEventoDeCierre = (res, cuerpoRespuesta, estado) => {
 const generarEventoCompleto = (req, res, cuerpoRespuesta, tipo, estado) => {
 
 	let txId = req.txId;
-
-	iFlags.set(txId, 'transmision', req.generaFlagsTransmision());
 	
 	return {
 		$setOnInsert: {
