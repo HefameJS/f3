@@ -6,7 +6,10 @@ const M = global.mongodb;
 
 // Externas
 const clone = require('clone');
+
+const iTokens = require('global/tokens');
 const ErrorFedicom = require('modelos/ErrorFedicom');
+
 
 /**
  * Identifica al usuario que está autenticandose en la petición.
@@ -133,6 +136,8 @@ const extenderSolicitudHttp = (req, res) => {
 	let txId = new M.ObjectID();
 	req.txId = res.txId = txId;
 
+	req.token = iTokens.verificarToken(req.token, txId);
+
 	res.setHeader('X-TxID', txId);
 	res.setHeader('Software-ID', C.softwareId.servidor);
 	res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
@@ -145,17 +150,6 @@ const extenderSolicitudHttp = (req, res) => {
 	req.obtenerDatosSSL = () => _obtenerDatosSSL(req);
 	req.obtenerNombreBalanceador = () => _obtenerNombreBalanceador(req);
 	req.obtenerDatosConcentrador = () => _obtenerDatosConcentrador(req);
-
-	req.generaFlagsTransmision = () => {
-		return {
-			ip: req.obtenerDireccionIp(),
-			autenticacion: req.identificarUsuarioAutenticado(),
-			programa: req.identificarProgramaFarmacia(),
-			ssl: req.obtenerDatosSSL(),
-			balanceador: req.obtenerNombreBalanceador(),
-			concentrador: req.obtenerDatosConcentrador()
-		}
-	}
 
 	return [req, res];
 }

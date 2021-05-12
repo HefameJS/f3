@@ -144,7 +144,6 @@ const verificaPermisos = (req, res, opciones) => {
 
 	L.xt(txId, ['Realizando control de autorización', req.token, opciones], 'txToken')
 
-	req.token = verificarToken(req.token, txId);
 	// Primerísimo de todo, el token debe ser válido
 	if (req.token.meta.errorFedicom) {
 		L.xw(txId, ['El token de la transmisión no es válido. Se transmite el error al cliente', req.token], 'txToken');
