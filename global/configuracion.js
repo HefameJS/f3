@@ -265,7 +265,7 @@ class ConfiguracionSap {
 	constructor(C, config) {
 		this.nombreSistemaPorDefecto = config.sistemaPorDefecto;
 		this.destino = new DestinoSap(config.destino);
-		
+
 		this.timeout = {
 			verificarCredenciales: (parseInt(config.timeout?.verificarCredenciales) || 5) * 1000,
 			realizarPedido: (parseInt(config.timeout?.realizarPedido) || 30) * 1000,
@@ -360,11 +360,12 @@ class ConfiguracionLdap {
 		this.servidor = config.servidor.trim();
 		this.baseBusqueda = config.baseBusqueda.trim();
 		this.prefijoGrupos = config.prefijoGrupos?.trim() || 'FED3_';
-		this.certificado = Buffer.from(config.certificado);
+		this.certificados = config.certificados || [];
 
 		this.opcionesTls = {
-			ca: [this.certificado]
+			ca: this.certificados
 		}
+
 	}
 
 	static async cargar(C) {
