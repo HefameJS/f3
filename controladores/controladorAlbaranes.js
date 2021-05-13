@@ -197,11 +197,23 @@ const listadoAlbaranes = async function (req, res) {
 
 	// Si el código de cliente está en formato corto, vamos a utilizar el código de login
 	// aprovechando que la búsqueda se realiza entre todos los códigos del mismo cliente.
-	if (codigoCliente.length < 8 && req.token.sub && req.token.sub.includes('@')) {
-		// Nos quedamos con la parte que va delante de la arroba.
-		codigoCliente = req.token.sub.split('@')[0];
-		L.xi(txId, ['Detectado codigo de cliente corto. Se usa el usuario del token como codigo de cliente', codigoCliente]);
-	}
+	if (codigoCliente.length < 8 && req.token.sub ) {
+		let codigoClienteLargo = '0';
+		// Casos en donde el usuario es de la forma xxxxxxxx@hefame
+		if (req.token.sub.includes('@')) {
+			// Nos quedamos con la parte que va delante de la arroba.
+			codigoClienteLargo = req.token.sub.split('@')[0];
+		}
+		// Casos de usuarios Borgino que son de la forma BF02901xxxxx
+		else if (req.token.sub.startsWith('BF')) {
+			// Eliminamos el BF y nos quedamos con el resto
+			codigoClienteLargo = req.token.sub.slice(2);
+		}
+
+		codigoCliente = codigoClienteLargo;
+	
+	} 
+
 	codigoCliente = codigoCliente.padStart(10, '0');
 
 
