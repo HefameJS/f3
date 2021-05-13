@@ -51,7 +51,7 @@ class LineaLogisticaCliente {
 		}
 
 		// codigoArticulo
-		this.codigoArticulo = json.codigoArticulo?.trim();
+		this.codigoArticulo = json.codigoArticulo?.trim?.() ?? json.codigoArticulo;
 
 		// cantidad. Los valores no válidos se convierten en un 1.
 		this.cantidad = parseInt(json.cantidad) || null;
