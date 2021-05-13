@@ -16,9 +16,20 @@ class DireccionLogistica {
 			errores: null // Null o un array de errores Fedicom si se detectan
 		}
 
-		// Copiamos las propiedades de la dirección que son relevantes
-		this.codigo = json.codigo.trim();
+		if (!json) {
+			this.metadatos.errores = new ErrorFedicom('LOG-ERR-000', 'Los campos "origen" y "destino" son obligatorios.')
+			return;
+		}
 
+		// El único campo obligatorio por el momento es el codigo.		
+		if (Validador.esCadenaNoVacia(json.codigo)) {
+			this.codigo = json.codigo.trim();
+		} else {
+			this.metadatos.errores = new ErrorFedicom('LOG-ERR-000', 'El campo "codigo" es obligatorio en la dirección.')
+			return;
+		}
+
+		// Copiamos lel resto de las propiedades de la dirección que son relevantes	
 		let tmp;
 
 		tmp = json.codigo;
