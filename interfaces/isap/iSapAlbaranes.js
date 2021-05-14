@@ -1,14 +1,16 @@
 'use strict';
 const C = global.config;
+const L = require('global/logger');
+const iFlags = require('interfaces/iflags/iFlags');
 //const L = global.logger;
 //const K = global.constants;
 
 
 // Interfaces
-const { ejecutarLlamadaSapSinEventos } = require('./iSapComun');
+const { ejecutarLlamadaSap } = require('./iSapComun');
 
 
-exports.consultaAlbaranJSON = async function (numeroAlbaran) {
+exports.consultaAlbaranJSON = async function (numeroAlbaran, txId) {
 
 	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
@@ -16,12 +18,25 @@ exports.consultaAlbaranJSON = async function (numeroAlbaran) {
 		timeout: C.sap.timeout.consultaAlbaranJSON
 	});
 
-	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
+	try {
+		return await ejecutarLlamadaSap(txId, parametrosHttp, { noGenerarEvento: true });
+	} catch (errorSap) {
+
+		// Cuando el albarán no existe, SAP devuelve un código HTTP 503 y en el cuerpo de respuesta:
+		// {type: 'E', id: 'E202004011151', .... , message: 'La informacion no esta disponible..'
+		if (errorSap?.codigo === 503 && errorSap?.cuerpoRespuesta?.message === 'La informacion no esta disponible..') {
+			iFlags.sap.quitarError(txId);
+			return {};
+		}
+
+		throw errorSap;
+	}
+
 }
 
 
 
-exports.consultaAlbaranPDF = async function (numeroAlbaran) {
+exports.consultaAlbaranPDF = async function (numeroAlbaran, txId) {
 
 	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 		url: '/api/zsf_get_document/proforma/' + numeroAlbaran,
@@ -29,7 +44,7 @@ exports.consultaAlbaranPDF = async function (numeroAlbaran) {
 		timeout: C.sap.timeout.consultaAlbaranPDF
 	});
 
-	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
+	return await ejecutarLlamadaSap(txId, parametrosHttp, { noGenerarEvento: true });
 
 }
 
@@ -42,6 +57,6 @@ exports.listadoAlbaranes = async function (consultaAlbaran, txId) {
 		timeout: C.sap.timeout.listadoAlbaranes
 	});
 
-	return await ejecutarLlamadaSapSinEventos(parametrosHttp);
+	return await ejecutarLlamadaSap(txId, parametrosHttp, { noGenerarEvento: true });
 
 }

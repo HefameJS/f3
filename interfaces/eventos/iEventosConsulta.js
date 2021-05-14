@@ -6,6 +6,7 @@ const K = global.constants;
 // Interfaces
 const iEventosComun = require('./iEventosComun');
 const iMongo = require('interfaces/imongo/iMongo');
+const iFlags = require('interfaces/iflags/iFlags');
 
 
 const consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
@@ -16,8 +17,10 @@ const consultaPedido = (req, res, cuerpoRespuesta, estadoFinal) => {
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTA_PEDIDO, estadoFinal);
 	transaccion['$set'].pedidoConsultado = numeroPedido;
 	//TODO: En 'cuerpoRespuesta' podríamos rascar el codigo del cliente y añadirlo al campo 'client' de la transaccion
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA PEDIDO'], 'qtxCommit');
+	
 	iMongo.transaccion.grabar(transaccion);
 }
 
@@ -30,6 +33,7 @@ const consultaDevolucion = (req, res, cuerpoRespuesta, estadoFinal, formatoConsu
 	transaccion['$set'].devolucionConsultada = numeroDevolucion;
 	transaccion['$set'].formatoConsulta = formatoConsulta;
 	//TODO: En 'cuerpoRespuesta' podríamos rascar el codigo del cliente y añadirlo al campo 'client' de la transaccion
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA DEVOLUCION'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -42,6 +46,7 @@ const consultaLogistica = (req, res, cuerpoRespuesta, estadoFinal) => {
 
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTA_LOGISTICA, estadoFinal);
 	transaccion['$set'].logisticaConsultada = numeroLogistica;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA LOGISTICA'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -54,6 +59,7 @@ const consultaAlbaran = (req, res, cuerpoRespuesta, estadoFinal, numeroAlbaran, 
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTAR_ALBARAN, estadoFinal);
 	transaccion['$set'].albaranConsultado = numeroAlbaran;
 	transaccion['$set'].formatoConsulta = formatoConsulta;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA ALBARAN'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -68,11 +74,11 @@ const consultaListadoAlbaranes = (req, res, cuerpoRespuesta, estadoFinal, datosC
 	transaccion['$set'] = {...transaccion['$set'], ...datosConsulta};
 	// Extra: Estos son los datos de la consulta que pueden venir:
 	// let { consultaSap, numeroResultadosTotales, numeroResultadosEnviados} = datosConsulta;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA LISTADO ALBARANES'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
 }
-
 
 const consultaFactura = (req, res, cuerpoRespuesta, estadoFinal, numeroFactura, formatoConsulta) => {
 
@@ -81,6 +87,7 @@ const consultaFactura = (req, res, cuerpoRespuesta, estadoFinal, numeroFactura, 
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONSULTAR_FACTURA, estadoFinal);
 	transaccion['$set'].facturaConsultada = numeroFactura;
 	transaccion['$set'].formatoConsulta = formatoConsulta;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA FACTURA'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);
@@ -94,6 +101,7 @@ const consultaListadoFacturas = (req, res, cuerpoRespuesta, estadoFinal, datosCo
 	transaccion['$set'] = { ...transaccion['$set'], ...datosConsulta };
 	// Extra: Estos son los datos de la consulta que pueden venir:
 	// let { consultaSap, numeroResultadosTotales, numeroResultadosEnviados} = datosConsulta;
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONSULTA LISTADO FACTURAS'], 'qtxCommit');
 	iMongo.transaccion.grabar(transaccion);

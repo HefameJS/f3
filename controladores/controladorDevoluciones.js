@@ -194,7 +194,7 @@ const _consultaDevolucionPDF = async function (req, res, numDevolucion) {
 		let cuerpoSap = await iSap.devoluciones.consultaDevolucionPDF(numDevolucion, txId);
 
 
-		if (cuerpoSap && cuerpoSap[0] && cuerpoSap[0].pdf_file) {
+		if (cuerpoSap?.[0]?.pdf_file) {
 			L.xi(txId, ['Se obtuvo la devolución PDF en Base64 desde SAP']);
 			let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
 
@@ -203,31 +203,16 @@ const _consultaDevolucionPDF = async function (req, res, numDevolucion) {
 			res.status(200).send(buffer);
 			iEventos.consultas.consultaDevolucion(req, res, { pdf: numDevolucion, bytes: buffer.length }, K.TX_STATUS.OK, numDevolucion, 'PDF');
 			return;
-		}
-		else {
-			L.xe(txId, ['La respuesta del PDF de SAP no es válida', cuerpoSap]);
-			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
+		} else {
+			L.xi(txId, ['SAP no ha devuelto el albarán', cuerpoSap]);
+			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP, numDevolucion, 'PDF');
+			iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
 			return;
 		}
 
 
 	} catch (errorLlamadaSap) {
-
-
-		// Cuando la devolución no existe, SAP devuelve un 500 y la incidencia:
-		// [ { id: 4, message: 'Error en la generacion del PDF' } ]
-		if (Array.isArray(errorLlamadaSap?.cuerpoRespuesta)) {
-			let incidenciaSap = errorLlamadaSap.cuerpoRespuesta[0];
-			if (incidenciaSap.id === 4 && incidenciaSap.message === 'Error en la generacion del PDF') {
-				L.xw(txId, ['SAP devolvió un 500 y la incidencia de error en la generación - Asumimos que la devolución no existe', errorLlamadaSap]);
-				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				iEventos.consultas.consultaDevolucion(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numDevolucion, 'PDF');
-				return;
-			}
-		}
 
 		L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba la devolución PDF', errorLlamadaSap]);
 		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);

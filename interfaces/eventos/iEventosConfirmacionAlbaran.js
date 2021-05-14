@@ -16,6 +16,7 @@ const confirmarAlbaran = (req, res, cuerpoRespuesta, estado, datosExtra) => {
 	let transaccion = iEventosComun.generarEventoCompleto(req, res, cuerpoRespuesta, K.TX_TYPES.CONFIRMACION_ALBARAN, estado);
 	if (datosExtra) transaccion['$set'] = { ...transaccion['$set'], ...datosExtra};
 	//TODO: En 'cuerpoRespuesta' podríamos rascar el codigo del cliente y añadirlo al campo 'client' de la transaccion
+	iFlags.finaliza(txId, transaccion);
 
 	L.xi(txId, ['Emitiendo COMMIT para evento CONFIRMACION ALBARAN'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);

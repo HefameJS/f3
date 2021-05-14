@@ -5,7 +5,7 @@ const C = global.config;
 
 
 // Interfaces
-const { ejecutarLlamadaSapSinEventos, ejecutarLlamadaSap } = require('./iSapComun');
+const { ejecutarLlamadaSap } = require('./iSapComun');
 
 exports.realizarPedido = async function (pedido) {
 
@@ -37,7 +37,7 @@ exports.retransmitirPedido = async function (pedido) {
 	}
 
 	try {
-		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp, true);
+		let respuestaSap = await ejecutarLlamadaSap(null, parametrosHttp, { noGenerarEvento: true, respuestaHttpCompleta: true });
 		respuestaSap.peticion = peticionASap;
 		return respuestaSap;
 	} catch (errorLlamadaSap) {

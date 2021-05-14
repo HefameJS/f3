@@ -13,5 +13,6 @@ module.exports = {
 	get: iFlagsComun.get,
 	del: iFlagsComun.del,
 	finaliza: iFlagsComun.finaliza,
-	transmision: require('./iFlagsTransmision')
+	transmision: require('./iFlagsTransmision'),
+	sap: require('./iFlagsSap'),
 };

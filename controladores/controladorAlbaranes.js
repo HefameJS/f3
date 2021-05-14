@@ -83,16 +83,6 @@ const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoA
 
 	} catch (errorSap) {
 
-		// Cuando el albarán no existe, SAP devuelve un código HTTP 503 y en el cuerpo de respuesta:
-		// {type: 'E', id: 'E202004011151', .... , message: 'La informacion no esta disponible..'
-		if (errorSap?.codigo === 503 && errorSap?.cuerpoRespuesta?.message === 'La informacion no esta disponible..') {
-			L.xw(txId, ['SAP indica que el albarán no existe', errorSap]);
-			let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaAlbaran(req, res, cuerpoRespuesta, K.TX_STATUS.CONSULTA.NO_EXISTE, numAlbaran, 'JSON');
-			return;
-		}
-
 		L.xe(txId, ['Ocurrió un error en la comunicación con SAP mientras se consultaba el albarán JSON', errorSap]);
 		let errorFedicom = new ErrorFedicom('ALB-ERR-999', 'Ocurrió un error en la búsqueda del albarán', 500);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);

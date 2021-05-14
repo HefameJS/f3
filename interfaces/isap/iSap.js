@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Helpers
-const { ejecutarLlamadaSapSinEventos } = require('./iSapComun');
+const { ejecutarLlamadaSap } = require('./iSapComun');
 
 
 
@@ -16,7 +16,7 @@ const ping = async function () {
 	});
 
 	try {
-		let respuestaSap = await ejecutarLlamadaSapSinEventos(parametrosHttp);
+		let respuestaSap = await ejecutarLlamadaSap(null, parametrosHttp, { noGenerarEvento: true});
 		return Boolean(respuestaSap?.message === 'Servicio Disponible');
 	} catch (errorComunicacion) {
 		L.w(['El ping a SAP devuelve un error', errorComunicacion])
