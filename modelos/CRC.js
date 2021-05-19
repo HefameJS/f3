@@ -16,7 +16,7 @@ function crear(codigoCliente, numeroPedidoOrigen) {
 function generar(...valores) {
 	let base = valores.reduce((acumulado, actual) => {
 		return acumulado + actual;
-	});
+	}, ''); // Poner '' como valor inicial nos garantiza un string a la salida
 	let hash = crypto.createHash('sha1');
 	return hash.update(base).digest('hex').substring(1, 25).toUpperCase();
 }
