@@ -65,10 +65,19 @@ exports.crearLogistica = async function (req, res) {
 			L.xi(txId, ['Detectada la transmisión de logística con idéntico CRC', txIdOriginal], 'crc');
 			L.xi(txIdOriginal, 'Se ha recibido una transmisión duplicada de este pedido de logística con ID ' + txId, 'crc');
 
-			let errorDuplicado = new ErrorFedicom('LOG-ERR-008', 'Solicitud de logística duplicada', 400);
-			let cuerpoRespuesta = errorDuplicado.enviarRespuestaDeError(res);
-			iEventos.logistica.logisticaDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
-			return;
+			if (txOriginal.status === K.TX_STATUS.LOGISTICA.SIN_NUMERO_LOGISTICA ||
+				txOriginal.status === K.TX_STATUS.RECHAZADO_SAP ||
+				txOriginal.status === K.TX_STATUS.FALLO_AUTENTICACION ||
+				txOriginal.status === K.TX_STATUS.PETICION_INCORRECTA) {
+				L.xi(txId, ['La transmisión original no se llegó a materializar, no la tomamos como repetida', txIdOriginal.status]);
+				iFlags.set(txId, C.flags.REINTENTO_CLIENTE, txIdOriginal._id);
+			} else {
+				let errorDuplicado = new ErrorFedicom('LOG-ERR-008', 'Solicitud de logística duplicada', 400);
+				let cuerpoRespuesta = errorDuplicado.enviarRespuestaDeError(res);
+				iEventos.logistica.logisticaDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
+				return;
+			}
+
 		} else {
 			L.xt(txId, ['No se ha detectado pedido duplicado'], 'crc');
 		}
