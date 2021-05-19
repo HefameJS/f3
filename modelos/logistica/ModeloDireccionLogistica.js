@@ -13,11 +13,11 @@ class DireccionLogistica {
 	constructor(txId, json) {
 
 		this.metadatos = {
-			errores: null // Null o un array de errores Fedicom si se detectan
+			errores: [] // Un array de errores Fedicom si se detectan. Un array vacío si no hay errores
 		}
 
 		if (!json) {
-			this.metadatos.errores = new ErrorFedicom('LOG-ERR-000', 'Los campos "origen" y "destino" son obligatorios.')
+			this.metadatos.errores.push(new ErrorFedicom('LOG-ERR-000', 'Los campos "origen" y "destino" son obligatorios.'));
 			return;
 		}
 
@@ -25,7 +25,7 @@ class DireccionLogistica {
 		if (Validador.esCadenaNoVacia(json.codigo)) {
 			this.codigo = json.codigo.trim();
 		} else {
-			this.metadatos.errores = new ErrorFedicom('LOG-ERR-000', 'El campo "codigo" es obligatorio en la dirección.')
+			this.metadatos.errores.push(new ErrorFedicom('LOG-ERR-000', 'El campo "codigo" es obligatorio en la dirección.'));
 			return;
 		}
 
@@ -111,7 +111,7 @@ class DireccionLogistica {
 	}
 
 	esErronea() {
-		return this.metadatos.errores !== null;
+		return this.metadatos.errores.length > 0;
 	}
 
 	getErrores() {
