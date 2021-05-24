@@ -399,10 +399,7 @@ let MAESTRO = {
 
 
 MAESTRO.transmisiones.getEstadoById = function (codigoEstado, tipoTransmision) {
-	return MAESTRO.transmisiones[tipoTransmision]?.estados.find( (e) => {
-		console.log(e.codigo, codigoEstado);
-		return e.codigo === codigoEstado 
-	}	);
+	return MAESTRO.transmisiones[tipoTransmision]?.estados.find( e => e.codigo === codigoEstado );
 }
 
 
