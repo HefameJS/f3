@@ -129,7 +129,7 @@ exports.crearLogistica = async function (req, res) {
 			let errorFedicom = new ErrorFedicom('LOG-ERR-999', 'Ocurrió un error al procesar la petición.', 500)
 			let respuestaError = errorFedicom.enviarRespuestaDeError(res);
 			iFlags.set(txId, C.flags.NO_SAP);
-			iEventos.pedidos.finPedido(res, respuestaError, K.TX_STATUS.NO_SAP);
+			iEventos.pedidos.finPedido(res, respuestaError, K.TX_STATUS.ERROR_RESPUESTA_SAP);
 			return;
 		}
 
@@ -149,7 +149,7 @@ exports.crearLogistica = async function (req, res) {
 		let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'No se pudo registrar la solicitud - Inténtelo de nuevo mas tarde', 503);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
 		iFlags.set(txId, C.flags.NO_SAP)
-		iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+		iEventos.logistica.finLogistica(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
 		return;
 	}
 }

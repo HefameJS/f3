@@ -123,7 +123,7 @@ exports.crearDevolucion = async function (req, res) {
 		let errorFedicom = new ErrorFedicom(K.INCIDENCIA_FEDICOM.ERR_DEV, 'No se pudo registrar la devolución - Inténtelo de nuevo mas tarde', 500);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res)
 		iFlags.set(txId, C.flags.NO_SAP)
-		iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+		iEventos.devoluciones.finDevolucion(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
 
 	}
 

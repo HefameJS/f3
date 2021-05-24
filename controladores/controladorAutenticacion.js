@@ -100,7 +100,7 @@ const _autenticarContraSAP = async function (txId, solicitudAutenticacion, res) 
 		let cuerpoRespuesta = solicitudAutenticacion.generarRespuestaToken();
 		res.status(201).json(cuerpoRespuesta);
 		iFlags.set(txId, C.flags.NO_SAP);
-		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.NO_SAP);
+		iEventos.autenticacion.finAutenticacion(res, cuerpoRespuesta, K.TX_STATUS.ERROR_RESPUESTA_SAP);
 	}
 
 }
