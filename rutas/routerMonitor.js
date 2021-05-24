@@ -100,6 +100,11 @@ module.exports = (app) => {
 	app.route('/v1/sap/destino')
 		.get(tryCatch(controladores.consultas.sap.consultaDestino));
 
+
+	// Consulta del maestro de constantes
+	app.route('/v1/maestro')
+		.get(tryCatch(controladores.consultas.maestro.consultaMaestro));
+
 /*
 	// Dumps de procesos
 	app.route('/v1/dumps')

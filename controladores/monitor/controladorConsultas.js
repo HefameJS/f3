@@ -12,6 +12,7 @@ module.exports = {
 	mongodb: require('controladores/monitor/controladorConsultasMongoDb'),
 	balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
 	sqlite: require('controladores/monitor/controladorConsultasSQLite'),
+	maestro: require('controladores/monitor/controladorMaestros'),
 	//dumps: require('controladores/monitor/controladorConsultasDumps')
 
 }
