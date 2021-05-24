@@ -13,6 +13,7 @@ module.exports = {
 	balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
 	sqlite: require('controladores/monitor/controladorConsultasSQLite'),
 	maestro: require('controladores/monitor/controladorMaestros'),
-	//dumps: require('controladores/monitor/controladorConsultasDumps')
+	prtg: require('controladores/monitor/controladorConsultasPrtg'),
+	//dumps: require('controladores/monitor/controladorConsultasDumps'),
 
 }

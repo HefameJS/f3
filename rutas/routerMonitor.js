@@ -101,6 +101,11 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.consultas.sap.consultaDestino));
 
 
+	// PRTG
+	app.route('/v1/prtg/estadoPedidos')
+		.get(tryCatch(controladores.consultas.prtg.consultaEstadoPedidos));
+
+
 	// Consulta del maestro de constantes
 	app.route('/v1/maestro')
 		.get(tryCatch(controladores.consultas.maestro.consultaMaestro));
