@@ -51,8 +51,8 @@ class LineaPedidoSap {
 		})
 
 
-		if (C.produccion === false && this.codigoArticulo === '0000003') {
-			this.descripcionArticulo = 'ARTICULO DEMORADO PARCIAL';
+		if (C.produccion === false && this.codigoArticulo.endsWith('0000043')) {
+			this.descripcionArticulo = 'ARTICULO REBOTE PARCIAL';
 			this.incidencias = [
 				{
 					"codigo": "LIN-PED-WARN-001",
@@ -62,8 +62,8 @@ class LineaPedidoSap {
 			this.codigoAlmacenServicio = 'RG99';
 			this.cantidadFalta = Math.round(this.cantidad / 2);
 		}
-		if (C.produccion === false && this.codigoArticulo === '0000010') {
-			this.descripcionArticulo = 'ARTICULO DEMORADO TOTAL';
+		if (C.produccion === false && this.codigoArticulo.endsWith('0000010')) {
+			this.descripcionArticulo = 'ARTICULO REBOTE TOTAL';
 			this.incidencias = [
 				{
 					"codigo": "LIN-PED-WARN-001",
@@ -73,12 +73,12 @@ class LineaPedidoSap {
 			this.codigoAlmacenServicio = 'RG99';
 			this.cantidadFalta = 0;
 		}
-		if (C.produccion === false && this.codigoArticulo === '0000027') {
+		if (C.produccion === false && this.codigoArticulo.endsWith('0000027')) {
 			this.descripcionArticulo = 'ARTICULO SIN FALTAS';
 			this.incidencias = null;
 			this.cantidadFalta = 0;
 		}
-		if (C.produccion === false && this.codigoArticulo === '0000034') {
+		if (C.produccion === false && this.codigoArticulo.endsWith('0000034')) {
 			this.descripcionArticulo = 'ARTICULO FALTA TOTAL';
 			this.incidencias = [
 				{
