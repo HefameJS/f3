@@ -51,7 +51,7 @@ class LineaPedidoSap {
 		})
 
 
-		if (C.produccion === false && this.codigoArticulo.endsWith('0000043')) {
+		if (C.produccion === false && this.codigoArticulo.endsWith('0000041')) {
 			this.descripcionArticulo = 'ARTICULO REBOTE PARCIAL';
 			this.incidencias = [
 				{
