@@ -127,7 +127,7 @@ class LineaPedidoSap {
 			} else {
 				L.xw(this.txId, ['Hay rebote pero no se admite servicio demorado, se añaden incidencias']);
 
-				if (this.cantidadFalta === this.cantidad) {
+				if (this.cantidadFalta === 0) {
 					this.incidencias = [{
 						codigo: 'LIN-PED-WARN-019',
 						descripcion: 'Entrega total demorada - El artículo se sirve por ' + this.codigoAlmacenServicio
