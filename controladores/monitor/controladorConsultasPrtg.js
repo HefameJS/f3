@@ -48,12 +48,17 @@ exports.consultaEstadoPedidos = async function (req, res) {
 
 		let resultado = await iMongo.consultaTx.agregacion(pipeline);
 
-		resultado.forEach(estado => {
-			sensorPrtg.resultado(
-				Maestro.transmisiones.getEstadoById(estado._id, 'pedidos')?.descripcionCorta,
-				estado.transmisiones,
-				'Count'
-			)
+		let canales = Maestro.transmisiones.pedidos.estados.map( estado => {
+			let valorEstado = resultado.find( e => e._id === estado.codigo);
+			return {
+				nombre: estado.descripcionCorta,
+				valor: valorEstado?.transmisiones || 0
+			}
+
+		})
+
+		canales.forEach(canal => {
+			sensorPrtg.resultado(canal.nombre, canal.valor, 'Count');
 		});
 
 
