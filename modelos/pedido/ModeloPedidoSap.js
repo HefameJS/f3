@@ -27,6 +27,7 @@ class PedidoSap {
 			pedidosAsociadosSap: json.sap_pedidosasociados?.filter(numeroPedidoSap => numeroPedidoSap ? true : false),
 			pedidoAgrupadoSap: json.numeropedido || null,
 			pedidoDuplicadoSap: false,
+			reboteFaltas: false,
 			totales: {
 				lineas: 0,
 				lineasIncidencias: 0,
@@ -97,6 +98,7 @@ class PedidoSap {
 
 		this.lineas = lineasJson.length === 0 ? [] : lineasJson.map((linea, index) => {
 			let lineaSap = new LineaPedidoSap(linea, this.txId, index);
+			lineaSap.gestionarReboteFaltas(this.codigoAlmacenServicio);
 
 			let totales = this.metadatos.totales;
 
@@ -110,6 +112,10 @@ class PedidoSap {
 			if (lineaSap.metadatos.estupefaciente) {
 				totales.lineasEstupe++;
 				totales.cantidadEstupe += lineaSap.cantidad;
+			}
+
+			if (lineaSap.metadatos.reboteFaltas) {
+				this.metadatos.reboteFaltas = true;
 			}
 
 			return lineaSap;
@@ -155,6 +161,9 @@ class PedidoSap {
 
 		if (this.metadatos.puntoEntrega)
 			iFlags.set(txId, C.flags.PUNTO_ENTREGA, this.metadatos.puntoEntrega);
+
+		if (this.metadatos.reboteFaltas)
+			iFlags.set(txId, C.flags.REBOTE_FALTAS);
 
 	}
 

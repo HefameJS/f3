@@ -12,8 +12,10 @@ class LineaPedidoSap {
 		L.xi(txId, ['Analizando linea de pedido en posicion ' + numeroPosicion])
 
 		this.metadatos = {
+			numeroPosicion: numeroPosicion,
 			tipoFalta: null,
-			estupefaciente: false
+			estupefaciente: false,
+			reboteFaltas: false
 		}
 
 		// Copiamos las propiedades de la POSICION que son relevantes		
@@ -36,7 +38,6 @@ class LineaPedidoSap {
 		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
 		this.condicion = json.condicion || null;
 		this.servicioDemorado = Boolean(json.serviciodemorado);
-		this.estadoServicio = json.estadoservicio || (this.servicioDemorado ? 'SR' : null);
 		this.fechaLimiteServicio = json.fechalimiteservicio || null;
 		this.servicioAplazado = json.servicioaplazado || null;
 		this.observaciones = json.observaciones || null;
@@ -49,9 +50,99 @@ class LineaPedidoSap {
 			}
 		})
 
+
+		if (C.produccion === false && this.codigoArticulo === '0000003') {
+			this.descripcionArticulo = 'ARTICULO DEMORADO PARCIAL';
+			this.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "No hay existencias"
+				}
+			];
+			this.codigoAlmacenServicio = 'RG99';
+			this.cantidadFalta = Math.round(this.cantidad / 2);
+		}
+		if (C.produccion === false && this.codigoArticulo === '0000010') {
+			this.descripcionArticulo = 'ARTICULO DEMORADO TOTAL';
+			this.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "No hay existencias"
+				}
+			];
+			this.codigoAlmacenServicio = 'RG99';
+			this.cantidadFalta = 0;
+		}
+		if (C.produccion === false && this.codigoArticulo === '0000027') {
+			this.descripcionArticulo = 'ARTICULO SIN FALTAS';
+			this.incidencias = null;
+			this.cantidadFalta = 0;
+		}
+		if (C.produccion === false && this.codigoArticulo === '0000034') {
+			this.descripcionArticulo = 'ARTICULO FALTA TOTAL';
+			this.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "No hay existencias"
+				}
+			];
+			this.cantidadFalta = this.cantidad;
+		}
+
+		this.#calculaEstadoServicio();
+
 		// Indica si la linea tiene algo que ver con los estupes
 		this.metadatos.estupefaciente = (this.valeEstupefaciente || this.metadatos.tipoFalta === "estupe");
-		
+
+	}
+
+	#calculaEstadoServicio() {
+		if (this.servicioDemorado) {
+			this.estadoServicio = (this.cantidadFalta === this.cantidad ? 'SR' : 'SC');
+		} else {
+			this.estadoServicio = null;
+		}
+	}
+
+	gestionarReboteFaltas(almacenCabecera) {
+
+
+		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
+
+			this.metadatos.reboteFaltas = this.codigoAlmacenServicio;
+			L.xi(this.txId, ['Detectado rebote de faltas para la línea', almacenCabecera, this.codigoAlmacenServicio])
+
+			if (this.servicioDemorado) {
+
+				let cantidadRebotada = this.cantidad - (this.cantidadFalta ?? 0);
+
+				this.cantidadFalta = this.cantidad;
+				this.estadoServicio = 'SC';
+
+				this.servicioAplazado = {
+					fechaServicio: Date.siguienteDiaHabil(),
+					cantidad: cantidadRebotada
+				}
+
+			} else {
+				L.xw(this.txId, ['Hay rebote pero no se admite servicio demorado, se añaden incidencias']);
+
+				if (this.cantidadFalta === this.cantidad) {
+					this.incidencias = [{
+						codigo: 'LIN-PED-WARN-019',
+						descripcion: 'Entrega total demorada - El artículo se sirve por ' + this.codigoAlmacenServicio
+					}];
+				} else {
+					this.incidencias = [{
+						codigo: 'LIN-PED-WARN-020',
+						descripcion: 'Entrega parcial demorada - El artículo se sirve por ' + this.codigoAlmacenServicio
+					}];
+				}
+			}
+
+
+		}
+
 	}
 
 	generarJSON() {

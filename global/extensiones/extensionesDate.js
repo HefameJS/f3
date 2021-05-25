@@ -164,3 +164,19 @@ if (!Date.toShortTime) {
 	}
 }
 
+/**
+ * ate.prototype.siguienteDiaHabil
+ */
+if (!Date.siguienteDiaHabil) {
+	Date.siguienteDiaHabil = () => {
+		let elDiaD = new Date();
+
+		let diaSemana = elDiaD.getDay();
+		if (diaSemana === 6) // Si es sábado, rebotamos al lunes (+2 días)
+			elDiaD.setDate(elDiaD.getDate() + 2);
+		else 
+			elDiaD.setDate(elDiaD.getDate() + 1);
+
+		return Date.toFedicomDate(elDiaD);
+	}
+}

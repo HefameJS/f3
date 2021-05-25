@@ -153,7 +153,7 @@ class LineaPedidoCliente {
 		}
 		if (this.servicioDemorado) {
 			json.servicioDemorado = this.servicioDemorado;
-			json.estadoServicio = 'SR';
+			json.estadoServicio = 'SC';
 		}
 		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
 		if (this.observaciones) json.observaciones = this.observaciones;
