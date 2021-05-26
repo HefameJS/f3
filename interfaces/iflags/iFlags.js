@@ -14,5 +14,6 @@ module.exports = {
 	del: iFlagsComun.del,
 	finaliza: iFlagsComun.finaliza,
 	transmision: require('./iFlagsTransmision'),
+	autenticacion: require('./iFlagsAutenticacion'),
 	sap: require('./iFlagsSap'),
 };

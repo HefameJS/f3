@@ -6,7 +6,7 @@ const C = global.config;
 // Externo
 const ActiveDirectory = require('activedirectory');
 
-const autenticar = function (txId, solicitudAutenticacion) {
+const autenticar = function (solicitudAutenticacion) {
 
 	return new Promise((resolve, reject) => {
 
