@@ -350,6 +350,7 @@ let MAESTRO = {
 		"RG17": "Melilla",
 		"RG18": "Granada",
 		"RG19": "Malaga",
+		"RG99": "Almacén de prueba"
 	},
 	laboratorios: {
 		'60200357': 'INDAS',
@@ -402,6 +403,9 @@ MAESTRO.transmisiones.getEstadoById = function (codigoEstado, tipoTransmision) {
 	return MAESTRO.transmisiones[tipoTransmision]?.estados.find( e => e.codigo === codigoEstado );
 }
 
+MAESTRO.almacenes.getNombreById = function (codigoAlmacen) {
+	return MAESTRO.almacenes[codigoAlmacen] || 'Almacén desconocido';
+}
 
 
 module.exports = MAESTRO;
