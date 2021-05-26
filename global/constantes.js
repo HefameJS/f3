@@ -78,9 +78,9 @@ module.exports = {
 	},
 	HOSTNAME: os.hostname().toLowerCase(),
 	VERSION: {
-		PROTOCOLO: '3.4.10',
-		SERVIDOR: '0.14.2',
-		TRANSMISION: 1402,
+		PROTOCOLO: '3.4.11',
+		SERVIDOR: '0.14.3',
+		TRANSMISION: 1403,
 		GIT: {}
 	},
 	PROCESOS: {
