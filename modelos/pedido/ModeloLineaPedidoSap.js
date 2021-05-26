@@ -4,7 +4,7 @@ const L = global.logger;
 //const K = global.constants;
 
 // Helpers
-const K = require('global/constantes');
+const Maestro = require('global/maestro');
 
 
 class LineaPedidoSap {
@@ -106,7 +106,6 @@ class LineaPedidoSap {
 
 	gestionarReboteFaltas(almacenCabecera) {
 
-
 		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
 
 			this.metadatos.reboteFaltas = this.codigoAlmacenServicio;
@@ -125,19 +124,22 @@ class LineaPedidoSap {
 				}
 
 			} else {
+
 				L.xw(this.txId, ['Hay rebote pero no se admite servicio demorado, se añaden incidencias']);
 
 				if (this.cantidadFalta === 0) {
 					this.incidencias = [{
 						codigo: 'LIN-PED-WARN-019',
-						descripcion: 'Entrega total demorada - El artículo se sirve por ' + this.codigoAlmacenServicio
+						descripcion: 'Entrega total demorada'
 					}];
 				} else {
 					this.incidencias = [{
 						codigo: 'LIN-PED-WARN-020',
-						descripcion: 'Entrega parcial demorada - El artículo se sirve por ' + this.codigoAlmacenServicio
+						descripcion: 'Entrega parcial demorada'
 					}];
 				}
+
+				this.observaciones = 'El artículo se sirve por ' + Maestro.almacenes.getNombreById(this.codigoAlmacenServicio);
 			}
 
 
