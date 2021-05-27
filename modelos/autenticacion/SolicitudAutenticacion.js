@@ -95,11 +95,11 @@ class SolicitudAutenticacion {
 				return await this.#autenticarContraSAP();
 			case C.dominios.HEFAME:
 				// Las peticiones al dominio HEFAME se verifica contra el LDAP
-				return await this.#autenticarContraLDAP(txId, solicitudAutenticacion, res);
+				return await this.#autenticarContraLDAP();
 				return;
 			default: {
 				// Las peticiones de otros dominios no son legales
-				L.xw(txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.dominio]);
+				L.xw(this.txId, ['No se permite la expedición de tokens para el dominio', solicitudAutenticacion.dominio]);
 				return {
 					tokenGenerado: false,
 					respuesta: new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401),
