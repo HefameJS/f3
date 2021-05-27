@@ -60,7 +60,7 @@ class LineaPedidoSap {
 				}
 			];
 			this.codigoAlmacenServicio = 'RG99';
-			this.cantidadFalta = Math.round(this.cantidad / 2);
+			this.cantidadFalta = Math.floor(this.cantidad / 2);
 		}
 		if (C.produccion === false && this.codigoArticulo.endsWith('0000010')) {
 			this.descripcionArticulo = 'ARTICULO REBOTE TOTAL';
