@@ -43,7 +43,8 @@ class DireccionLogistica {
 			this.cif = tmp.trim();
 		}
 
-		tmp = (json.soe || json.SOE) + '';
+		tmp = json.soe || json.SOE;
+		if (tmp) tmp = tmp + '';
 		if (Validador.esCadenaNoVacia(tmp)) {
 			this.soe = tmp.trim();
 		}
