@@ -178,7 +178,7 @@ class SolicitudAutenticacion {
 			L.xt(this.txId, ['Usuario validado por LDAP, grupos obtenidos', grupos]);
 			return {
 				tokenGenerado: true,
-				respuesta: solicitudAutenticacion.generarRespuestaToken(grupos),
+				respuesta: this.generarRespuestaToken(grupos),
 				codigoEstado: 201,
 				estadoTransmision: K.TX_STATUS.OK
 			}
