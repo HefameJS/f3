@@ -171,7 +171,7 @@ class SolicitudAutenticacion {
 	}
 
 	async #autenticarContraLDAP() {
-		L.xi(txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
+		L.xi(this.txId, ['Se procede a comprobar en Active Directory las credenciales de la petición']);
 
 		try {
 			let grupos = await iLdap.autenticar(this);
