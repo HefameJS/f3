@@ -8,6 +8,7 @@ const iEventos = require('interfaces/eventos/iEventos');
 const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
+const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
@@ -53,11 +54,17 @@ module.exports = (app) => {
 	// Tambien añadimos funcionalidades a req y res
 	app.use((req, res, next) => {
 
+		let transmision = new Transmision(req, res);
+
+		
+
 		[req, res] = extenderSolicitudHttp(req, res);
 		let txId = req.txId;
 
+		req.transmision = res.transmision = transmision;
+
 		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
-		L.xt(txId, 'Iniciando procesamiento de la transmisión');
+		transmision.log.info('Iniciando procesamiento de la transmisión');
 
 		iFlags.transmision.generaFlags(req);
 
