@@ -16,6 +16,10 @@ class ErrorFedicom {
 		}
 	}
 
+	getCodigoRespuestaHttp() {
+		return this.codigoRespuestaHttp;
+	}
+
 	/**
 	 * Inserta el error en la lista de errores.
 	 * Se admiten los distintos tipos de errores:
@@ -60,7 +64,8 @@ class ErrorFedicom {
 		}
 
 		// Se llama pasando otro error Fedicom
-		if (error && error.constructor.name === 'ErrorFedicom') {
+		if (error?.constructor?.name === 'ErrorFedicom') {
+			codigoRespuestaHttp = error.codigoRespuestaHttp;
 			this.listaErroresFedicom = [...this.listaErroresFedicom, ...error.listaErroresFedicom];
 			if (codigoRespuestaHttp) this.codigoRespuestaHttp = parseInt(codigoRespuestaHttp) || CODIGO_HTTP_POR_DEFECTO;
 			return this;
@@ -130,6 +135,14 @@ class ErrorFedicom {
 	static generarYEnviarErrorMonitor(expressRes, descripcion, codigoRespuestaHTTP) {
 		return ErrorFedicom.generarYEnviarError(expressRes, 'MONITOR-ERR-999', descripcion, codigoRespuestaHTTP || 500);
 	}
+
+
+	static esErrorFedicom(objeto) {
+		return ErrorFedicom.prototype.isPrototypeOf(objeto);
+	}
 }
+
+
+
 
 module.exports = ErrorFedicom;

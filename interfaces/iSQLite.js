@@ -2,10 +2,10 @@
 const C = global.config;
 const L = global.logger;
 //const K = global.constants;
+const M = global.mongodb;
 
 // Externo
 const { EJSON } = require('bson');
-const ObjectID = require('mongodb').ObjectID;
 const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
@@ -19,13 +19,38 @@ const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
 });
 
 /**
+ * Graba en la base de datos SQLite la sentencia MongoDB pasada.
+ * @param {*} sentencia 
+ */
+const grabarSentencia = async function (sentencia) {
+
+	let uid = (new M.ObjectID()).toHexString();
+	let txId = transaccion['$setOnInsert']._id;
+	let txIdHexadecimal = txId.toHexString();
+
+	// Para serializar correctamente objetos como ObjectIDs y Dates
+	// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
+	// https://www.npmjs.com/package/bson
+	let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
+	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], function (err) {
+		if (err) {
+			throw err;
+		} else {
+			return this.lastID;
+		}
+	});
+
+
+}
+
+/**
  * Graba en la base de datos SQLite la transacción MongoDB pasada.
  * @param {*} transaccion 
  */
 const grabarTransaccion = function (transaccion) {
 
 	return new Promise((resolve, reject) => {
-		let uid = (new ObjectID()).toHexString();
+		let uid = (new M.ObjectID()).toHexString();
 		let txId = transaccion['$setOnInsert']._id;
 		let txIdHexadecimal = txId.toHexString();
 
@@ -44,9 +69,8 @@ const grabarTransaccion = function (transaccion) {
 		});
 	});
 
-
-
 }
+
 
 /**
  * Devuelve el número de entradas que hay en la base de datos y que están pendientes de ser enviadas.
@@ -102,7 +126,7 @@ const obtenerEntradas = (numeroFallosMaximo, limite) => {
 			sql += ' LIMIT ' + limite;
 		}
 
-		
+
 
 		db.all(sql, parametrosSql, (errorSQLite, entradas) => {
 			if (errorSQLite) {
@@ -276,7 +300,8 @@ const consultaRegistros = (opciones, callback) => {
 }
 
 module.exports = {
-	grabarTransaccion,
+	grabarTransaccion, /* DEPRECATED - Usar grabarSentencia */
+	grabarSentencia,
 	numeroEntradasPendientes,
 	obtenerEntradas,
 	eliminarEntrada,

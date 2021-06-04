@@ -10,22 +10,35 @@ class RegistroLogTransmision {
 	nivel;
 	datos;
 
-	constructor( datos, nivel ) {
+	constructor(datos, nivel) {
 		this.fecha = new Date();
 		this.datos = datos;
-
-		if (!Array.isArray(this.datos)) {
-			this.datos = [this.datos];
-		}
-
 		this.nivel = nivel;
 
-
-		//
+		// Imprimimos
 		this.datos.forEach(dato => {
-			console.log(LogTransmision[this.nivel], this.fecha, dato)
-		});
 
+			switch (this.nivel) {
+				case LogTransmision.FATAL:
+				case LogTransmision.ERROR:
+					console.log('\u001b[' + 31 + 'm\u001b[' + 7 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					break;
+				case LogTransmision.WARN:
+					console.log('\u001b[' + 31 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					break;
+				case LogTransmision.DEBUG:
+				case LogTransmision.TRACE:
+					console.log('\u001b[' + 36 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					break;
+				case LogTransmision.EVENT:
+					console.log('\u001b[' + 36 + 'm\u001b[' + 7 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					break;
+				default:
+					console.log('\u001b[' + 32 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					//32
+			}
+
+		});
 	}
 
 
@@ -33,36 +46,42 @@ class RegistroLogTransmision {
 
 class LogTransmision {
 
-	registros = [];
+	#transmision;
+	#registros;
 
-	constructor() {
-
+	constructor(transmision) {
+		this.#registros = [];
+		this.transmision = transmision;
 	}
 
-	#grabarEntrada (datos, nivel) {
+	get registros() {
+		return this.#registros;
+	}
+
+	#grabarEntrada(datos, nivel) {
 		let registro = new RegistroLogTransmision(datos, nivel)
-		this.registros.push(registro);
+		this.#registros.push(registro);
 	}
 
-	trace(datos) {
+	trace(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.TRACE);
 	}
-	debug(datos) {
+	debug(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.DEBUG);
 	}
-	info(datos) {
+	info(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.INFO);
 	}
-	warn(datos) {
+	warn(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.WARN);
 	}
-	err(datos) {
+	err(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.ERROR);
 	}
-	fatal(datos) {
+	fatal(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.FATAL);
 	}
-	evento(datos) {
+	evento(...datos) {
 		this.#grabarEntrada(datos, LogTransmision.EVENT);
 	}
 

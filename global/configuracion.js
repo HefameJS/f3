@@ -268,7 +268,7 @@ class ConfiguracionSap {
 
 		this.timeout = {
 			verificarCredenciales: (parseInt(config.timeout?.verificarCredenciales) || 5) * 1000,
-			realizarPedido: (parseInt(config.timeout?.realizarPedido) || 30) * 1000,
+			realizarPedido: (parseInt(config.timeout?.realizarPedido) || 60) * 1000,
 			realizarLogistica: (parseInt(config.timeout?.realizarLogistica) || 30) * 1000,
 			realizarDevolucion: (parseInt(config.timeout?.realizarDevolucion) || 15) * 1000,
 			consultaDevolucionPDF: (parseInt(config.timeout?.consultaDevolucionPDF) || 10) * 1000,

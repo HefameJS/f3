@@ -22,6 +22,7 @@ const JsonWebToken = require('jsonwebtoken');
  */
 class Token {
 
+	#transmision;				// Referencia a la transmision
 	jwt = null; 				// (string) El token de la transmisión(null si no aparece)
 	verificado = false;			// (bool) Indica si el token es válido o no (true|false)
 
@@ -36,7 +37,9 @@ class Token {
 
 	constructor(transmision) {
 
-		this.#extraerToken(transmision);
+		this.#transmision = transmision;
+
+		this.#extraerToken();
 		this.#verificarJwt();
 
 	}
@@ -52,8 +55,25 @@ class Token {
 		};
 	}
 
+	getDatosLoginSap() {
+		return {
+			user: this.#usuario,
+			domain: this.#dominio
+		}
+	}
+
 	esPermanente() {
 		return this.#permanente;
+	}
+
+	generarFlag() {
+		if (this.verificado) {
+			return {
+				usuario: this.#usuario,
+				dominio: this.#dominio
+			}
+		}
+		return null
 	}
 
 	/**
@@ -61,8 +81,8 @@ class Token {
 	 * Tal como indica el protocolo Fedicom3, el token debe aparecer en la cabecera 'Authorization' precedido por 'Bearer '
 	 * @param {Transmision} transmision 
 	 */
-	#extraerToken(transmision) {
-		let cabeceraAutorizacion = transmision.req.headers?.authorization;
+	#extraerToken() {
+		let cabeceraAutorizacion = this.#transmision.req.headers?.authorization;
 		if (cabeceraAutorizacion) {
 			if (cabeceraAutorizacion.startsWith('Bearer ')) {
 				this.jwt = cabeceraAutorizacion.slice(7);
@@ -116,6 +136,29 @@ class Token {
 
 			this.#error = errorJwt;
 
+		}
+	}
+
+
+	static generarToken(usuario, dominio, datosExtra) {
+
+		let { grupos } = datosExtra;
+
+		let datosToken = {
+			sub: usuario,
+			aud: dominio,
+			exp: Math.ceil((Date.fedicomTimestamp() / 1000) + C.jwt.ttl)
+		};
+
+		if (grupos && grupos.forEach) datosToken.grupos = grupos;
+		return JsonWebToken.sign(datosToken, C.jwt.clave);
+	}
+
+	static extraerDatosToken(token) {
+		try {
+			return JsonWebToken.verify(token, C.jwt.clave, { clockTolerance: C.jwt.tiempoDeGracia });
+		} catch (errorJwt) {
+			return { error: errorJwt.message };
 		}
 	}
 

@@ -8,7 +8,9 @@ const iEventos = require('interfaces/eventos/iEventos');
 const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
-const Transmision = require('modelos/transmision/Transmision');
+const TransmisionAutenticacion = require('modelos/autenticacion/TransmisionAutenticacion');
+const TransmisionCrearPedido = require('modelos/pedido/TransmisionCrearPedido');
+
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
@@ -16,17 +18,17 @@ const { extenderSolicitudHttp, tryCatch } = require('global/extensiones/extensio
 
 
 
+
 module.exports = (app) => {
 
 
 	const controladores = {
-		autenticacion: require('controladores/controladorAutenticacion'),
-		pedidos: require('controladores/controladorPedidos'),
+		//pedidos: require('controladores/controladorPedidos'),
 		confirmacionPedido: require('controladores/controladorConfirmacionPedido'),
 		devoluciones: require('controladores/controladorDevoluciones'),
 		albaranes: require('controladores/controladorAlbaranes'),
 		facturas: require('controladores/controladorFacturas'),
-		retransmision: require('controladores/controladorRetransmision'),
+		//retransmision: require('controladores/controladorRetransmision'),
 		logistica: require('controladores/controladorLogistica'),
 	}
 
@@ -54,18 +56,12 @@ module.exports = (app) => {
 	// Tambien añadimos funcionalidades a req y res
 	app.use((req, res, next) => {
 
-		let transmision = new Transmision(req, res);
-
-		
 
 		[req, res] = extenderSolicitudHttp(req, res);
 		let txId = req.txId;
 
-		req.transmision = res.transmision = transmision;
-
 		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
-		transmision.log.info('Iniciando procesamiento de la transmisión');
-
+		
 		iFlags.transmision.generaFlags(req);
 
 		next();
@@ -74,18 +70,16 @@ module.exports = (app) => {
 
 
 	// Rutas estandard Fedicom v3
-
 	app.route('/authenticate')
-		.post(tryCatch(controladores.autenticacion.autenticar))
-		.get(tryCatch(controladores.autenticacion.verificarToken));
+		.post(TransmisionAutenticacion.procesar)
 
 
 	app.route('/pedidos')
-		.get(tryCatch(controladores.pedidos.consultaPedido))
-		.post(tryCatch(controladores.pedidos.crearPedido))
-		.put(tryCatch(controladores.pedidos.actualizarPedido));
+	//	.get(tryCatch(controladores.pedidos.consultaPedido))
+		.post(TransmisionCrearPedido.procesar)
+	/*	.put(tryCatch(controladores.pedidos.actualizarPedido));
 	app.route('/pedidos/:numeroPedido')
-		.get(tryCatch(controladores.pedidos.consultaPedido));
+		.get(tryCatch(controladores.pedidos.consultaPedido));*/
 
 	app.route('/confirmaPedido')
 		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
@@ -116,8 +110,8 @@ module.exports = (app) => {
 	
 	
 	
-	app.route('/retransmitir/:txId')
-		.get(tryCatch(controladores.retransmision.retransmitePedido));
+	//app.route('/retransmitir/:txId')
+		//.get(tryCatch(controladores.retransmision.retransmitePedido));
 	
 	app.route('/logistica')
 		.post(tryCatch(controladores.logistica.crearLogistica))

@@ -14,7 +14,7 @@ const iFlags = require('interfaces/iflags/iFlags');
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const PedidoCliente = require('modelos/pedido/ModeloPedidoCliente');
-const PedidoSap = require('modelos/pedido/ModeloPedidoSap');
+const PedidoSap = require('modelos/pedido/RespuestaPedidoSap');
 
 
 

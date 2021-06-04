@@ -54,6 +54,7 @@ class Logger {
 			}
 		})
 
+		/*
 		if (C.log.consola) {
 			if (evento.nivel === ERROR || evento.nivel === FATAL)
 				console.log('\u001b[' + 30 + 'm' + '\u001b[' + 41 + 'm' + (process.titulo || 'init') + '|' + mensaje + '\u001b[0m');
@@ -64,6 +65,7 @@ class Logger {
 			else
 				console.log((process.titulo || 'init') + '|' + mensaje);
 		}
+		*/
 
 	}
 

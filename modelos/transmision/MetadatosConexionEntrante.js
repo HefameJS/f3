@@ -102,7 +102,4 @@ class MetadatosConexionEntrante {
 
 }
 
-console.log(MetadatosConexionEntrante.prototype.hasOwnProperty('ip'));
-
-
 module.exports = MetadatosConexionEntrante;

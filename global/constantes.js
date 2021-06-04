@@ -1,9 +1,29 @@
 'use strict';
 
-const git = require('global/git');
 const os = require('os');
 
 module.exports = {
+	ESTADOS: {
+		RECEPCIONADO: 1010,
+		PETICION_ENVIADA_A_SAP: 1020,
+		OBTENIDA_RESPUESTA_DE_SAP: 1030,
+		FALLO_AUTENTICACION: 3010,
+		PETICION_INCORRECTA: 3020,
+		ERROR_RESPUESTA_SAP: 3130,
+		COMPLETADO: 9900,
+		PEDIDO: {
+			RECHAZADO_SAP: 3120,
+			DUPLICADO: 3012,
+			NO_SAP: 3110,
+			ESPERANDO_NUMERO_PEDIDO: 8010,
+			SIN_NUMERO_PEDIDO_SAP: 9140
+		}
+
+	},
+	TIPOS: {
+		AUTENTICACION: 0,
+		CREAR_PEDIDO: 10
+	},
 	TX_STATUS: {
 		DESCONOCIDO: -1,
 		RECEPCIONADO: 1010,
@@ -82,6 +102,10 @@ module.exports = {
 		SERVIDOR: '0.14.3',
 		TRANSMISION: 1403,
 		GIT: {}
+	},
+	SOFTWARE_ID: {
+		SERVIDOR: '0026',
+		RETRANSMISOR: '9002'
 	},
 	PROCESOS: {
 		getTitulo: function (tipo) {

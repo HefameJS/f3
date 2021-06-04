@@ -8,8 +8,17 @@ const Maestro = require('global/maestro');
 
 
 class LineaPedidoSap {
-	constructor(json, txId, numeroPosicion) {
-		L.xi(txId, ['Analizando linea de pedido en posicion ' + numeroPosicion])
+
+	#transmision;
+	#log;
+
+	constructor(json, transmision, numeroPosicion) {
+
+
+		this.#transmision = transmision;
+		this.#log = this.#transmision.log;
+
+		this.#log.info(`Analizando linea de pedido SAP en posición ${numeroPosicion}`);
 
 		this.metadatos = {
 			numeroPosicion: numeroPosicion,
@@ -70,7 +79,7 @@ class LineaPedidoSap {
 		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
 
 			this.metadatos.reboteFaltas = this.codigoAlmacenServicio;
-			L.xi(this.txId, ['Detectado rebote de faltas para la línea', almacenCabecera, this.codigoAlmacenServicio])
+			this.#log.info(`Posicion ${this.medatados.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
 
 			if (this.servicioDemorado) {
 
@@ -86,7 +95,7 @@ class LineaPedidoSap {
 
 			} else {
 
-				L.xw(this.txId, ['Hay rebote pero no se admite servicio demorado, se añaden incidencias']);
+				this.#log.info(`Posicion ${this.medatados.numeroPosicion}: Hay rebote pero no se admite servicio demorado, se añaden incidencias`);
 
 				if (this.cantidadFalta === 0) {
 					this.incidencias = [{
@@ -108,7 +117,8 @@ class LineaPedidoSap {
 
 	}
 
-	generarJSON() {
+	generarJSON(tipoPedido = 'respuestaCliente') {
+
 		let json = {};
 		if (this.orden || this.orden === 0) json.orden = this.orden;
 
@@ -121,7 +131,6 @@ class LineaPedidoSap {
 		if (this.cantidadBonificacion) json.cantidadBonificacion = this.cantidadBonificacion;
 		if (this.cantidadBonificacionFalta) json.cantidadBonificacionFalta = this.cantidadBonificacionFalta;
 
-
 		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
 		if (this.codigoAlmacenServicio) json.codigoAlmacenServicio = this.codigoAlmacenServicio;
 		if (this.codigoUbicacion) json.codigoUbicacion = this.codigoUbicacion;
@@ -133,7 +142,6 @@ class LineaPedidoSap {
 		if (this.cargoPorcentaje) json.cargoPorcentaje = this.cargoPorcentaje;
 		if (this.cargoImporte) json.cargoImporte = this.cargoImporte;
 
-
 		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
 		if (this.servicioDemorado) json.servicioDemorado = this.servicioDemorado;
 		if (this.estadoServicio) json.estadoServicio = this.estadoServicio;
@@ -144,6 +152,9 @@ class LineaPedidoSap {
 		if (this.observaciones) json.observaciones = this.observaciones;
 		return json;
 	}
+
+
+
 
 }
 
