@@ -17,6 +17,7 @@ const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision')
 const LineaPedidoCliente = require('modelos/pedido/LineaPedidoCliente');
 const LineaPedidoSap = require('./LineaPedidoSap');
 const RespuestaPedidoSap = require('./RespuestaPedidoSap');
+const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -62,9 +63,8 @@ class TransmisionCrearPedido extends Transmision {
 		await transmision.inicializar();
 		return transmision;
 	}
-
 	constructor(req, res) {
-		super(req, res, K.TIPOS.CREAR_PEDIDO);
+		super(req, res, K.TIPOS.CREAR_PEDIDO, TransmisionCrearPedido.condicionesAutorizacion);
 	}
 	async inicializar() {
 		let json = this.req.body;
@@ -219,8 +219,6 @@ class TransmisionCrearPedido extends Transmision {
 		});
 	}
 
-
-
 	/**
 	 * Anota un error en la cabecera del pedido
 	 * Se puede indicar el (codigo, descripcion) del error, o pasar un único parametro con un objeto instancia de ErrorFedicom
@@ -281,11 +279,21 @@ class TransmisionCrearPedido extends Transmision {
 
 	}
 
+	/**
+	 * Genera la URL donde SAP debe confirmar la creación del pedido
+	 */
+	#generaUrlConfirmacion() {
+		return 'http://' + K.HOSTNAME + '.hefame.es:' + C.http.puertoConcentrador + '/confirmaPedido';
+	}
+
 
 
 	async operar() {
 		let resultadoTransmision = await this.#generarResultadoTransmision();
-		resultadoTransmision.cerrarTransmision(this);
+		resultadoTransmision.responderTransmision(this);
+		this.setMetadatosOperacion('pedido', this.#generarMetadatosPedido());
+		await this.actualizarTransmision();
+
 	}
 
 	async #generarResultadoTransmision() {
@@ -383,11 +391,6 @@ class TransmisionCrearPedido extends Transmision {
 		return json;
 	}
 
-
-	#generaUrlConfirmacion() {
-		return 'http://' + K.HOSTNAME + '.hefame.es:' + C.http.puertoConcentrador + '/confirmaPedido';
-	}
-
 	// Control de duplicados
 	async #esPedidoDuplicado() {
 
@@ -402,16 +405,18 @@ class TransmisionCrearPedido extends Transmision {
 				tipo: K.TIPOS.CREAR_PEDIDO,
 				'pedido.crc': this.#metadatos.crc
 			}
+			let opcionesConsultaCRC = {
+				projection: { _id: 1, estado: 1 }
+			}
 
-			let transmisionOriginal = await M.col.transmisiones.findOne(consultaCRC, { _id: 1, estado: 1 });
+			let transmisionOriginal = await M.col.transmisiones.findOne(consultaCRC, opcionesConsultaCRC);
 
 			if (transmisionOriginal?._id) {
 				this.log.info(`Se ha detectado otra transmisión con idéntico CRC ${transmisionOriginal._id}`);
 
-				// TODO: Determinar lista de estados que ignoraremos
-				if (transmisionOriginal.status === K.ESTADOS.RECHAZADO_SAP) {
+				// TODO: Determinar lista de estados que ignoraremos a nivel de configuración de clúster
+				if (transmisionOriginal.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP) {
 					this.log.info('La transmisión original fue rechazada por SAP, no la tomamos como repetida');
-					// iFlags.set(txId, C.flags.REINTENTO_CLIENTE, txIdOriginal._id);
 					this.#metadatos.retransmisionCliente = true;
 				} else {
 					this.log.warn('Se marca la transmisión como un duplicado');
@@ -438,7 +443,6 @@ class TransmisionCrearPedido extends Transmision {
 			this.log.info('Obtenida respuesta de SAP, procedemos a analizarla');
 			return await this.#procesarResultadoSap();
 		} catch (errorLlamadaSap) {
-			console.log(errorLlamadaSap.stack)
 			this.log.err('Incidencia en la comunicación con SAP, se simulan las faltas del pedido', errorLlamadaSap);
 			this.addError('PED-WARN-001', 'Su pedido se ha recibido correctamente, pero no hemos podido informar las faltas.');
 			this.#metadatos.noEnviaFaltas = true;
@@ -466,7 +470,7 @@ class TransmisionCrearPedido extends Transmision {
 					return false;
 				}
 				return true;
-			// Para las incidencias que pasen el filtro, las añadimos a la lista de errores.
+				// Para las incidencias que pasen el filtro, las añadimos a la lista de errores.
 			}).forEach(incidencia => {
 				this.addError(incidencia.codigo, incidencia.descripcion);
 			});
@@ -492,11 +496,60 @@ class TransmisionCrearPedido extends Transmision {
 
 		let respuestaCliente = this.generarJSON('respuestaCliente');
 		let estadoTransmision = this.#respuestaPedidoSap.determinarEstadoTransmision();
-		
+
 		return new ResultadoTransmision(estadoTransmision.codigoRetornoHttp, estadoTransmision.estadoTransmision, respuestaCliente);
+
 
 	}
 
+	#generarMetadatosPedido() {
+
+		if (this.#metadatos.errorProtocolo) {
+			return null;
+		}
+
+		let metadatos = {};
+
+		metadatos.codigoCliente = parseInt(this.#datosEntrada.codigoCliente.slice(-5)) || null;
+		metadatos.tipoPedido = parseInt(this.#datosEntrada.tipoPedido) || 0;
+		metadatos.crc = this.#metadatos.crc;
+		metadatos.crcSap = parseInt(this.#metadatos.crc.toString().substring(0, 8), 16);
+		metadatos.tipoCrc = this.#metadatos.tipoCrc;
+
+		if (this.#metadatos.codigoAlmacenDesconocido) metadatos.codigoAlmacenDesconocido = true;
+		if (this.#metadatos.codigoAlmacenSaneado) metadatos.codigoAlmacenSaneado = true;
+		if (this.#metadatos.retransmisionCliente) metadatos.retransmisionCliente = true;
+		if (this.#metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
+		if (this.#metadatos.noEnviaFaltas) metadatos.noEnviaFaltas = true;
+		if (this.#metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = true;
+
+		if (this.#respuestaPedidoSap) {
+
+			let d = this.#respuestaPedidoSap.getDatos();
+			let md = this.#respuestaPedidoSap.getMetadatos();
+
+			if (d.codigoAlmacenServicio) metadatos.codigoAlmacen = d.codigoAlmacenServicio;
+			if (md.puntoEntrega) metadatos.puntoEntrega = md.puntoEntrega;
+			if (md.tipoPedidoSap) metadatos.tipoPedidoSap = md.tipoPedidoSap;
+			if (md.motivoPedidoSap) metadatos.motivoPedidoSap = md.motivoPedidoSap;
+			if (md.clienteSap) metadatos.clienteSap = md.clienteSap;
+
+			if (md.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = md.pedidosAsociadosSap;
+			if (md.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = md.pedidoAgrupadoSap;
+
+			if (md.reboteFaltas) metadatos.reboteFaltas = md.reboteFaltas;
+			if (md.porRazonDesconocida) metadatos.porRazonDesconocida = md.porRazonDesconocida;
+			if (md.pedidoProcesadoSinNumero) metadatos.pedidoProcesadoSinNumero = md.pedidoProcesadoSinNumero;
+			if (md.servicioDemorado) metadatos.servicioDemorado = md.servicioDemorado;
+			if (md.estupefaciente) metadatos.estupefaciente = md.estupefaciente;
+
+			if (md.totales) metadatos.totales = md.totales;
+
+		}
+
+		return metadatos;
+
+	}
 }
 
 
@@ -504,6 +557,14 @@ TransmisionCrearPedido.procesar = async function (req, res) {
 	let transmision = await TransmisionCrearPedido.instanciar(req, res);
 	await transmision.operar();
 }
+
+TransmisionCrearPedido.condicionesAutorizacion = new CondicionesAutorizacion({
+	tokenVerificado: true,
+	grupo: null,
+	simulaciones: false,
+	simulacionesEnProduccion: false,
+	simulacionRequiereCambioToken: false
+});
 
 
 module.exports = TransmisionCrearPedido;

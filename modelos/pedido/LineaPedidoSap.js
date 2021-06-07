@@ -12,6 +12,13 @@ class LineaPedidoSap {
 	#transmision;
 	#log;
 
+	#metadatos = {
+		numeroPosicion: null,
+		tipoFalta: null,
+		estupefaciente: false,
+		reboteFaltas: false
+	}
+
 	constructor(json, transmision, numeroPosicion) {
 
 
@@ -20,12 +27,8 @@ class LineaPedidoSap {
 
 		this.#log.info(`Analizando linea de pedido SAP en posición ${numeroPosicion}`);
 
-		this.metadatos = {
-			numeroPosicion: numeroPosicion,
-			tipoFalta: null,
-			estupefaciente: false,
-			reboteFaltas: false
-		}
+		this.#metadatos.numeroPosicion = numeroPosicion;
+		
 
 		// Copiamos las propiedades de la POSICION que son relevantes		
 		this.orden = parseInt(json.orden);
@@ -55,14 +58,14 @@ class LineaPedidoSap {
 		// Tipificado del motivo de la falta
 		this.incidencias?.forEach(incidencia => {
 			if (incidencia.descripcion) {
-				this.metadatos.tipoFalta = C.pedidos.tipificadoFaltas[incidencia.descripcion];
+				this.#metadatos.tipoFalta = C.pedidos.tipificadoFaltas[incidencia.descripcion];
 			}
 		})
 
 		this.#calculaEstadoServicio();
 
 		// Indica si la linea tiene algo que ver con los estupes
-		this.metadatos.estupefaciente = (this.valeEstupefaciente || this.metadatos.tipoFalta === "estupe");
+		this.#metadatos.estupefaciente = (this.valeEstupefaciente || this.#metadatos.tipoFalta === "estupe");
 
 	}
 
@@ -78,7 +81,7 @@ class LineaPedidoSap {
 
 		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
 
-			this.metadatos.reboteFaltas = this.codigoAlmacenServicio;
+			this.#metadatos.reboteFaltas = this.codigoAlmacenServicio;
 			this.#log.info(`Posicion ${this.medatados.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
 
 			if (this.servicioDemorado) {
@@ -154,6 +157,17 @@ class LineaPedidoSap {
 	}
 
 
+	tieneIncidencias() {
+		return this.incidencias?.length > 0;
+	}
+
+	tieneEstupefaciente() {
+		return this.#metadatos.estupefaciente;
+	}
+
+	tieneServicioDemorado() {
+		return this.servicioDemorado;
+	}
 
 
 }

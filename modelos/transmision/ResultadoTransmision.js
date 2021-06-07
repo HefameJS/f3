@@ -23,10 +23,9 @@ class ResultadoTransmision {
 		this.cuerpoRespuestaHttp = cuerpoRespuestaHttp;
 	}
 
-	async cerrarTransmision(transmision) {
+	async responderTransmision(transmision) {
 		await transmision.responder(this.cuerpoRespuestaHttp, this.codigoEstadoHttp);
 		transmision.setEstado(this.codigoEstadoTransmision);
-		await transmision.actualizarTransmision();
 	}
 }
 

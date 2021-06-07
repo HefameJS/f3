@@ -5,10 +5,11 @@ const K = global.constants;
 const M = global.mongodb;
 
 
-const Token = require('modelos/transmision/Token');
-const MetadatosConexionEntrante = require('modelos/transmision/MetadatosConexionEntrante');
-const LogTransmision = require('modelos/transmision/LogTransmision');
-const IntercambioSap = require('modelos/transmision/IntercambioSap');
+const Token =						require('modelos/transmision/Token');
+const MetadatosOperacion =			require('modelos/transmision/MetadatosOperacion');
+const MetadatosConexionEntrante = 	require('modelos/transmision/MetadatosConexionEntrante');
+const LogTransmision = 				require('modelos/transmision/LogTransmision');
+const IntercambioSap = 				require('modelos/transmision/IntercambioSap');
 
 const iSQLite = require('interfaces/iSQLite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -33,10 +34,11 @@ class Transmision extends Object {
 	#estado;					// (integer) El estado de la transmisión. Ej, RECEPCIONADA, ESPERANDO FALTAS ....
 	#tipo;						// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
 	token;						// (Token) Datos del token transmitido en la transmisión.
-	#intercambioSap				// (IntercambioSap) Interfaz de comunicación con SAP
-	metadatosConexionEntrante;	// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
+	#intercambioSap				// (IntercambioSap) Interfaz de comunicación con SAP.
+	#metadatosConexionEntrante;	// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
+	#metadatosOperacion;		// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
 
-	constructor(req, res, tipo) {
+	constructor(req, res, tipo, condicionesAutorizacion) {
 		super();
 
 		this.txId = new M.ObjectID();
@@ -58,11 +60,11 @@ class Transmision extends Object {
 				error: null
 			}
 		};
-		this.token = new Token(this);
+		this.token = new Token(this, condicionesAutorizacion);
 		this.#intercambioSap = new IntercambioSap(this);
 
-		this.metadatosConexionEntrante = new MetadatosConexionEntrante(this);
-		
+		this.#metadatosConexionEntrante = new MetadatosConexionEntrante(this);
+		this.#metadatosOperacion = new MetadatosOperacion();
 	}
 
 	/**
@@ -79,15 +81,31 @@ class Transmision extends Object {
 		return this.#http.req;
 	}
 
+	/**
+	 * Obtiene la instancia del interfaz de intercambio de mensajes HTTP con SAP
+	 */
 	get sap() {
 		return this.#intercambioSap;
 	}
 
 
-
+	/**
+	 * Establece el estado de la transmision
+	 * @param {*} estado El nuevo estado
+	 */
 	setEstado(estado) {
 		this.log.evento(`La transmisión pasa de estado ${this.#estado} a ${estado}`);
 		this.#estado = estado;
+	}
+
+	/**
+	 * Establece el valor del Flag indicado
+	 * @param {*} nombre El nombre del flag
+	 * @param {*} valor El nuevo valor del flag
+	 */
+	setMetadatosOperacion(nombre, valor) {
+		this.log.debug(`Establecidos metadatos de la operacion '${nombre}':`, valor);
+		this.#metadatosOperacion.insertar(nombre, valor);
 	}
 
 	/**
@@ -142,12 +160,12 @@ class Transmision extends Object {
 
 		//Flag de transimision
 		return {
-			ip: this.metadatosConexionEntrante.ip,
+			ip: this.#metadatosConexionEntrante.ip,
 			autenticacion: this.token.generarFlag(),
-			programa: this.metadatosConexionEntrante.programa,
-			ssl: this.metadatosConexionEntrante.ssl,
-			balanceador: this.metadatosConexionEntrante.balanceador,
-			concentrador: this.metadatosConexionEntrante.concentrador
+			programa: this.#metadatosConexionEntrante.programa,
+			ssl: this.#metadatosConexionEntrante.ssl,
+			balanceador: this.#metadatosConexionEntrante.balanceador,
+			concentrador: this.#metadatosConexionEntrante.concentrador
 		}
 
 	}
@@ -215,6 +233,10 @@ class Transmision extends Object {
 			sentencia['$set'].sap = this.#intercambioSap.generarMetadatosSap()
 
 
+		// Metadatos de la operacion
+		this.#metadatosOperacion.sentenciar(sentencia);
+
+
 		try {
 			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });
 			this.log.debug('La transmision ha sido actualizada en la base de datos');
@@ -231,6 +253,9 @@ class Transmision extends Object {
 		}
 	}
 
+	async escribirLogTransmision() {
+
+	}
 }
 
 

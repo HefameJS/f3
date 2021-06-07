@@ -48,7 +48,7 @@ class TransmisionAutenticacion extends Transmision {
 
 
 	constructor(req, res) {
-		super(req, res, K.TIPOS.AUTENTICACION);
+		super(req, res, K.TIPOS.AUTENTICACION, TransmisionAutenticacion.condicionesAutorizacion);
 	}
 	async inicializar() {
 		let json = this.req.body;
@@ -127,7 +127,10 @@ class TransmisionAutenticacion extends Transmision {
 
 	async operar() {
 		let resultadoTransmision = await this.#verificarCredenciales();
-		resultadoTransmision.cerrarTransmision(this);
+		resultadoTransmision.responderTransmision(this);
+
+		this.setMetadatosOperacion('autenticacion', this.#generarMetadatosOperacion());
+		await this.actualizarTransmision();
 	}
 
 
@@ -254,6 +257,14 @@ class TransmisionAutenticacion extends Transmision {
 		return new ResultadoTransmision(codigoEstadoHttp, codigoEstadoTransmision, cuerpoRespuestaHttp);
 	}
 
+	#generarMetadatosOperacion () {
+		let metadatos = {}
+		if (this.#metadatos.aciertoCache) metadatos.aciertoCache = this.#metadatos.aciertoCache;
+		if (this.#metadatos.evitarCache) metadatos.evitarCache = this.#metadatos.evitarCache;
+		if (this.#metadatos.debug) metadatos.debug = this.#metadatos.debug;
+		return metadatos;
+	}
+
 }
 
 
@@ -262,5 +273,9 @@ TransmisionAutenticacion.procesar = async function (req, res) {
 	await transmision.operar();
 }
 
+
+TransmisionAutenticacion.condicionesAutorizacion = new CondicionesAutorizacion({
+	tokenVerificado: false
+});
 
 module.exports = TransmisionAutenticacion;

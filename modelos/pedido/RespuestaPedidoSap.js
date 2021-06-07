@@ -29,6 +29,8 @@ class RespuestaPedidoSap {
 		porRazonDesconocida: false,
 		pedidoProcesadoSinNumero: false,
 		erroresGraves: new ErrorFedicom(),
+		servicioDemorado: false,
+		estupefaciente: false,
 		totales: {
 			lineas: 0,
 			cantidad: 0,
@@ -155,85 +157,29 @@ class RespuestaPedidoSap {
 			let lineaSap = new LineaPedidoSap(linea, this.#transmision, i);
 			this.#datos.lineas.push(lineaSap);
 
-			//lineaSap.gestionarReboteFaltas(this.codigoAlmacenServicio);
-			/*
-						let totales = this.metadatos.totales;
+			lineaSap.gestionarReboteFaltas(this.#datos.codigoAlmacenServicio);
+
+			this.#metadatos.totales.lineas++;
+			this.#metadatos.totales.cantidad += lineaSap.cantidad;
+
+			if (lineaSap.tieneIncidencias()) {
+				this.#metadatos.totales.lineasIncidencias++;
+				this.#metadatos.totales.cantidadIncidencias += lineaSap.cantidadFalta;
+			}
+
+			if (lineaSap.tieneEstupefaciente() ) {
+				this.#metadatos.estupefaciente = true;
+				this.#metadatos.totales.lineasEstupe++;
+				this.#metadatos.totales.cantidadEstupe += lineaSap.cantidad;
+			}
 			
-						totales.lineas++;
-						if (lineaSap.incidencias) totales.lineasIncidencias++;
-						if (lineaSap.servicioDemorado) totales.lineasDemorado++;
-						if (lineaSap.cantidad) totales.cantidad += lineaSap.cantidad;
-						if (lineaSap.cantidadBonificacion) totales.cantidadBonificacion += lineaSap.cantidadBonificacion;
-						if (lineaSap.cantidadFalta) totales.cantidadFalta += lineaSap.cantidadFalta;
-						if (lineaSap.cantidadBonificacionFalta) totales.cantidadBonificacionFalta += lineaSap.cantidadBonificacionFalta;
-						if (lineaSap.metadatos.estupefaciente) {
-							totales.lineasEstupe++;
-							totales.cantidadEstupe += lineaSap.cantidad;
-						}
-			
-						if (lineaSap.metadatos.reboteFaltas) {
-							this.metadatos.reboteFaltas = true;
-						}
-			*/
+			if (lineaSap.tieneServicioDemorado()) 
+				this.#metadatos.servicioDemorado = true;
 			return lineaSap;
 		});
 	}
 
 
-	/*
-		#establecerFlags() {
-	
-			let txId = this.txId;
-			let totales = this.metadatos.totales;
-	
-	
-			iFlags.set(txId, C.flags.TOTALES, totales);
-	
-			// Es falta total ?
-			if (totales.cantidad === totales.cantidadFalta) iFlags.set(txId, C.flags.FALTATOTAL)
-	
-			// Tiene lineas demoradas ?
-			if (totales.lineasDemorado) iFlags.set(txId, C.flags.DEMORADO)
-	
-			// Tiene lineas bonificadas ?
-			if (totales.cantidadBonificacion) iFlags.set(txId, C.flags.BONIFICADO)
-	
-			// Tiene lineas con estupefaciente ?
-			if (totales.lineasEstupe) iFlags.set(txId, C.flags.ESTUPEFACIENTE)
-	
-	
-			// El Flag tipoPedido contiene el tipo del pedido convertido a número para permitir búsquedas por tipo de pedido rápidas y fiables. (Donde los tipos de pedido "1", "001", "000001", "001   " son el mismo valor)
-			// Si tipoPedido es una clave de transmisión típica de fedicom (un número de 0 a 999999, eliminando espacios a izquierda y derecha) se guarda el valor numérico. 
-			// Si no se indica nada, por defecto se usa un 0. Si el valor no es numérico (p.e. se indica grupo de precios SAP como "KF"), se guarda tal cual.
-			if (this.tipoPedido) {
-				let tipoInt = parseInt(this.tipoPedido);
-				if (tipoInt >= 0 && tipoInt <= 999999) {
-					iFlags.set(txId, C.flags.TIPO, tipoInt);
-				}
-			} else {
-				iFlags.set(txId, C.flags.TIPO, 0);
-			}
-	
-	
-			if (this.metadatos.pedidoDuplicadoSap)
-				iFlags.set(txId, C.flags.DUPLICADO_SAP);
-	
-			if (this.metadatos.puntoEntrega)
-				iFlags.set(txId, C.flags.PUNTO_ENTREGA, this.metadatos.puntoEntrega);
-	
-			if (this.metadatos.reboteFaltas)
-				iFlags.set(txId, C.flags.REBOTE_FALTAS);
-	
-		}
-	*/
-
-	getNumeroPedidoAgrupado() {
-		return this.#metadatos.pedidoAgrupadoSap;
-	}
-
-	getNumerosPedidoSap() {
-		return this.#metadatos.pedidosAsociadosSap;
-	}
 
 	/**
 	 * Devuelve un ErrorFedicom si la respuesta de SAP contiene errores graves que indican que el pedido,
@@ -249,6 +195,10 @@ class RespuestaPedidoSap {
 
 	getDatos() {
 		return this.#datos;
+	}
+
+	getMetadatos() {
+		return this.#metadatos;
 	}
 
 	determinarEstadoTransmision() {
