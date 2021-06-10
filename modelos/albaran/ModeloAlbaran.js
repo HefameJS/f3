@@ -161,7 +161,7 @@ class LineaAlbaran {
 		this.precioPvp = posicion.precio_pvp;
 		this.precioNeto = posicion.precio_neto;
 		this.precioAlbaran = posicion.precio_alb;
-		this.precioPvf = this.precioNeto;
+		this.precioPvf = this.precioAlbaran;
 		this.precioPvl = 0;
 		
 
