@@ -12,10 +12,10 @@ const { extenderSolicitudHttp, tryCatch } = require('global/extensiones/extensio
 
 
 module.exports = (app) => {
-
+/*
 	const controladores = {
 		consultas: require('controladores/monitor/controladorConsultas')
-	}
+	}*/
 
 	/* Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	 * Detecta errores comunes en las peticiones entrantes tales como:
@@ -53,7 +53,7 @@ module.exports = (app) => {
 
 
 	// RUTAS NUEVAS v1
-
+/*
 	// Consulta de transmisiones
 	app.route('/v1/transmisiones')
 		.put(tryCatch(controladores.consultas.transmisiones.consultaTransmisiones));
@@ -110,7 +110,7 @@ module.exports = (app) => {
 	app.route('/v1/maestro')
 		.get(tryCatch(controladores.consultas.maestro.consultaMaestro));
 
-/*
+
 	// Dumps de procesos
 	app.route('/v1/dumps')
 		.get(tryCatch(controladores.consultas.dumps.listadoDumps));

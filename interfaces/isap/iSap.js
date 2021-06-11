@@ -29,8 +29,6 @@ const ping = async function () {
 
 module.exports = {
 	ping,
-	autenticacion: require('./iSapAutenticacion'),
-	pedidos: require('./iSapPedidos'),
 	devoluciones: require('./iSapDevoluciones'),
 	albaranes: require('./iSapAlbaranes'),
 	logistica: require('./iSapLogistica'),

@@ -3,10 +3,6 @@
 const L = global.logger;
 //const K = global.constants;
 
-// Interfaces
-const iEventos = require('interfaces/eventos/iEventos');
-const iFlags = require('interfaces/iflags/iFlags');
-
 // Modelos
 const Transmision = require('modelos/transmision/Transmision');
 const TransmisionAutenticacion = require('modelos/autenticacion/TransmisionAutenticacion');
@@ -40,7 +36,6 @@ module.exports = (app) => {
 
 			let errorFedicom = new ErrorFedicom(errorExpress);
 			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.descartar(req, res, cuerpoRespuesta, errorExpress);
 		} else {
 			next();
 		}
@@ -105,7 +100,6 @@ module.exports = (app) => {
 		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-		iEventos.descartar(req, res, cuerpoRespuesta);
 	});
 
 };

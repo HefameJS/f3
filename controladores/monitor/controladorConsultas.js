@@ -7,7 +7,7 @@
 module.exports = {
 	transmisiones: require('controladores/monitor/controladorConsultasTransmisiones'),
 	agregaciones: require('controladores/monitor/controladorConsultasAgregaciones'),
-	sap: require('controladores/monitor/controladorConsultasSap'),
+	//sap: require('controladores/monitor/controladorConsultasSap'),
 	procesos: require('controladores/monitor/controladorConsultasProcesos'),
 	mongodb: require('controladores/monitor/controladorConsultasMongoDb'),
 	balanceadores: require('controladores/monitor/controladorConsultasBalanceadores'),
