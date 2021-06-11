@@ -1,10 +1,10 @@
 'use strict';
 const C = global.config;
-//const L = global.logger;
 //const K = global.constants;
 const M = global.mongodb;
 
 const JsonWebToken = require('jsonwebtoken');
+const ErrorFedicom = require('modelos/ErrorFedicom');
 const CondicionesAutorizacion = require('./CondicionesAutorizacion');
 
 /**
@@ -25,28 +25,33 @@ class Token {
 
 	#transmision;				// Referencia a la transmision
 	#log;						// Referencia a #transmision.log
-	jwt = null; 				// (string) El token de la transmisión(null si no aparece)
-	verificado = false;			// (bool) Indica si el token es válido o no (true|false)
-	autorizado = false;			// (bool) Indica si el token ha sido autorizado a realizar la acción
+	#jwt = null; 				// (string) El token de la transmisión(null si no aparece)
+	#permanente;				// (bool) Indica si el token es permanente o no (true|false).
+	#verificado = false;		// (bool) Indica si el token es válido o no (true|false)
+	#autorizado = false;		// (bool) Indica si el token ha sido autorizado a realizar la acción
+	#solicitante = null;		// (null|Object) Indica el {usuario, dominio} que solicita la transmisión
 	#condicionesAutorizacion;	// (CondicionesAutorizacion) Objeto con las condiciones que la transmision debe cumplir para que se autorice.
+	#error = null;				// (ErrorFedicom) Indica un objeto de Error si se encuentra algún error en el tratamiento del token. null si no hay errores.
 
-	#error;						// (Errir) Indica un objeto de Error si se encuentra algún error en el tratamiento del token. undefined si no hay errores.
 	#usuario;					// (string) El usuario del token. undefined si no aplica.
 	#dominio;					// (string) El dominio al que pertenece el usuario del token. undefined si no aplica.
 	#fechaDeExpiracion;			// (Date) La fecha de expiración del token en un objeto Date. undefined si no aplica.
 	#fechaDeEmision;			// (Date) La fecha de emision del token en un objeto Date. undefined si no aplica.
-	#transmisionDeEmision;		// (ObjectID) El ObjectID de la transmisión que generó el token. undefined si no aplica.
-	#permanente;				// (bool) Indica si el token es permanente o no (true|false).
-	#permisos;					// (Array[string]) Un array con los permisos del token.
+	#grupos = [];				// (Array[string]) Un array con los permisos del token.
 
 	constructor(transmision, condicionesAutorizacion) {
 
 		this.#transmision = transmision;
 		this.#log = this.#transmision.log;
-
 		this.#condicionesAutorizacion = condicionesAutorizacion || new CondicionesAutorizacion();
 
-		this.#extraerToken();
+		let cabeceraAutorizacion = this.#transmision.req.headers?.authorization;
+		if (cabeceraAutorizacion) {
+			if (cabeceraAutorizacion.startsWith('Bearer ')) {
+				this.#jwt = cabeceraAutorizacion.slice(7);
+			}
+		}
+
 		this.#verificarJwt();
 		this.#comprobarAutorizacion();
 
@@ -58,8 +63,7 @@ class Token {
 			dominio: this.#dominio,
 			fechaDeExpiracion: this.#fechaDeExpiracion,
 			fechaDeEmision: this.#fechaDeEmision,
-			transmisionDeEmision: this.#transmisionDeEmision,
-			permisos: this.#permisos
+			grupos: this.#grupos
 		};
 	}
 
@@ -75,44 +79,37 @@ class Token {
 	}
 
 	generarFlag() {
-		if (this.verificado) {
-			return {
+		if (this.#verificado) {
+			let flag = {
 				usuario: this.#usuario,
 				dominio: this.#dominio
+			};
+
+			if (this.#solicitante) {
+				flag.solicitante = this.#solicitante;
 			}
+			return flag;
 		}
-		return null
+		return null;
 	}
 
-	/**
-	 * Extrae el token de la transmisión.
-	 * Tal como indica el protocolo Fedicom3, el token debe aparecer en la cabecera 'Authorization' precedido por 'Bearer '
-	 * @param {Transmision} transmision 
-	 */
-	#extraerToken() {
-		let cabeceraAutorizacion = this.#transmision.req.headers?.authorization;
-		if (cabeceraAutorizacion) {
-			if (cabeceraAutorizacion.startsWith('Bearer ')) {
-				this.jwt = cabeceraAutorizacion.slice(7);
-			}
-		}
-	}
+
 
 	/**
-	 * Verifica y extrae los datos del token
+	 * Verifica y extrae los datos del token.
+	 * Si el token se verifica, #verificado se establece a true. De lo contrario, se establece el error pertinente en #error.
 	 * @returns 
 	 */
 	#verificarJwt() {
 
-		if (!this.jwt) {
-			this.#error = new Error('Usuario no autentificado');
+		if (!this.#jwt) {
 			return;
 		}
 
 		try {
 
-			let tokenDecodificado = JsonWebToken.verify(this.jwt, C.jwt.clave, { clockTolerance: C.jwt.tiempoDeGracia });
-			this.verificado = true;
+			let tokenDecodificado = JsonWebToken.verify(this.#jwt, C.jwt.clave, { clockTolerance: C.jwt.tiempoDeGracia });
+			this.#verificado = true;
 
 			this.#usuario = tokenDecodificado.sub;
 			this.#dominio = tokenDecodificado.aud;
@@ -129,120 +126,122 @@ class Token {
 				this.#fechaDeEmision.setTime(tokenDecodificado.iat * 1000);
 			}
 
-			try {
-				this.#transmisionDeEmision = tokenDecodificado.jti ? new M.ObjectID(tokenDecodificado.jti) : undefined;
-			} catch (errorJti) {
-
-			}
-
 			// Copiamos los permisos del usuario, si los hubiere
-			if (Array.isArray(tokenDecodificado.perms)) {
-				this.#permisos = tokenDecodificado.perms.map(permisoBruto => permisoBruto)
+			if (Array.isArray(tokenDecodificado.grupos)) {
+				this.#grupos = tokenDecodificado.grupos.map(permisoBruto => permisoBruto)
 			}
 
 		} catch (errorJwt) {
-			this.#error = errorJwt;
+			this.#log.warn('No se pudo decodificar el token de la transmisión', errorJwt);
+			this.#error = new ErrorFedicom('AUTH-002', 'Token inválido', 401);
 		}
 	}
 
 	/**
 	 * Funcion que verifica los permisos del token de una petición entrante para comprobar si
 	 * cumple con los requisitos establecidos en las CondicionesAutorizacion.
+	 * Si el token se autoriza, #autorizado se establece a true. De lo contrario, se establece el error pertinente en #error.
 	 */
 	#comprobarAutorizacion() {
 
+		let opciones = this.#condicionesAutorizacion;
+		this.#log.debug('Realizando control de autorización')
 
-		this.#log.debug('Realizando control de autorización', this.#condicionesAutorizacion)
 
-		// Primerísimo de todo, el token debe ser válido
-		if (!this.verificado) {
-			this.autorizado = false;
-			this.#log.warn('El token de la transmisión no es válido', this.#error);
+		// Primerísimo de todo, ¿ el token debe ser válido ?
+		if (opciones.admitirSinTokenVerificado) {
+			this.#autorizado = true;
+			this.#log.info('No se requiere token, la transisión queda autorizada');
+			return;
+		} else if (!this.#verificado) {
+			this.#log.warn('El token de la transmisión no es válido o no se especifica');
+			this.#error = new ErrorFedicom('AUTH-001', 'Usuario no autentificado', 401);
 			return;
 		}
 
-		return;
-
-		/*
-		// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor, nunca al core
-		if (req.token.aud === C.dominios.INTERFEDICOM) {
+		// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor
+		if (this.#dominio === C.dominios.INTERFEDICOM) {
 			if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
 				// TODO: Falta hacer control de admision por IP origen
-				L.xi(txId, ['Se acepta el token INTERFEDICOM'], 'txToken')
-				return { ok: true };
+				this.#log.info('La transisión queda autorizada como INTERFEDICOM');
+				this.#autorizado = true;
+				return;
 			}
 
-			L.xw(txId, ['El token es del dominio INTERFEDICOM y no se admite para este tipo de consulta'], 'txToken');
-			let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
+			this.#log.err(`Los tokens del dominio ${this.#dominio} solo se admiten en el proceso ${K.PROCESOS.TIPOS.MONITOR}`);
+			this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+			return;
 		}
 
 		// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 		if (opciones.grupoRequerido) {
-			if (!req.token.perms || !req.token.perms.includes(opciones.grupoRequerido)) {
-				L.xw(txId, ['El token no tiene el permiso necesario', opciones.grupoRequerido, req.token.perms], 'txToken');
-				let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar esta acción', 403);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
+			if (!this.#grupos.includes(opciones.grupoRequerido)) {
+				this.#log.err(`El token no pertenece al grupo ${opciones.grupoRequerido}`);
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+				return;
 			}
 		}
 
 		// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
-		if (opciones.admitirSimulaciones && req.token.aud === C.dominios.HEFAME) {
+		if (opciones.simulaciones && this.#dominio === C.dominios.HEFAME) {
 
-			// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza al petición
-			if (C.produccion === true && !opciones.admitirSimulacionesEnProduccion) {
-				L.xw(txId, ['El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.', req.token.perms], 'txToken');
-				let errorFedicom = new ErrorFedicom('AUTH-005', 'El concentrador está en PRODUCCION. No se admiten llamadas simuladas.', 403);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
+			// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza la petición
+			if (C.produccion === true && !opciones.simulacionesEnProduccion) {
+				this.#log.err('El concentrador está en PRODUCCION. No se admiten llamar al servicio de manera simulada.');
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+				return;
 			}
 
 			// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
-			if (!req.token.perms || !req.token.perms.includes('FED3_SIMULADOR')) {
-				L.xw(txId, ['El token no tiene los permisos necesarios para realizar una llamada simulada', req.token.perms], 'txToken');
-				let errorFedicom = new ErrorFedicom('AUTH-005', 'No tienes los permisos necesarios para realizar simulaciones', 403);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-				return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.NO_AUTORIZADO };
-			} else {
-				L.xi(txId, ['La consulta es simulada por un usuario del dominio', req.token.sub], 'txToken');
-
-				// Generamos un token con el usuario/dominio indicado en el campo 'authReq' del body
-				let solicitudAutenticacion = null;
-				if (req.body?.authReq && req.body.authReq.username && req.body.authReq.domain) {
-					solicitudAutenticacion = {
-						usuario: req.body.authReq.username,
-						dominio: req.body.authReq.domain
-					}
-					L.xi(txId, ['La solicitid simulada viene con una solicitud de autenticación', solicitudAutenticacion], 'txToken')
-					let newToken = generarToken(txId, solicitudAutenticacion, []);
-					L.xd(txId, ['Se ha generado un token para la solicitud de autenticacion simulada', newToken], 'txToken');
-					req.headers['authorization'] = 'Bearer ' + newToken;
-					req.token = verificarToken(newToken, txId);
-				}
-
-				if (opciones.simulacionRequiereSolicitudAutenticacion && !solicitudAutenticacion) {
-					L.xe(txId, ['No se incluye solicitud de autenticación y esta es obligatoria'], 'txToken');
-					let errorFedicom = new ErrorFedicom('AUTH-999', 'No se indica el usuario objetivo de la transmisión', 400);
-					let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-					return { ok: false, respuesta: cuerpoRespuesta, motivo: K.TX_STATUS.PETICION_INCORRECTA };
-				}
-
-				return { ok: true, usuarioSimulador: req.token.sub, solicitudAutenticacion: solicitudAutenticacion };
+			if (!this.#grupos.includes('FED3_SIMULADOR')) {
+				this.#log.err('El token no pertenece al grupo "FED3_SIMULADOR" necesario para realizar simulaciones', this.#grupos);
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+				return;
 			}
+
+			this.#log.info(`La transmisión es solicitada por el usuario ${this.#usuario}@${this.#dominio}`);
+
+
+			// Buscamos las cabeceras 'x-simulacion-usuario' y 'x-simulacion-dominio' para generar un token simulando a este usuario
+			let usuarioSimulado = this.#transmision.req.headers?.['x-simulacion-usuario']?.trim?.();
+			let dominioSimulado = this.#transmision.req.headers?.['x-simulacion-dominio']?.trim?.();
+
+			if (!usuarioSimulado || !dominioSimulado) {
+				this.#log.err('No se han hayado datos del usuario en nombre del cual se hace la transmisión');
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+				return;
+			}
+
+			this.#solicitante = {
+				usuario: this.#usuario,
+				dominio: this.#dominio
+			};
+
+			this.#jwt = Token.generarToken(usuarioSimulado, dominioSimulado);
+			this.#verificarJwt();
+
+			this.#log.info(`La transmisión se realiza en nombre de ${this.#usuario}@${this.#dominio}`);
 		}
 
+		this.#autorizado = true;
+		this.#log.info('El token transmitido queda autorizado');
+		return;
 
-		L.xi(txId, ['El token transmitido es correcto y está autorizado', req.token], 'txToken');
-		return { ok: true };
-		*/
+	}
+
+
+	/**
+	 * Devuelve un ErrorFedicom si se ha encontrado algún error en la autenticacion/autorización del token.
+	 * @returns ErrorFedicom si se ha encontrado algún error en la autenticacion/autorización del token o null si no hay errores.
+	 */
+	getError() {
+		return this.#error;
 	}
 
 
 	static generarToken(usuario, dominio, datosExtra) {
 
-		let { grupos } = datosExtra;
+		let { grupos } = datosExtra || {};
 
 		let datosToken = {
 			sub: usuario,

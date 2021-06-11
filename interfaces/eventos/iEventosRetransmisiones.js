@@ -9,7 +9,7 @@ const iMongo = require('interfaces/imongo/iMongo');
 const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
-const ConfirmacionPedidoSAP = require('modelos/pedido/ModeloConfirmacionPedidoSAP');
+//const ConfirmacionPedidoSAP = require('modelos/confirmacionPedidoSap/ModeloConfirmacionPedidoSAP');
 
 
 
@@ -237,6 +237,7 @@ module.exports.cambioEstado = (txId, nuevoEstado) => {
 	}
 }
 
+/*
 module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionSap) => {
 
 	let cuerpoConfirmacionSap = dbTxConfirmacionSap.clientRequest.body;
@@ -270,11 +271,7 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 	iMongo.transaccion.grabar(transaccion);
 	L.evento(txIdConfirmada, K.TX_TYPES.RECUPERACION_CONFIRMACION, confirmacionPedidoSAP.estadoTransmision, confirmacionPedidoSAP.pedidosAsociadosSap);
 
-	/**
-	 * Dejamos constancia en la propia transmisión de confirmación de que se ha actualizado
-	 * Lo normal es que previamente estuviera en estado K.TX_STATUS.CONFIRMACION_PEDIDO.NO_ASOCIADA_A_PEDIDO
-	 * y no tenga el valor establecido 'confirmingId'
-	 */
+
 	let transaccionConfirmacionSap = {
 		$setOnInsert: {
 			_id: txIdConfirmacionSap,
@@ -290,3 +287,4 @@ module.exports.asociarConfirmacionConPedido = (txIdConfirmada, dbTxConfirmacionS
 	iMongo.transaccion.grabar(transaccionConfirmacionSap);
 
 }
+*/

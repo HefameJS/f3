@@ -1,13 +1,13 @@
 'use strict';
 const C = global.config;
-//const L = global.logger;
 const K = global.constants;
 //const M = global.mongodb;
 
 
-const iSap = require('interfaces/isap/iSap');
+
 const iLdap = require('interfaces/iLdap');
 const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
+const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
 const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -39,18 +39,9 @@ class TransmisionAutenticacion extends Transmision {
 		error: null
 	}
 
-	static async instanciar(req, res) {
-		let transmision = new TransmisionAutenticacion(req, res);
-		await transmision.registrarTransmision();
-		await transmision.inicializar();
-		return transmision;
-	}
 
-
-	constructor(req, res) {
-		super(req, res, K.TIPOS.AUTENTICACION, TransmisionAutenticacion.condicionesAutorizacion);
-	}
-	async inicializar() {
+	// @Override
+	async operar() {
 		let json = this.req.body;
 
 		let errorFedicom = new ErrorFedicom();
@@ -86,13 +77,26 @@ class TransmisionAutenticacion extends Transmision {
 			this.#metadatos.debug = Boolean(json.debug);
 			this.log.debug('La petición indica que se devuelva información de depuración');
 		}
+
+		return await this.#verificarCredenciales();
 	}
+
+	// @Override
+	generarMetadatosOperacion() {
+		let metadatos = {}
+		if (this.#metadatos.aciertoCache) metadatos.aciertoCache = this.#metadatos.aciertoCache;
+		if (this.#metadatos.evitarCache) metadatos.evitarCache = this.#metadatos.evitarCache;
+		if (this.#metadatos.debug) metadatos.debug = this.#metadatos.debug;
+
+		this.setMetadatosOperacion('autenticacion', metadatos);
+	}
+
 
 	isTransfer() {
 		return this.#datos.dominio === C.dominios.TRANSFER || (this.#datos.dominio === C.dominios.FEDICOM && this.#datos.usuario.search(/^T[RGP]/) !== -1);
 	}
 
-	// TODO
+
 	generarJSON() {
 		return {
 			domain: this.#datos.dominio,
@@ -124,17 +128,6 @@ class TransmisionAutenticacion extends Transmision {
 		this.log.info('Se ha generado un token para el usuario', this.#datos.token)
 	}
 
-
-	async operar() {
-		let resultadoTransmision = await this.#verificarCredenciales();
-		resultadoTransmision.responderTransmision(this);
-
-		this.setMetadatosOperacion('autenticacion', this.#generarMetadatosOperacion());
-		await this.actualizarTransmision();
-	}
-
-
-
 	async #verificarCredenciales() {
 
 		if (!this.#metadatos.errorProtocolo) {
@@ -160,7 +153,6 @@ class TransmisionAutenticacion extends Transmision {
 
 		return this.#determinarResultadoAutenticacion();
 	}
-
 
 	async #autenticarContraSAP() {
 
@@ -216,7 +208,6 @@ class TransmisionAutenticacion extends Transmision {
 
 	}
 
-
 	async #autenticarContraLDAP() {
 		this.log.info('Se procede a comprobar en Active Directory las credenciales de la petición');
 
@@ -257,25 +248,19 @@ class TransmisionAutenticacion extends Transmision {
 		return new ResultadoTransmision(codigoEstadoHttp, codigoEstadoTransmision, cuerpoRespuestaHttp);
 	}
 
-	#generarMetadatosOperacion () {
-		let metadatos = {}
-		if (this.#metadatos.aciertoCache) metadatos.aciertoCache = this.#metadatos.aciertoCache;
-		if (this.#metadatos.evitarCache) metadatos.evitarCache = this.#metadatos.evitarCache;
-		if (this.#metadatos.debug) metadatos.debug = this.#metadatos.debug;
-		return metadatos;
-	}
 
 }
+
+
+TransmisionAutenticacion.TIPO = K.TIPOS.AUTENTICACION;
+TransmisionAutenticacion.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
+	admitirSinTokenVerificado: true
+});
 
 
 TransmisionAutenticacion.procesar = async function (req, res) {
-	let transmision = await TransmisionAutenticacion.instanciar(req, res);
-	await transmision.operar();
+	await Transmision.ejecutar(req, res, TransmisionAutenticacion);
 }
 
-
-TransmisionAutenticacion.condicionesAutorizacion = new CondicionesAutorizacion({
-	tokenVerificado: false
-});
 
 module.exports = TransmisionAutenticacion;

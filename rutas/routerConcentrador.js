@@ -8,29 +8,23 @@ const iEventos = require('interfaces/eventos/iEventos');
 const iFlags = require('interfaces/iflags/iFlags');
 
 // Modelos
+const Transmision = require('modelos/transmision/Transmision');
 const TransmisionAutenticacion = require('modelos/autenticacion/TransmisionAutenticacion');
 const TransmisionCrearPedido = require('modelos/pedido/TransmisionCrearPedido');
+const TransmisionConfirmarPedido = require('modelos/confirmarPedido/TransmisionConfirmarPedido');
+const TransmisionConsultarPedido = require('modelos/pedido/TransmisionConsultarPedido');
 
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
-const { extenderSolicitudHttp, tryCatch } = require('global/extensiones/extensionesExpress');
+const { extenderSolicitudHttp } = require('global/extensiones/extensionesExpress');
+
+
 
 
 
 
 module.exports = (app) => {
-
-
-	const controladores = {
-		//pedidos: require('controladores/controladorPedidos'),
-		confirmacionPedido: require('controladores/controladorConfirmacionPedido'),
-		devoluciones: require('controladores/controladorDevoluciones'),
-		albaranes: require('controladores/controladorAlbaranes'),
-		facturas: require('controladores/controladorFacturas'),
-		//retransmision: require('controladores/controladorRetransmision'),
-		logistica: require('controladores/controladorLogistica'),
-	}
 
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	// Detecta errores comunes en las peticiones entrantes tales como:
@@ -52,40 +46,24 @@ module.exports = (app) => {
 		}
 	});
 
-	// Generamos txId y añadimos cabeceras comunes.
-	// Tambien añadimos funcionalidades a req y res
-	app.use((req, res, next) => {
-
-
-		[req, res] = extenderSolicitudHttp(req, res);
-		let txId = req.txId;
-
-		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
-		
-		iFlags.transmision.generaFlags(req);
-
-		next();
-	});
-
 
 
 	// Rutas estandard Fedicom v3
 	app.route('/authenticate')
-		.post(TransmisionAutenticacion.procesar)
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionAutenticacion));
 
 
 	app.route('/pedidos')
-	//	.get(tryCatch(controladores.pedidos.consultaPedido))
-		.post(TransmisionCrearPedido.procesar)
-	/*	.put(tryCatch(controladores.pedidos.actualizarPedido));
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearPedido));
+	//	.put(tryCatch(controladores.pedidos.actualizarPedido));
 	app.route('/pedidos/:numeroPedido')
-		.get(tryCatch(controladores.pedidos.consultaPedido));*/
+		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarPedido));
 
 	app.route('/confirmaPedido')
-		.post(tryCatch(controladores.confirmacionPedido.confirmaPedido));
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 
 
-	
+	/*
 	app.route('/devoluciones')
 		.get(tryCatch(controladores.devoluciones.consultaDevolucion))
 		.post(tryCatch(controladores.devoluciones.crearDevolucion));
@@ -119,7 +97,7 @@ module.exports = (app) => {
 
 	app.route('/logistica/:numeroLogistica')
 		.get(tryCatch(controladores.logistica.consultaLogistica));
-
+	*/
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {

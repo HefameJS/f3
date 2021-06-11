@@ -1,18 +1,18 @@
 'use strict';
 //const C = global.config;
-//const L = global.logger;
 const K = global.constants;
 const M = global.mongodb;
 
 
-const Token =						require('modelos/transmision/Token');
-const MetadatosOperacion =			require('modelos/transmision/MetadatosOperacion');
-const MetadatosConexionEntrante = 	require('modelos/transmision/MetadatosConexionEntrante');
-const LogTransmision = 				require('modelos/transmision/LogTransmision');
-const IntercambioSap = 				require('modelos/transmision/IntercambioSap');
+const Token = require('modelos/transmision/Token');
+const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
+const MetadatosConexionEntrante = require('modelos/transmision/MetadatosConexionEntrante');
+const LogTransmision = require('modelos/transmision/LogTransmision');
+const IntercambioSap = require('modelos/transmision/IntercambioSap');
 
 const iSQLite = require('interfaces/iSQLite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
+const ResultadoTransmision = require('./ResultadoTransmision');
 
 
 /**
@@ -23,13 +23,15 @@ class Transmision extends Object {
 
 
 	#http;						// Contiene la peticion y respuesta de Express {req, res}
-								// Contiene un campo adicional "respuesta" que indica el estado de la respuesta dada al cliente:
-								// 		.enviada (Boolean) Indica si se ha INTENTADO o no enviar una respuesta (independientemente del resultado)
-								// 		.codigo (Numeric) Indica el código de estado HTTP de la respuesta (null si no hay respuesta)
-								// 		.cuerpoRespuesta (Object) Especifica el objeto enviado en la respuesta (null si no hay respuesta)
-								//		.error (Error) Un objeto de error si la respuesta no pudo enviarse (null si no hay error)
+	// Contiene un campo adicional "respuesta" que indica el estado de la respuesta dada al cliente:
+	// 		.enviada (Boolean) Indica si se ha INTENTADO o no enviar una respuesta (independientemente del resultado)
+	// 		.codigo (Numeric) Indica el código de estado HTTP de la respuesta (null si no hay respuesta)
+	// 		.cuerpoRespuesta (Object) Especifica el objeto enviado en la respuesta (null si no hay respuesta)
+	//		.error (Error) Un objeto de error si la respuesta no pudo enviarse (null si no hay error)
 
+	
 	txId;						// (ObjectID) El ID único de la transmisión.
+	log;						// (LogTransmision) El gestor de log para esta transmisión.
 	fechaCreacion;				// (Date) Fecha de creación de la transmisión.
 	#estado;					// (integer) El estado de la transmisión. Ej, RECEPCIONADA, ESPERANDO FALTAS ....
 	#tipo;						// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
@@ -37,6 +39,27 @@ class Transmision extends Object {
 	#intercambioSap				// (IntercambioSap) Interfaz de comunicación con SAP.
 	#metadatosConexionEntrante;	// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
 	#metadatosOperacion;		// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
+
+
+	static async ejecutar(req, res, ClaseTransmision) {
+
+		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
+		await transmision.#registrarTransmision();
+
+		if (transmision.#responderFalloAutorizacion()) {
+			try {
+				let resultadoOperacion = await transmision.operar();
+				await resultadoOperacion.responderTransmision(transmision);
+				await transmision.generarMetadatosOperacion();
+				
+			} catch (truenoTransmision) {
+				console.log('OJO QUE HA PEGADO UN TRUENO')
+				console.log(truenoTransmision.stack)
+			}
+		}
+
+		await transmision.#actualizarTransmision();
+	}
 
 	constructor(req, res, tipo, condicionesAutorizacion) {
 		super();
@@ -67,12 +90,24 @@ class Transmision extends Object {
 		this.#metadatosOperacion = new MetadatosOperacion();
 	}
 
+
 	/**
-	 * Retorna el tipo de la transmisión.
+	 * Método abstracto que las clases que hereden deben implementar.
+	 * DEBE DEVOLVER UN OBJETO ResultadoTransmision.
 	 */
-	getTipo() {
-		return this.#tipo;
+	async operar() {
+		this.log.fatal('Intento de operar sobre una transmisión que no tiene redefinido el método operar()')
+		return new ResultadoTransmision(503, K.ESTADOS.PETICION_INCORRECTA,)
 	}
+
+	/**
+	 * Método abstracto que las clases que hereden deben implementar.
+	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
+	 */
+	async generarMetadatosOperacion() {
+		this.log.warn('El objeto de transmisión no tiene redefinido el método generarMetadatosOperacion()');
+	}
+
 
 	/**
 	 * Obtiene el objecto request de express
@@ -149,11 +184,23 @@ class Transmision extends Object {
 	}
 
 	/**
-	 * Método absctrato que las clases que hereden deben implementar
+	 * Envía una respuesta de fallo de autenticación/autorización a la solicitud HTTP del cliente si el token 
+	 * no es válido para realizar la operación solicitada.
+	 * @returns false si el token no es valido y por tanto se respondió al cliente. true si el token es correcto y se debe operar.
 	 */
-	async operar() {
-		this.log.fatal('Intento de operar sobre una transmisión que no tiene redefinido el método operar()')
-		await this.responder(new ErrorFedicom('HTTP-ERR-500', `${__filename}@${new Error().lineNumber}`, 500));
+	async #responderFalloAutorizacion() {
+
+		let errorToken = this.token.getError();
+		if (errorToken) {
+			let codigoRespuesta = errorToken.getCodigoRespuestaHttp()
+			let estadoTransmision = codigoRespuesta === 401 ? K.ESTADOS.FALLO_AUTENTICACION : K.ESTADOS.FALLO_AUTORIZACION;
+			let resultadoTransmision = new ResultadoTransmision(codigoRespuesta, estadoTransmision, errorToken.getErrores())
+			await resultadoTransmision.responderTransmision(this);
+			return false;
+		}
+
+		return true;
+
 	}
 
 	#generarMetadatosConexion() {
@@ -170,7 +217,7 @@ class Transmision extends Object {
 
 	}
 
-	async registrarTransmision() {
+	async #registrarTransmision() {
 
 		let sentencia = {
 			$setOnInsert: {
@@ -207,15 +254,17 @@ class Transmision extends Object {
 		}
 	}
 
-	async actualizarTransmision() {
+	async #actualizarTransmision() {
 
 		let sentencia = {
 			$setOnInsert: {
 				_id: this.txId,
 				fechaCreacion: this.fechaCreacion
 			},
-			$set: {
+			$max: {
 				estado: this.#estado,
+			},
+			$set: {
 				tipo: this.#tipo,
 				'conexion.respuesta': {
 					fechaEnvio: new Date(),
@@ -253,11 +302,7 @@ class Transmision extends Object {
 		}
 	}
 
-	async escribirLogTransmision() {
-
-	}
 }
-
 
 
 

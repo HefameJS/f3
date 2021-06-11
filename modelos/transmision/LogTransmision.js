@@ -9,33 +9,38 @@ class RegistroLogTransmision {
 	fecha;
 	nivel;
 	datos;
+	padre;
 
-	constructor(datos, nivel) {
+	constructor(datos, nivel, padre) {
 		this.fecha = new Date();
 		this.datos = datos;
 		this.nivel = nivel;
+		this.padre = padre;
 
 		// Imprimimos
 		this.datos.forEach(dato => {
 
+			let mensaje = dato?.message || dato;
+			let nivel = this.nivel + (padre.prefijo ? '@' + padre.prefijo : '');
+
 			switch (this.nivel) {
 				case LogTransmision.FATAL:
 				case LogTransmision.ERROR:
-					console.log('\u001b[' + 31 + 'm\u001b[' + 7 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					console.log('\u001b[' + 31 + 'm\u001b[' + 7 + 'm', nivel, '\u001b[0m', mensaje);
 					break;
 				case LogTransmision.WARN:
-					console.log('\u001b[' + 31 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					console.log('\u001b[' + 31 + 'm', nivel, '\u001b[0m', mensaje);
 					break;
 				case LogTransmision.DEBUG:
 				case LogTransmision.TRACE:
-					console.log('\u001b[' + 36 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					console.log('\u001b[' + 36 + 'm', nivel, '\u001b[0m', mensaje);
 					break;
 				case LogTransmision.EVENT:
-					console.log('\u001b[' + 36 + 'm\u001b[' + 7 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
+					console.log('\u001b[' + 36 + 'm\u001b[' + 7 + 'm', nivel, '\u001b[0m', mensaje);
 					break;
 				default:
-					console.log('\u001b[' + 32 + 'm', this.nivel, '\u001b[0m', dato?.message || dato);
-					//32
+					console.log('\u001b[' + 32 + 'm', nivel, '\u001b[0m', mensaje);
+				//32
 			}
 
 		});
@@ -48,18 +53,24 @@ class LogTransmision {
 
 	#transmision;
 	#registros;
+	#prefijo;
 
-	constructor(transmision) {
+	constructor(transmision, prefijo = '') {
+		this.#transmision = transmision;
 		this.#registros = [];
-		this.transmision = transmision;
+		this.#prefijo = prefijo;
 	}
 
 	get registros() {
 		return this.#registros;
 	}
 
+	get prefijo() {
+		return this.#prefijo;
+	}
+
 	#grabarEntrada(datos, nivel) {
-		let registro = new RegistroLogTransmision(datos, nivel)
+		let registro = new RegistroLogTransmision(datos, nivel, this)
 		this.#registros.push(registro);
 	}
 

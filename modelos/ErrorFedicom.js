@@ -1,7 +1,10 @@
 'use strict';
 //const C = global.config;
-const L = global.logger;
 //const K = global.constants;
+
+const ResultadoTransmision = require("modelos/transmision/ResultadoTransmision");
+
+
 
 const CODIGO_HTTP_POR_DEFECTO = 500;
 
@@ -57,7 +60,6 @@ class ErrorFedicom {
 				this.codigoRespuestaHttp = 400;
 				this.listaErroresFedicom.push({ codigo: 'HTTP-400', descripcion: 'No se entiende el cuerpo del mensaje' });
 			} else {
-				L.f('ERROR EXPRESS NO CONTROLADO: ' + error.type);
 				this.listaErroresFedicom.push({ codigo: 'HTTP-500', descripcion: 'Error desconocido [' + error.type + ']' });
 			}
 			return this;
@@ -79,8 +81,6 @@ class ErrorFedicom {
 				errorToLog = error.stack.split(/\r?\n/);
 			}
 
-			L.e(['Se convirtió una excepción en un ErrorFedicom', errorToLog, error]);
-
 			this.listaErroresFedicom.push({
 				codigo: 'HTTP-ERR-500',
 				descripcion: 'Error interno del servidor - '
@@ -91,7 +91,6 @@ class ErrorFedicom {
 		}
 
 		// Si los parámetros de la llamada no son válidos
-		L.f(['Se inserta un error desconocido', error]);
 		this.listaErroresFedicom.push({ codigo: 'HTTP-500', descripcion: 'Error desconocido' });
 		return this;
 	}
@@ -104,42 +103,15 @@ class ErrorFedicom {
 		return this.listaErroresFedicom;
 	}
 
-
-	enviarRespuestaDeError(expressRes, codigoHttp) {
-		codigoHttp = codigoHttp || this.codigoRespuestaHttp || CODIGO_HTTP_POR_DEFECTO;
-		if (!expressRes.headersSent)
-			expressRes.status(codigoHttp).json(this.listaErroresFedicom);
-		return this.listaErroresFedicom;
-	}
-
-
-	/**
-	 * Este método provee un atajo para enviar un único codigo de error Fedicom al cliente.
-	 * @param {*} expressRes El objeto de respuesta HTTP de express
-	 * @param {*} codigo El código del error Fedicom (i.e. AUTH-004, LIN-PED-ERR-001, etc...)
-	 * @param {*} descripcion El texto descriptivo del error
-	 * @param {*} codigoRespuestaHTTP El código de respuesta HTTP asociado al error
-	 */
-	static generarYEnviarError(expressRes, codigo, descripcion, codigoRespuestaHTTP) {
-		let errorFedicom = new ErrorFedicom(codigo, descripcion, codigoRespuestaHTTP);
-		return errorFedicom.enviarRespuestaDeError(expressRes);
-	}
-
-	/**
-	 * Genera y envía un error fedicom para las respuestas erroneas que da el proceso monitor.
-	 * 
-	 * @param {*} expressRes 
-	 * @param {*} descripcion 
-	 * @param {*} codigoRespuestaHTTP 
-	 */
-	static generarYEnviarErrorMonitor(expressRes, descripcion, codigoRespuestaHTTP) {
-		return ErrorFedicom.generarYEnviarError(expressRes, 'MONITOR-ERR-999', descripcion, codigoRespuestaHTTP || 500);
-	}
-
-
 	static esErrorFedicom(objeto) {
 		return ErrorFedicom.prototype.isPrototypeOf(objeto);
 	}
+
+	generarResultadoTransmision(estado = K.ESTADOS.ERROR_GENERICO) {
+		return new ResultadoTransmision(this.codigoRespuestaHttp, estado, this.getErrores())
+	}
+
+
 }
 
 

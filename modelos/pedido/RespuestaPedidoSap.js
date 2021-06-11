@@ -75,9 +75,14 @@ class RespuestaPedidoSap {
 		this.#metadatos.pedidoAgrupadoSap = parseInt(json.numeropedido) || null;
 
 		if (Array.isArray(json.sap_pedidosasociados) && json.sap_pedidosasociados.length > 0) {
-			this.#metadatos.pedidosAsociadosSap = json.sap_pedidosasociados.map(numeroPedidoSap => {
-				return parseInt(numeroPedidoSap);
-			}).filter(numeroPedidoSap => numeroPedidoSap ?? false);
+			this.#metadatos.pedidosAsociadosSap = []
+			json.sap_pedidosasociados.forEach(numeroPedidoSap => {
+				let pedidoInt = parseInt(numeroPedidoSap);
+				if (pedidoInt) this.#metadatos.pedidosAsociadosSap.push(pedidoInt);
+			})
+
+			if (this.#metadatos.pedidosAsociadosSap.length === 0)
+				this.#metadatos.pedidosAsociadosSap = null;
 		}
 
 
@@ -167,13 +172,13 @@ class RespuestaPedidoSap {
 				this.#metadatos.totales.cantidadIncidencias += lineaSap.cantidadFalta;
 			}
 
-			if (lineaSap.tieneEstupefaciente() ) {
+			if (lineaSap.tieneEstupefaciente()) {
 				this.#metadatos.estupefaciente = true;
 				this.#metadatos.totales.lineasEstupe++;
 				this.#metadatos.totales.cantidadEstupe += lineaSap.cantidad;
 			}
-			
-			if (lineaSap.tieneServicioDemorado()) 
+
+			if (lineaSap.tieneServicioDemorado())
 				this.#metadatos.servicioDemorado = true;
 			return lineaSap;
 		});

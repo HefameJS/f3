@@ -1,6 +1,5 @@
 'use strict';
 const C = global.config;
-//const L = global.logger;
 const K = global.constants;
 const M = global.mongodb;
 
@@ -15,7 +14,6 @@ const Validador = require('global/validador');
 
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const LineaPedidoCliente = require('modelos/pedido/LineaPedidoCliente');
-const LineaPedidoSap = require('./LineaPedidoSap');
 const RespuestaPedidoSap = require('./RespuestaPedidoSap');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
@@ -54,19 +52,10 @@ class TransmisionCrearPedido extends Transmision {
 		lineas: null
 	}
 
-
 	#respuestaPedidoSap = null;
 
-	static async instanciar(req, res) {
-		let transmision = new TransmisionCrearPedido(req, res);
-		await transmision.registrarTransmision();
-		await transmision.inicializar();
-		return transmision;
-	}
-	constructor(req, res) {
-		super(req, res, K.TIPOS.CREAR_PEDIDO, TransmisionCrearPedido.condicionesAutorizacion);
-	}
-	async inicializar() {
+	// @Override
+	async operar() {
 		let json = this.req.body;
 
 		let errorFedicom = new ErrorFedicom();
@@ -170,6 +159,8 @@ class TransmisionCrearPedido extends Transmision {
 		}
 		this.log.info(`Se asigna el siguiente CRC ${this.#metadatos.crc} para el pedido usando ${this.#metadatos.tipoCrc}`);
 
+
+		return await this.#procesarCreacionDePedido();
 
 	}
 
@@ -288,15 +279,7 @@ class TransmisionCrearPedido extends Transmision {
 
 
 
-	async operar() {
-		let resultadoTransmision = await this.#generarResultadoTransmision();
-		resultadoTransmision.responderTransmision(this);
-		this.setMetadatosOperacion('pedido', this.#generarMetadatosPedido());
-		await this.actualizarTransmision();
-
-	}
-
-	async #generarResultadoTransmision() {
+	async #procesarCreacionDePedido() {
 
 		// PASO 1: Verificar si hay errores de protocolo
 		if (this.#metadatos.errorProtocolo) {
@@ -502,10 +485,11 @@ class TransmisionCrearPedido extends Transmision {
 
 	}
 
-	#generarMetadatosPedido() {
+	// @Override
+	generarMetadatosOperacion() {
 
 		if (this.#metadatos.errorProtocolo) {
-			return null;
+			return [];
 		}
 
 		let metadatos = {};
@@ -547,23 +531,18 @@ class TransmisionCrearPedido extends Transmision {
 
 		}
 
-		return metadatos;
-
+		this.setMetadatosOperacion('pedido', metadatos);
 	}
 }
 
 
-TransmisionCrearPedido.procesar = async function (req, res) {
-	let transmision = await TransmisionCrearPedido.instanciar(req, res);
-	await transmision.operar();
-}
 
-TransmisionCrearPedido.condicionesAutorizacion = new CondicionesAutorizacion({
-	tokenVerificado: true,
+TransmisionCrearPedido.TIPO = K.TIPOS.CREAR_PEDIDO;
+TransmisionCrearPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
+	admitirSinTokenVerificado: false,
 	grupo: null,
-	simulaciones: false,
+	simulaciones: true,
 	simulacionesEnProduccion: false,
-	simulacionRequiereCambioToken: false
 });
 
 
