@@ -9,11 +9,14 @@ const TransmisionAutenticacion = require('modelos/autenticacion/TransmisionAuten
 const TransmisionCrearPedido = require('modelos/pedido/TransmisionCrearPedido');
 const TransmisionConfirmarPedido = require('modelos/confirmarPedido/TransmisionConfirmarPedido');
 const TransmisionConsultarPedido = require('modelos/pedido/TransmisionConsultarPedido');
+const TransmisionCrearDevolucion = require('modelos/devolucion/TransmisionCrearDevolucion');
+const TransmisionConsultarDevolucion = require('modelos/devolucion/TransmisionConsultarDevolucion');
 
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
 const { extenderSolicitudHttp } = require('global/extensiones/extensionesExpress');
+
 
 
 
@@ -58,13 +61,13 @@ module.exports = (app) => {
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 
 
-	/*
+	
 	app.route('/devoluciones')
-		.get(tryCatch(controladores.devoluciones.consultaDevolucion))
-		.post(tryCatch(controladores.devoluciones.crearDevolucion));
+	//	.get(tryCatch(controladores.devoluciones.consultaDevolucion))
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
-		.get(tryCatch(controladores.devoluciones.consultaDevolucion));
-
+		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarDevolucion));
+	/*
 		
 	app.route('/albaranes')
 		.get(tryCatch(controladores.albaranes.listadoAlbaranes));

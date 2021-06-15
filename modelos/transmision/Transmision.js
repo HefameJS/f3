@@ -46,7 +46,7 @@ class Transmision extends Object {
 		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
 		await transmision.#registrarTransmision();
 
-		if (transmision.#responderFalloAutorizacion()) {
+		if (await transmision.#responderFalloAutorizacion()) {
 			try {
 				let resultadoOperacion = await transmision.operar();
 				await resultadoOperacion.responderTransmision(transmision);
@@ -146,10 +146,12 @@ class Transmision extends Object {
 	/**
 	 * Envía una respuesta a la solicitud HTTP del cliente.
 	 * 
-	 * @param {ErrorFedicom|Object} datos Los datos a enviar
+	 * @param {ErrorFedicom|Object|Buffer} datos Los datos a enviar
 	 * @param {number} codigoEstado El código de estado de la respuesta HTTP. Por defecto 200.
+	 * @param {string} contentType El valor para la cabecera 'Content-Type' de la respuesta. Por defecto: 'application/json'.
+	 * @param {string} nombreFichero El nombre con el que se descarga el fichero.
 	 */
-	async responder(datos, codigoEstado) {
+	async responder(datos, codigoEstado, contentType = 'application/json', nombreFichero) {
 
 		if (this.#http.res.headersSent) {
 			this.log.fatal('Se está intentando enviar una respuesta HTTP por segunda vez', datos, codigoEstado);
@@ -160,6 +162,9 @@ class Transmision extends Object {
 		this.#http.res.setHeader('Software-ID', K.SOFTWARE_ID.SERVIDOR);
 		this.#http.res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
 
+		this.#http.res.setHeader('Content-Type', contentType);
+		if (nombreFichero) this.#http.res.setHeader('Content-Disposition', 'attachment; filename=' + nombreFichero);
+
 		if (ErrorFedicom.esErrorFedicom(datos)) {
 			codigoEstado = codigoEstado || datos.getCodigoRespuestaHttp();
 			datos = datos.getListaErroresFedicom();
@@ -167,12 +172,17 @@ class Transmision extends Object {
 			codigoEstado = codigoEstado || 200;
 		}
 
-		this.#http.res.datos = datos;
-
 		try {
-			let respuesta = await this.#http.res.status(codigoEstado).json(datos);
+			let respuesta = await this.#http.res.status(codigoEstado).send(datos);
 			this.log.info(`Se ha enviado una respuesta ${respuesta.statusCode} - ${respuesta.statusMessage} al cliente`);
-			this.#http.respuesta.datos = datos;
+			if (!Buffer.isBuffer(datos))
+				this.#http.respuesta.datos = datos;
+			else 
+				this.#http.respuesta.datos = {
+					nombreFichero: nombreFichero,
+					formato: contentType,
+					bytes: datos.byteLength
+				};
 			this.#http.respuesta.codigo = codigoEstado;
 		} catch (errorRespuesta) {
 			this.log.err('No se pudo enviar la respuesta al cliente por un error en el socket', errorRespuesta);

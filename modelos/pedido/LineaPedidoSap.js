@@ -120,7 +120,7 @@ class LineaPedidoSap {
 
 	}
 
-	generarJSON(tipoPedido = 'respuestaCliente') {
+	generarJSON(tipoReceptor = 'respuestaCliente') {
 
 		let json = {};
 		if (this.orden || this.orden === 0) json.orden = this.orden;

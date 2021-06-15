@@ -6,16 +6,16 @@ const M = global.mongodb;
 
 const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
-const Crc = require('modelos/CRC');
-
-
-const Validador = require('global/validador');
-// const Token = require('modelos/transmision/Token');
-
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
+const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
+
+const Crc = require('modelos/CRC');
+const Validador = require('global/validador');
+
 const LineaPedidoCliente = require('modelos/pedido/LineaPedidoCliente');
 const RespuestaPedidoSap = require('./RespuestaPedidoSap');
-const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
+
+let toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -489,7 +489,7 @@ class TransmisionCrearPedido extends Transmision {
 	generarMetadatosOperacion() {
 
 		if (this.#metadatos.errorProtocolo) {
-			return [];
+			return;
 		}
 
 		let metadatos = {};
@@ -518,8 +518,8 @@ class TransmisionCrearPedido extends Transmision {
 			if (md.motivoPedidoSap) metadatos.motivoPedidoSap = md.motivoPedidoSap;
 			if (md.clienteSap) metadatos.clienteSap = md.clienteSap;
 
-			if (md.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = md.pedidosAsociadosSap;
-			if (md.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = md.pedidoAgrupadoSap;
+			if (md.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = md.pedidosAsociadosSap.map(nPed => toMongoLong(nPed));
+			if (md.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = toMongoLong(md.pedidoAgrupadoSap);
 
 			if (md.reboteFaltas) metadatos.reboteFaltas = md.reboteFaltas;
 			if (md.porRazonDesconocida) metadatos.porRazonDesconocida = md.porRazonDesconocida;

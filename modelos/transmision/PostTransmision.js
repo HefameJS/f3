@@ -45,7 +45,7 @@ class PostTransmision {
 		this.#datosTransmision = datosTransmision;
 
 		this.log = new LogTransmision(this, this.txId.toString());
-		this.log.info(`Se post-instancia la transmisión ${this.#datosTransmision._id}`);
+		this.log.info(`Se re-instancia la transmisión ${this.#datosTransmision._id}`);
 
 		this.#metadatosOperacion = new MetadatosOperacion();
 	}

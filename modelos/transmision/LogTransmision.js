@@ -43,6 +43,10 @@ class RegistroLogTransmision {
 				//32
 			}
 
+			if (dato?.stack) {
+				console.log(dato.stack)
+			}
+
 		});
 	}
 

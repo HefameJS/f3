@@ -10,6 +10,7 @@ const PostTransmision = require('modelos/transmision/PostTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 
+let toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -31,7 +32,7 @@ class TransmisionConfirmarPedido extends Transmision {
 	async operar() {
 		let json = this.req.body;
 
-		
+
 		json.sap_pedidosasociados?.forEach?.(numeroPedidoSap => {
 			let pedidoInt = parseInt(numeroPedidoSap);
 			if (pedidoInt) this.#datos.pedidosAsociadosSap.push(pedidoInt);
@@ -72,10 +73,10 @@ class TransmisionConfirmarPedido extends Transmision {
 			transmisionPedidoConfirmada.setEstado(this.#metadatos.estadoTransmisionPedido);
 			if (this.#datos.pedidosAsociadosSap?.length) {
 				transmisionPedidoConfirmada.setMetadatosOperacion('pedido', {
-					pedidosAsociadosSap: this.#datos.pedidosAsociadosSap
+					pedidosAsociadosSap: this.#datos.pedidosAsociadosSap.map(nPed => toMongoLong(nPed))
 				});
 			}
-			transmisionPedidoConfirmada.actualizarTransmision();
+			await transmisionPedidoConfirmada.actualizarTransmision();
 
 		} catch (errorPostTransmision) {
 			this.log.err('Ocurrió un error al instanciar la transmisión a confirmar', errorPostTransmision);
@@ -83,9 +84,7 @@ class TransmisionConfirmarPedido extends Transmision {
 		}
 
 
-
 		return new ResultadoTransmision(200, K.ESTADOS.COMPLETADO, { ok: true });
-
 
 	}
 

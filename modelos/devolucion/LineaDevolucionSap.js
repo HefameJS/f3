@@ -1,12 +1,26 @@
 'use strict';
 const C = global.config;
-const L = global.logger;
 //const K = global.constants;
 
 
 class LineaDevolucionSap {
-	constructor(json, txId, numeroPosicion) {
-		L.xi(txId, ['Analizando linea de devolución en posicion ' + numeroPosicion])
+
+	#transmision;
+	#log;
+
+	#metadatos = {
+		numeroPosicion: null,
+		estupefaciente: false
+	}
+	
+	constructor(transmision, json, numeroPosicion) {
+
+		this.#transmision = transmision;
+		this.#log = this.#transmision.log;
+
+		this.#log.info(`Posición ${numeroPosicion}: Analizando linea de devolución`);
+
+		this.#metadatos.numeroPosicion = numeroPosicion;
 
 		// Copiamos las propiedades de la POSICION que son relevantes		
 		this.orden = json.orden;
@@ -23,9 +37,21 @@ class LineaDevolucionSap {
 		this.observaciones = json.observaciones || null;
 		this.numeroDevolucionSap = json.sap_num_devo_fedi || null;
 
+		if (this.valeEstupefaciente) {
+			this.#metadatos.estupefaciente = true;
+		}
+
 	}
 
-	generarJSON() {
+	esEstupefaciente() {
+		return this.#metadatos.estupefaciente;
+	}
+
+	tieneIncidencias() {
+		return this.incidencias?.length > 0;
+	}
+
+	generarJSON(tipoReceptor = 'respuestaCliente') {
 		let json = {};
 		if (this.orden || this.orden === 0) json.orden = this.orden;
 		if (this.numeroAlbaran) json.numeroAlbaran = this.numeroAlbaran;

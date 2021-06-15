@@ -52,6 +52,7 @@ class Token {
 			}
 		}
 
+		this.#log.debug('Verificando la validez del token')
 		this.#verificarJwt();
 		this.#comprobarAutorizacion();
 
@@ -132,7 +133,7 @@ class Token {
 			}
 
 		} catch (errorJwt) {
-			this.#log.warn('No se pudo decodificar el token de la transmisión', errorJwt);
+			this.#log.warn(`El token de la transmisión no es válido. Motivo: ${errorJwt.message}`);
 			this.#error = new ErrorFedicom('AUTH-002', 'Token inválido', 401);
 		}
 	}
@@ -145,13 +146,13 @@ class Token {
 	#comprobarAutorizacion() {
 
 		let opciones = this.#condicionesAutorizacion;
-		this.#log.debug('Realizando control de autorización')
+		
 
 
 		// Primerísimo de todo, ¿ el token debe ser válido ?
 		if (opciones.admitirSinTokenVerificado) {
 			this.#autorizado = true;
-			this.#log.info('No se requiere token, la transisión queda autorizada');
+			this.#log.info('No se requiere token para esta operación, la transmisión queda autorizada');
 			return;
 		} else if (!this.#verificado) {
 			this.#log.warn('El token de la transmisión no es válido o no se especifica');
@@ -163,7 +164,7 @@ class Token {
 		if (this.#dominio === C.dominios.INTERFEDICOM) {
 			if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
 				// TODO: Falta hacer control de admision por IP origen
-				this.#log.info('La transisión queda autorizada como INTERFEDICOM');
+				this.#log.info('La transmisión queda autorizada como INTERFEDICOM');
 				this.#autorizado = true;
 				return;
 			}
