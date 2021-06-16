@@ -141,7 +141,7 @@ function esFechaHora(campo, errorFedicom, codigoErrorFedicom, descripcionErrorFe
 * @param {string} descripcionErrorFedicom El mensaje de error que se introduce en caso de error
 */
 function esArrayNoVacio(campo, errorFedicom, codigoErrorFedicom, descripcionErrorFedicom) {
-	if (!campo || !campo.forEach || campo.length < 1) {
+	if (!Array.isArray(campo) || campo.length < 1) {
 		if (errorFedicom) errorFedicom.insertar(codigoErrorFedicom, descripcionErrorFedicom, 400);
 		return false;
 	}

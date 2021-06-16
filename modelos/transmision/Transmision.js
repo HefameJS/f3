@@ -167,7 +167,7 @@ class Transmision extends Object {
 
 		if (ErrorFedicom.esErrorFedicom(datos)) {
 			codigoEstado = codigoEstado || datos.getCodigoRespuestaHttp();
-			datos = datos.getListaErroresFedicom();
+			datos = datos.getErrores();
 		} else {
 			codigoEstado = codigoEstado || 200;
 		}

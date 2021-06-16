@@ -49,6 +49,7 @@ let MAESTRO = {
 				new Estado(K.ESTADOS.FALLO_AUTENTICACION, 'Fallo de autenticación', 'La petición no incluye un token válido'),
 				new Estado(K.ESTADOS.NO_AUTORIZADO, 'No autorizado', 'No está autorizado a crear pedidos en nombre del cliente indicado'),
 				new Estado(K.ESTADOS.PETICION_INCORRECTA, 'Petición incorrecta', 'La petición no contiene un pedido válido según la norma Fedicom3'),
+				new Estado(K.ESTADOS.DUPLICADO, 'Petición duplicada', 'La petición se ha detectado como duplicado de otra'),
 				new Estado(K.ESTADOS.NO_SAP, 'No SAP', 'No se ha logrado comunicar con SAP, la transmisión está pendiente de reenviarse'),
 				new Estado(K.ESTADOS.RECHAZADO_SAP, 'Rechazado por SAP', 'SAP ha indicado que el pedido no es válido'),
 				new Estado(K.ESTADOS.COMPLETADO, 'OK', 'El pedido se ha grabado con éxito'),
@@ -69,7 +70,8 @@ let MAESTRO = {
 					K.ESTADOS.FALLO_AUTENTICACION,
 					K.ESTADOS.NO_AUTORIZADO,
 					K.ESTADOS.PETICION_INCORRECTA,
-					K.ESTADOS.RECHAZADO_SAP
+					K.ESTADOS.RECHAZADO_SAP,
+					K.ESTADOS.DUPLICADO
 				]),
 				new CategoriaEstado(3, 'Error',
 					'Pedidos que están en un estado erróneo', [
@@ -137,6 +139,7 @@ let MAESTRO = {
 				new Estado(K.ESTADOS.FALLO_AUTENTICACION, 'Fallo de autenticación', 'La petición no incluye un token válido'),
 				new Estado(K.ESTADOS.NO_AUTORIZADO, 'No autorizado', 'No está autorizado a realizar el pedido de logística'),
 				new Estado(K.ESTADOS.PETICION_INCORRECTA, 'Petición incorrecta', 'La petición no contiene un pedido de logística válido según la norma Fedicom3'),
+				new Estado(K.ESTADOS.DUPLICADO, 'Petición duplicada', 'La petición se ha detectado como duplicado de otra'),
 				new Estado(K.ESTADOS.RECHAZADO_SAP, 'Rechazado por SAP', 'SAP ha indicado que la transmisión no contiene datos válidos'),
 				new Estado(K.ESTADOS.ERROR_RESPUESTA_SAP, 'Error SAP', 'Ocurrió un error en la llamada a SAP'),
 				new Estado(K.ESTADOS.COMPLETADO, 'Completada', 'Pedido de logística grabado con éxito'),
@@ -156,6 +159,7 @@ let MAESTRO = {
 						K.ESTADOS.PETICION_INCORRECTA,
 						K.ESTADOS.RECHAZADO_SAP,
 						K.ESTADOS.LOGISTICA.SIN_NUMERO_LOGISTICA,
+						K.ESTADOS.DUPLICADO,
 				]),
 				new CategoriaEstado(3, 'Error',
 					'Pedidos de logística que están en un estado erróneo', [

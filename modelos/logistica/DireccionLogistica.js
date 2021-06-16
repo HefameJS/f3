@@ -1,23 +1,48 @@
 'use strict';
 //const C = global.config;
-const L = global.logger;
 //const K = global.constants;
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
-
-// Helpers
 const Validador = require('global/validador');
+const Modelo = require('modelos/transmision/Modelo');
 
-class DireccionLogistica {
-	constructor(txId, json) {
+class DireccionLogistica extends Modelo {
 
-		this.metadatos = {
-			errores: [] // Un array de errores Fedicom si se detectan. Un array vacío si no hay errores
+
+	metadatos = {
+		errores: new ErrorFedicom(),
+		modo: null
+	}
+
+	codigo;
+	cif;
+	soe;
+	nombre;
+	calle;
+	poblacion;
+	provincia;
+	codigoPostal;
+	pais;
+	telefono;
+	email;
+	codigoAlmacen;
+	descripcionAlmacen;
+	ruta;
+	descripcionRuta;
+
+
+	constructor(transmision, json, modo) {
+		super(transmision);
+
+		if (!['origen', 'destino'].includes(modo)) {
+			this.log.fatal(`No se admite el modo "${modo}" en la dirección. Debe ser "origen" o "destino"`)
+			this.metadatos.errores.push(new ErrorFedicom('LOG-ERR-000', `El modo "${modo} es incorrecto"`));
 		}
-
+		this.metadatos.modo = modo;
+		
 		if (!json) {
-			this.metadatos.errores.push(new ErrorFedicom('LOG-ERR-000', 'Los campos "origen" y "destino" son obligatorios.'));
+			this.metadatos.errores.push(new ErrorFedicom('LOG-ERR-000', `El campo "${modo}" es obligatorio"`));
 			return;
 		}
 
@@ -29,14 +54,7 @@ class DireccionLogistica {
 			return;
 		}
 
-		// Copiamos lel resto de las propiedades de la dirección que son relevantes	
 		let tmp;
-
-		tmp = json.codigo;
-		if (Validador.esCadenaNoVacia(tmp)) {
-			this.codigo = tmp.trim();
-		}
-
 
 		tmp = json.cif || json.CIF;
 		if (Validador.esCadenaNoVacia(tmp)) {
@@ -108,18 +126,18 @@ class DireccionLogistica {
 		if (Validador.esCadenaNoVacia(tmp)) {
 			this.descripcionRuta = tmp.trim();
 		}
-
 	}
 
 	esErronea() {
-		return this.metadatos.errores.length > 0;
+		return this.metadatos.errores.tieneErrores();
 	}
 
 	getErrores() {
-		return this.metadatos.errores;
+		return this.metadatos.errores.getErrores();
 	}
 
-	generarJSON(generarParaSap = true) {
+
+	generarJSON(tipoDestino = 'sap') {
 		let respuesta = {}
 
 		if (this.codigo) respuesta.codigo = this.codigo;

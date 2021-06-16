@@ -11,11 +11,14 @@ const TransmisionConfirmarPedido = require('modelos/confirmarPedido/TransmisionC
 const TransmisionConsultarPedido = require('modelos/pedido/TransmisionConsultarPedido');
 const TransmisionCrearDevolucion = require('modelos/devolucion/TransmisionCrearDevolucion');
 const TransmisionConsultarDevolucion = require('modelos/devolucion/TransmisionConsultarDevolucion');
+const TransmisionCrearLogistica = require('modelos/logistica/TransmisionCrearLogistica');
+
 
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // Helpers
 const { extenderSolicitudHttp } = require('global/extensiones/extensionesExpress');
+
 
 
 
@@ -88,14 +91,14 @@ module.exports = (app) => {
 	
 	//app.route('/retransmitir/:txId')
 		//.get(tryCatch(controladores.retransmision.retransmitePedido));
-	
-	app.route('/logistica')
-		.post(tryCatch(controladores.logistica.crearLogistica))
-		.get(tryCatch(controladores.logistica.consultaLogistica));
-
-	app.route('/logistica/:numeroLogistica')
-		.get(tryCatch(controladores.logistica.consultaLogistica));
 	*/
+
+	app.route('/logistica')
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearLogistica));
+
+	//app.route('/logistica/:numeroLogistica')
+	//	.get(tryCatch(controladores.logistica.consultaLogistica));
+
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {

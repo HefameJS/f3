@@ -92,9 +92,10 @@ class TransmisionCrearPedido extends Transmision {
 		// notificaciones: [{tipo: string, valor: string}]
 		if (Validador.esArrayNoVacio(json.notificaciones)) {
 			this.#datosEntrada.notificaciones = json.notificaciones.filter(n => {
-				if (Validador.esCadenaNoVacia(n.tipo) && Validador.esCadenaNoVacia(n.valor))
+				if (Validador.esCadenaNoVacia(n.tipo) && Validador.esCadenaNoVacia(n.valor)) {
 					return true;
-				L.xw(txId, ['Se descarta una notificación por no ser correcta', n])
+				}
+				this.log.warn('Se descarta una notificación por no ser correcta:', n)
 				return false;
 			}).map(n => { return { tipo: n.tipo, valor: n.valor } })
 		}
@@ -120,7 +121,7 @@ class TransmisionCrearPedido extends Transmision {
 			if (Validador.esFechaHora(json.fechaServicio)) {
 				this.#datosEntrada.fechaServicio = json.fechaServicio.trim();
 			} else {
-				L.xw(txId, 'El campo "fechaServicio" no va en formato Fedicom3 DateTime dd/mm/yyyy hh:mm:ss');
+				this.log.warn('El campo "fechaServicio" no va en formato Fedicom3 DateTime dd/mm/yyyy hh:mm:ss');
 			}
 		}
 
@@ -129,7 +130,7 @@ class TransmisionCrearPedido extends Transmision {
 			if (Validador.esEnteroPositivoMayorQueCero(json.aplazamiento)) {
 				this.#datosEntrada.aplazamiento = parseInt(json.aplazamiento);
 			} else {
-				L.xw(txId, ['El campo "aplazamiento" no es un entero > 0', json.aplazamiento]);
+				this.log.warn(`El valor "${json.aplazamiento}" como "aplazamiento" no es válido`);
 			}
 		}
 
@@ -291,7 +292,7 @@ class TransmisionCrearPedido extends Transmision {
 
 		// PASO 2: Verificar si el pedido es duplicado
 		if (await this.#esPedidoDuplicado()) {
-			return new ResultadoTransmision(400, K.ESTADOS.PEDIDO.DUPLICADO, this.generarJSON('errores'));
+			return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.generarJSON('errores'));
 		}
 
 

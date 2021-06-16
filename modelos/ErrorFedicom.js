@@ -10,6 +10,7 @@ const CODIGO_HTTP_POR_DEFECTO = 500;
 
 class ErrorFedicom {
 
+	
 	constructor(codigoError, descripcion, codigoRespuestaHttp = CODIGO_HTTP_POR_DEFECTO) {
 		this.listaErroresFedicom = [];
 		this.codigoRespuestaHttp = codigoRespuestaHttp;
