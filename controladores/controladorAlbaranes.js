@@ -12,7 +12,7 @@ const iSap = require('interfaces/isap/iSap');
 const CRC = require('modelos/CRC');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const ConsultaAlbaran = require('modelos/albaran/ModeloConsultaAlbaran');
-const Albaran = require('modelos/albaran/ModeloAlbaran');
+const Albaran = require('modelos/albaran/Albaran');
 const ConfirmacionAlbaran = require('modelos/albaran/ModeloConfirmacionAlbaran');
 
 
