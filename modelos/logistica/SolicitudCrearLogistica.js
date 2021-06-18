@@ -22,7 +22,8 @@ class SolicitudCrearLogistica extends Modelo {
 		errores: new ErrorFedicom(),		// Errores encontrados al instanciar la solicitud
 		errorProtocoloCabecera: false,		// Indica si la transmisión no tiene la cabecera según el protocolo
 		todasLineasInvalidas: true,			// Indica si la transmisión no contiene ninguna línea válida según el protocolo
-		retransmisionCliente: false,		// Indica si es un intento de retransmisión del cliente de una transmisión que quedó erronea
+		esDuplicado: false,
+		esRetransmisionCliente: false,		// Indica si es un intento de retransmisión del cliente de una transmisión que quedó erronea
 		errorComprobacionDuplicado: false,	// Indica si no se pudo chequear si la transmisión es un duplicado de otra
 		crc: ''								// El CRC de la transmisión
 	};
@@ -107,6 +108,7 @@ class SolicitudCrearLogistica extends Modelo {
 
 		// Generación del CRC
 		this.metadatos.crc = Crc.generar(this.codigoCliente, this.numeroLogisticaOrigen);
+		this.log.info(`Se asigna el siguiente CRC ${this.metadatos.crc} para la orden de logística`);
 	}
 
 	/**
@@ -152,6 +154,15 @@ class SolicitudCrearLogistica extends Modelo {
 		return this.metadatos.errorProtocoloCabecera || this.metadatos.todasLineasInvalidas;
 	}
 
+	contieneErroresProtocoloEnCabecera() {
+		return this.metadatos.errorProtocoloCabecera;
+	}
+
+	noTieneLineasValidas() {
+		return this.metadatos.todasLineasInvalidas;
+	}
+
+
 	/**
 	 * Control de duplicados
 	 */
@@ -183,9 +194,10 @@ class SolicitudCrearLogistica extends Modelo {
 					transmisionOriginal.estado === K.ESTADOS.FALLO_AUTENTICACION ||
 					transmisionOriginal.estado === K.ESTADOS.PETICION_INCORRECTA) {
 					this.log.info('La transmisión original no se llegó a materializar, no la tomamos como repetida');
-					this.metadatos.retransmisionCliente = true;
+					this.metadatos.esRetransmisionCliente = true;
 				} else {
 					this.log.warn('Se marca la transmisión como un duplicado');
+					this.metadatos.esDuplicado = true;
 					this.metadatos.errores.insertar('LOG-ERR-008', 'Solicitud de logística duplicada');
 					return true;
 				}
@@ -207,11 +219,10 @@ class SolicitudCrearLogistica extends Modelo {
 	 */
 	generarJSON(tipoReceptor = 'sap') {
 
-		if (tipoReceptor === 'errores' && this.metadatos.errorProtocoloCabecera) {
+		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicado) {
 			return this.metadatos.errores.getErrores() || [];
 		}
 
-		
 		let json = {
 			codigoCliente: this.codigoCliente,
 			numeroLogisticaOrigen: this.numeroLogisticaOrigen,

@@ -1,7 +1,6 @@
 'use strict';
 const C = global.config;
 const K = global.constants;
-const M = global.mongodb;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -18,29 +17,29 @@ const RespuestaLogisticaSap = require('modelos/logistica/RespuestaLogisticaSap')
  */
 class TransmisionCrearLogistica extends Transmision {
 
-	#solicitudCliente;
-	#respuestaCliente;
+	#solicitud;
+	#respuesta;
 
 	// @Override
 	async operar() {
 
-		this.#solicitudCliente = new SolicitudCrearLogistica(this);
+		this.#solicitud = new SolicitudCrearLogistica(this);
 
 		// PASO 1: Verificar si hay errores de protocolo
-		if (this.#solicitudCliente.contieneErroresProtocolo()) {
-			return new ResultadoTransmision(400, K.ESTADOS.PETICION_INCORRECTA, this.#solicitudCliente.generarJSON('errores'));
+		if (this.#solicitud.contieneErroresProtocolo()) {
+			return new ResultadoTransmision(400, K.ESTADOS.PETICION_INCORRECTA, this.#solicitud.generarJSON('errores'));
 		}
 
 		// PASO 2: Verificar si es una transmisión duplicada
-		if (await this.#solicitudCliente.esDuplicado()) {
-			return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitudCliente.generarJSON('errores'));
+		if (await this.#solicitud.esDuplicado()) {
+			return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
 		}
 
 		// PASO 3: Mandar a SAP y a ver si responde
 		try {
 			this.log.info('Procedemos a enviar a SAP la petición de logística');
 			this.sap.setTimeout(C.sap.timeout.crearLogistica);
-			await this.sap.post('/api/zsd_ent_ped_api/logistica', this.#solicitudCliente.generarJSON('sap'));
+			await this.sap.post('/api/zsd_ent_ped_api/logistica', this.#solicitud.generarJSON('sap'));
 			this.log.info('Obtenida respuesta de SAP, procedemos a analizarla');
 		} catch (errorLlamadaSap) {
 			this.log.err('No se pudo contactar con SAP, se envía error al cliente');
@@ -56,57 +55,51 @@ class TransmisionCrearLogistica extends Transmision {
 
 	async #procesarResultadoSap() {
 
-		this.#respuestaCliente = new RespuestaLogisticaSap(this);
+		this.#respuesta = new RespuestaLogisticaSap(this);
 
-		if (this.#respuestaCliente.esRespuestaDeErrores()) {
-			return new ResultadoTransmision(409, K.ESTADOS.LOGISTICA.RECHAZADO_SAP, this.#respuestaCliente.generarJSON());
+		if (this.#respuesta.metadatos.esRespuestaDeErrores) {
+			return new ResultadoTransmision(409, K.ESTADOS.LOGISTICA.RECHAZADO_SAP, this.#respuesta.generarJSON());
 		}
 
 		// En ocasiones, SAP devolvía un string que no era un JSON. Esto parece que ya no ocurre con el cambio a 'axios'
 		// pero mantenemos la comprobación por si acaso
-		if (this.#respuestaCliente.esRespuestaIncompresible()) {
+		if (this.#respuesta.metadatos.esRespuestaIncompresible) {
 			this.log.err('La respuesta de SAP es incomprensible, se envía error al cliente');
 			let errorFedicom = new ErrorFedicom('LOG-ERR-999', 'No pudo registrarse la orden de logística, inténtelo de nuevo mas tarde.', 500);
 			return errorFedicom.generarResultadoTransmision(K.ESTADOS.ERROR_RESPUESTA_SAP);
 		}
 
-		let respuestaCliente = this.#respuestaCliente.generarJSON();
-		let estadoTransmision = this.#respuestaCliente.determinarEstadoTransmision();
-		return new ResultadoTransmision(201, estadoTransmision, respuestaCliente);
+		let respuestaCliente = this.#respuesta.generarJSON();
+		let { codigoRetornoHttp, estadoTransmision } = this.#respuesta.determinarEstadoTransmision();
+		return new ResultadoTransmision(codigoRetornoHttp, estadoTransmision, respuestaCliente);
 
 	}
 
 	// @Override
 	generarMetadatosOperacion() {
 
-		if (this.#solicitudCliente.contieneErroresProtocolo()) {
+		if (this.#solicitud.contieneErroresProtocoloEnCabecera()) {
 			return;
 		}
 
 		let metadatos = {};
-		/*
-				metadatos.codigoCliente = parseInt(this.#datosEntrada.codigoCliente.slice(-5)) || null;
-				metadatos.tipoLogistica = this.#datosEntrada.tipoLogistica;
-				metadatos.crc = this.#metadatos.crc;
-				
-				if (this.#metadatos.retransmisionCliente) metadatos.retransmisionCliente = true;
-				if (this.#metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
-				if (this.#metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = true;
-		
-				if (this.respuestaCliente;) {
-		
-					let d = this.respuestaCliente;;
-					let md = this.respuestaCliente;.getMetadatos();
-		
-					if (md.puntoEntrega) metadatos.puntoEntrega = md.puntoEntrega;
-					
-					if (d.numeroLogistica) metadatos.numeroLogistica = toMongoLong(parseInt(numeroLogistica));
-					if (d.codigoCliente) metadatos.codigoCliente = parseInt(d.codigoCliente.slice(-5));
-		
-					if (md.totales) metadatos.totales = md.totales;
-		
-				}
-			*/
+		// Metadatos de la SOLICITUD
+		metadatos.codigoCliente = parseInt(this.#solicitud.codigoCliente.slice(-5)) || this.#solicitud.codigoCliente;
+		metadatos.tipoLogistica = this.#solicitud.tipoLogistica;
+		metadatos.crc = this.#solicitud.metadatos.crc;
+		if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = this.#solicitud.metadatos.esRetransmisionCliente;
+		if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = this.#solicitud.metadatos.errorComprobacionDuplicado;
+
+		// Metadatos de la RESPUESTA
+
+		if (this.#respuesta) {
+			if (this.#respuesta.numeroLogistica) metadatos.numeroLogistica = toMongoLong(parseInt(this.#respuesta.numeroLogistica));
+			if (this.#respuesta.metadatos.puntoEntrega) metadatos.puntoEntrega = this.#respuesta.metadatos.puntoEntrega;
+			if (this.#respuesta.metadatos.erroresOcultados.tieneErrores()) metadatos.erroresOcultados = this.#respuesta.metadatos.erroresOcultados.getErrores();
+			if (this.#respuesta.metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = this.#respuesta.metadatos.clienteBloqueadoSap;
+			if (this.#respuesta.metadatos.totales) metadatos.totales = this.#respuesta.metadatos.totales;
+		}
+
 		this.setMetadatosOperacion('logistica', metadatos);
 
 	}

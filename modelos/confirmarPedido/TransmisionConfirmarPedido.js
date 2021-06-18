@@ -17,35 +17,39 @@ let toMongoLong = require("mongodb").Long.fromNumber;
  */
 class TransmisionConfirmarPedido extends Transmision {
 
-	#metadatos = {							// Metadatos
+	metadatos = {							// Metadatos
 		estadoTransmisionPedido: null,		// (int) El estado al que se mueve la transmisión de pedido que se está confirmando con esta transmisión
 		idTransmisionPedido: null			// (ObjectID) El ID de la transisión que se está confirmando.
 	};
 
-	#datos = {
-		pedidosAsociadosSap: [],
-		crcSap: null,
-	}
+
+	pedidosAsociadosSap;
+	crcSap;
 
 
 	// @Override
 	async operar() {
 		let json = this.req.body;
 
+		if (Array.isArray(json.sap_pedidosasociados) && json.sap_pedidosasociados.length) {
+			let setPedidosSap = new Set();
+			json.sap_pedidosasociados.forEach(numeroPedidoSap => {
+				let pedidoInt = parseInt(numeroPedidoSap);
+				if (pedidoInt) setPedidosSap.add(pedidoInt);
+			});
+			this.pedidosAsociadosSap = Array.from(setPedidosSap);
+		} else {
+			this.pedidosAsociadosSap = [];
+		}
 
-		json.sap_pedidosasociados?.forEach?.(numeroPedidoSap => {
-			let pedidoInt = parseInt(numeroPedidoSap);
-			if (pedidoInt) this.#datos.pedidosAsociadosSap.push(pedidoInt);
-		});
+		this.crcSap = parseInt(json.crc, 16) || 0;
 
-		this.#datos.crcSap = parseInt(json.crc, 16);
-
-		if (this.#datos.pedidosAsociadosSap.length > 0) {
-			this.log.info(`SAP confirma la creación del pedido con CRC '${json.crc?.toUpperCase?.()}' los siguientes números de pedido:`, this.#datos.pedidosAsociadosSap);
-			this.#metadatos.estadoTransmisionPedido = K.ESTADOS.COMPLETADO;
+		if (this.pedidosAsociadosSap.length > 0) {
+			this.log.info(`SAP confirma la creación del pedido con CRC '${json.crc.toUpperCase()}' los siguientes números de pedido:`, this.pedidosAsociadosSap);
+			this.metadatos.estadoTransmisionPedido = K.ESTADOS.COMPLETADO;
 		} else {
 			this.log.warn(`SAP no indica ningún número de pedido para la transmisión con CRC ${json.crc}`);
-			this.#metadatos.estadoTransmisionPedido = K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
+			this.metadatos.estadoTransmisionPedido = K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		}
 
 		return await this.#confirmarCreacionDePedido();
@@ -62,18 +66,18 @@ class TransmisionConfirmarPedido extends Transmision {
 		let consulta = {
 			tipo: K.TIPOS.CREAR_PEDIDO,
 			fechaCreacion: { $gt: fechaLimite },
-			'pedido.crcSap': this.#datos.crcSap
+			'pedido.crcSap': this.crcSap
 		};
 
 
 		try {
 			let transmisionPedidoConfirmada = await PostTransmision.instanciar(consulta);
-			this.#metadatos.idTransmisionPedido = transmisionPedidoConfirmada.txId;
+			this.metadatos.idTransmisionPedido = transmisionPedidoConfirmada.txId;
 
-			transmisionPedidoConfirmada.setEstado(this.#metadatos.estadoTransmisionPedido);
-			if (this.#datos.pedidosAsociadosSap?.length) {
+			transmisionPedidoConfirmada.setEstado(this.metadatos.estadoTransmisionPedido);
+			if (this.pedidosAsociadosSap?.length) {
 				transmisionPedidoConfirmada.setMetadatosOperacion('pedido', {
-					pedidosAsociadosSap: this.#datos.pedidosAsociadosSap.map(nPed => toMongoLong(nPed))
+					pedidosAsociadosSap: this.pedidosAsociadosSap.map(nPed => toMongoLong(nPed))
 				});
 			}
 			await transmisionPedidoConfirmada.actualizarTransmision();
@@ -93,8 +97,8 @@ class TransmisionConfirmarPedido extends Transmision {
 	// @Override
 	generarMetadatosOperacion() {
 		let metadatos = {
-			crcSap: this.#datos.crcSap,
-			idPedidoConfirmado: this.#metadatos.idTransmisionPedido
+			crcSap: toMongoLong(this.crcSap),
+			idPedidoConfirmado: this.metadatos.idTransmisionPedido
 		};
 		this.setMetadatosOperacion('confirmacion', metadatos);
 	}

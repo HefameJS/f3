@@ -5,67 +5,88 @@ const L = global.logger;
 
 // Helpers
 const Maestro = require('global/maestro');
+const ErrorFedicom = require('modelos/ErrorFedicom');
+const Modelo = require('modelos/transmision/Modelo');
 
 
-class LineaPedidoSap {
+class LineaPedidoSap extends Modelo {
 
-	#transmision;
-	#log;
-
-	#metadatos = {
+	metadatos = {
 		numeroPosicion: null,
-		tipoFalta: null,
+		tipificadoFalta: null,
 		estupefaciente: false,
-		reboteFaltas: false
+		almacenDeRebote: false
 	}
 
-	constructor(json, transmision, numeroPosicion) {
+	orden;
+	codigoArticulo;
+	descripcionArticulo;
+	codigoArticuloSustituyente;
+	codigoUbicacion;
+	cantidad;
+	cantidadFalta;
+	cantidadBonificacion;
+	cantidadBonificacionFalta;
+	precio;
+	descuentoPorcentaje;
+	descuentoImporte;
+	cargoPorcentaje;
+	cargoImporte;
+	valeEstupefaciente;
+	codigoAlmacenServicio;
+	condicion;
+	servicioDemorado;
+	estadoServicio;
+	fechaLimiteServicio;
+	servicioAplazado;
+	observaciones;
+	incidencias;
 
+	constructor(transmision, json, numeroPosicion) {
 
-		this.#transmision = transmision;
-		this.#log = this.#transmision.log;
+		super(transmision);
 
-		this.#log.info(`Analizando linea de pedido SAP en posición ${numeroPosicion}`);
+		this.metadatos.numeroPosicion = numeroPosicion;
+		this.log.info(`Analizando linea de pedido SAP en posición ${numeroPosicion}`);
 
-		this.#metadatos.numeroPosicion = numeroPosicion;
-		
-
-		// Copiamos las propiedades de la POSICION que son relevantes		
-		this.orden = parseInt(json.orden);
-
-		this.codigoArticulo = json.codigoarticulo || null;
-		this.descripcionArticulo = json.descripcionarticulo || null;
-		this.codigoArticuloSustituyente = json.codigoarticulosustituyente || null;
-		this.codigoUbicacion = json.codigoubicacion || null;
-		this.cantidad = parseInt(json.cantidad);
-		this.cantidadFalta = parseInt(json.cantidadfalta);
-		this.cantidadBonificacion = parseInt(json.cantidadbonificacion);
-		this.cantidadBonificacionFalta = parseInt(json.cantidadbonificacionfalta);
-		this.precio = parseFloat(json.precio);
-		this.descuentoPorcentaje = parseFloat(json.descuentoporcentaje);
-		this.descuentoImporte = parseFloat(json.descuentoimporte);
-		this.cargoPorcentaje = parseFloat(json.cargoporcentaje);
-		this.cargoImporte = parseFloat(json.cargoimporte);
-		this.valeEstupefaciente = json.valeestupefaciente || null;
-		this.codigoAlmacenServicio = json.codigoalmacenservicio || null;
-		this.condicion = json.condicion || null;
-		this.servicioDemorado = Boolean(json.serviciodemorado);
-		this.fechaLimiteServicio = json.fechalimiteservicio || null;
-		this.servicioAplazado = json.servicioaplazado || null;
-		this.observaciones = json.observaciones || null;
-		this.incidencias = json.incidencias.length === 0 ? null : json.incidencias;
+		// Copiamos las propiedades definidas en el protocolo		
+		if (json.orden >= 0) this.orden = parseInt(json.orden);
+		if (json.codigoarticulo) this.codigoArticulo = json.codigoarticulo;
+		if (json.descripcionarticulo) this.descripcionArticulo = json.descripcionarticulo;
+		if (json.codigoarticulosustituyente) this.codigoArticuloSustituyente = json.codigoarticulosustituyente;
+		if (json.codigoubicacion) this.codigoUbicacion = json.codigoubicacion;
+		if (json.cantidad >= 0) this.cantidad = parseInt(json.cantidad);
+		if (json.cantidadfalta >= 0) this.cantidadFalta = parseInt(json.cantidadfalta);
+		if (json.cantidadbonificacion >= 0) this.cantidadBonificacion = parseInt(json.cantidadbonificacion);
+		if (json.cantidadbonificacionfalta >= 0) this.cantidadBonificacionFalta = parseInt(json.cantidadbonificacionfalta);
+		if (json.precio >= 0) this.precio = parseFloat(json.precio);
+		if (json.descuentoporcentaje >= 0) this.descuentoPorcentaje = parseFloat(json.descuentoporcentaje);
+		if (json.descuentoimporte >= 0) this.descuentoImporte = parseFloat(json.descuentoimporte);
+		if (json.cargoporcentaje >= 0) this.cargoPorcentaje = parseFloat(json.cargoporcentaje);
+		if (json.cargoimporte >= 0) this.cargoImporte = parseFloat(json.cargoimporte);
+		if (json.valeestupefaciente) this.valeEstupefaciente = json.valeestupefaciente;
+		if (json.codigoalmacenservicio) this.codigoAlmacenServicio = json.codigoalmacenservicio;
+		if (json.condicion) this.condicion = json.condicion;
+		if (json.serviciodemorado) this.servicioDemorado = json.serviciodemorado;
+		// if (json.estadoservicio) this.estadoServicio = json.estadoservicio;
+		if (json.fechalimiteservicio) this.fechaLimiteServicio = json.fechalimiteservicio;
+		if (json.servicioaplazado) this.servicioAplazado = json.servicioaplazado;
+		if (json.observaciones) this.observaciones = json.observaciones;
+		if (Array.isArray(json.incidencias) && json.incidencias.length) this.incidencias = json.incidencias;
 
 		// Tipificado del motivo de la falta
-		this.incidencias?.forEach(incidencia => {
-			if (incidencia.descripcion) {
-				this.#metadatos.tipoFalta = C.pedidos.tipificadoFaltas[incidencia.descripcion];
-			}
-		})
+		if (this.incidencias) {
+			this.incidencias.forEach(incidencia => {
+				if (incidencia.descripcion) {
+					this.metadatos.tipificadoFalta = C.pedidos.tipificadoFaltas[incidencia.descripcion];
+				}
+			})
+		}
 
 		this.#calculaEstadoServicio();
 
 		// Indica si la linea tiene algo que ver con los estupes
-		this.#metadatos.estupefaciente = (this.valeEstupefaciente || this.#metadatos.tipoFalta === "estupe");
+		this.metadatos.estupefaciente = (this.valeEstupefaciente || this.metadatos.tipificadoFalta === "estupe");
 
 	}
 
@@ -79,18 +100,17 @@ class LineaPedidoSap {
 
 	gestionarReboteFaltas(almacenCabecera) {
 
+		// Si el almacén de cabecera y posicion son distintos Y se indica que se sirve todo o parte de la cantidad
 		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
 
-			this.#metadatos.reboteFaltas = this.codigoAlmacenServicio;
-			this.#log.info(`Posicion ${this.medatados.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
+			this.metadatos.almacenDeRebote = this.codigoAlmacenServicio;
+			this.log.info(`Posicion ${this.metadados.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
 
 			if (this.servicioDemorado) {
 
 				let cantidadRebotada = this.cantidad - (this.cantidadFalta ?? 0);
-
 				this.cantidadFalta = this.cantidad;
 				this.estadoServicio = 'SC';
-
 				this.servicioAplazado = {
 					fechaServicio: Date.siguienteDiaHabil(),
 					cantidad: cantidadRebotada
@@ -98,77 +118,55 @@ class LineaPedidoSap {
 
 			} else {
 
-				this.#log.info(`Posicion ${this.medatados.numeroPosicion}: Hay rebote pero no se admite servicio demorado, se añaden incidencias`);
+				this.log.info(`Posición ${this.medatados.numeroPosicion}: Hay rebote pero no se admite servicio demorado, se añaden incidencias`);
 
+				let advertenciaRebote = new ErrorFedicom();
 				if (this.cantidadFalta === 0) {
-					this.incidencias = [{
-						codigo: 'LIN-PED-WARN-019',
-						descripcion: 'Entrega total demorada'
-					}];
+					advertenciaRebote.insertar('LIN-PED-WARN-019', 'Entrega total demorada');
 				} else {
-					this.incidencias = [{
-						codigo: 'LIN-PED-WARN-020',
-						descripcion: 'Entrega parcial demorada'
-					}];
+					advertenciaRebote.insertar('LIN-PED-WARN-020', 'Entrega parcial demorada');
 				}
+
+				if (this.incidencias) this.incidencias.concat(advertenciaRebote.getErrores());
+				else this.incidencias = advertenciaRebote.getErrores();
 
 				this.observaciones = 'El artículo se sirve por ' + Maestro.almacenes.getNombreById(this.codigoAlmacenServicio);
 			}
-
-
 		}
-
 	}
 
-	generarJSON(tipoReceptor = 'respuestaCliente') {
+	generarJSON() {
 
 		let json = {};
-		if (this.orden || this.orden === 0) json.orden = this.orden;
-
+		if (this.orden >= 0) json.orden = this.orden;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.descripcionArticulo) json.descripcionArticulo = this.descripcionArticulo;
 		if (this.codigoArticuloSustituyente) json.codigoArticuloSustituyente = this.codigoArticuloSustituyente;
-
-		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
+		if (this.codigoUbicacion) json.codigoUbicacion = this.codigoUbicacion;
+		if (this.cantidad >= 0) json.cantidad = this.cantidad;
 		if (this.cantidadFalta) json.cantidadFalta = this.cantidadFalta;
 		if (this.cantidadBonificacion) json.cantidadBonificacion = this.cantidadBonificacion;
 		if (this.cantidadBonificacionFalta) json.cantidadBonificacionFalta = this.cantidadBonificacionFalta;
-
-		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
-		if (this.codigoAlmacenServicio) json.codigoAlmacenServicio = this.codigoAlmacenServicio;
-		if (this.codigoUbicacion) json.codigoUbicacion = this.codigoUbicacion;
-
-		if (this.condicion) json.condicion = this.condicion;
 		if (this.precio) json.precio = this.precio;
 		if (this.descuentoPorcentaje) json.descuentoPorcentaje = this.descuentoPorcentaje;
 		if (this.descuentoImporte) json.descuentoImporte = this.descuentoImporte;
 		if (this.cargoPorcentaje) json.cargoPorcentaje = this.cargoPorcentaje;
 		if (this.cargoImporte) json.cargoImporte = this.cargoImporte;
-
-		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
+		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
+		if (this.codigoAlmacenServicio) json.codigoAlmacenServicio = this.codigoAlmacenServicio;
+		if (this.condicion) json.condicion = this.condicion;
 		if (this.servicioDemorado) json.servicioDemorado = this.servicioDemorado;
 		if (this.estadoServicio) json.estadoServicio = this.estadoServicio;
+		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
 		if (this.servicioAplazado) json.servicioAplazado = this.servicioAplazado;
-		this.fechaLimiteServicio = json.fechalimiteservicio || null;
-
-		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.incidencias) json.incidencias = this.incidencias;
 		return json;
 	}
-
 
 	tieneIncidencias() {
 		return this.incidencias?.length > 0;
 	}
-
-	tieneEstupefaciente() {
-		return this.#metadatos.estupefaciente;
-	}
-
-	tieneServicioDemorado() {
-		return this.servicioDemorado;
-	}
-
 
 }
 

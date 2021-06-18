@@ -140,34 +140,34 @@ class RespuestaLogisticaSap extends Modelo {
 		}
 	}
 
-	esRespuestaDeErrores() {
-		return this.metadatos.esRespuestaDeErrores;
-	}
-
-	esRespuestaIncompresible() {
-		return this.metadatos.respuestaIncomprensible;
-	}
-
 	determinarEstadoTransmision() {
+
+		const Tupla = function (estado, codigoHttp) {
+			return {
+				estadoTransmision: estado,
+				codigoRetornoHttp: codigoHttp
+			}
+		}
+
 		if (this.metadatos.esRespuestaDeErrores) {
-			return K.ESTADOS.LOGISTICA.RECHAZADO_SAP;
+			return Tupla(K.ESTADOS.LOGISTICA.RECHAZADO_SAP, 409);
 		}
 
 		if (this.metadatos.respuestaIncomprensible) {
-			return K.ESTADOS.ERROR_RESPUESTA_SAP;
+			return Tupla(K.ESTADOS.ERROR_RESPUESTA_SAP, 500);
 		}
 
 		if (this.numeroLogistica) {
-			return K.ESTADOS.COMPLETADO;
+			return Tupla(K.ESTADOS.COMPLETADO, 201);
 		} else {
-			return K.ESTADOS.LOGISTICA.SIN_NUMERO_LOGISTICA;
+			return Tupla(K.ESTADOS.LOGISTICA.SIN_NUMERO_LOGISTICA, 201);
 		}
 	}
 
 	generarJSON() {
 
 		if (this.metadatos.esRespuestaDeErrores) {
-			return this.metadatos.errores;
+			return this.metadatos.errores.getErrores();
 		}
 
 		let json = {};
