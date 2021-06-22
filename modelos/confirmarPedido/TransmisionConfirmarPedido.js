@@ -100,7 +100,7 @@ class TransmisionConfirmarPedido extends Transmision {
 			crcSap: toMongoLong(this.crcSap),
 			idPedidoConfirmado: this.metadatos.idTransmisionPedido
 		};
-		this.setMetadatosOperacion('confirmacion', metadatos);
+		this.setMetadatosOperacion('pedido.confirmar', metadatos);
 	}
 }
 

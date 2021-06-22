@@ -1,7 +1,7 @@
 'use strict';
 const C = global.config;
 const K = global.constants;
-const M = global.mongodb;
+//const M = global.mongodb;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -10,42 +10,47 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
+const Albaran = require('./Albaran');
+
 let toMongoLong = require("mongodb").Long.fromNumber;
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
 const ResultadoTransmisionPdf = require('modelos/transmision/ResultadoTransmisionPdf');
+
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
  */
 class TransmisionConsultarAlbaran extends Transmision {
 
-	#metadatos = {							// Metadatos
-		numeroAlbaran: null,				// (int64) el numero de albarán consultado
-		formatoRespuesta: null,
+	metadatos = {							// Metadatos
+		numeroAlbaran: null,				// (string) El número de albarán consultado
+		formatoRespuesta: null,				// (string) El formato de la consulta (PDF o JSON)
+		codigoCliente: null					// El código de cliente al que pertenece el albarán, si podemos sacarlo...
 	}
 
 	// @Override
 	async operar() {
 
 		let numeroAlbaranRecibido = this.req.params?.numeroAlbaran;
-		this.#metadatos.numeroAlbaran = parseInt(numeroAlbaranRecibido);
+		this.metadatos.numeroAlbaran = parseInt(numeroAlbaranRecibido);
 
-		if (!this.#metadatos.numeroAlbaran) {
+		if (!this.metadatos.numeroAlbaran) {
 			this.log.warn(`El numero de albarán indicado "${numeroAlbaranRecibido}" no es un entero válido`);
 			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 400);
 			return errorFedicom.generarResultadoTransmision(K.ESTADOS.PETICION_INCORRECTA);
 		}
 
+		this.log.info(`Se solicita el número de albarán ${this.metadatos.numeroAlbaran}`)
 
 		switch (this.req.headers?.['accept']?.toLowerCase?.()) {
-			case 'application/pdf': this.#metadatos.formatoRespuesta = 'PDF'; break;
-			default: this.#metadatos.formatoRespuesta = 'JSON'; break;
+			case 'application/pdf': this.metadatos.formatoRespuesta = 'PDF'; break;
+			default: this.metadatos.formatoRespuesta = 'JSON'; break;
 		}
 
 
-		this.log.info(`Se determina el formato solicitado del albarán ${this.req.headers?.['accept']} -> ${this.#metadatos.formatoRespuesta}`);
+		this.log.info(`Se determina el formato solicitado del albarán ${this.req.headers?.['accept']} -> ${this.metadatos.formatoRespuesta}`);
 
-		switch (this.#metadatos.formatoRespuesta) {
+		switch (this.metadatos.formatoRespuesta) {
 			case 'PDF':
 				return this.#consultarFormatoPDF();
 			default:
@@ -57,15 +62,17 @@ class TransmisionConsultarAlbaran extends Transmision {
 
 	async #consultarFormatoJSON() {
 		try {
+
 			this.sap.setTimeout(C.sap.timeout.consultaDevolucionPDF);
 			this.sap.setFuncionValidadora(IntercambioSap.validador.consultaAlbaranJSON);
-			await this.sap.get('/api/zsd_orderlist_api/view/' + this.#metadatos.numeroAlbaran);
+			await this.sap.get('/api/zsd_orderlist_api/view/' + this.metadatos.numeroAlbaran.toString().padStart(10, '0'));
 
 			let cuerpoSap = this.sap.getRespuesta();
 
 			if (cuerpoSap?.t_pos) {
 				let datosAlbaran = new Albaran(cuerpoSap);
-				return new ResultadoTransmisionPdf(200, K.ESTADOS.COMPLETADO, datosAlbaran);
+				if (datosAlbaran.codigoCliente) this.metadatos.codigoCliente = datosAlbaran.codigoCliente;
+				return new ResultadoTransmision(200, K.ESTADOS.COMPLETADO, datosAlbaran);
 			} else {
 				this.log.info('SAP no ha devuelto ningún documento. Esta es la manera "especial" de SAP de indicarnos esto:', cuerpoSap);
 				let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'El albarán solicitado no existe', 404);
@@ -79,7 +86,7 @@ class TransmisionConsultarAlbaran extends Transmision {
 			let errorFedicom = new ErrorFedicom('DEV-ERR-999', 'Ocurrió un error en la búsqueda de la devolución', 500);
 			return errorFedicom.generarResultadoTransmision(K.ESTADOS.ERROR_RESPUESTA_SAP);
 		}
-		
+
 	}
 
 
@@ -87,15 +94,15 @@ class TransmisionConsultarAlbaran extends Transmision {
 
 		try {
 			this.sap.setTimeout(C.sap.timeout.consultaDevolucionPDF);
-			await this.sap.get('/api/zsf_get_document/proforma/' + this.#metadatos.numeroAlbaran);
+			await this.sap.get('/api/zsf_get_document/proforma/' + this.metadatos.numeroAlbaran.toString().padStart(10, '0'));
 
 			let cuerpoSap = this.sap.getRespuesta();
 
 			if (cuerpoSap?.[0]?.pdf_file) {
 				this.log.info('Se obtuvo el albarán PDF en Base64 desde SAP');
+				if (cuerpoSap[0].kunnr) this.metadatos.codigoCliente = cuerpoSap[0].kunnr;
 				let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
-
-				return new ResultadoTransmisionPdf(200, K.ESTADOS.COMPLETADO, buffer, this.#metadatos.numeroAlbaran + '.pdf');
+				return new ResultadoTransmisionPdf(200, K.ESTADOS.COMPLETADO, buffer, this.metadatos.numeroAlbaran + '.pdf');
 			} else {
 				this.log.info('SAP no ha devuelto ningún documento. Esta es la manera "especial" de SAP de indicarnos esto:', cuerpoSap);
 				let errorFedicom = new ErrorFedicom('ALB-ERR-001', 'No se encontró el albarán', 404);
@@ -115,12 +122,15 @@ class TransmisionConsultarAlbaran extends Transmision {
 
 	// @Override
 	generarMetadatosOperacion() {
-		if (this.#metadatos.numeroAlbaran) {
+		if (this.metadatos.numeroAlbaran) {
 			let metadatos = {
-				numeroDevolucion: this.#metadatos.numeroAlbaran,
-				formatoRespuesta: this.#metadatos.formatoRespuesta
+				numeroAlbaran: toMongoLong(this.metadatos.numeroAlbaran),
+				formatoRespuesta: this.metadatos.formatoRespuesta
 			}
-			this.setMetadatosOperacion('consulta.albaran', metadatos);
+			if (this.metadatos.codigoCliente) {
+				metadatos.codigoCliente = parseInt(this.metadatos.codigoCliente.slice(-5));
+			}
+			this.setMetadatosOperacion('albaran.consultar', metadatos);
 		}
 
 	}

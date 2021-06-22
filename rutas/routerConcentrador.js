@@ -19,6 +19,8 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 // Helpers
 const { extenderSolicitudHttp } = require('global/extensiones/extensionesExpress');
 const TransmisionConsultarAlbaran = require('modelos/albaran/TransmisionConsultarAlbaran');
+const TransmisionBuscarAlbaranes = require('modelos/albaran/TransmisionBuscarAlbaranes');
+const TransmisionConfirmarAlbaran = require('modelos/confirmarAlbaran/TransmisionConfirmarAlbaran');
 
 
 
@@ -73,10 +75,10 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarDevolucion));
 	
 		
-//	app.route('/albaranes')
-//		.get(tryCatch(controladores.albaranes.listadoAlbaranes));
-//	app.route('/albaranes/confirmacion')
-//		.post(tryCatch(controladores.albaranes.confirmacionAlbaran));
+	app.route('/albaranes')
+		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionBuscarAlbaranes));
+	app.route('/albaranes/confirmacion')
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarAlbaran));
 	app.route('/albaranes/:numeroAlbaran')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarAlbaran));
 

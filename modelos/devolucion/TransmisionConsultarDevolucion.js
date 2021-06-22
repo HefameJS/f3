@@ -19,18 +19,19 @@ const ResultadoTransmisionPdf = require('modelos/transmision/ResultadoTransmisio
  */
 class TransmisionConsultarDevolucion extends Transmision {
 
-	#metadatos = {							// Metadatos
+	metadatos = {							// Metadatos
 		numeroDevolucion: null,				// (int64) el numero de devolución consultado
-		formatoRespuesta: null,
+		formatoRespuesta: null,				// (string) El formato de la consulta (PDF o JSON)
+		codigoCliente: null					// El código de cliente al que pertenece el albarán, si podemos sacarlo...
 	}
 
 	// @Override
 	async operar() {
 
 		let numeroDevolucionRecibida = this.req.params?.numeroDevolucion;
-		this.#metadatos.numeroDevolucion = parseInt(numeroDevolucionRecibida);
+		this.metadatos.numeroDevolucion = parseInt(numeroDevolucionRecibida);
 
-		if (!this.#metadatos.numeroDevolucion) {
+		if (!this.metadatos.numeroDevolucion) {
 			this.log.warn('El numero de devolución indicado no es un entero válido');
 			let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 400);
 			return errorFedicom.generarResultadoTransmision(K.ESTADOS.PETICION_INCORRECTA);
@@ -38,14 +39,14 @@ class TransmisionConsultarDevolucion extends Transmision {
 
 
 		switch (this.req.headers?.['accept']?.toLowerCase?.()) {
-			case 'application/pdf': this.#metadatos.formatoRespuesta = 'PDF'; break;
-			default: this.#metadatos.formatoRespuesta = 'JSON'; break;
+			case 'application/pdf': this.metadatos.formatoRespuesta = 'PDF'; break;
+			default: this.metadatos.formatoRespuesta = 'JSON'; break;
 		}
 
 
-		this.log.info(`Se determina el formato solicitado de la devolución ${this.req.headers?.['accept']} -> ${this.#metadatos.formatoRespuesta}`);
+		this.log.info(`Se determina el formato solicitado de la devolución ${this.req.headers?.['accept']} -> ${this.metadatos.formatoRespuesta}`);
 
-		switch (this.#metadatos.formatoRespuesta) {
+		switch (this.metadatos.formatoRespuesta) {
 			case 'PDF':
 				return this.#consultarFormatoPDF();
 			default:
@@ -60,15 +61,19 @@ class TransmisionConsultarDevolucion extends Transmision {
 		try {
 			let consulta = {
 				tipo: K.TIPOS.CREAR_DEVOLUCION,
-				'devolucion.numeroDevolucion': toMongoLong(this.#metadatos.numeroDevolucion)
+				'devolucion.numeroDevolucion': toMongoLong(this.metadatos.numeroDevolucion)
 			}
 
 			let respuestaDevolucion = await M.col.transmisiones.findOne(consulta, {
 				projection: {
 					'_id': 1,
-					'conexion.respuesta': 1
+					'conexion.respuesta': 1,
+					'devolucion.codigoCliente': 1
 				}
 			});
+
+			// Vemos si ha devuelto el codigo del cliente
+			this.metadatos.codigoCliente = respuestaDevolucion?.devolucion?.codigoCliente;
 
 			if (respuestaDevolucion?.conexion?.respuesta?.body) {
 				this.log.info(`Recuperada la respuesta de la devolución con txId ${respuestaDevolucion?._id}`);
@@ -93,15 +98,15 @@ class TransmisionConsultarDevolucion extends Transmision {
 		try {
 			this.sap.setTimeout(C.sap.timeout.consultaDevolucionPDF);
 			this.sap.setFuncionValidadora(IntercambioSap.validador.consultaDevolucionPDF);
-			await this.sap.get('/api/zsf_get_document/devo_fedi/' + this.#metadatos.numeroDevolucion);
+			await this.sap.get('/api/zsf_get_document/devo_fedi/' + this.metadatos.numeroDevolucion);
 
 			let cuerpoSap = this.sap.getRespuesta();
 
 			if (cuerpoSap?.[0]?.pdf_file) {
 				this.log.info('Se obtuvo la devolución PDF en Base64 desde SAP');
+				if (cuerpoSap[0].kunnr) this.metadatos.codigoCliente = cuerpoSap[0].kunnr;
 				let buffer = Buffer.from(cuerpoSap[0].pdf_file, 'base64');
-
-				return new ResultadoTransmisionPdf(200, K.ESTADOS.COMPLETADO, buffer, this.#metadatos.numeroDevolucion + '.pdf');
+				return new ResultadoTransmisionPdf(200, K.ESTADOS.COMPLETADO, buffer, this.metadatos.numeroDevolucion + '.pdf');
 			} else {
 				this.log.info('SAP no ha devuelto ningún documento. Esta es la manera "especial" de SAP de indicarnos esto:', cuerpoSap);
 				let errorFedicom = new ErrorFedicom('DEV-ERR-001', 'La devolución solicitada no existe', 404);
@@ -121,12 +126,15 @@ class TransmisionConsultarDevolucion extends Transmision {
 
 	// @Override
 	generarMetadatosOperacion() {
-		if (this.#metadatos.numeroDevolucion) {
+		if (this.metadatos.numeroDevolucion) {
 			let metadatos = {
-				numeroDevolucion: this.#metadatos.numeroDevolucion,
-				formatoRespuesta: this.#metadatos.formatoRespuesta
+				numeroDevolucion: this.metadatos.numeroDevolucion,
+				formatoRespuesta: this.metadatos.formatoRespuesta
 			}
-			this.setMetadatosOperacion('consulta.devolucion', metadatos);
+			if (this.metadatos.codigoCliente) {
+				metadatos.codigoCliente = parseInt(this.metadatos.codigoCliente.slice(-5));
+			}
+			this.setMetadatosOperacion('devolucion.consultar', metadatos);
 		}
 
 	}

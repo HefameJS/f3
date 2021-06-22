@@ -117,6 +117,13 @@ class Transmision extends Object {
 	}
 
 	/**
+	 * Obtiene el objecto response de express
+	 */
+	get res() {
+		return this.#http.res;
+	}
+
+	/**
 	 * Obtiene la instancia del interfaz de intercambio de mensajes HTTP con SAP
 	 */
 	get sap() {

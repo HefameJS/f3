@@ -89,6 +89,7 @@ class TransmisionCrearPedido extends Transmision {
 
 		let metadatos = {
 			codigoCliente: parseInt(this.#solicitud.codigoCliente.slice(-5)) || this.codigoCliente,
+			numeroPedidoOrigen: this.#solicitud.numeroPedidoOrigen,
 			tipoPedido: parseInt(this.#solicitud.tipoPedido) || 0,
 			crc: this.#solicitud.metadatos.crc,
 			crcSap: toMongoLong(parseInt(this.#solicitud.metadatos.crc.toString().substring(0, 8), 16)),

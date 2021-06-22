@@ -69,7 +69,7 @@ class TransmisionConsultarPedido extends Transmision {
 			let metadatos = {
 				numeroPedido: this.#metadatos.numeroPedido
 			}
-			this.setMetadatosOperacion('consulta.pedido', metadatos);
+			this.setMetadatosOperacion('pedido.consultar', metadatos);
 		}
 		
 	}
