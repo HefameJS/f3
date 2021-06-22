@@ -8,9 +8,10 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-let toMongoLong = require("mongodb").Long.fromNumber;
+
 const SolicitudCrearLogistica = require('modelos/logistica/SolicitudCrearLogistica');
 const RespuestaLogisticaSap = require('modelos/logistica/RespuestaLogisticaSap');
+const toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.

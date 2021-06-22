@@ -21,6 +21,7 @@ const { extenderSolicitudHttp } = require('global/extensiones/extensionesExpress
 const TransmisionConsultarAlbaran = require('modelos/albaran/TransmisionConsultarAlbaran');
 const TransmisionBuscarAlbaranes = require('modelos/albaran/TransmisionBuscarAlbaranes');
 const TransmisionConfirmarAlbaran = require('modelos/confirmarAlbaran/TransmisionConfirmarAlbaran');
+const TransmisionConsultarLogistica = require('modelos/logistica/TransmisionConsultarLogistica');
 
 
 
@@ -99,8 +100,8 @@ module.exports = (app) => {
 	app.route('/logistica')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearLogistica));
 
-	//app.route('/logistica/:numeroLogistica')
-	//	.get(tryCatch(controladores.logistica.consultaLogistica));
+	app.route('/logistica/:numeroLogistica')
+		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
