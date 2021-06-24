@@ -1,5 +1,4 @@
 'use strict';
-//const C = global.config;
 const K = global.constants;
 const M = global.mongodb;
 
@@ -9,7 +8,6 @@ const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
 const MetadatosConexionEntrante = require('modelos/transmision/MetadatosConexionEntrante');
 const LogTransmision = require('modelos/transmision/LogTransmision');
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
-
 const iSQLite = require('interfaces/iSQLite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('./ResultadoTransmision');
@@ -41,14 +39,14 @@ class Transmision extends Object {
 	#metadatosOperacion;		// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
 
 
-	static async ejecutar(req, res, ClaseTransmision) {
+	static async ejecutar(req, res, ClaseTransmision, datosDeOperacion) {
 
 		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
 		await transmision.#registrarTransmision();
 
 		if (await transmision.#responderFalloAutorizacion()) {
 			try {
-				let resultadoOperacion = await transmision.operar();
+				let resultadoOperacion = await transmision.operar(datosDeOperacion);
 				await resultadoOperacion.responderTransmision(transmision);
 				await transmision.generarMetadatosOperacion();
 				

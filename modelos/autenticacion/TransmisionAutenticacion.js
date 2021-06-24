@@ -6,7 +6,7 @@ const K = global.constants;
 
 
 const iLdap = require('interfaces/iLdap');
-const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
+const iCacheCredencialesSap = require('modelos/autenticacion/CacheCredencialesSap');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
 const Transmision = require('modelos/transmision/Transmision');

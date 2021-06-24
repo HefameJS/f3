@@ -136,9 +136,6 @@ const _analizaDatosBalanceadores = (data) => {
 }
 
 
-
-
-
 class Balanceador {
 
 	constructor(datos) {

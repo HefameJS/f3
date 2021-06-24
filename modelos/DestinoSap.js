@@ -1,11 +1,6 @@
 'use strict';
-let C = global.config;
-//const L = global.logger;
-//const K = global.constants;
 
-//Externas
 const crypto = require('crypto');
-const { resourceUsage } = require('process');
 
 class DestinoSap {
 	constructor(json) {
@@ -40,7 +35,7 @@ class DestinoSap {
 	}
 
 	/**
-	 * Crea un objeto de parámetros listo para ser pasado a la librería 'request' para que haga
+	 * Crea un objeto de parámetros listo para ser pasado a la librería 'aixos' para que haga
 	 * la llamada al sistema SAP.
 	 * 
 	 * Las opciones que admite son:

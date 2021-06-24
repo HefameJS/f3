@@ -1,9 +1,6 @@
 'use strict';
-const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
 
-// Externo
+const C = global.config;
 const ActiveDirectory = require('activedirectory');
 
 const autenticar = function (solicitudAutenticacion) {

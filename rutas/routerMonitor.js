@@ -1,15 +1,7 @@
 'use strict';
-//const C = global.config;
+
 const L = global.logger;
-//const K = global.constants;
-
-// Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
-
-// Helpers
-const { extenderSolicitudHttp, tryCatch } = require('global/extensiones/extensionesExpress');
-
-
 
 module.exports = (app) => {
 /*
@@ -23,7 +15,7 @@ module.exports = (app) => {
 	 */
 	app.use((errorExpress, req, res, next) => {
 		if (errorExpress) {
-
+			/*
 			[req, res] = extenderSolicitudHttp(req, res);
 			let txId = req.txId;
 
@@ -32,23 +24,10 @@ module.exports = (app) => {
 
 			let errorFedicom = new ErrorFedicom(errorExpress);
 			errorFedicom.enviarRespuestaDeError(res);
+			*/
 		} else {
 			next();
 		}
-	});
-
-
-	// Generamos txId y añadimos cabeceras comunes.
-	// Tambien añadimos funcionalidades a req y res
-	app.use((req, res, next) => {
-
-		[req, res] = extenderSolicitudHttp(req, res);
-		let txId = req.txId;
-
-		L.i('Recibiendo transmisión ' + txId + ' desde ' + req.obtenerDireccionIp());
-		L.xt(txId, 'Iniciando procesamiento de la transmisión');
-
-		next();
 	});
 
 
@@ -121,10 +100,12 @@ module.exports = (app) => {
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
+		/*
 		let txId = req.txId;
 		L.xw(txId, 'Se descarta la transmisión porque el endpoint [' + req.originalUrl + '] no existe');
 		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
 		errorFedicom.enviarRespuestaDeError(res);
+		*/
 	});
 
 

@@ -1,8 +1,4 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
-//const M = global.mongodb;
-
 
 /**
  * Clase que representa las condiciones que una transmisión debe cumplir para ser autorizada su ejecución.

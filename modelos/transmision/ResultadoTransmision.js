@@ -1,8 +1,4 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
-//const M = global.mongodb;
-
 
 /**
  * Representa el resultado final del procesamiento de una transmisión.

@@ -9,7 +9,7 @@ const iMongo = require('interfaces/imongo/iMongo');
 const Maestro = require('global/maestro');
 
 // Modelos
-const SensorPrtg = require('modelos/prtg/SensorPrtg');
+const SensorPrtg = require('modelos/_prtg/SensorPrtg');
 
 
 // GET /prtg/estadoPedidos

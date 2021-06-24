@@ -38,6 +38,7 @@ module.exports = {
 	},
 	TIPOS: {
 		PLANTILLA: -1,
+		RECHAZO: 100,
 		AUTENTICACION: 0,
 		CREAR_PEDIDO: 10,
 		CONSULTAR_PEDIDO: 11,

@@ -1,8 +1,6 @@
 'use strict';
-const C = global.config;
-//const K = global.constants;
-const M = global.mongodb;
 
+const C = global.config;
 const JsonWebToken = require('jsonwebtoken');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const CondicionesAutorizacion = require('./CondicionesAutorizacion');

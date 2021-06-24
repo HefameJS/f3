@@ -25,13 +25,13 @@ const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
 const grabarSentencia = async function (sentencia) {
 
 	let uid = (new M.ObjectID()).toHexString();
-	let txId = transaccion['$setOnInsert']._id;
+	let txId = sentencia['$setOnInsert']._id;
 	let txIdHexadecimal = txId.toHexString();
 
 	// Para serializar correctamente objetos como ObjectIDs y Dates
 	// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
 	// https://www.npmjs.com/package/bson
-	let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
+	let jsonExtendido = EJSON.stringify(sentencia, { relaxed: false });
 	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], function (err) {
 		if (err) {
 			throw err;

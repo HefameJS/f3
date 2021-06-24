@@ -1,10 +1,6 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
 
 const ResultadoTransmision = require("modelos/transmision/ResultadoTransmision");
-
-
 
 const CODIGO_HTTP_POR_DEFECTO = 500;
 

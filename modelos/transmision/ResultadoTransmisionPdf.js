@@ -1,7 +1,4 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
-//const M = global.mongodb;
 
 const ResultadoTransmision = require("./ResultadoTransmision");
 
@@ -12,8 +9,8 @@ const ResultadoTransmision = require("./ResultadoTransmision");
  * - cuerpoRespuestaHttp:		(Buffer) La respuesta que hay que darle al cliente en el estado actual de la transmisión
  * - nombreFichero				(string) El nombre del fichero PDF que se envía
 */
-class ResultadoTransmisionPdf extends ResultadoTransmision{
-	
+class ResultadoTransmisionPdf extends ResultadoTransmision {
+
 	nombreFichero;
 
 	constructor(codigoEstadoHttp, codigoEstadoTransmision, cuerpoRespuestaHttp, nombreFichero) {

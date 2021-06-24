@@ -1,50 +1,38 @@
 'use strict';
 const C = global.config;
-const L = global.logger;
-//const K = global.constants;
-
-// Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
-const CRC = require('modelos/CRC');
-
-// Helpers
 const Validador = require('global/validador');
+const Modelo = require('modelos/transmision/Modelo');
 
 
-class LineaDevolucionCliente {
+class LineaDevolucionCliente extends Modelo {
 
-	#transmision;
-	#log;
-
-	#metadatos = {
+	metadatos = {
 		numeroPosicion: 0,
-		errores: null,
-		lineaIncorrecta: false,
-		crc: null,
+		errores: new ErrorFedicom(),
+		errorProtocolo: false,
 		estupefaciente: false
 	}
 
-	#datos = {
-		orden: null,
-		ordenLineaAlbaran: null,
-		numeroAlbaran: null,
-		fechaAlbaran: null,
-		codigoArticulo: null,
-		cantidad: null,
-		codigoMotivo: null,
-		lote: null,
-		fechaCaducidad: null,
-		valeEstupefaciente: null,
-		observaciones: null
-	}
+
+	orden;
+	ordenLineaAlbaran;
+	numeroAlbaran;
+	fechaAlbaran;
+	codigoArticulo;
+	cantidad;
+	codigoMotivo;
+	lote;
+	fechaCaducidad;
+	valeEstupefaciente;
+	observaciones;
 
 	constructor(transmision, json, numeroPosicion) {
 
-		this.#transmision = transmision;
-		this.#log = this.#transmision.log;
+		super(transmision);
 
-		this.#log.info(`Posición ${numeroPosicion}: Analizando linea de devolución`);
-		this.#metadatos.numeroPosicion = numeroPosicion;
+		this.log.info(`Posición ${numeroPosicion}: Analizando linea de devolución`);
+		this.metadatos.numeroPosicion = numeroPosicion;
 
 		// Comprobamos los campos mínimos que deben aparecer en cada POSICION de una devolucion
 		let errorFedicom = new ErrorFedicom();
@@ -61,7 +49,7 @@ class LineaDevolucionCliente {
 
 			let descripcionMotivo = C.devoluciones.motivos[codigoMotivoSaneado];
 			if (!descripcionMotivo) {
-				this.#log.warn(`Posición ${numeroPosicion}: El motivo '${json.codigoMotivo}' no es un código de motivo válido`);
+				this.log.warn(`Posición ${numeroPosicion}: El motivo '${json.codigoMotivo}' no es un código de motivo válido`);
 				errorFedicom.insertar('LIN-DEV-ERR-005', 'El campo "codigoMotivo" no tiene un valor válido');
 			}
 		}
@@ -71,26 +59,25 @@ class LineaDevolucionCliente {
 			Validador.esCadenaNoVacia(json.numeroAlbaran, errorFedicom, 'LIN-DEV-ERR-001', 'El campo "numeroAlbaran" es obligatorio');
 			Validador.esFecha(json.fechaAlbaran, errorFedicom, 'LIN-DEV-ERR-002', 'El campo "fechaAlbaran" es incorrecto');
 		} else {
-			this.#log.info(`Posición ${numeroPosicion}: El codigo de motivo '${json.codigoMotivo}' exento de prensentar numeroAlbaran y fechaAlbaran`);
+			this.log.info(`Posición ${numeroPosicion}: El codigo de motivo '${json.codigoMotivo}' exento de prensentar numeroAlbaran y fechaAlbaran`);
 		}
 
 		// Si se encuentran errores:
 		// - Se describen los errores encontrados en el array de incidencias.
 		// - La posicion se marca como 'excluir=true' para que no se envíe a SAP.
 		if (errorFedicom.tieneErrores()) {
-			this.#log.warn(`Posición ${numeroPosicion}: Se han detectado errores graves de protocolo en la línea`, errorFedicom);
-			this.#metadatos.errores = errorFedicom;
+			this.log.warn(`Posición ${numeroPosicion}: Se han detectado errores graves de protocolo en la línea`, errorFedicom);
+			this.metadatos.errorProtocolo = true;
+			this.metadatos.errores = errorFedicom;
 		}
 
 
 		// Copiamos las propiedades de la POSICION que son relevantes
-		this.#datos.numeroAlbaran = json.numeroAlbaran?.trim();
-		this.#datos.fechaAlbaran = json.fechaAlbaran?.trim();
-		this.#datos.codigoArticulo = json.codigoArticulo?.trim();
-		this.#datos.cantidad = parseInt(json.cantidad) || 0;
-		this.#datos.codigoMotivo = json.codigoMotivo;
-
-
+		this.numeroAlbaran = json.numeroAlbaran?.trim();
+		this.fechaAlbaran = json.fechaAlbaran?.trim();
+		this.codigoArticulo = json.codigoArticulo?.trim();
+		this.cantidad = parseInt(json.cantidad) || 0;
+		this.codigoMotivo = json.codigoMotivo;
 
 
 		// Valores que son opcionales
@@ -100,81 +87,51 @@ class LineaDevolucionCliente {
 		// orden
 		if (Validador.existe(json.orden)) {
 			if (Validador.esEnteroPositivo(json.orden)) {
-				this.#datos.orden = parseInt(json.orden);
+				this.orden = parseInt(json.orden);
 			} else {
-				this.#log.warn(`Posición ${numeroPosicion}: El valor '${json.orden}' no es válido para el campo 'orden'`);
-				// Si el orden no es válido o no aparece, el objeto de Devolucion que contiene esta línea le asignará un orden.
-				// por eso no asignamos ningún valor por defecto
+				this.log.warn(`Posición ${numeroPosicion}: El valor '${json.orden}' no es válido para el campo 'orden'`);
 			}
 		}
 
 		// ordenLineaAlbaran
 		if (Validador.existe(json.ordenLineaAlbaran)) {
 			if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
-				this.#datos.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
+				this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
 			} else {
-				this.#log.warn(`Posición ${numeroPosicion}: El valor '${json.ordenLineaAlbaran}' no es válido para el campo 'ordenLineaAlbaran'`);
-				// Descartamos el valor en caso de error
+				this.warn(`Posición ${numeroPosicion}: El valor '${json.ordenLineaAlbaran}' no es válido para el campo 'ordenLineaAlbaran'`);
 			}
 		}
 
 		// lote
 		if (Validador.esCadenaNoVacia(json.lote)) {
-			this.#datos.lote = json.lote.trim();
+			this.lote = json.lote.trim();
 		}
 
 		// fechaCaducidad
 		if (Validador.existe(json.fechaCaducidad)) {
 			if (Validador.esFecha(json.fechaCaducidad)) {
-				this.#datos.fechaCaducidad = json.fechaCaducidad.trim();
+				this.fechaCaducidad = json.fechaCaducidad.trim();
 			} else {
-				this.#log.warn(`Posición ${numeroPosicion}: El valor '${json.fechaCaducidad}' en 'fechaCaducidad' no va en formato Fedicom3 Date dd/mm/yyyy`);
+				this.log.warn(`Posición ${numeroPosicion}: El valor '${json.fechaCaducidad}' en 'fechaCaducidad' no va en formato Fedicom3 Date dd/mm/yyyy`);
 			}
 		}
 
 		// valeEstupefaciente
 		if (Validador.esCadenaNoVacia(json.valeEstupefaciente)) {
-			this.#datos.valeEstupefaciente = json.valeEstupefaciente.trim();
-			this.#metadatos.estupefaciente = true;
+			this.valeEstupefaciente = json.valeEstupefaciente.trim();
+			this.metadatos.estupefaciente = true;
 		}
 
 		// observaciones
 		if (Validador.esCadenaNoVacia(json.observaciones)) {
-			this.#datos.observaciones = json.observaciones.trim();
+			this.observaciones = json.observaciones.trim();
 		}
 
-
-		// Generacion de CRC de línea
-		this.#generarCRC();
-		this.#log.debug(`Posición ${numeroPosicion}: Generado CRC de linea ${this.#metadatos.crc}`);
-
 	}
 
 
-	getCrc() {
-		return this.#metadatos.crc;
-	}
-
-	getNumeroPosicion() {
-		return this.#metadatos.numeroPosicion;
-	}
-
-	tieneErroresDeProtocolo() {
-		return (this.#metadatos.errores !== null)
-	}
-
-
-
-	getOrdinal() {
-		return this.#datos.orden;
-	}
-
-	setOrdinal(orden) {
-		this.#datos.orden = orden;
-	}
-
-	getCantidad() {
-		return this.#datos.cantidad || 0;
+	tieneErrores() {
+		return this.metadatos.errorProtocolo
 	}
 
 
@@ -186,39 +143,24 @@ class LineaDevolucionCliente {
 	generarJSON(tipoReceptor = 'sap') {
 
 		let json = {};
-		if (this.#datos.orden || this.#datos.orden === 0) json.orden = this.#datos.orden;
-		if (this.#datos.numeroAlbaran) json.numeroAlbaran = this.#datos.numeroAlbaran;
-		if (this.#datos.fechaAlbaran) json.fechaAlbaran = this.#datos.fechaAlbaran;
-		if (this.#datos.codigoArticulo) json.codigoArticulo = this.#datos.codigoArticulo;
-		if (this.#datos.cantidad || this.#datos.cantidad === 0) json.cantidad = this.#datos.cantidad;
-		if (this.#datos.codigoMotivo) json.codigoMotivo = this.#datos.codigoMotivo;
-		if (this.#datos.incidencias) json.incidencias = this.#datos.incidencias;
-		if (this.#datos.lote) json.lote = this.#datos.lote;
-		if (this.#datos.fechaCaducidad) json.fechaCaducidad = this.#datos.fechaCaducidad;
-		if (this.#datos.valeEstupefaciente) json.valeEstupefaciente = this.#datos.valeEstupefaciente;
-		if (this.#datos.observaciones) json.observaciones = this.#datos.observaciones;
- 
-		if (tipoReceptor === 'lineasInvalidas') {
-			if (this.#metadatos.errores) {
-				json.incidencias = this.#metadatos.errores.getErrores();
-			}
+		if (this.orden || this.orden === 0) json.orden = this.orden;
+		if (this.numeroAlbaran) json.numeroAlbaran = this.numeroAlbaran;
+		if (this.fechaAlbaran) json.fechaAlbaran = this.fechaAlbaran;
+		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
+		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
+		if (this.codigoMotivo) json.codigoMotivo = this.codigoMotivo;
+		if (this.incidencias) json.incidencias = this.incidencias;
+		if (this.lote) json.lote = this.lote;
+		if (this.fechaCaducidad) json.fechaCaducidad = this.fechaCaducidad;
+		if (this.valeEstupefaciente) json.valeEstupefaciente = this.valeEstupefaciente;
+		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.metadatos.errores) {
+			json.incidencias = this.metadatos.errores.getErrores();
 		}
 
 		return json;
 	}
 
-	#generarCRC() {
-		this.#metadatos.crc = CRC.generar(
-			this.#datos.codigoMotivo,
-			this.#datos.numeroAlbaran,
-			this.#datos.fechaAlbaran,
-			this.#datos.codigoArticulo,
-			this.#datos.cantidad,
-			this.#datos.lote,
-			this.#datos.fechaCaducidad,
-			this.#datos.valeEstupefaciente
-		)
-	}
 
 }
 

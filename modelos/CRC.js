@@ -1,7 +1,4 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
 const M = global.mongodb;
 
 const crypto = require('crypto');
