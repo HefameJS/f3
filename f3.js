@@ -59,7 +59,7 @@ require('bootstrap')('master').then(() => {
 	}
 
 
-	let registradorProcesos = require('watchdog/registradorProcesos');
+	let registradorProcesos = require('procesos/registradorProcesos');
 	registradorProcesos();
 
 	cluster.on('exit', (workerMuerto, code, signal) => {

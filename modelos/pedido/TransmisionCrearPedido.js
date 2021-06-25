@@ -23,6 +23,7 @@ class TransmisionCrearPedido extends Transmision {
 
 	// @Override
 	async operar() {
+		
 		this.#solicitud = new SolicitudCrearPedido(this);
 
 		// PASO 1: Verificar si hay errores de protocolo

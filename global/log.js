@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs/promises'); fs.constants = require('fs').constants;
+const util=require('util')
+
 class RegistroLog {
 	fecha;
 	nivel;
@@ -45,8 +48,42 @@ class RegistroLog {
 		});
 	}
 
+}
+
+
+
+class RegistroDump {
+	fecha;
+	nivel;
+	datos;
+	padre;
+
+	constructor(datos, padre) {
+		this.fecha = new Date();
+		this.datos = datos;
+		this.padre = padre;
+
+		let ficheroDump = this.#generarNombreFichero(true);
+		let mensaje = (new Date).toUTCString() + '\n\n'
+
+		this.datos.forEach(dato => {
+			if (dato?.stack) {
+				mensaje += dato.stack
+			} else {
+				mensaje += util.inspect(dato);
+			}			
+
+			fs.appendFile(ficheroDump, mensaje);
+		});
+	}
+
+	#generarNombreFichero(dump = false) {
+		return C.log.directorio + this.padre.prefijo + '-' + process.iid + '-' + Date.toSapDate() + (dump ? '.dump' : '.log')
+	}
 
 }
+
+
 class LogServidor {
 
 	prefijo;
@@ -59,10 +96,11 @@ class LogServidor {
 		new RegistroLog(datos, nivel, this)
 	}
 
-	dump(...datos) {
-		this.#grabarEntrada(datos, LogServidor.FATAL);
-	}
 
+
+	dump(...datos) {
+		new RegistroDump(datos, this);
+	}
 	trace(...datos) {
 		this.#grabarEntrada(datos, LogServidor.TRACE);
 	}
@@ -94,6 +132,7 @@ LogServidor.WARN = 'WRN';
 LogServidor.ERROR = 'ERR';
 LogServidor.FATAL = 'DIE';
 LogServidor.EVENT = 'EVT';
+LogServidor.DUMP = 'DMP';
 
 
 

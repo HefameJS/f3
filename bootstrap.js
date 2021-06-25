@@ -38,7 +38,7 @@ module.exports = async function (tipoProceso) {
 	C.pid.escribirFicheroPid();
 
 	// Log global
-	await require('global/logger')(process.titulo);
+	await require('global/log')(process.titulo);
 	
 	// Carga de datos del proceso
 	L.info('Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker });
@@ -61,10 +61,4 @@ module.exports = async function (tipoProceso) {
 
 }
 
-
-
-
-
-
-// while (!conexionEstablecida);
 
