@@ -1,6 +1,6 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
+const C = global.C;
+const K = global.K;
 
 
 const axios = require('axios');

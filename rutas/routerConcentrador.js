@@ -18,12 +18,6 @@ const TransmisionConsultarLogistica = require('modelos/logistica/TransmisionCons
 
 
 
-
-
-
-
-
-
 module.exports = (app) => {
 
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
@@ -32,7 +26,7 @@ module.exports = (app) => {
 	app.use(async (errorExpress, req, res, next) => {
 
 		if (errorExpress) {
-			Transmision.ejecutar(req, res, TransmisionError, {errorExpress})
+			Transmision.ejecutar(req, res, TransmisionError, { errorExpress })
 		} else {
 			next();
 		}
@@ -47,22 +41,20 @@ module.exports = (app) => {
 
 
 	app.route('/pedidos')
-		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearPedido));
-	//	.put(tryCatch(controladores.pedidos.actualizarPedido));
+		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearPedido))
+		.put(async (req, res) => { Transmision.ejecutar(req, res, TransmisionError, { errorFedicom: new ErrorFedicom('PED-ERR-999', 'El servicio de actualización de pedidos no está disponible.', 501) }); });
 	app.route('/pedidos/:numeroPedido')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarPedido));
-
 	app.route('/confirmaPedido')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 
 
-	
 	app.route('/devoluciones')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearDevolucion));
 	app.route('/devoluciones/:numeroDevolucion')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarDevolucion));
-	
-		
+
+
 	app.route('/albaranes')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionBuscarAlbaranes));
 	app.route('/albaranes/confirmacion')
@@ -70,33 +62,27 @@ module.exports = (app) => {
 	app.route('/albaranes/:numeroAlbaran')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarAlbaran));
 
-/*
-	
+
+
 	app.route('/facturas')
-		.get(controladores.facturas.listadoFacturas);
+		.get(async (req, res) => { Transmision.ejecutar(req, res, TransmisionError, { errorFedicom: new ErrorFedicom('FACT-ERR-999', 'El servicio de consulta de facturas no está disponible.', 501) }); });
 	app.route('/facturas/:numeroFactura')
-		.get(controladores.facturas.consultaFactura);
-	
-	
-	
-	
-	//app.route('/retransmitir/:txId')
-		//.get(tryCatch(controladores.retransmision.retransmitePedido));
-	*/
+		.get(async (req, res) => { Transmision.ejecutar(req, res, TransmisionError, { errorFedicom: new ErrorFedicom('FACT-ERR-999', 'El servicio de consulta de facturas no está disponible.', 501) }) });
+
 
 	app.route('/logistica')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionCrearLogistica));
-
 	app.route('/logistica/:numeroLogistica')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
-	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
-	app.use(async (req, res, next) => {
+	/*
+	//app.route('/retransmitir/:txId')
+		//.get(tryCatch(controladores.retransmision.retransmitePedido));
+	*/
 
-		let errorFedicom = new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404);
-		Transmision.ejecutar(req, res, TransmisionError, { errorFedicom });
-	
-	});
+
+	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
+	app.use(async (req, res) => { Transmision.ejecutar(req, res, TransmisionError, { errorFedicom: new ErrorFedicom('HTTP-404', 'No existe el endpoint indicado.', 404) }) });
 
 };

@@ -1,11 +1,11 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-//const K = global.constants;
+//const C = global.C;
+const L = global.L;
+//const K = global.K;
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iMongo = require('interfaces/imongo/iMongo');
+const iMongo = require('interfaces/_imongo/iMongo');
 
 // Modelos
 const EstadoReplicaSet = require('modelos/monitor/ModeloEstadoReplicaSet')

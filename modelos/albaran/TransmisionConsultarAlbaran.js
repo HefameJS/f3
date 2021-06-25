@@ -1,7 +1,7 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-//const M = global.mongodb;
+const C = global.C;
+const K = global.K;
+const M = global.M;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -12,7 +12,7 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 
 const Albaran = require('./Albaran');
 
-let toMongoLong = require("mongodb").Long.fromNumber;
+
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
 const ResultadoTransmisionPdf = require('modelos/transmision/ResultadoTransmisionPdf');
 
@@ -124,7 +124,7 @@ class TransmisionConsultarAlbaran extends Transmision {
 	generarMetadatosOperacion() {
 		if (this.metadatos.numeroAlbaran) {
 			let metadatos = {
-				numeroAlbaran: toMongoLong(this.metadatos.numeroAlbaran),
+				numeroAlbaran: M.toMongoLong(this.metadatos.numeroAlbaran),
 				formatoRespuesta: this.metadatos.formatoRespuesta
 			}
 			if (this.metadatos.codigoCliente) {

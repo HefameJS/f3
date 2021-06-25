@@ -1,7 +1,5 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-const M = global.mongodb;
+const K = global.K;
 
 
 const Transmision = require('modelos/transmision/Transmision');

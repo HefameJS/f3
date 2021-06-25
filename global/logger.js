@@ -1,190 +1,112 @@
 'use strict';
-let C = global.config;
-//const L = {};
-//const K = global.constants;
 
+class RegistroLog {
+	fecha;
+	nivel;
+	datos;
+	padre;
 
-const util = require('util');
-const fs = require('fs');
+	constructor(datos, nivel, padre) {
+		this.fecha = new Date();
+		this.datos = datos;
+		this.nivel = nivel;
+		this.padre = padre;
 
-const TRACE = 'TRC';
-const DEBUG = 'DBG';
-const INFO = 'INF';
-const WARN = 'WRN';
-const ERROR = 'ERR';
-const FATAL = 'DIE';
-const EVENT = 'EVT';
+		// Imprimimos
+		this.datos.forEach(dato => {
 
+			let mensaje = dato?.message || dato;
+			let nivel = this.nivel + (padre.prefijo ? '@' + padre.prefijo : '');
 
-class Evento {
-	constructor({ nivel, categoria, datos, txId }) {
-
-		this.nivel = nivel ?? INFO;
-		this.categoria = categoria.padStart ? categoria.padStart(15) : '';
-		this.datos = Array.isArray(datos) ? datos : [datos];
-		this.timestamp = new Date();
-		this.txId = txId ?? null;
-		this.proceso = {
-			iid: process.iid
-		}
-		if (process.worker) this.proceso.worker = process.worker;
-	}
-}
-
-class Logger {
-
-	constructor() {
-
-	}
-
-	#generarNombreFichero(dump = false) {
-		return C.log.directorio + process.titulo + '-' + process.iid + '-' + Date.toSapDate() + (dump ? '.dump' : '.log')
-	}
-
-	grabarLog(evento) {
-
-		C = global.config;
-		let hora = Date.toShortTime(evento.timestamp);
-		let mensaje = (evento.txId ? evento.txId + '|' : '') + hora + '|' + evento.nivel + '|' + evento.categoria + '|' + JSON.stringify(evento.datos)
-		
-		fs.appendFile(this.#generarNombreFichero(), mensaje + '\n', (err) => {
-			if (err) {
-				console.log(mensaje)
-				console.log('###', err)
+			switch (this.nivel) {
+				case LogServidor.FATAL:
+				case LogServidor.ERROR:
+					console.log('\u001b[' + 31 + 'm\u001b[' + 7 + 'm', nivel, '\u001b[0m', mensaje);
+					break;
+				case LogServidor.WARN:
+					console.log('\u001b[' + 31 + 'm', nivel, '\u001b[0m', mensaje);
+					break;
+				case LogServidor.DEBUG:
+				case LogServidor.TRACE:
+					console.log('\u001b[' + 36 + 'm', nivel, '\u001b[0m', mensaje);
+					break;
+				case LogServidor.EVENT:
+					console.log('\u001b[' + 36 + 'm\u001b[' + 7 + 'm', nivel, '\u001b[0m', mensaje);
+					break;
+				default:
+					console.log('\u001b[' + 32 + 'm', nivel, '\u001b[0m', mensaje);
+				//32
 			}
-		})
 
-		/*
-		if (C.log.consola) {
-			if (evento.nivel === ERROR || evento.nivel === FATAL)
-				console.log('\u001b[' + 30 + 'm' + '\u001b[' + 41 + 'm' + (process.titulo || 'init') + '|' + mensaje + '\u001b[0m');
-			else if (evento.nivel === WARN)
-				console.log('\u001b[' + 30 + 'm' + '\u001b[' + 43 + 'm' + (process.titulo || 'init') + '|' + mensaje + '\u001b[0m');
-			else if (evento.nivel === DEBUG || evento.nivel === TRACE)
-				console.log('\u001b[' + 36 + 'm' + (process.titulo || 'init') + '|' + mensaje + '\u001b[0m');
-			else
-				console.log((process.titulo || 'init') + '|' + mensaje);
-		}
-		*/
+			if (dato?.stack) {
+				console.log(dato.stack)
+			}
 
-	}
-
-	logGeneral(datos, nivel, categoria) {
-		categoria = categoria || 'server';
-		let evento = new Evento({ nivel, datos, categoria })
-		this.grabarLog(evento);
-	};
-
-	logTransmision(txId, datos, nivel, categoria) {
-		categoria = categoria || 'tx';
-		let evento = new Evento({ nivel, datos, categoria, txId })
-		this.grabarLog(evento);
-	};
-
-	logEvento(txId, txTipo, txEstado, datos) {
-
-		let evento = new Evento({
-			nivel: EVENT,
-			datos: {
-				datos: datos,
-				tipo: txTipo,
-				estado: txEstado
-			},
-			categoria: 'evento',
-			txId
 		});
-
-		this.grabarLog(evento);
 	}
 
-	logDump(err, req) {
 
-		C = global.config;
-		
-		let message = (new Date).toUTCString() + '\n\n'
-		message += err.stack
+}
+class LogServidor {
 
-		if (req) {
-			message += '\n\nPETICIÓN HTTP\n=============\n'
-			message += 'IP: ' + req.ip + ' (' + req.protocol + ')\n'
-			message += req.method + ' ' + req.originalUrl + ' HTTP/' + req.httpVersion + '\n'
-			message += util.inspect(req.headers) + '\n\n'
-			message += util.inspect(req.body)
-		}
+	prefijo;
 
-		fs.appendFileSync(this.#generarNombreFichero(true), message, (err) => {
-			if (err) {
-				console.error(message)
-				console.error('###', err)
-			}
-		})
-
-		if (C.log.consola) {
-			console.log('DUMP GENERADO')
-			console.log(message)
-		}
-
+	constructor(prefijo) {
+		this.prefijo = prefijo;
 	}
 
-	t(datos, categoria) {
-		this.logGeneral(datos, TRACE, categoria);
+	#grabarEntrada(datos, nivel) {
+		new RegistroLog(datos, nivel, this)
 	}
 
-	d(datos, categoria) {
-		this.logGeneral(datos, DEBUG, categoria);
+	dump(...datos) {
+		this.#grabarEntrada(datos, LogServidor.FATAL);
 	}
 
-	i(datos, categoria) {
-		this.logGeneral(datos, INFO, categoria);
+	trace(...datos) {
+		this.#grabarEntrada(datos, LogServidor.TRACE);
 	}
-
-	w(datos, categoria) {
-		this.logGeneral(datos, WARN, categoria);
+	debug(...datos) {
+		this.#grabarEntrada(datos, LogServidor.DEBUG);
 	}
-
-	e(datos, categoria) {
-		this.logGeneral(datos, ERROR, categoria);
+	info(...datos) {
+		this.#grabarEntrada(datos, LogServidor.INFO);
 	}
-
-	f(datos, categoria) {
-		this.logGeneral(datos, FATAL, categoria);
+	warn(...datos) {
+		this.#grabarEntrada(datos, LogServidor.WARN);
 	}
-
-	xt(id, datos, categoria) {
-		this.logTransmision(id, datos, TRACE, categoria);
+	err(...datos) {
+		this.#grabarEntrada(datos, LogServidor.ERROR);
 	}
-
-	xd(id, datos, categoria) {
-		this.logTransmision(id, datos, DEBUG, categoria);
+	fatal(...datos) {
+		this.#grabarEntrada(datos, LogServidor.FATAL);
 	}
-
-	xi(id, datos, categoria) {
-		this.logTransmision(id, datos, INFO, categoria);
+	evento(...datos) {
+		this.#grabarEntrada(datos, LogServidor.EVENT);
 	}
-
-	xw(id, datos, categoria) {
-		this.logTransmision(id, datos, WARN, categoria);
-	}
-
-	xe(id, datos, categoria) {
-		this.logTransmision(id, datos, ERROR, categoria);
-	}
-
-	xf(id, datos, categoria) {
-		this.logTransmision(id, datos, FATAL, categoria);
-	}
-
-	evento(txId, txTipo, txEstado, datos) {
-		this.logEvento(txId, txTipo, txEstado, datos);
-	}
-
-	dump(err, req) {
-		this.logDump(err, req);
-	}
-
 }
 
 
-const L = new Logger();
+LogServidor.TRACE = 'TRC';
+LogServidor.DEBUG = 'DBG';
+LogServidor.INFO = 'INF';
+LogServidor.WARN = 'WRN';
+LogServidor.ERROR = 'ERR';
+LogServidor.FATAL = 'DIE';
+LogServidor.EVENT = 'EVT';
 
-module.exports = L;
+
+
+
+module.exports = async function (prefijo) {
+	let l = new LogServidor(prefijo);
+	global.L.trace = (...datos) => l.trace(...datos);
+	global.L.debug = (...datos) => l.debug(...datos);
+	global.L.info = (...datos) => l.info(...datos);
+	global.L.warn = (...datos) => l.warn(...datos);
+	global.L.err = (...datos) => l.err(...datos);
+	global.L.fatal = (...datos) => l.fatal(...datos);
+	global.L.evento = (...datos) => l.evento(...datos);
+	global.L.dump = (...datos) => l.dump(...datos);
+	return;
+}

@@ -1,9 +1,7 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-const K = global.constants;
-
-// Externas
+const C = global.C;
+const L = global.L;
+const K = global.K;
 const OS = require('os');
 const FS = require('fs');
 

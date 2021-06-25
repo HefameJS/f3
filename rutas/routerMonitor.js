@@ -1,6 +1,6 @@
 'use strict';
 
-const L = global.logger;
+const L = global.L;
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 module.exports = (app) => {

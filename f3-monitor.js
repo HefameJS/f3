@@ -1,14 +1,11 @@
 'use strict';
 require('app-module-path').addPath(__dirname);
-global.constants = require('global/constantes');
-const K = global.constants;
-
 console.log('Inicializando servicio de monitorización Fedicom v3', new Date());
 
-require('bootstrap')(K.PROCESOS.TIPOS.MONITOR).then(() => {
+require('bootstrap')('monitor').then(() => {
 
-	const C = global.config;
-	const L = global.logger;
+	const C = global.C;
+	const L = global.L;
 
 	// externas
 	const express = require('express');
@@ -35,8 +32,6 @@ require('bootstrap')(K.PROCESOS.TIPOS.MONITOR).then(() => {
 	});
 	servidorHttp.on('listening', () => { L.i("Servidor HTTP a la escucha en el puerto " + C.http.puertoConsultas); });
 	servidorHttp.on('close', () => { L.f("Se ha cerrado el servicio HTTP"); });
-	//servidorHttp.on('connection', (socket) => {});
-
 
 });
 

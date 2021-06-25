@@ -1,20 +1,17 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-//const K = global.constants;
-const M = global.mongodb;
-
-// Externo
+const C = global.C;
+const L = global.L;
+const M = global.M;
 const { EJSON } = require('bson');
 const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
 	if (err) {
-		L.f(['No se pudo conectar a SQLite', C.sqlite.fichero, err], 'sqlite');
+		L.fatal(`No se pudo conectar al fichero ${C.sqlite.fichero} para SQLite:`, err);
 		return;
 	}
 
-	L.i(['Conectado a la base de datos SQLite3', C.sqlite.fichero], 'sqlite');
+	L.info(`Conectado a la base de datos SQLite3 en el fichero ${C.sqlite.fichero}`);
 	db.exec('CREATE TABLE IF NOT EXISTS tx(uid CHARACTER(24) PRIMARY KEY, txid CHARACTER(24), data TEXT, retryCount INTEGER)');
 });
 
@@ -43,33 +40,6 @@ const grabarSentencia = async function (sentencia) {
 
 }
 
-/**
- * Graba en la base de datos SQLite la transacción MongoDB pasada.
- * @param {*} transaccion 
- */
-const grabarTransaccion = function (transaccion) {
-
-	return new Promise((resolve, reject) => {
-		let uid = (new M.ObjectID()).toHexString();
-		let txId = transaccion['$setOnInsert']._id;
-		let txIdHexadecimal = txId.toHexString();
-
-		// Para serializar correctamente objetos como ObjectIDs y Dates
-		// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
-		// https://www.npmjs.com/package/bson
-		let jsonExtendido = EJSON.stringify(transaccion, { relaxed: false });
-		db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], (err) => {
-			if (err) {
-				L.xf(txId, ["*** FALLO AL GRABAR EN LA BASE DE DATOS DE RESPALDO - PELIGRO DE PERDIDA DE DATOS", err, transaccion], 'sqlite');
-				resolve(false);
-			} else {
-				L.xw(txId, ['* Se almacenó el COMMIT fallido en la base de datos auxiliar', uid], 'sqlite');
-				resolve(true);
-			}
-		});
-	});
-
-}
 
 
 /**
@@ -78,12 +48,13 @@ const grabarTransaccion = function (transaccion) {
  * @param {*} numeroFallosMaximo 
  * @param {*} callback 
  */
+/*
 const numeroEntradasPendientes = () => {
 
 	return new Promise((resolve, reject) => {
 		db.all('SELECT count(*) as count FROM tx WHERE retryCount < ?', [C.sqlite.maximoReintentos], (errorSQLite, resultados) => {
 			if (errorSQLite) {
-				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+				L.fatal("Fallo a leer de SQLite:", errorSQLite);
 				reject(errorSQLite);
 			}
 			else if (resultados && resultados[0] && resultados[0].count >= 0) {
@@ -97,7 +68,7 @@ const numeroEntradasPendientes = () => {
 		});
 	});
 }
-
+*/
 
 /**
  * Devuelve los datos de todas las entradas que haya en la base de datos SQLite.
@@ -106,6 +77,7 @@ const numeroEntradasPendientes = () => {
  * para obtener solo aquellas que son candidatas para pasarlas a MongoDB.
  * @param {*} numeroFallosMaximo
  */
+/*
 const obtenerEntradas = (numeroFallosMaximo, limite) => {
 
 	return new Promise((resolve, reject) => {
@@ -130,7 +102,7 @@ const obtenerEntradas = (numeroFallosMaximo, limite) => {
 
 		db.all(sql, parametrosSql, (errorSQLite, entradas) => {
 			if (errorSQLite) {
-				L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+				L.fatal("*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
 				reject(errorSQLite);
 			}
 			else if (entradas && entradas.length) {
@@ -150,18 +122,20 @@ const obtenerEntradas = (numeroFallosMaximo, limite) => {
 	})
 
 }
+*/
 
 /**
  * Elimina de la base de datos SQLite la entrada con el UID indicado.
  * @param {*} uid 
  */
+/*
 const eliminarEntrada = (uid) => {
 
 	return new Promise((resolve, reject) => {
 
 		db.run('DELETE FROM tx WHERE uid = ?', [uid], (errorSQLite) => {
 			if (errorSQLite) {
-				L.f(["*** Fallo al borrar la entrada de la base de datos de respaldo", errorSQLite], 'sqlite');
+				L.fatal("*** Fallo al borrar la entrada de la base de datos de respaldo", errorSQLite], 'sqlite');
 				reject(errorSQLite);
 			} else {
 				resolve(this.changes)
@@ -172,6 +146,7 @@ const eliminarEntrada = (uid) => {
 
 
 }
+*/
 
 /**
  * Actualiza en la base de datos la entrada con el UID indicado para aumentar su campo 'retryCount' en uno.
@@ -179,12 +154,13 @@ const eliminarEntrada = (uid) => {
  * la entrada de SQLite a MongoDB.
  * @param {*} uid 
  */
+/*
 const incrementarNumeroDeIntentos = (uid) => {
 
 	return new Promise((resolve, reject) => {
 		db.run('UPDATE tx SET retryCount = retryCount + 1 WHERE uid = ?', [uid], (errorSQLite) => {
 			if (errorSQLite) {
-				L.f(["*** Fallo al incrementar el número de intentos para la entrada", errorSQLite], 'sqlite');
+				L.fatal("*** Fallo al incrementar el número de intentos para la entrada", errorSQLite], 'sqlite');
 				reject(errorSQLite);
 			} else {
 				resolve(this.changes);
@@ -192,11 +168,13 @@ const incrementarNumeroDeIntentos = (uid) => {
 		});
 	})
 }
+*/
 
 /**
  * Genera un recuento del número de entradas que hay en la base de datos agrupadas por 
  * el numero de veces que han sido intentadas enviar a MongoDB
  */
+/*
 const recuentoRegistros = () => {
 
 	return new Promise((resolve, reject) => {
@@ -208,7 +186,7 @@ const recuentoRegistros = () => {
 		});
 	});
 }
-
+*/
 
 /**
  * Permite realizar una consulta de las entradas de la base de datos.
@@ -240,6 +218,7 @@ const recuentoRegistros = () => {
  * @param {*} opciones 
  * @param {*} callback 
  */
+/*
 const consultaRegistros = (opciones, callback) => {
 
 	return new Promise((resolve, reject) => {
@@ -265,7 +244,7 @@ const consultaRegistros = (opciones, callback) => {
 
 		db.get(sqlContador, valores, (errorContadorSQLite, filaNumeroEntradas) => {
 			if (errorContadorSQLite) {
-				L.f(['Fallo al contar el número de entradas en la base de datos', errorContadorSQLite], 'sqlite');
+				L.fatal('Fallo al contar el número de entradas en la base de datos', errorContadorSQLite], 'sqlite');
 				reject(errorSQLite);
 				return;
 			}
@@ -273,7 +252,7 @@ const consultaRegistros = (opciones, callback) => {
 
 			db.all(sql, valores, (errorSQLite, entradas) => {
 				if (errorSQLite) {
-					L.f(["*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
+					L.fatal("*** FALLO AL LEER LA BASE DE DATOS DE RESPALDO", errorSQLite], 'sqlite');
 					reject(errorSQLite);
 					return;
 				}
@@ -298,16 +277,16 @@ const consultaRegistros = (opciones, callback) => {
 		});
 	});
 }
+*/
 
 module.exports = {
-	grabarTransaccion, /* DEPRECATED - Usar grabarSentencia */
 	grabarSentencia,
-	numeroEntradasPendientes,
-	obtenerEntradas,
-	eliminarEntrada,
-	incrementarNumeroDeIntentos,
-	recuentoRegistros,
-	consultaRegistros
+	//numeroEntradasPendientes,
+	//obtenerEntradas,
+	//eliminarEntrada,
+	//incrementarNumeroDeIntentos,
+	//recuentoRegistros,
+	//consultaRegistros
 }
 
 

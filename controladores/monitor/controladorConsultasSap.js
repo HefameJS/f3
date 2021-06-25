@@ -1,7 +1,7 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-//const K = global.constants;
+const C = global.C;
+const L = global.L;
+//const K = global.K;
 
 // Interfaces
 const iTokens = require('global/tokens');

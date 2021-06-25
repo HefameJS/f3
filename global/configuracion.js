@@ -1,10 +1,7 @@
 'use strict';
-const C = global.config;
-const L = require('./logger');
-//const K = global.constants;
-let M = global.mongodb;
-
-// externas
+const L = global.L;
+const M = global.M;
+const C = global.C;
 const fs = require('fs/promises'); fs.constants = require('fs').constants;
 const OS = require('os')
 const SEPARADOR_DIRECTORIOS = require('path').sep;
@@ -24,37 +21,6 @@ const SUBDIR = {
 
 
 class Configuracion {
-	constructor(config) {
-
-		this.listeners = [];
-
-		if (!(config.produccion === true || config.produccion === false))
-			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
-
-		this.produccion = Boolean(config.produccion);
-		this.numeroWorkers = Validador.esEnteroPositivo(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
-
-		this.sinWatchdogPedidos = Boolean(config.sinWatchdogPedidos);
-		this.sinWatchdogSqlite = Boolean(config.sinWatchdogSqlite);
-		this.sinMonitor = Boolean(config.sinMonitor);
-
-		// El directorio de cache sabemos que existe y que es escribible
-		// porque el objeto se instancia como Configuracion.cargarDatosFichero(rutaFichero)
-		this.directorioCache = config.directorioCache;
-
-		// Objetos complejos
-		this.mongodb = new ConfiguracionMongodb(this, config.mongodb);
-		this.pid = new ConfiguracionPid(this, config.pid);
-		this.log = new ConfiguracionLog(this, config.log);
-		this.sqlite = new ConfiguracionSqlite(this, config.sqlite);
-		this.http = new ConfiguracionHttp(this, config.http);
-
-	}
-
-	registrarListener(funcion) {
-		if (funcion && typeof funcion === 'function')
-			this.listeners.push(funcion);
-	}
 
 	static async cargarDatosFichero(ficheroConfiguracion) {
 
@@ -87,24 +53,43 @@ class Configuracion {
 		}
 
 
-		return new Configuracion(config);
+		if (!(config.produccion === true || config.produccion === false))
+			throw new Error("No se ha definido el nodo PRODUCTION (produccion) a TRUE o FALSE. Por motivos de seguridad, esto es obligatorio.");
+
+		global.C.produccion = Boolean(config.produccion);
+		global.C.numeroWorkers = Validador.esEnteroPositivo(config.numeroWorkers) ? parseInt(config.numeroWorkers) : 1;
+
+		global.C.sinWatchdogPedidos = Boolean(config.sinWatchdogPedidos);
+		global.C.sinWatchdogSqlite = Boolean(config.sinWatchdogSqlite);
+		global.C.sinMonitor = Boolean(config.sinMonitor);
+
+		// El directorio de cache sabemos que existe y que es escribible
+		// porque el objeto se instancia como Configuracion.cargarDatosFichero(rutaFichero)
+		global.C.directorioCache = config.directorioCache;
+
+		// Objetos complejos
+		global.C.mongodb = new ConfiguracionMongodb(config.mongodb);
+		global.C.pid = new ConfiguracionPid(config.pid);
+		global.C.log = new ConfiguracionLog(config.log);
+		global.C.sqlite = new ConfiguracionSqlite(config.sqlite);
+		global.C.http = new ConfiguracionHttp(config.http);
+
 
 	}
 
-	async cargarDatosCluster() {
-		M = global.mongodb;
-		this.jwt = await ConfiguracionJwt.cargar(this);
-		this.sap = await ConfiguracionSap.cargar(this);
-		this.dominios = await ConfiguracionDominios.cargar(this);
-		this.flags = await ConfiguracionFlags.cargar(this);
-		this.ldap = await ConfiguracionLdap.cargar(this);
-		this.pedidos = await ConfiguracionPedidos.cargar(this);
-		this.devoluciones = await ConfiguracionDevoluciones.cargar(this);
-		this.softwareId = await ConfiguracionSoftwareId.cargar(this);
-		this.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar(this);
-		this.sqlite = await ConfiguracionSqlite.cargar(this);
-		this.balanceador = await ConfiguracionBalanceadores.cargar(this);
-		this.logistica = await ConfiguracionLogistica.cargar(this);
+	static async cargarConfiguracionCluster() {
+		global.C.jwt = await ConfiguracionJwt.cargar();
+		global.C.sap = await ConfiguracionSap.cargar();
+		global.C.dominios = await ConfiguracionDominios.cargar();
+		global.C.flags = await ConfiguracionFlags.cargar();
+		global.C.ldap = await ConfiguracionLdap.cargar();
+		global.C.pedidos = await ConfiguracionPedidos.cargar();
+		global.C.devoluciones = await ConfiguracionDevoluciones.cargar();
+		global.C.softwareId = await ConfiguracionSoftwareId.cargar();
+		global.C.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar();
+		global.C.sqlite = await ConfiguracionSqlite.cargar();
+		global.C.balanceador = await ConfiguracionBalanceadores.cargar();
+		global.C.logistica = await ConfiguracionLogistica.cargar();
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -125,7 +110,7 @@ class Configuracion {
 			L.e(['No hay conexión con el clúster. Intentamos utilizar la caché.'])
 		}
 
-		let C = global.config;
+
 		let directorioCacheConfig = C.directorioCache + SUBDIR.CONFIG + SEPARADOR_DIRECTORIOS + claveObjeto + '.config';
 		if (!config) {
 			config = await fs.readFile(directorioCacheConfig, { encoding: 'utf8', flag: 'r' });
@@ -139,7 +124,7 @@ class Configuracion {
 }
 
 class ConfiguracionMongodb {
-	constructor(C, nodoJson) {
+	constructor(nodoJson) {
 		if (!nodoJson) throw new Error("No se ha definido el nodo para MongoDB (mongodb)");
 		if (!Validador.esArrayNoVacio(nodoJson.servidores)) throw new Error("No se ha definido la lista de servidores de MongoDB (mongodb.servidores)");
 		if (!Validador.esCadenaNoVacia(nodoJson.usuario)) throw new Error("No se ha definido el usuario para MongoDB (mongodb.usuario)");
@@ -165,7 +150,6 @@ class ConfiguracionMongodb {
 
 	}
 
-
 	getUrl() {
 		let url = 'mongodb://' +
 			this.usuario + ':' + this.password +
@@ -185,19 +169,18 @@ class ConfiguracionMongodb {
 			loggerLevel: 'warn'
 		};
 	}
-	//TODO: asdasdasd
 }
 
 class ConfiguracionLog {
-	constructor(C, config) {
+	constructor(config) {
 		this.consola = Boolean(config?.consola);
-		this.directorio = C.directorioCache + SUBDIR.LOGS + SEPARADOR_DIRECTORIOS;
+		this.directorio = global.C.directorioCache + SUBDIR.LOGS + SEPARADOR_DIRECTORIOS;
 	}
 }
 
 class ConfiguracionPid {
-	constructor(C, config) {
-		this.directorio = C.directorioCache;
+	constructor(config) {
+		this.directorio = global.C.directorioCache;
 	}
 
 	getFicheroPid() {
@@ -208,8 +191,7 @@ class ConfiguracionPid {
 		try {
 			await fs.writeFile(this.getFicheroPid(), '' + process.pid);
 		} catch (errorFicheroPid) {
-			if (L) L.e(["Error al escribir el fichero del PID", errorFicheroPid]);
-			else console.error('Error al escribir el fichero del PID', errorFicheroPid)
+
 		}
 	}
 
@@ -219,26 +201,24 @@ class ConfiguracionPid {
 }
 
 class ConfiguracionSqlite {
-	constructor(C, config) {
-		this.directorio = C.directorioCache + SUBDIR.SQLITE + SEPARADOR_DIRECTORIOS;
+	constructor(config) {
+		this.directorio = global.C.directorioCache + SUBDIR.SQLITE + SEPARADOR_DIRECTORIOS;
 		this.fichero = this.directorio + 'db.sqlite';
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('watchdogSqlite');
-		C.sqlite.maximoReintentos = parseInt(config.maximoReintentos) || 10;
-		C.sqlite.insercionesSimultaneas = parseInt(config.insercionesSimultaneas) || 10;
-		C.sqlite.intervalo = (parseInt(config.intervalo) || 10) * 1000;
-		return C.sqlite;
+		global.C.sqlite.maximoReintentos = parseInt(config.maximoReintentos) || 10;
+		global.C.sqlite.insercionesSimultaneas = parseInt(config.insercionesSimultaneas) || 10;
+		global.C.sqlite.intervalo = (parseInt(config.intervalo) || 10) * 1000;
+		return global.C.sqlite;
 	}
-
-
 
 }
 
 class ConfiguracionHttp {
 
-	constructor(C, config) {
+	constructor(config) {
 		this.puertoConcentrador = parseInt(config?.puertoConcentrador) || 5000;
 		this.puertoConsultas = parseInt(config?.puertoConsultas) || 5001;
 	}
@@ -247,22 +227,22 @@ class ConfiguracionHttp {
 
 class ConfiguracionJwt {
 
-	constructor(C, config) {
+	constructor(config) {
 		this.clave = config.clave;
 		this.ttl = parseInt(config.ttl) || 3600;
 		this.tiempoDeGracia = parseInt(config.tiempoDeGracia) || 60;
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('jwt');
-		return new ConfiguracionJwt(C, config);
+		return new ConfiguracionJwt(config);
 	}
 
 }
 
 class ConfiguracionSap {
 
-	constructor(C, config) {
+	constructor(config) {
 		this.nombreSistemaPorDefecto = config.sistemaPorDefecto;
 		this.destino = new DestinoSap(config.destino);
 
@@ -278,16 +258,16 @@ class ConfiguracionSap {
 		}
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('sap');
-		return new ConfiguracionSap(C, config);
+		return new ConfiguracionSap(config);
 	}
 
 }
 
 class ConfiguracionDominios {
 
-	constructor(C, config) {
+	constructor(config) {
 
 
 		if (!config) throw new Error("No se ha definido la configuracion de dominios de autenticacion ($.dominios)");
@@ -303,9 +283,9 @@ class ConfiguracionDominios {
 
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('dominios');
-		return new ConfiguracionDominios(C, config);
+		return new ConfiguracionDominios(config);
 	}
 
 	/**
@@ -334,23 +314,23 @@ class ConfiguracionDominios {
 
 class ConfiguracionFlags {
 
-	constructor(C, config) {
+	constructor(config) {
 		if (!config) throw new Error("No se ha definido la configuracion de flags ($.flags)");
 		if (!config.flags) throw new Error("No se ha definido la configuracion de flags ($.flags.flags)");
 		if (!Object.keys(config.flags).length) throw new Error("La lista de flags está vacía ($.flags.flags)");
 		Object.assign(this, config.flags);
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('flags');
-		return new ConfiguracionFlags(C, config);
+		return new ConfiguracionFlags(config);
 	}
 
 }
 
 class ConfiguracionLdap {
 
-	constructor(C, config) {
+	constructor(config) {
 
 		if (!config) throw new Error("No se ha definido la configuracion de LDAP ($.ldap)");
 		if (!Validador.esCadenaNoVacia(config.servidor)) throw new Error("No se ha definido el servidor LDAP ($.ldap.servidor)");
@@ -368,9 +348,9 @@ class ConfiguracionLdap {
 
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('ldap');
-		return new ConfiguracionLdap(C, config);
+		return new ConfiguracionLdap(config);
 	}
 
 	/**
@@ -392,30 +372,28 @@ class ConfiguracionLdap {
 }
 
 class ConfiguracionPedidos {
-	constructor(C, config) {
-
+	constructor(config) {
 		this.umbralLineasCrc = parseInt(config.umbralLineasCrc) || 10;
 		this.antiguedadDuplicadosMaxima = (parseInt(config.antiguedadDuplicadosMaxima) || 10080) * 60000;
 		this.antiguedadDuplicadosPorLineas = (parseInt(config.antiguedadDuplicadosPorLineas) || 180) * 60000;
 		this.tipificadoFaltas = { ...config.tipificadoFaltas };
-
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('pedidos');
-		return new ConfiguracionPedidos(C, config);
+		return new ConfiguracionPedidos(config);
 	}
 }
 
 class ConfiguracionDevoluciones {
-	constructor(C, config) {
+	constructor(config) {
 		this.motivos = { ...config.motivos };
 		this.motivosExtentosAlbaran = config.motivosExtentosAlbaran || [];
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('devoluciones');
-		return new ConfiguracionDevoluciones(C, config);
+		return new ConfiguracionDevoluciones(config);
 	}
 
 	motivoExentoDeAlbaran(motivo) {
@@ -424,20 +402,20 @@ class ConfiguracionDevoluciones {
 }
 
 class ConfiguracionSoftwareId {
-	constructor(C, config) {
+	constructor(config) {
 		this.servidor = config.servidor;
 		this.retransmisor = config.retransmisor;
 		this.codigos = { ...config.codigos };
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('softwareId');
-		return new ConfiguracionSoftwareId(C, config);
+		return new ConfiguracionSoftwareId(config);
 	}
 }
 
 class ConfiguracionWatchdogPedidos {
-	constructor(C, config) {
+	constructor(config) {
 		this.servidor = config.servidor;
 		this.intervalo = (parseInt(config.intervalo) || 5) * 1000;
 		this.antiguedadMinima = (parseInt(config.antiguedadMinima) || 300) * 1000;
@@ -447,9 +425,9 @@ class ConfiguracionWatchdogPedidos {
 		this.maximoReintentos = parseInt(config.maximoReintentos) || 5;
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('watchdogPedidos');
-		return new ConfiguracionWatchdogPedidos(C, config);
+		return new ConfiguracionWatchdogPedidos(config);
 	}
 
 	soyMaestro() {
@@ -459,13 +437,13 @@ class ConfiguracionWatchdogPedidos {
 
 class ConfiguracionBalanceadores {
 
-	constructor(C, config) {
+	constructor(config) {
 		this.balanceadores = config.balanceadores.map(balanceador => new Balanceador(balanceador));
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('balanceador');
-		return new ConfiguracionBalanceadores(C, config);
+		return new ConfiguracionBalanceadores(config);
 	}
 
 	get(nombre) {
@@ -475,16 +453,19 @@ class ConfiguracionBalanceadores {
 
 
 class ConfiguracionLogistica {
-	constructor(C, config) {
+	constructor(config) {
 
 		this.tiposAdmitidos = { ...config.tiposAdmitidos };
 
 	}
 
-	static async cargar(C) {
+	static async cargar() {
 		let config = await Configuracion.cargarObjetoCluster('logistica');
-		return new ConfiguracionLogistica(C, config);
+		return new ConfiguracionLogistica(config);
 	}
 }
 
-module.exports = Configuracion.cargarDatosFichero;
+module.exports = async function (ficheroConfiguracion) {
+	await Configuracion.cargarDatosFichero(ficheroConfiguracion);
+	global.C.cargarConfiguracionCluster = Configuracion.cargarConfiguracionCluster
+};

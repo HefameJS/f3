@@ -1,12 +1,7 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
-
-// Externas
 
 const clone = require('clone');
 const LineaAlbaran = require("./LineaAlbaran");
-const ImpuestoAlbaran = require("./ImpuestoAlbaran");
 
 
 /**

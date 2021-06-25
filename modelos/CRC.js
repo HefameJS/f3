@@ -1,5 +1,5 @@
 'use strict';
-const M = global.mongodb;
+const M = global.M;
 
 const crypto = require('crypto');
 

@@ -2,8 +2,9 @@
 
 const os = require('os');
 
-module.exports = {
-	ESTADOS: {
+module.exports = async function () {
+
+	global.K.ESTADOS = {
 		ERROR_GENERICO: 1000,
 		RECEPCIONADO: 1010,
 		PETICION_ENVIADA_A_SAP: 1020,
@@ -35,8 +36,8 @@ module.exports = {
 			RECHAZADO_SAP: 3120,
 			SIN_NUMERO_LOGISTICA: 9141
 		}
-	},
-	TIPOS: {
+	};
+	global.K.TIPOS = {
 		PLANTILLA: -1,
 		RECHAZO: 100,
 		AUTENTICACION: 0,
@@ -52,27 +53,19 @@ module.exports = {
 		CONSULTAR_FACTURA: 41,
 		CREAR_LOGISTICA: 50,
 		CONSULTAR_LOGISTICA: 51
-	},
-	TX_STATUS: {
-		MAX_RETRANSMISIONES: 8110, /* DEPRECATED */
-		RETRANSMISION: {
-			OK: 19001,
-			IMPOSIBLE: 19002,
-			SOLO_FORZANDO: 19003,
-		}
-	},
-	HOSTNAME: os.hostname().toLowerCase(),
-	VERSION: {
+	};
+	global.K.HOSTNAME = os.hostname().toLowerCase();
+	global.K.VERSION = {
 		PROTOCOLO: '3.4.11',
 		SERVIDOR: '2.0.0',
 		TRANSMISION: 20000,
-		GIT: {}
-	},
-	SOFTWARE_ID: {
+		GIT: await require('global/git').obtenerCommitHash()
+	};
+	global.K.SOFTWARE_ID = {
 		SERVIDOR: '0026',
 		RETRANSMISOR: '9002'
-	},
-	PROCESOS: {
+	};
+	global.K.PROCESOS = {
 		getTitulo: function (tipo) {
 			switch (tipo) {
 				case 'master': return 'f3-master';
@@ -92,6 +85,7 @@ module.exports = {
 		}
 	}
 }
+
 
 
 

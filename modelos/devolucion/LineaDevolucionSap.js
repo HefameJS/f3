@@ -1,5 +1,5 @@
 'use strict';
-const C = global.config;
+const C = global.C;
 const Modelo = require("modelos/transmision/Modelo");
 
 

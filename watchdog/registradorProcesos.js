@@ -1,10 +1,7 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-const K = global.constants;
-const M = global.mongodb;
-
-
+const L = global.L;
+const K = global.K;
+const M = global.M;
 
 const cluster = require('cluster');
 const OS = require('os');
@@ -53,9 +50,9 @@ module.exports = async function() {
 		try {
 			intervaloRegistroEnEjecucion = true;
 			await M.bd.collection('instancias').updateOne(CLAVE_MONGODB, datosInstancia, { upsert: 1 })
-			//L.t(['Instancia registrada', datosInstancia['$set']]);
+			//L.trace('Instancia registrada', datosInstancia['$set']);
 		} catch (errorMongo) {
-			L.e(['Capturado error en el registro de la instancia', errorMongo]);
+			L.err('Capturado error en el registro de la instancia:', errorMongo);
 		} finally {
 			intervaloRegistroEnEjecucion = false;
 		}

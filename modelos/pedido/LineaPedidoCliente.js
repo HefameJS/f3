@@ -1,8 +1,4 @@
 'use strict';
-//const C = global.config;
-//const K = global.constants;
-
-
 const Modelo = require('modelos/transmision/Modelo');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Crc = require('modelos/CRC');

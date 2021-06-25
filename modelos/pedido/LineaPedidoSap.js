@@ -1,9 +1,5 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-//const K = global.constants;
-
-// Helpers
+const C = global.C;
 const Maestro = require('global/maestro');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Modelo = require('modelos/transmision/Modelo');

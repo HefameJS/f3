@@ -1,7 +1,7 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-const M = global.mongodb;
+const C = global.C;
+const K = global.K;
+const M = global.M;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -10,7 +10,6 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-let toMongoLong = require("mongodb").Long.fromNumber;
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
 const ResultadoTransmisionPdf = require('modelos/transmision/ResultadoTransmisionPdf');
 
@@ -61,7 +60,7 @@ class TransmisionConsultarDevolucion extends Transmision {
 		try {
 			let consulta = {
 				tipo: K.TIPOS.CREAR_DEVOLUCION,
-				'devolucion.numeroDevolucion': toMongoLong(this.metadatos.numeroDevolucion)
+				'devolucion.numeroDevolucion': M.toMongoLong(this.metadatos.numeroDevolucion)
 			}
 
 			let respuestaDevolucion = await M.col.transmisiones.findOne(consulta, {

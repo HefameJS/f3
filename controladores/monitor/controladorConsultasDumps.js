@@ -1,7 +1,7 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-// const K = global.constants;
+//const C = global.C;
+const L = global.L;
+// const K = global.K;
 
 // Externas
 const OS = require('os');
@@ -12,7 +12,7 @@ const iMonitor = require('interfaces/iMonitor');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
-const Dump = require('modelos/log/ModeloDump');
+const Dump = require('modelos/monitor/ModeloDump');
 
 
 // GET /dumps

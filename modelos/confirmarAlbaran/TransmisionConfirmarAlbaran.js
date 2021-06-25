@@ -1,14 +1,12 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-//const M = global.mongodb;
+const K = global.K;
+const M = global.M;
 
 
 const Transmision = require('modelos/transmision/Transmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const SolicitudConfirmacionAlbaran = require('./SolicitudConfirmacionAlbaran');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
-const toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -36,7 +34,7 @@ class TransmisionConfirmarAlbaran extends Transmision {
 	// @Override
 	generarMetadatosOperacion() {
 		let metadatos = {}
-		if (this.#solicitud.numeroAlbaran) metadatos.numeroAlbaran = toMongoLong(parseInt(this.#solicitud.numeroAlbaran))
+		if (this.#solicitud.numeroAlbaran) metadatos.numeroAlbaran = M.toMongoLong(parseInt(this.#solicitud.numeroAlbaran))
 		metadatos.totales = this.#solicitud.metadatos.totales;
 		this.setMetadatosOperacion('albaran.confirmar', metadatos);
 	}

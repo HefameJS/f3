@@ -1,14 +1,11 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-//const M = global.mongodb;
-
-
+const C = global.C;
+const K = global.K;
+const M = global.M;
 const Transmision = require('modelos/transmision/Transmision');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-let toMongoLong = require("mongodb").Long.fromNumber;
 const SolicitudCrearPedido = require('./SolicitudCrearPedido');
 const RespuestaPedidoSap = require('./RespuestaPedidoSap');
 
@@ -92,7 +89,7 @@ class TransmisionCrearPedido extends Transmision {
 			numeroPedidoOrigen: this.#solicitud.numeroPedidoOrigen,
 			tipoPedido: parseInt(this.#solicitud.tipoPedido) || 0,
 			crc: this.#solicitud.metadatos.crc,
-			crcSap: toMongoLong(parseInt(this.#solicitud.metadatos.crc.toString().substring(0, 8), 16)),
+			crcSap: M.toMongoLong(parseInt(this.#solicitud.metadatos.crc.toString().substring(0, 8), 16)),
 			tipoCrc: this.#solicitud.metadatos.tipoCrc
 		};
 
@@ -124,8 +121,8 @@ class TransmisionCrearPedido extends Transmision {
 			if (this.#respuesta.metadatos.motivoPedidoSap) metadatos.motivoPedidoSap = this.#respuesta.metadatos.motivoPedidoSap;
 			if (this.#respuesta.metadatos.clienteSap) metadatos.clienteSap = this.#respuesta.metadatos.clienteSap;
 
-			if (this.#respuesta.metadatos.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = this.#respuesta.metadatos.pedidosAsociadosSap.map(nPed => toMongoLong(nPed));
-			if (this.#respuesta.metadatos.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = toMongoLong(this.#respuesta.metadatos.pedidoAgrupadoSap);
+			if (this.#respuesta.metadatos.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = this.#respuesta.metadatos.pedidosAsociadosSap.map(nPed => M.toMongoLong(nPed));
+			if (this.#respuesta.metadatos.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = M.toMongoLong(this.#respuesta.metadatos.pedidoAgrupadoSap);
 
 		}
 

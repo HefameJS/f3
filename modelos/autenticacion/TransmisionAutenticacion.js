@@ -1,11 +1,11 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-//const M = global.mongodb;
+const C = global.C;
+const K = global.K;
+//const M = global.M;
 
 
 
-const iLdap = require('interfaces/iLdap');
+const iLdap = require('global/ldap');
 const iCacheCredencialesSap = require('modelos/autenticacion/CacheCredencialesSap');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 

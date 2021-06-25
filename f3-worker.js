@@ -1,14 +1,11 @@
 'use strict';
 require('app-module-path').addPath(__dirname);
-global.constants = require('global/constantes');
-const K = global.constants;
+console.log('Inicializando Worker Fedicom v3', new Date());
 
-console.log('Inicializando servicios Fedicom v3', new Date());
+require('bootstrap')('worker').then(() => {
 
-require('bootstrap')(K.PROCESOS.TIPOS.WORKER).then(() => {
-
-	const C = global.config;
-	const L = global.logger;
+	const C = global.C;
+	const L = global.L;
 
 	// externas
 	const express = require('express');
@@ -29,14 +26,12 @@ require('bootstrap')(K.PROCESOS.TIPOS.WORKER).then(() => {
 	let servidorHttp = app.listen(C.http.puertoConcentrador)
 
 	servidorHttp.on('error', (errorServidorHTTP) => {
-		L.f("Ocurrió un error en el servicio HTTP");
-		L.f(errorServidorHTTP);
+		L.fatal('Ocurrió un error en el servicio HTTP:', errorServidorHTTP);
 		process.exit(1);
 	});
-	servidorHttp.on('listening', () => { L.i("Servidor HTTP a la escucha en el puerto " + C.http.puertoConcentrador); });
-	servidorHttp.on('close', () => { L.f("Se ha cerrado el servicio HTTP"); });
-	//servidorHttp.on('connection', (socket) => {});
-
-
+	servidorHttp.on('listening', () => {
+		L.info(`Servidor HTTP a la escucha en el puerto ${C.http.puertoConcentrador}`);
+		//servidorHttp.on('connection', (socket) => {});
+	});
+	servidorHttp.on('close', () => { L.fatal("Se ha cerrado el servicio HTTP"); });
 });
-

@@ -1,12 +1,8 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-const M = global.mongodb;
-
-
+const K = global.K;
+const M = global.M;
 const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
-
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 

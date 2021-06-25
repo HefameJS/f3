@@ -1,7 +1,7 @@
 'use strict';
-//const C = global.config;
-const K = global.constants;
-const M = global.mongodb;
+//const C = global.C;
+const K = global.K;
+const M = global.M;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -9,7 +9,6 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
-const toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  */
@@ -32,7 +31,7 @@ class TransmisionConsultarLogistica extends Transmision {
 		try {
 			let consulta = {
 				tipo: K.TIPOS.CREAR_LOGISTICA,
-				'logistica.numeroLogistica': toMongoLong(this.#metadatos.numeroLogistica)
+				'logistica.numeroLogistica': M.toMongoLong(this.#metadatos.numeroLogistica)
 			}
 
 			let respuestaLogistica = await M.col.transmisiones.findOne(consulta, {
@@ -64,7 +63,7 @@ class TransmisionConsultarLogistica extends Transmision {
 	generarMetadatosOperacion() {
 		if (this.#metadatos.numeroLogistica) {
 			let metadatos = {
-				numeroLogistica: toMongoLong(this.#metadatos.numeroLogistica)
+				numeroLogistica: M.toMongoLong(this.#metadatos.numeroLogistica)
 			}
 			this.setMetadatosOperacion('logistica.consultar', metadatos);
 		}

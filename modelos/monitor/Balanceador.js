@@ -1,16 +1,9 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-//const K = global.constants;
 
 
 const OS = require('os');
 const axios = require('axios');
 const { URLSearchParams } = require('url');
-
-
-
-
 
 class MatchEnlace {
 
@@ -186,7 +179,7 @@ class Balanceador {
 			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
 
 			if (!nonce) {
-				global.logger.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
+				global.L.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
 				throw new Error('Imposible encontrar el nonce para el grupo de balanceo');
 			}
 

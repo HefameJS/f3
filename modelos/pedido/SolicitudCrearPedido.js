@@ -1,14 +1,10 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-const M = global.mongodb;
-
-
+const C = global.C;
+const K = global.K;
+const M = global.M;
 const ErrorFedicom = require('modelos/ErrorFedicom');
-
 const Crc = require('modelos/CRC');
 const Validador = require('global/validador');
-
 const LineaPedidoCliente = require('modelos/pedido/LineaPedidoCliente');
 const Modelo = require('modelos/transmision/Modelo');
 

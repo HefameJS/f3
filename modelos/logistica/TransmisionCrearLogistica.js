@@ -1,17 +1,13 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-
-
+const C = global.C;
+const K = global.K;
+const M = global.M;
 const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
-
-
 const SolicitudCrearLogistica = require('modelos/logistica/SolicitudCrearLogistica');
 const RespuestaLogisticaSap = require('modelos/logistica/RespuestaLogisticaSap');
-const toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -94,7 +90,7 @@ class TransmisionCrearLogistica extends Transmision {
 		// Metadatos de la RESPUESTA
 
 		if (this.#respuesta) {
-			if (this.#respuesta.numeroLogistica) metadatos.numeroLogistica = toMongoLong(parseInt(this.#respuesta.numeroLogistica));
+			if (this.#respuesta.numeroLogistica) metadatos.numeroLogistica = M.toMongoLong(parseInt(this.#respuesta.numeroLogistica));
 			if (this.#respuesta.metadatos.puntoEntrega) metadatos.puntoEntrega = this.#respuesta.metadatos.puntoEntrega;
 			if (this.#respuesta.metadatos.erroresOcultados.tieneErrores()) metadatos.erroresOcultados = this.#respuesta.metadatos.erroresOcultados.getErrores();
 			if (this.#respuesta.metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = this.#respuesta.metadatos.clienteBloqueadoSap;

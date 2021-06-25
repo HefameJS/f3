@@ -1,22 +1,19 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
-const M = global.mongodb;
+const M = global.M;
 
 
-const getReplicaSet = async function () {
+module.exports.getReplicaSet = async function () {
 	let db = M.getBD('admin');
 	return await db.command({ "replSetGetStatus": 1 })
 }
 
-const getColeccion = async function (nombreColeccion) {
+module.exports.getColeccion = async function (nombreColeccion) {
 	let db = M.getBD();
 	return await db.command({ collStats: nombreColeccion });
 }
 
 
-const getNombresColecciones = async function () {
+module.exports.getNombresColecciones = async function () {
 	let db = M.getBD();
 	let nombresColecciones = await db.command({ listCollections: 1, nameOnly: true })
 
@@ -27,27 +24,18 @@ const getNombresColecciones = async function () {
 	}
 }
 
-const getDatabase = async function () {
+module.exports.getDatabase = async function () {
 	let db = M.getBD();
 	return await db.command({ dbStats: 1 });
 }
 
-const getOperaciones = async function () {
+module.exports.getOperaciones = async function () {
 	let db = M.getBD('admin');
 	let operaciones = await db.executeDbAdminCommand({ currentOp: true, "$all": true });
 	return operaciones.inprog;
 }
 
-const getLogs = async function (tipoLog) {
+module.exports.getLogs = async function (tipoLog) {
 	let db = M.getBD('admin');
 	return await db.executeDbAdminCommand({ getLog: tipoLog });
-}
-
-module.exports = {
-	getReplicaSet,
-	getColeccion,
-	getNombresColecciones,
-	getDatabase,
-	getOperaciones,
-	getLogs
 }

@@ -1,8 +1,7 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-const K = global.constants;
-const M = global.mongodb;
+const L = global.L;
+const K = global.K;
+const M = global.M;
 
 // Externas
 const axios = require('axios');

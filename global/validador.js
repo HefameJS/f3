@@ -1,8 +1,4 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
-
 
 /**
  * Comprueba que un valor dado exista -> Es decir, no sea null ni undefined.

@@ -1,7 +1,4 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
 
 if (!('toJSON' in Error.prototype)) {
 	Object.defineProperty(Error.prototype, 'toJSON', {

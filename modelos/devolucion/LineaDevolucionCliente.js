@@ -1,5 +1,5 @@
 'use strict';
-const C = global.config;
+const C = global.C;
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Validador = require('global/validador');
 const Modelo = require('modelos/transmision/Modelo');

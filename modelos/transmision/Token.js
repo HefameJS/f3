@@ -1,6 +1,6 @@
 'use strict';
 
-const C = global.config;
+const C = global.C;
 const JsonWebToken = require('jsonwebtoken');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const CondicionesAutorizacion = require('./CondicionesAutorizacion');

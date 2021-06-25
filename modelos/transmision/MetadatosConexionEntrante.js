@@ -1,5 +1,5 @@
 'use strict';
-const K = global.constants;
+const K = global.K;
 
 
 /**

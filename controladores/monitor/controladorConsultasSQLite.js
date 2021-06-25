@@ -1,12 +1,12 @@
 'use strict';
-//const C = global.config;
-const L = global.logger;
-//const K = global.constants;
+//const C = global.C;
+const L = global.L;
+//const K = global.K;
 
 // Interfaces
 const iTokens = require('global/tokens');
 const iMonitor = require('interfaces/iMonitor');
-const iSQLite = require('interfaces/iSQLite');
+const iSQLite = require('global/sqlite');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

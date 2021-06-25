@@ -1,13 +1,12 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-
+const C = global.C;
+const K = global.K;
+const M = global.M;
 const Transmision = require('modelos/transmision/Transmision');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const RespuestaDevolucionSap = require('modelos/devolucion/RespuestaDevolucionSap');
 
-let toMongoLong = require("mongodb").Long.fromNumber;
 const SolicitudCrearDevolucion = require('./SolicitudCrearDevolucion');
 
 /**
@@ -91,8 +90,8 @@ class TransmisionCrearDevolucion extends Transmision {
 			if (m.numerosDevolucionSap) metadatos.numerosDevolucionSap = m.numerosDevolucionSap;
 			if (m.totales) metadatos.totales = m.totales;
 
-			if (r.numeroDevolucion) metadatos.numeroDevolucion = toMongoLong(parseInt(r.numeroDevolucion))
-			if (r.codigoRecogida) metadatos.numeroLogistica = toMongoLong(parseInt(r.codigoRecogida))
+			if (r.numeroDevolucion) metadatos.numeroDevolucion = M.toMongoLong(parseInt(r.numeroDevolucion))
+			if (r.codigoRecogida) metadatos.numeroLogistica = M.toMongoLong(parseInt(r.codigoRecogida))
 		}
 
 		this.setMetadatosOperacion('devolucion', metadatos);

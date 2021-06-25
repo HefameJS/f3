@@ -2,13 +2,26 @@
 
 require('global/extensiones/extensionesDate');
 require('global/extensiones/extensionesError');
+const cluster = require('cluster');
+
 
 module.exports = async function (tipoProceso) {
 
-	const cluster = require('cluster');
-	const K = global.constants;
+	global.K = {}
+	global.C = {}
+	global.L = {}
+	global.M = {}
 
-	K.VERSION.GIT = await require('global/git').obtenerCommitHash();
+	const K = global.K;
+	const L = global.L;
+	const C = global.C;
+	const M = global.M;
+
+
+	// Inicialización de las constantes
+	await require('global/constantes')();
+	await require('global/configuracion')(process.env.F3_CONFIG_FILE || 'config.json');
+	
 
 	// ID de instancia del proceso actual
 	process.tipo = tipoProceso;
@@ -20,31 +33,31 @@ module.exports = async function (tipoProceso) {
 		process.titulo = K.PROCESOS.getTitulo(tipoProceso);
 	}
 
-	const Configuracion = require('global/configuracion');
 
+	// Cargamos configuracion basica
+	C.pid.escribirFicheroPid();
+
+	// Log global
+	await require('global/logger')(process.titulo);
 	
-	global.config = await Configuracion(process.env.F3_CONFIG_FILE || 'config.json');
-	global.config.pid.escribirFicheroPid();
-
-	global.logger = require('global/logger');
-
-	global.logger.i(['Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker }], 'cluster');
-
+	// Carga de datos del proceso
+	L.info('Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker });
 	process.on('uncaughtException', (excepcionNoControlada) => {
-		global.logger.dump(excepcionNoControlada);
-		global.config.pid.borrarFicheroPid();
+		L.dump(excepcionNoControlada);
+		C.pid.borrarFicheroPid();
 		process.exit(1);
 	})
-
 	process.on('exit', (code) => {
-		global.config.pid.borrarFicheroPid();
+		C.pid.borrarFicheroPid();
 		process.exit(code);
 	});
 
-	let conectarMongo = require('interfaces/imongo/iMongoConexion');
+	// Carga de MongoDB
+	await require('global/mongodb')();
+	
 
-	global.mongodb = await conectarMongo();
-	await global.config.cargarDatosCluster();
+	// Al tener conexión a mongo, podemos cargar la configuración del clúster
+	await C.cargarConfiguracionCluster();
 
 }
 

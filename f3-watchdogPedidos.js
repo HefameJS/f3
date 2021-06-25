@@ -1,14 +1,12 @@
 'use strict';
 require('app-module-path').addPath(__dirname);
-global.constants = require('global/constantes');
-const K = global.constants;
-
 console.log('Inicializando Watchdog Pedidos Fedicom v3', new Date());
 
-require('bootstrap')(K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS).then(() => {
+require('bootstrap')('watchdogPedidos').then(() => {
 
-	const C = global.config;
-	const L = global.logger;
+	const C = global.C;
+	const L = global.L;
+	const K = global.K;
 
 	L.i(['Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker }], 'cluster');
 

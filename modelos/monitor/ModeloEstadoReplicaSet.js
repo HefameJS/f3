@@ -1,14 +1,9 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-//const K = global.constants;
-
 
 const ESTADOS_DE_NODO = {
     0: {code: 0, name: 'INICIANDO', desc: 'La instancia está iniciandose'},
     1: { code: 1, name: 'PRIMARIO', desc: 'Esta instancia contiene la copia primaria de la base de datos' },
     2: { code: 2, name: 'SECUNDARIO', desc: 'Instancia replicando datos' },
-
     4: { code: 4, name: 'SINCRONIZANDO', desc: 'La instancia se está sincronizando' },
     5: { code: 5, name: 'UNIENDOSE', desc: 'La instancia se está uniendo al clúster' },
     6: { code: 6, name: 'DESCONOCIDO', desc: 'No se conoce el estado' },

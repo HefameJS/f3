@@ -1,7 +1,5 @@
 'use strict';
-//const C = global.config;
-//const L = global.logger;
-const K = global.constants;
+const K = global.K;
 
 class CategoriaEstado {
 	constructor(codigo, descripcionCorta, descripcionLarga, estadosAsociados) {

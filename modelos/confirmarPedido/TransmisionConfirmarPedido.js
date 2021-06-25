@@ -1,7 +1,7 @@
 'use strict';
-const C = global.config;
-const K = global.constants;
-//const M = global.mongodb;
+const C = global.C;
+const K = global.K;
+const M = global.M;
 
 
 const Transmision = require('modelos/transmision/Transmision');
@@ -9,8 +9,6 @@ const Transmision = require('modelos/transmision/Transmision');
 const PostTransmision = require('modelos/transmision/PostTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
-
-let toMongoLong = require("mongodb").Long.fromNumber;
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -77,7 +75,7 @@ class TransmisionConfirmarPedido extends Transmision {
 			transmisionPedidoConfirmada.setEstado(this.metadatos.estadoTransmisionPedido);
 			if (this.pedidosAsociadosSap?.length) {
 				transmisionPedidoConfirmada.setMetadatosOperacion('pedido', {
-					pedidosAsociadosSap: this.pedidosAsociadosSap.map(nPed => toMongoLong(nPed))
+					pedidosAsociadosSap: this.pedidosAsociadosSap.map(nPed => M.toMongoLong(nPed))
 				});
 			}
 			await transmisionPedidoConfirmada.actualizarTransmision();
@@ -97,7 +95,7 @@ class TransmisionConfirmarPedido extends Transmision {
 	// @Override
 	generarMetadatosOperacion() {
 		let metadatos = {
-			crcSap: toMongoLong(this.crcSap),
+			crcSap: M.toMongoLong(this.crcSap),
 			idPedidoConfirmado: this.metadatos.idTransmisionPedido
 		};
 		this.setMetadatosOperacion('pedido.confirmar', metadatos);

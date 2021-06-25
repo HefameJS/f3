@@ -1,14 +1,7 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-const K = global.constants;
-
-// Interfaces
-//const iFlags = require('interfaces/iflags/iFlags');
+const K = global.K;
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Modelo = require('modelos/transmision/Modelo');
-
-// Modelos
 const LineaPedidoSap = require('./LineaPedidoSap');
 
 

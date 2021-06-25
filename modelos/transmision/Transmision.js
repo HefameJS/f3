@@ -1,6 +1,6 @@
 'use strict';
-const K = global.constants;
-const M = global.mongodb;
+const K = global.K;
+const M = global.M;
 
 
 const Token = require('modelos/transmision/Token');
@@ -8,7 +8,7 @@ const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
 const MetadatosConexionEntrante = require('modelos/transmision/MetadatosConexionEntrante');
 const LogTransmision = require('modelos/transmision/LogTransmision');
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
-const iSQLite = require('interfaces/iSQLite');
+const SQLite = require('global/sqlite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('./ResultadoTransmision');
 
@@ -260,7 +260,7 @@ class Transmision extends Object {
 			this.log.err('Error al registrar la transmisión en la base de datos', errorMongo);
 
 			try {
-				let uid = await iSQLite.grabarTransaccion(sentencia);
+				let uid = await SQLite.grabarSentencias(sentencia);
 				this.log.warn(`La transmision ha sido registrada en la base de datos local con UID ${uid}`);
 			} catch (errorSQLite) {
 				this.log.fatal('La transmisión no ha podido ser registrada', errorSQLite)
@@ -308,7 +308,7 @@ class Transmision extends Object {
 			this.log.err('Error al actualizar la transmisión en la base de datos', errorMongo);
 
 			try {
-				let uid = await iSQLite.grabarTransaccion(sentencia);
+				let uid = await SQLite.grabarSentencia(sentencia);
 				this.log.warn(`La actualización ha sido registrada en la base de datos local con UID ${uid}`);
 			} catch (errorSQLite) {
 				this.log.fatal('La actualización no ha podido ser registrada', errorSQLite)

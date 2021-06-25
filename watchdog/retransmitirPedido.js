@@ -1,11 +1,11 @@
 'use strict';
-const C = global.config;
-const L = global.logger;
-const K = global.constants;
-const M = global.mongodb;
+const C = global.C;
+const L = global.L;
+const K = global.K;
+const M = global.M;
 
 // Interfaces
-const iMongo = require('interfaces/imongo/iMongo');
+const iMongo = require('interfaces/_imongo/iMongo');
 const iSap = require('interfaces/isap/iSap');
 const iEventos = require('interfaces/eventos/iEventos');
 const iFlags = require('interfaces/iflags/iFlags');
