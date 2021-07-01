@@ -53,20 +53,6 @@ module.exports = (app) => {
 
 
 	// RUTAS NUEVAS v1
-	app.route('/delay/:nsec')
-		.post((req, res) => {
-
-			let msecs = parseInt(req.params.nsec) * 1000 || 1000;
-
-			setTimeout(() => {
-				res.status(200).json({
-					ok: true,
-					msecs
-				})
-			}, msecs)
-
-
-		})
 
 	// Consulta de transmisiones
 	app.route('/v1/transmisiones')
