@@ -1,8 +1,6 @@
 'use strict';
 const M = global.M;
-
-
-const LogTransmision = require('modelos/transmision/LogTransmision');
+const L = global.L;
 const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
 
 /**
@@ -42,7 +40,7 @@ class PostTransmision {
 		this.txId = datosTransmision._id;
 		this.#datosTransmision = datosTransmision;
 
-		this.log = new LogTransmision(this, this.txId.toString());
+		this.log = L.instanciar(this);
 		this.log.info(`Se re-instancia la transmisión ${this.#datosTransmision._id}`);
 
 		this.#metadatosOperacion = new MetadatosOperacion();

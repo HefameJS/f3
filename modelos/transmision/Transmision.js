@@ -1,12 +1,10 @@
 'use strict';
 const K = global.K;
 const M = global.M;
-
-
+const L = global.L;
 const Token = require('modelos/transmision/Token');
 const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
 const MetadatosConexionEntrante = require('modelos/transmision/MetadatosConexionEntrante');
-const LogTransmision = require('modelos/transmision/LogTransmision');
 const IntercambioSap = require('modelos/transmision/IntercambioSap');
 const SQLite = require('global/sqlite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -29,7 +27,7 @@ class Transmision extends Object {
 
 	
 	txId;						// (ObjectID) El ID único de la transmisión.
-	log;						// (LogTransmision) El gestor de log para esta transmisión.
+	log;						// (Log) El gestor de log para esta transmisión.
 	fechaCreacion;				// (Date) Fecha de creación de la transmisión.
 	#estado;					// (integer) El estado de la transmisión. Ej, RECEPCIONADA, ESPERANDO FALTAS ....
 	#tipo;						// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
@@ -67,7 +65,7 @@ class Transmision extends Object {
 		this.#estado = K.ESTADOS.RECEPCIONADO;
 		this.#tipo = tipo;
 
-		this.log = new LogTransmision(this);
+		this.log = L.instanciar(this);
 		this.log.evento(`------------------------ ${this.txId} ------------------------`);
 		this.log.evento(`Se da entrada a la transmisión ${this.constructor.name}. [tipo=${this.#tipo}, estado=${this.#estado}]`);
 

@@ -63,7 +63,8 @@ module.exports = async function () {
 	};
 	global.K.SOFTWARE_ID = {
 		SERVIDOR: '0026',
-		RETRANSMISOR: '9002'
+		RETRANSMISOR: '9002',
+		TEST: '9000'
 	};
 	global.K.PROCESOS = {
 		getTitulo: function (tipo) {
@@ -73,6 +74,7 @@ module.exports = async function () {
 				case 'watchdogPedidos': return 'f3-w-pedidos';
 				case 'watchdogSqlite': return 'f3-w-sqlite';
 				case 'monitor': return 'f3-monitor';
+				case 'simulador': return 'f3-simulador';
 				default: return 'indefinido';
 			}
 		},
@@ -81,7 +83,8 @@ module.exports = async function () {
 			WORKER: 'worker',
 			WATCHDOG_PEDIDOS: 'watchdogPedidos',
 			WATCHDOG_SQLITE: 'watchdogSqlite',
-			MONITOR: 'monitor'
+			MONITOR: 'monitor',
+			SIMULADOR: 'simulador'
 		}
 	}
 }
