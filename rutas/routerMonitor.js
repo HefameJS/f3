@@ -53,6 +53,20 @@ module.exports = (app) => {
 
 
 	// RUTAS NUEVAS v1
+	app.route('/delay/:nsec')
+		.post((req, res) => {
+
+			let msecs = parseInt(req.params.nsec) * 1000 || 1000;
+
+			setTimeout(() => {
+				res.status(200).json({
+					ok: true,
+					msecs
+				})
+			}, msecs)
+
+
+		})
 
 	// Consulta de transmisiones
 	app.route('/v1/transmisiones')
@@ -110,14 +124,14 @@ module.exports = (app) => {
 	app.route('/v1/maestro')
 		.get(tryCatch(controladores.consultas.maestro.consultaMaestro));
 
-/*
-	// Dumps de procesos
-	app.route('/v1/dumps')
-		.get(tryCatch(controladores.consultas.dumps.listadoDumps));
-
-	app.route('/v1/dumps/:idDump')
-		.get(tryCatch(controladores.consultas.dumps.consultaDump));
-*/
+	/*
+		// Dumps de procesos
+		app.route('/v1/dumps')
+			.get(tryCatch(controladores.consultas.dumps.listadoDumps));
+	
+		app.route('/v1/dumps/:idDump')
+			.get(tryCatch(controladores.consultas.dumps.consultaDump));
+	*/
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
