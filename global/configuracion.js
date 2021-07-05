@@ -291,15 +291,16 @@ class ConfiguracionDominios {
 	/**
 	 * Obtiene el valor del dominio con el ID especificado, o null si no existe
 	 */
-	getDominio(id) {
-		return this[id];
+	getDominio(clave) {
+
+		return this[clave];
 	}
 
 	/**
 	 * Obtiene el valor del dominio por defecto
 	 */
 	getPrincipal() {
-		return this.principal;
+		return this[this.principal];
 	}
 
 	/**
@@ -307,7 +308,12 @@ class ConfiguracionDominios {
 	 * por defecto.
 	 */
 	resolver(id) {
-		return this.getDominio(id) || this.getPrincipal()
+		for (let clave in this) {
+			if (this[clave] === id) 
+			return this[clave];
+		}
+
+		return this.getPrincipal()
 	}
 
 }
