@@ -49,8 +49,9 @@ class Transmision extends Object {
 				await transmision.generarMetadatosOperacion();
 				
 			} catch (truenoTransmision) {
-				console.log('OJO QUE HA PEGADO UN TRUENO')
-				console.log(truenoTransmision.stack)
+				transmision.log.dump(truenoTransmision);
+				transmision.log.fatal('OJO QUE HA PEGADO UN TRUENO - GENERANDO DUMP')
+				transmision.log.fatal(truenoTransmision.stack)
 			}
 		}
 
