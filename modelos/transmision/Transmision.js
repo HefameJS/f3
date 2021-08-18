@@ -39,22 +39,29 @@ class Transmision extends Object {
 
 	static async ejecutar(req, res, ClaseTransmision, datosDeOperacion) {
 
+		// Instancia la transmisión (notese que las transmisiones NO DEBEN sobreescribir el constructor por defecto)
 		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
+		// Registra en la base de datos la transisión como recepcionada
 		await transmision.#registrarTransmision();
 
-		if (await transmision.#responderFalloAutorizacion()) {
+		// Comprobación de que el usuario pueda ejecutar la transmisión.
+		let ejecucionAutorizada = await transmision.#chequeoAutorizacion()
+		if (ejecucionAutorizada) {
 			try {
+				// Ejecuta la operacion ( metodo operar() que debe sobreescribirse ), de debe devolver un objeto de tipo ResultadoOperacion
 				let resultadoOperacion = await transmision.operar(datosDeOperacion);
+				// Responde al cliente HTTP y establece el estado de la transmisión
 				await resultadoOperacion.responderTransmision(transmision);
+				// Genera los metadatos de la transmisión
 				await transmision.generarMetadatosOperacion();
-				
 			} catch (truenoTransmision) {
+				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
-				transmision.log.fatal('OJO QUE HA PEGADO UN TRUENO - GENERANDO DUMP')
+				transmision.log.fatal('LA TRANSMISION HA PEGADO UN TRUENO Y GENERANDO UN DUMP')
 				transmision.log.fatal(truenoTransmision.stack)
 			}
 		}
-
+		// Registra en la base de datos el resultado de la transmisión.
 		await transmision.#actualizarTransmision();
 	}
 
@@ -198,11 +205,12 @@ class Transmision extends Object {
 	}
 
 	/**
-	 * Envía una respuesta de fallo de autenticación/autorización a la solicitud HTTP del cliente si el token 
-	 * no es válido para realizar la operación solicitada.
-	 * @returns false si el token no es valido y por tanto se respondió al cliente. true si el token es correcto y se debe operar.
+	 * Comprueba que la petición esté autenticada y que el usuario autenticado esté autorizado a ejecutarla. 
+	 * En caso afirmativo devuelve true, en caso negativo devuelve false y responde al cliente con un error de autenticación
+	 * o autorización, según corresponda.
+	 * @returns true si la autorización es correcta, false de lo contrario. 
 	 */
-	async #responderFalloAutorizacion() {
+	async #chequeoAutorizacion() {
 
 		let errorToken = this.token.getError();
 		if (errorToken) {
@@ -222,7 +230,7 @@ class Transmision extends Object {
 		//Flag de transimision
 		return {
 			ip: this.#metadatosConexionEntrante.ip,
-			autenticacion: this.token.generarFlag(),
+			autenticacion: this.token.generarMetadatos(),
 			programa: this.#metadatosConexionEntrante.programa,
 			ssl: this.#metadatosConexionEntrante.ssl,
 			balanceador: this.#metadatosConexionEntrante.balanceador,
@@ -257,9 +265,8 @@ class Transmision extends Object {
 			this.log.debug('La transmision ha sido registrada en la base de datos');
 		} catch (errorMongo) {
 			this.log.err('Error al registrar la transmisión en la base de datos', errorMongo);
-
 			try {
-				let uid = await SQLite.grabarSentencias(sentencia);
+				let uid = await SQLite.grabarSentencia(sentencia);
 				this.log.warn(`La transmision ha sido registrada en la base de datos local con UID ${uid}`);
 			} catch (errorSQLite) {
 				this.log.fatal('La transmisión no ha podido ser registrada', errorSQLite)

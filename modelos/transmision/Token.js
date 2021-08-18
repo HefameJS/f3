@@ -56,7 +56,7 @@ class Token {
 
 	}
 
-	get datos() {
+	getDatos() {
 		return {
 			usuario: this.#usuario,
 			dominio: this.#dominio,
@@ -66,6 +66,10 @@ class Token {
 		};
 	}
 
+	/**
+	 * Obtiene el objeto 'login' que hay que mandarle a SAP para informar del usuario/dominio de la operación
+	 * @returns 
+	 */
 	getDatosLoginSap() {
 		return {
 			user: this.#usuario,
@@ -73,11 +77,7 @@ class Token {
 		}
 	}
 
-	esPermanente() {
-		return this.#permanente;
-	}
-
-	generarFlag() {
+	generarMetadatos() {
 		if (this.#verificado) {
 			let flag = {
 				usuario: this.#usuario,

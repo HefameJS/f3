@@ -72,7 +72,7 @@ class ConsultaAlbaran extends Modelo {
 
 
 		if (codigoCliente.length < 8) {
-			let usuarioToken = this.transmision.token.datos.usuario;
+			let usuarioToken = this.transmision.token.getDatos().usuario;
 
 			let codigoClienteLargo = codigoCliente;
 			// Casos en donde el usuario es de la forma xxxxxxxx@hefame
