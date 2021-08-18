@@ -19,25 +19,24 @@ const db = new sqlite3.Database(C.sqlite.fichero, (err) => {
  * Graba en la base de datos SQLite la sentencia MongoDB pasada.
  * @param {*} sentencia 
  */
-const grabarSentencia = async function (sentencia) {
+const grabarSentencia = async (sentencia) => {
+	return new Promise((accept, reject) => {
+		let uid = (new M.ObjectID()).toHexString();
+		let txId = sentencia['$setOnInsert']._id;
+		let txIdHexadecimal = txId.toHexString();
 
-	let uid = (new M.ObjectID()).toHexString();
-	let txId = sentencia['$setOnInsert']._id;
-	let txIdHexadecimal = txId.toHexString();
-
-	// Para serializar correctamente objetos como ObjectIDs y Dates
-	// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
-	// https://www.npmjs.com/package/bson
-	let jsonExtendido = EJSON.stringify(sentencia, { relaxed: false });
-	db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], function (err) {
-		if (err) {
-			throw err;
-		} else {
-			return this.lastID;
-		}
+		// Para serializar correctamente objetos como ObjectIDs y Dates
+		// https://docs.mongodb.com/v3.0/reference/mongodb-extended-json/
+		// https://www.npmjs.com/package/bson
+		let jsonExtendido = EJSON.stringify(sentencia, { relaxed: false });
+		db.run('INSERT INTO tx(uid, txid, data, retryCount) VALUES(?, ?, ?, ?)', [uid, txIdHexadecimal, jsonExtendido, 0], (err) => {
+			if (err) {
+				reject(err);
+			} else {
+				accept(this.lastID);
+			}
+		});
 	});
-
-
 }
 
 
