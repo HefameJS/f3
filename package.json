@@ -5,7 +5,7 @@
   "scripts": {
     "service": "nohup node f3.js >> console.log 2>> console.err &",
     "test": "nodemon --trace-warnings f3.js",
-	"simulador": "nodemon --trace-warnings SIMULADOR/simulador.js"
+    "simulador": "nodemon --trace-warnings SIMULADOR/simulador.js"
   },
   "keywords": [
     "fedicom",
@@ -28,7 +28,7 @@
     "mongodb": "^3.6.5",
     "os": "^0.1.1",
     "saslprep": "^1.0.3",
-    "sqlite3": "^5.0.2",
+    "sqlite3": "^4.2.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
