@@ -94,22 +94,16 @@ class Configuracion {
 
 	static async cargarObjetoCluster(claveObjeto) {
 
-		// L.d(['Leyendo configuracion del clúster', claveObjeto]);
+		L.debug(`Leyendo configuracion del clúster para el objeto ${claveObjeto}`);
 
 		let config = null;
 
-		if (M.conectado) {
-			try {
-				config = await M.col.configuracion.findOne({ _id: claveObjeto });
-				// L.i(['Obtenida configuración del clúster', claveObjeto], 'config');
-			} catch (errorMongo) {
-				L.e(['Ocurrió un error en la consulta. Usamos configuración en caché', errorMongo])
-			}
+		try {
+			config = await M.col.configuracion.findOne({ _id: claveObjeto });
+			// L.i(['Obtenida configuración del clúster', claveObjeto], 'config');
+		} catch (errorMongo) {
+			L.err(`Ocurrió un error en la consulta de configuración de ${claveObjeto}. Usamos configuración en caché`, errorMongo)
 		}
-		else {
-			L.e(['No hay conexión con el clúster. Intentamos utilizar la caché.'])
-		}
-
 
 		let directorioCacheConfig = C.directorioCache + SUBDIR.CONFIG + SEPARADOR_DIRECTORIOS + claveObjeto + '.config';
 		if (!config) {
@@ -309,8 +303,8 @@ class ConfiguracionDominios {
 	 */
 	resolver(id) {
 		for (let clave in this) {
-			if (this[clave] === id) 
-			return this[clave];
+			if (this[clave] === id)
+				return this[clave];
 		}
 
 		return this.getPrincipal()

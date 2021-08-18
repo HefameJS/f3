@@ -4,15 +4,29 @@ const L = global.L;
 const MongoDb = require('mongodb');
 
 
+class ColeccionDummy {
 
-module.exports = async function () {
+	esDummy = true;
+
+	async updateOne() {
+		throw new MongoDb.MongoError('No conectado a MongoDb (updateOne)')
+	}
+
+	async findOne() {
+		throw new MongoDb.MongoError('No conectado a MongoDb (findOne)')
+	}
+
+}
+
+const conexion = async function () {
 
 	L.info('Conectando al clúster MongoDB');
 	let cliente = new MongoDb.MongoClient(C.mongodb.getUrl(), C.mongodb.getConfigConexion());
 	let baseDatos = null;
 	let colecciones = {
-		transmisiones: null,
-		configuracion: null
+		transmisiones: new ColeccionDummy(),
+		configuracion: new ColeccionDummy(),
+		descartes: new ColeccionDummy()
 	};
 
 	let opcionesColeccion1 = { writeConcern: { w: 1, wtimeout: 1000 } }
@@ -28,7 +42,7 @@ module.exports = async function () {
 	}
 	catch (error) {
 		L.err('Error en la conexión a de MongoDB:', error)
-		L.err(`Reintentando la conexión en ${C.mongodb.intervaloReconexion} milisegundos`)
+		L.err(`Se reintentará la conexión en ${C.mongodb.intervaloReconexion} milisegundos`)
 		setTimeout(() => conexion(), C.mongodb.intervaloReconexion)
 	}
 
@@ -36,14 +50,24 @@ module.exports = async function () {
 	global.M.ObjectID = MongoDb.ObjectID;
 	global.M.toMongoLong = MongoDb.Long.fromNumber;
 
-	global.M.conectado = cliente ? true : false;
+
 	global.M.cliente = cliente;
 	global.M.bd = baseDatos;
 	global.M.db = baseDatos;
 	global.M.getBD = (nombreDb) => { return (nombreDb ? cliente.db(nombreDb) : baseDatos) };
 	global.M.col = {
 		transmisiones: colecciones.transmisiones,
-		configuracion: colecciones.configuracion
+		configuracion: colecciones.configuracion,
+		descartes: colecciones.descartes,
+	}
+
+	global.M.conectado = () => {
+		for (let coleccion in global.M.col) {
+			if (global.M.col[coleccion].esDummy) return false;
+		}
+		return true;
 	}
 
 }
+
+module.exports = conexion;
