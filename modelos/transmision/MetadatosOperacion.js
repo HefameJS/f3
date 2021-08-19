@@ -13,11 +13,6 @@ class MetadatosOperacion {
 	 * @param {*} valor 
 	 */
 	insertar(nombre, valor) {
-
-		
-
-
-
 		this.#metadatosOperacion[nombre] = valor;
 	}
 

@@ -32,11 +32,11 @@ class ErrorLlamadaSap {
 
 	}
 
-	get tipo() {
+	getTipo() {
 		return this.#tipo;
 	}
 
-	get cuerpoRespuesta() {
+	getCuerpoRespuesta() {
 		return this.#cuerpoRespuesta;
 	}
 

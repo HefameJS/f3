@@ -15,23 +15,23 @@ class IntercambioSap {
 	log;								// Referencia a this.#transmision.log;
 
 	#intercambioEjecutado;				// Indica si se ha intentado realizar el intercambio
-	#timeout;
+	#timeout;							// Timeout a esperar antes de abortar la llamada HTTP
 	#funcionValidadora;					// Funcion a la que se llamará con la respuesta de SAP para determinar si esta es correcta o no.
 
 	#solicitud = {
-		fecha: null,
-		url: null,
-		metodo: null,
-		headers: null,
-		body: null
+		fecha: null,		// Hora a la que se genera la solicitud a SAP
+		url: null,			// URL a la que se llama
+		metodo: null,		// Método HTTP usado
+		headers: null,		// Cabeceras de la petición
+		body: null			// Cuerpo de la petición
 	}
 
 	#respuesta = {
-		fecha: null,
-		estado: null,
-		error: null,
-		headers: null,
-		body: null
+		fecha: null,		// Hora de recepción de la respuesta
+		estado: null,		// Codigo de estado HTTP
+		error: null,		// Objeto de tipo ErrorLlamadaSap si hubo error al ejecutar la llamada, null si no hubo error
+		headers: null,		// Cabeceras de la respuesta
+		body: null			// Cuerpo de respuesta
 	}
 
 
@@ -92,7 +92,7 @@ class IntercambioSap {
 		return {
 			metadatos: {
 				servidor: this.#respuesta.headers?.['x-servidor-sap']?.toLowerCase?.() || null,
-				error: this.#respuesta.error?.tipo || undefined,
+				error: this.#respuesta.error?.getTipo() || undefined,
 				codigoEstado: this.#respuesta.estado || null,
 				tiempoRespuesta: parseInt(this.#respuesta.headers?.['sap-perf-fesrec']) ?? null
 			},
