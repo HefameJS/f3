@@ -2,7 +2,7 @@
 require('app-module-path').addPath(__dirname);
 console.log('Inicializando Worker Fedicom v3', new Date());
 
-require('bootstrap')('worker').then(() => {
+require('global/bootstrap')('worker').then(() => {
 
 	const C = global.C;
 	const L = global.L;

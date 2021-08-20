@@ -2,7 +2,7 @@
 const C = global.C;
 const K = global.K;
 
-const Ldap = require('global/ldap');
+const Ldap = require('interfaces/ldap');
 const CacheCredencialesSap = require('modelos/autenticacion/CacheCredencialesSap');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 

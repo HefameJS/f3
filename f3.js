@@ -3,7 +3,7 @@ require('app-module-path').addPath(__dirname);
 
 console.log('Inicializando servicios Fedicom v3', new Date());
 
-require('bootstrap')('master').then(() => {
+require('global/bootstrap')('master').then(() => {
 
 	const C = global.C;
 	const L = global.L;

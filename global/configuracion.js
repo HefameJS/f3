@@ -2,15 +2,14 @@
 const L = global.L;
 const M = global.M;
 const C = global.C;
+
 const fs = require('fs/promises'); fs.constants = require('fs').constants;
 const OS = require('os')
 const SEPARADOR_DIRECTORIOS = require('path').sep;
 
-// modelos
+
 const DestinoSap = require('modelos/DestinoSap');
 const Balanceador = require('modelos/monitor/Balanceador');
-
-// util
 const Validador = require('global/validador');
 
 const SUBDIR = {

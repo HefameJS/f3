@@ -2,7 +2,7 @@
 require('app-module-path').addPath(__dirname);
 console.log('Inicializando Watchdog Pedidos Fedicom v3', new Date());
 
-require('bootstrap')('watchdogPedidos').then(() => {
+require('global/bootstrap')('watchdogPedidos').then(() => {
 
 	const C = global.C;
 	const L = global.L;

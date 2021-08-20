@@ -2,7 +2,7 @@
 require('app-module-path').addPath(__dirname);
 console.log('Inicializando servicio de monitorización Fedicom v3', new Date());
 
-require('bootstrap')('monitor').then(() => {
+require('global/bootstrap')('monitor').then(() => {
 
 	const C = global.C;
 	const L = global.L;
