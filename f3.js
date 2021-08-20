@@ -59,7 +59,7 @@ require('global/bootstrap')('master').then(() => {
 	}
 
 
-	let registradorProcesos = require('procesos/registradorProcesos');
+	let registradorProcesos = require('global/registradorProcesos');
 	registradorProcesos();
 
 	cluster.on('exit', (workerMuerto, code, signal) => {

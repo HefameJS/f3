@@ -7,7 +7,7 @@ const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision')
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const RespuestaDevolucionSap = require('modelos/devolucion/RespuestaDevolucionSap');
 
-const SolicitudCrearDevolucion = require('./SolicitudCrearDevolucion');
+const SolicitudCrearDevolucion = require('modelos/devolucion/SolicitudCrearDevolucion');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.

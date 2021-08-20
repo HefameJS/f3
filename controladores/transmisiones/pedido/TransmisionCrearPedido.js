@@ -6,8 +6,8 @@ const Transmision = require('modelos/transmision/Transmision');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-const SolicitudCrearPedido = require('./SolicitudCrearPedido');
-const RespuestaPedidoSap = require('./RespuestaPedidoSap');
+const SolicitudCrearPedido = require('modelos/pedido/SolicitudCrearPedido');
+const RespuestaPedidoSap = require('modelos/pedido/RespuestaPedidoSap');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -44,7 +44,7 @@ class TransmisionCrearPedido extends Transmision {
 			this.log.info('Obtenida respuesta de SAP, procedemos a analizarla');
 		} catch (errorLlamadaSap) {
 			this.log.err('Incidencia en la comunicación con SAP, se simulan las faltas del pedido', errorLlamadaSap);
-			this.addError('PED-WARN-001', 'Su pedido se ha recibido correctamente, pero no hemos podido informar las faltas.');
+			//this.addError('PED-WARN-001', 'Su pedido se ha recibido correctamente, pero no hemos podido informar las faltas.');
 			this.metadatos.noEnviaFaltas = true;
 			return new ResultadoTransmision(201, K.ESTADOS.PEDIDO.NO_SAP, this.#solicitud.generarJSON('errores'));
 		}
@@ -125,6 +125,10 @@ class TransmisionCrearPedido extends Transmision {
 			if (this.#respuesta.metadatos.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = this.#respuesta.metadatos.pedidosAsociadosSap.map(nPed => M.toMongoLong(nPed));
 			if (this.#respuesta.metadatos.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = M.toMongoLong(this.#respuesta.metadatos.pedidoAgrupadoSap);
 
+		}
+
+		if (this.token.dominio = C.dominios.TRANSFER) {
+			metadatos.esTransfer = true;
 		}
 
 

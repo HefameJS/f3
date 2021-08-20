@@ -8,11 +8,11 @@ const OS = require('os');
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iMonitor = require('interfaces/iMonitor');
+const iMonitor = require('interfaces/_iMonitor');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
-const Dump = require('modelos/monitor/ModeloDump');
+const Dump = require('modelos/_monitor/ModeloDump');
 
 
 // GET /dumps

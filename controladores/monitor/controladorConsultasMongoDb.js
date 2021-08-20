@@ -8,7 +8,7 @@ const iTokens = require('global/tokens');
 const iMongo = require('interfaces/_imongo/iMongo');
 
 // Modelos
-const EstadoReplicaSet = require('modelos/monitor/ModeloEstadoReplicaSet')
+const EstadoReplicaSet = require('modelos/_monitor/ModeloEstadoReplicaSet')
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 // GET /mongodb/colecciones

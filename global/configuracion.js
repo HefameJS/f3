@@ -9,7 +9,7 @@ const SEPARADOR_DIRECTORIOS = require('path').sep;
 
 
 const DestinoSap = require('modelos/DestinoSap');
-const Balanceador = require('modelos/monitor/Balanceador');
+const Balanceador = require('modelos/_monitor/Balanceador');
 const Validador = require('global/validador');
 
 const SUBDIR = {

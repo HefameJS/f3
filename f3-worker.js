@@ -11,7 +11,7 @@ require('global/bootstrap')('worker').then(() => {
 	const express = require('express');
 	const cors = require('cors');
 
-	const routerConcentrador = require('rutas/routerConcentrador');
+	const routerConcentrador = require('controladores/rutas/rutasEstandar');
 
 	let app = express();
 	app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));

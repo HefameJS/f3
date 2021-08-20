@@ -7,7 +7,7 @@ const L = global.L;
 const iTokens = require('global/tokens');
 
 // Helpers
-const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;
+const retransmitirPedido = require('_watchdog/retransmitirPedido').retransmitirPedido;
 
 // GET /retransmitir/:txId
 exports.retransmitePedido = async function (req, res) {

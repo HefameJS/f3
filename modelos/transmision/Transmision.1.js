@@ -7,7 +7,6 @@ const MetadatosOperacion = require('./MetadatosOperacion');
 const MetadatosConexionEntrante = require('./MetadatosConexionEntrante');
 const IntercambioSap = require('./IntercambioSap');
 const ResultadoTransmision = require('./ResultadoTransmision');
-const SQLite = require('global/sqlite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 
@@ -15,7 +14,7 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
  * Representación de la transmisión que se está procesando en el concentrador.
  * La clase permite conocer y manejar el flujo y ciclo de vida de cada transmisión.
  */
-class Transmision extends Object {
+class TransmisionB extends Object {
 
 
 	#http;						// Contiene la peticion y respuesta de Express {req, res}
@@ -33,14 +32,12 @@ class Transmision extends Object {
 	#tipo;						// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
 	token;						// (Token) Datos del token transmitido en la transmisión.
 	#intercambioSap				// (IntercambioSap) Interfaz de comunicación con SAP.
-	#metadatosConexionEntrante;	// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
-	#metadatosOperacion;		// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
 
 
-	static async ejecutar(req, res, ClaseTransmision, datosDeOperacion) {
+	static async ejecutar(req, res, ClaseTransmisionB, datosDeOperacion) {
 
 		// Instancia la transmisión (notese que las transmisiones NO DEBEN sobreescribir el constructor por defecto)
-		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
+		let transmision = new ClaseTransmisionB(req, res, ClaseTransmision.CONDICIONES_AUTORIZACION);
 		// Registra en la base de datos la transisión como recepcionada
 		await transmision.#registrarTransmision();
 
@@ -52,8 +49,6 @@ class Transmision extends Object {
 				let resultadoOperacion = await transmision.operar(datosDeOperacion);
 				// Responde al cliente HTTP y establece el estado de la transmisión
 				await resultadoOperacion.responderTransmision(transmision);
-				// Genera los metadatos de la transmisión
-				await transmision.generarMetadatosOperacion();
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
@@ -104,13 +99,6 @@ class Transmision extends Object {
 		return new ResultadoTransmision(503, K.ESTADOS.PETICION_INCORRECTA,)
 	}
 
-	/**
-	 * Método abstracto que las clases que hereden deben implementar.
-	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
-	 */
-	async generarMetadatosOperacion() {
-		this.log.warn('El objeto de transmisión no tiene redefinido el método generarMetadatosOperacion()');
-	}
 
 
 	/**
@@ -135,24 +123,6 @@ class Transmision extends Object {
 	}
 
 
-	/**
-	 * Establece el estado de la transmision
-	 * @param {*} estado El nuevo estado
-	 */
-	setEstado(estado) {
-		this.log.evento(`La transmisión pasa de estado ${this.#estado} a ${estado}`);
-		this.#estado = estado;
-	}
-
-	/**
-	 * Establece el valor del Flag indicado
-	 * @param {*} nombre El nombre del flag
-	 * @param {*} valor El nuevo valor del flag
-	 */
-	setMetadatosOperacion(nombre, valor) {
-		this.log.debug(`Establecidos metadatos de la operacion '${nombre}':`, valor);
-		this.#metadatosOperacion.insertar(nombre, valor);
-	}
 
 	/**
 	 * Envía una respuesta a la solicitud HTTP del cliente.
@@ -225,106 +195,11 @@ class Transmision extends Object {
 
 	}
 
-	#generarMetadatosConexion() {
-
-		//Flag de transimision
-		return {
-			ip: this.#metadatosConexionEntrante.ip,
-			autenticacion: this.token.generarMetadatos(),
-			programa: this.#metadatosConexionEntrante.programa,
-			ssl: this.#metadatosConexionEntrante.ssl,
-			balanceador: this.#metadatosConexionEntrante.balanceador,
-			concentrador: this.#metadatosConexionEntrante.concentrador
-		}
-
-	}
-
-	async #registrarTransmision() {
-
-		let sentencia = {
-			$setOnInsert: {
-				_id: this.txId,
-				fechaCreacion: this.fechaCreacion
-			},
-			$set: {
-				estado: this.#estado,
-				tipo: this.#tipo,
-				v: K.VERSION.TRANSMISION,
-				'conexion.solicitud': {
-					method: this.#http.req.method,
-					url: this.#http.req.originalUrl,
-					headers: this.#http.req.headers,
-					body: this.#http.req.body
-				},
-				'conexion.metadatos': this.#generarMetadatosConexion()
-			}
-		}
-
-		try {
-			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });
-			this.log.debug('La transmision ha sido registrada en la base de datos');
-		} catch (errorMongo) {
-			this.log.err('Error al registrar la transmisión en la base de datos', errorMongo);
-			try {
-				let uid = await SQLite.grabarSentencia(sentencia);
-				this.log.warn(`La transmision ha sido registrada en la base de datos local con UID ${uid}`);
-			} catch (errorSQLite) {
-				this.log.fatal('La transmisión no ha podido ser registrada', errorSQLite)
-			}
-			return false;
-		}
-	}
-
-	async #actualizarTransmision() {
-
-		let sentencia = {
-			$setOnInsert: {
-				_id: this.txId,
-				fechaCreacion: this.fechaCreacion
-			},
-			$max: {
-				estado: this.#estado,
-			},
-			$set: {
-				tipo: this.#tipo,
-				'conexion.respuesta': {
-					fechaEnvio: new Date(),
-					codigo: this.#http.respuesta.codigo,
-					headers: this.#http.res.getHeaders(),
-					body: this.#http.respuesta.datos,
-					error: (this.#http.respuesta.error ? this.#http.respuesta.error.toString() : undefined)
-				}
-			}
-		}
-
-		// SAP
-		// Si se ha efectuado transmision a SAP, grabamos la inforamción de la misma
-		if (this.#intercambioSap.intercambioEjecutado())
-			sentencia['$set'].sap = this.#intercambioSap.generarMetadatosSap()
 
 
-		// Metadatos de la operacion
-		this.#metadatosOperacion.sentenciar(sentencia);
-
-
-		try {
-			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });
-			this.log.debug('La transmision ha sido actualizada en la base de datos');
-		} catch (errorMongo) {
-			this.log.err('Error al actualizar la transmisión en la base de datos', errorMongo);
-
-			try {
-				let uid = await SQLite.grabarSentencia(sentencia);
-				this.log.warn(`La actualización ha sido registrada en la base de datos local con UID ${uid}`);
-			} catch (errorSQLite) {
-				this.log.fatal('La actualización no ha podido ser registrada', errorSQLite)
-			}
-			return false;
-		}
-	}
 
 }
 
 
 
-module.exports = Transmision;
+module.exports = TransmisionB;

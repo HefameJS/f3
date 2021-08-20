@@ -1,7 +1,7 @@
 'use strict';
 const Modelo = require('modelos/transmision/Modelo');
 const ErrorFedicom = require('modelos/ErrorFedicom');
-const Crc = require('modelos/CRC');
+const Crc = require('global/crc');
 const Validador = require('global/validador');
 
 

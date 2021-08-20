@@ -11,7 +11,7 @@ require('global/bootstrap')('monitor').then(() => {
 	const express = require('express');
 	const cors = require('cors');
 
-	const routerMonitor = require('rutas/routerMonitor');
+	const routerMonitor = require('controladores/rutas/rutasMonitor');
 
 	let app = express();
 	app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));

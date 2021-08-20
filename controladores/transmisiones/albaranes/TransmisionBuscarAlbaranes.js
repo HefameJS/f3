@@ -10,8 +10,8 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-const Albaran = require('./Albaran');
-const ConsultaAlbaran = require('./SolicitudConsultaAlbaran');
+const Albaran = require('../../../modelos/albaran/Albaran');
+const ConsultaAlbaran = require('../../../modelos/albaran/SolicitudConsultaAlbaran');
 
 
 /**

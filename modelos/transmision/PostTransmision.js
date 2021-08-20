@@ -1,7 +1,7 @@
 'use strict';
 const M = global.M;
 const L = global.L;
-const MetadatosOperacion = require('modelos/transmision/MetadatosOperacion');
+const MetadatosOperacion = require('./MetadatosOperacion');
 
 /**
  * Clase que representa a una transmisión que ya está registrada en la base de datos.

@@ -31,11 +31,11 @@ class Token {
 	#condicionesAutorizacion;	// (CondicionesAutorizacion) Objeto con las condiciones que la transmision debe cumplir para que se autorice.
 	#error = null;				// (ErrorFedicom) Indica un objeto de Error si se encuentra algún error en el tratamiento del token. null si no hay errores.
 
-	#usuario;					// (string) El usuario del token. undefined si no aplica.
-	#dominio;					// (string) El dominio al que pertenece el usuario del token. undefined si no aplica.
-	#fechaDeExpiracion;			// (Date) La fecha de expiración del token en un objeto Date. undefined si no aplica.
-	#fechaDeEmision;			// (Date) La fecha de emision del token en un objeto Date. undefined si no aplica.
-	#grupos = [];				// (Array[string]) Un array con los permisos del token.
+	usuario;					// (string) El usuario del token. undefined si no aplica.
+	dominio;					// (string) El dominio al que pertenece el usuario del token. undefined si no aplica.
+	fechaDeExpiracion;			// (Date) La fecha de expiración del token en un objeto Date. undefined si no aplica.
+	fechaDeEmision;				// (Date) La fecha de emision del token en un objeto Date. undefined si no aplica.
+	grupos = [];				// (Array[string]) Un array con los permisos del token.
 
 	constructor(transmision, condicionesAutorizacion) {
 
@@ -56,32 +56,22 @@ class Token {
 
 	}
 
-	getDatos() {
-		return {
-			usuario: this.#usuario,
-			dominio: this.#dominio,
-			fechaDeExpiracion: this.#fechaDeExpiracion,
-			fechaDeEmision: this.#fechaDeEmision,
-			grupos: this.#grupos
-		};
-	}
-
 	/**
 	 * Obtiene el objeto 'login' que hay que mandarle a SAP para informar del usuario/dominio de la operación
 	 * @returns 
 	 */
 	getDatosLoginSap() {
 		return {
-			user: this.#usuario,
-			domain: this.#dominio
+			user: this.usuario,
+			domain: this.dominio
 		}
 	}
 
 	generarMetadatos() {
 		if (this.#verificado) {
 			let flag = {
-				usuario: this.#usuario,
-				dominio: this.#dominio
+				usuario: this.usuario,
+				dominio: this.dominio
 			};
 
 			if (this.#solicitante) {
@@ -110,8 +100,8 @@ class Token {
 			let tokenDecodificado = JsonWebToken.verify(this.#jwt, C.jwt.clave, { clockTolerance: C.jwt.tiempoDeGracia });
 			this.#verificado = true;
 
-			this.#usuario = tokenDecodificado.sub;
-			this.#dominio = tokenDecodificado.aud;
+			this.usuario = tokenDecodificado.sub;
+			this.dominio = tokenDecodificado.aud;
 
 			// Los tokens permanentes llevan exp = 9999999999, iat = 0
 			// Por error, algunos se generaron con exp = 9999999999999, iat = 1
@@ -119,15 +109,15 @@ class Token {
 				this.#permanente = true;
 			} else {
 				this.#permanente = false;
-				this.#fechaDeExpiracion = new Date();
-				this.#fechaDeExpiracion.setTime(tokenDecodificado.exp * 1000);
-				this.#fechaDeEmision = new Date();
-				this.#fechaDeEmision.setTime(tokenDecodificado.iat * 1000);
+				this.fechaDeExpiracion = new Date();
+				this.fechaDeExpiracion.setTime(tokenDecodificado.exp * 1000);
+				this.fechaDeEmision = new Date();
+				this.fechaDeEmision.setTime(tokenDecodificado.iat * 1000);
 			}
 
 			// Copiamos los permisos del usuario, si los hubiere
 			if (Array.isArray(tokenDecodificado.grupos)) {
-				this.#grupos = tokenDecodificado.grupos.map(permisoBruto => permisoBruto)
+				this.grupos = tokenDecodificado.grupos.map(permisoBruto => permisoBruto)
 			}
 
 		} catch (errorJwt) {
@@ -159,7 +149,7 @@ class Token {
 		}
 
 		// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor
-		if (this.#dominio === C.dominios.INTERFEDICOM) {
+		if (this.dominio === C.dominios.INTERFEDICOM) {
 			if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
 				// TODO: Falta hacer control de admision por IP origen
 				this.#log.info('La transmisión queda autorizada como INTERFEDICOM');
@@ -167,14 +157,14 @@ class Token {
 				return;
 			}
 
-			this.#log.err(`Los tokens del dominio ${this.#dominio} solo se admiten en el proceso ${K.PROCESOS.TIPOS.MONITOR}`);
+			this.#log.err(`Los tokens del dominio ${this.dominio} solo se admiten en el proceso ${K.PROCESOS.TIPOS.MONITOR}`);
 			this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
 			return;
 		}
 
 		// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 		if (opciones.grupoRequerido) {
-			if (!this.#grupos.includes(opciones.grupoRequerido)) {
+			if (!this.grupos.includes(opciones.grupoRequerido)) {
 				this.#log.err(`El token no pertenece al grupo ${opciones.grupoRequerido}`);
 				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
 				return;
@@ -182,7 +172,7 @@ class Token {
 		}
 
 		// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
-		if (opciones.simulaciones && this.#dominio === C.dominios.HEFAME) {
+		if (opciones.simulaciones && this.dominio === C.dominios.HEFAME) {
 
 			// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza la petición
 			if (C.produccion === true && !opciones.simulacionesEnProduccion) {
@@ -192,13 +182,13 @@ class Token {
 			}
 
 			// En caso de que sea viable la simulación, el usuario debe tener el permiso 'FED3_SIMULADOR'
-			if (!this.#grupos.includes('FED3_SIMULADOR')) {
-				this.#log.err('El token no pertenece al grupo "FED3_SIMULADOR" necesario para realizar simulaciones', this.#grupos);
+			if (!this.grupos.includes('FED3_SIMULADOR')) {
+				this.#log.err('El token no pertenece al grupo "FED3_SIMULADOR" necesario para realizar simulaciones', this.grupos);
 				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
 				return;
 			}
 
-			this.#log.info(`La transmisión es solicitada por el usuario ${this.#usuario}@${this.#dominio}`);
+			this.#log.info(`La transmisión es solicitada por el usuario ${this.usuario}@${this.dominio}`);
 
 
 			// Buscamos las cabeceras 'x-simulacion-usuario' y 'x-simulacion-dominio' para generar un token simulando a este usuario
@@ -212,14 +202,14 @@ class Token {
 			}
 
 			this.#solicitante = {
-				usuario: this.#usuario,
-				dominio: this.#dominio
+				usuario: this.usuario,
+				dominio: this.dominio
 			};
 
 			this.#jwt = Token.generarToken(usuarioSimulado, dominioSimulado);
 			this.#verificarJwt();
 
-			this.#log.info(`La transmisión se realiza en nombre de ${this.#usuario}@${this.#dominio}`);
+			this.#log.info(`La transmisión se realiza en nombre de ${this.usuario}@${this.dominio}`);
 		}
 
 		this.#autorizado = true;

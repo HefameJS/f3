@@ -6,7 +6,7 @@ const cacheMetadatosGit = {
 	timestamp: 0
 }
 
-const obtenerCommitHash = async function () {
+module.exports.obtenerCommitHash = async () => {
 
 	if (cacheMetadatosGit.commit) {
 		return cacheMetadatosGit;
@@ -36,7 +36,4 @@ const obtenerCommitHash = async function () {
 
 }
 
-module.exports = {
-	obtenerCommitHash
-}
 

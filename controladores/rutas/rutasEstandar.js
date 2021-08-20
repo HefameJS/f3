@@ -3,18 +3,24 @@
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const Transmision = require('modelos/transmision/Transmision');
-const TransmisionError = require('modelos/transmision/errores/TransmisionError');
-const TransmisionAutenticacion = require('modelos/autenticacion/TransmisionAutenticacion');
-const TransmisionCrearPedido = require('modelos/pedido/TransmisionCrearPedido');
-const TransmisionConfirmarPedido = require('modelos/confirmarPedido/TransmisionConfirmarPedido');
-const TransmisionConsultarPedido = require('modelos/pedido/TransmisionConsultarPedido');
-const TransmisionCrearDevolucion = require('modelos/devolucion/TransmisionCrearDevolucion');
-const TransmisionConsultarDevolucion = require('modelos/devolucion/TransmisionConsultarDevolucion');
-const TransmisionCrearLogistica = require('modelos/logistica/TransmisionCrearLogistica');
-const TransmisionConsultarAlbaran = require('modelos/albaran/TransmisionConsultarAlbaran');
-const TransmisionBuscarAlbaranes = require('modelos/albaran/TransmisionBuscarAlbaranes');
-const TransmisionConfirmarAlbaran = require('modelos/confirmarAlbaran/TransmisionConfirmarAlbaran');
-const TransmisionConsultarLogistica = require('modelos/logistica/TransmisionConsultarLogistica');
+const TransmisionError = require('controladores/transmisiones/TransmisionError');
+
+const TransmisionAutenticacion = require('controladores/transmisiones/autenticacion/TransmisionAutenticacion');
+
+const TransmisionCrearPedido = require('controladores/transmisiones/pedido/TransmisionCrearPedido');
+const TransmisionConfirmarPedido = require('controladores/transmisiones/pedido/TransmisionConfirmarPedido');
+const TransmisionConsultarPedido = require('controladores/transmisiones/pedido/TransmisionConsultarPedido');
+
+const TransmisionCrearDevolucion = require('controladores/transmisiones/devoluciones/TransmisionCrearDevolucion');
+const TransmisionConsultarDevolucion = require('controladores/transmisiones/devoluciones/TransmisionConsultarDevolucion');
+
+const TransmisionCrearLogistica = require('controladores/transmisiones/logistica/TransmisionCrearLogistica');
+const TransmisionConsultarLogistica = require('controladores/transmisiones/logistica/TransmisionConsultarLogistica');
+
+const TransmisionConsultarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConsultarAlbaran');
+const TransmisionBuscarAlbaranes = require('controladores/transmisiones/albaranes/TransmisionBuscarAlbaranes');
+const TransmisionConfirmarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConfirmarAlbaran');
+
 
 
 

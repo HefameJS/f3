@@ -2,7 +2,7 @@
 const C = global.C;
 const K = global.K;
 
-const Ldap = require('interfaces/ldap');
+const Ldap = require('global/ldap');
 const CacheCredencialesSap = require('modelos/autenticacion/CacheCredencialesSap');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
@@ -10,7 +10,7 @@ const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
-const SolicitudAutenticacion = require('./SolicitudAutenticacion');
+const SolicitudAutenticacion = require('modelos/autenticacion/SolicitudAutenticacion');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.

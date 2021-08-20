@@ -5,7 +5,7 @@ const M = global.M;
 
 const Transmision = require('modelos/transmision/Transmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
-const SolicitudConfirmacionAlbaran = require('./SolicitudConfirmacionAlbaran');
+const SolicitudConfirmacionAlbaran = require('../../../modelos/confirmacionAlbaran/SolicitudConfirmacionAlbaran');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 
 /**

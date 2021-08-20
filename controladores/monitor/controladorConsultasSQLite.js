@@ -5,7 +5,7 @@ const L = global.L;
 
 // Interfaces
 const iTokens = require('global/tokens');
-const iMonitor = require('interfaces/iMonitor');
+const iMonitor = require('interfaces/_iMonitor');
 const iSQLite = require('global/sqlite');
 
 // Modelos

@@ -4,7 +4,7 @@ const K = global.K;
 
 
 const axios = require('axios');
-const ErrorLlamadaSap = require('modelos/transmision/ErrorLlamadaSap');
+const ErrorLlamadaSap = require('./ErrorLlamadaSap');
 
 /**
  * Clase que representa una única petición HTTP a SAP
@@ -117,14 +117,14 @@ class IntercambioSap {
 
 	async #ejecutarLlamadaSap(parametros) {
 
-		
+		global.L.trace(parametros);		
 		this.#intercambioEjecutado = true;
 		this.#solicitud = {
 			fecha: new Date(),
 			url: parametros.url,
 			metodo: parametros.method,
 			headers: parametros.headers,
-			body: parametros.body || undefined
+			body: parametros.data || undefined
 		}
 
 		let errorLlamadaSap = undefined;
@@ -137,7 +137,7 @@ class IntercambioSap {
 			respuestaSap = await axios(parametros);
 			
 			if (!this.#funcionValidadora(respuestaSap.status, respuestaSap.data)) {
-				this.log.err('La llamada SAP ha devuelto un codigo de estado erróneo');
+				this.log.err(`La llamada SAP ha devuelto un codigo de estado ${respuestaSap.status}`);
 				errorLlamadaSap = new ErrorLlamadaSap(ErrorLlamadaSap.ERROR_RESPUESTA_HTTP, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
 			}
 

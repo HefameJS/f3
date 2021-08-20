@@ -165,7 +165,7 @@ class Balanceador {
 			}
 
 		} else {
-			const iMonitor = require('interfaces/iMonitor');
+			const iMonitor = require('interfaces/_iMonitor');
 			return await iMonitor.llamadaMonitorRemoto(this.proxy, '/v1/balanceadores/' + this.nombre)
 		}
 

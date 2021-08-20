@@ -10,7 +10,7 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
-const Albaran = require('./Albaran');
+const Albaran = require('modelos/albaran/Albaran');
 
 
 const IntercambioSap = require('modelos/transmision/IntercambioSap');

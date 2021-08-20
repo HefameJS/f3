@@ -10,7 +10,7 @@ require('global/bootstrap')('watchdogPedidos').then(() => {
 
 	L.i(['Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker }], 'cluster');
 
-	let funcionWatchdog = require('watchdog/watchdogMongodb');
+	let funcionWatchdog = require('_watchdog/watchdogMongodb');
 	let idIntervalo = null;
 
 	let reiniciaIntervalo = () => {

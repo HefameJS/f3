@@ -9,7 +9,6 @@ class ErrorFedicom {
 	#listaErroresFedicom = [];
 	#codigoRespuestaHttp = null;
 
-
 	static esErrorFedicom(objeto) {
 		return ErrorFedicom.prototype.isPrototypeOf(objeto);
 	}

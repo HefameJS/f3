@@ -6,7 +6,7 @@ const L = global.L;
 // Interfaces
 const iTokens = require('global/tokens');
 const iSap = require('interfaces/isap/iSap');
-const iMonitor = require('interfaces/iMonitor');
+const iMonitor = require('interfaces/_iMonitor');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');

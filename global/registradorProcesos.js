@@ -7,18 +7,13 @@ const cluster = require('cluster');
 const OS = require('os');
 
 let DATOS_INSTANCIA = {};
-let CLAVE_MONGODB = {};
+let ID_INSTANCIA = {};
 let idIntervalo = null;
 
 
+module.exports = async () => {
 
-
-
-
-
-module.exports = async function() {
-
-	CLAVE_MONGODB = { _id: OS.hostname().toLowerCase() };
+	ID_INSTANCIA = { _id: OS.hostname().toLowerCase() };
 	DATOS_INSTANCIA = {
 		inicio: Date.fedicomTimestamp(),
 		version: {
@@ -33,7 +28,7 @@ module.exports = async function() {
 	idIntervalo = setInterval(async () => {
 
 		let datosInstancia = {
-			$setOnInsert: CLAVE_MONGODB,
+			$setOnInsert: ID_INSTANCIA,
 			$set: {
 				...DATOS_INSTANCIA,
 				timestamp: Date.fedicomTimestamp(),
@@ -49,7 +44,7 @@ module.exports = async function() {
 
 		try {
 			intervaloRegistroEnEjecucion = true;
-			await M.bd.collection('instancias').updateOne(CLAVE_MONGODB, datosInstancia, { upsert: 1 })
+			await M.bd.collection('instancias').updateOne(ID_INSTANCIA, datosInstancia, { upsert: 1 })
 			//L.trace('Instancia registrada', datosInstancia['$set']);
 		} catch (errorMongo) {
 			L.err('Capturado error en el registro de la instancia:', errorMongo);

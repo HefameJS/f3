@@ -13,7 +13,7 @@ const iEventos = require('interfaces/eventos/iEventos');
 const iFlags = require('interfaces/iflags/iFlags');
 
 // Helpers
-const retransmitirPedido = require('watchdog/retransmitirPedido').retransmitirPedido;
+const retransmitirPedido = require('_watchdog/retransmitirPedido').retransmitirPedido;
 
 
 
