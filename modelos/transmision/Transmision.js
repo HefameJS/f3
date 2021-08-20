@@ -25,7 +25,7 @@ class Transmision extends Object {
 	// 		.cuerpoRespuesta (Object) Especifica el objeto enviado en la respuesta (null si no hay respuesta)
 	//		.error (Error) Un objeto de error si la respuesta no pudo enviarse (null si no hay error)
 
-	
+
 	txId;						// (ObjectID) El ID único de la transmisión.
 	log;						// (Log) El gestor de log para esta transmisión.
 	fechaCreacion;				// (Date) Fecha de creación de la transmisión.
@@ -42,7 +42,7 @@ class Transmision extends Object {
 		// Instancia la transmisión (notese que las transmisiones NO DEBEN sobreescribir el constructor por defecto)
 		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
 		// Registra en la base de datos la transisión como recepcionada
-		await transmision.#registrarTransmision();
+		if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.#registrarTransmision();
 
 		// Comprobación de que el usuario pueda ejecutar la transmisión.
 		let ejecucionAutorizada = await transmision.#chequeoAutorizacion()
@@ -53,7 +53,7 @@ class Transmision extends Object {
 				// Responde al cliente HTTP y establece el estado de la transmisión
 				await resultadoOperacion.responderTransmision(transmision);
 				// Genera los metadatos de la transmisión
-				await transmision.generarMetadatosOperacion();
+				if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.generarMetadatosOperacion();
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
@@ -62,7 +62,7 @@ class Transmision extends Object {
 			}
 		}
 		// Registra en la base de datos el resultado de la transmisión.
-		await transmision.#actualizarTransmision();
+		if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.#actualizarTransmision();
 	}
 
 	constructor(req, res, tipo, condicionesAutorizacion) {
@@ -173,6 +173,7 @@ class Transmision extends Object {
 		this.#http.res.setHeader('Software-ID', K.SOFTWARE_ID.SERVIDOR);
 		this.#http.res.setHeader('Content-Api-Version', K.VERSION.PROTOCOLO);
 
+
 		this.#http.res.setHeader('Content-Type', contentType);
 		if (nombreFichero) this.#http.res.setHeader('Content-Disposition', 'attachment; filename=' + nombreFichero);
 
@@ -188,7 +189,7 @@ class Transmision extends Object {
 			this.log.info(`Se ha enviado una respuesta ${respuesta.statusCode} - ${respuesta.statusMessage} al cliente`);
 			if (!Buffer.isBuffer(datos))
 				this.#http.respuesta.datos = datos;
-			else 
+			else
 				this.#http.respuesta.datos = {
 					nombreFichero: nombreFichero,
 					formato: contentType,

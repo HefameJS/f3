@@ -1,6 +1,7 @@
 'use strict';
 const M = global.M;
 const L = global.L;
+const FakeRes = require('./FakeRes');
 const MetadatosOperacion = require('./MetadatosOperacion');
 
 /**
@@ -22,9 +23,11 @@ class PostTransmision {
 	 * @param {*} consulta 
 	 * @returns 
 	 */
-	static async instanciar(consulta) {
+	static async instanciar(consulta, incluirConexion) {
 		try {
-			let datosTransmision = await M.col.transmisiones.findOne(consulta, { projection: { conexion: 0, sap: 0 } });
+			let proyeccion = { projection: { sap: 0 } };
+			if (!incluirConexion) proyeccion.projection.conexion = 0;
+			let datosTransmision = await M.col.transmisiones.findOne(consulta, proyeccion);
 			if (datosTransmision?._id) {
 				return new PostTransmision(datosTransmision);
 			} else {
@@ -55,6 +58,23 @@ class PostTransmision {
 		this.#datosTransmision.estado = estado;
 	}
 
+	getDatos() {
+		return this.#datosTransmision;
+	}
+
+	async prepararReejecucion() {
+
+		
+
+		return {
+			req: {
+				...this.#datosTransmision.conexion.solicitud,
+				getHeaders: () => this.#datosTransmision.conexion.headers
+			},
+			res: new FakeRes()
+		}
+
+	}
 
 	/**
 	 * Establece el valor del Flag indicado

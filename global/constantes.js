@@ -5,6 +5,7 @@ const os = require('os');
 module.exports = async function () {
 
 	global.K.ESTADOS = {
+		NO_CONTROLADA: 0,
 		ERROR_GENERICO: 1000,
 		RECEPCIONADO: 1010,
 		PETICION_ENVIADA_A_SAP: 1020,
@@ -39,7 +40,8 @@ module.exports = async function () {
 	};
 	global.K.TIPOS = {
 		PLANTILLA: -1,
-		RECHAZO: 100,
+		NO_CONTROLADA: 1000,
+		RECHAZO: 1001,	
 		AUTENTICACION: 0,
 		CREAR_PEDIDO: 10,
 		CONSULTAR_PEDIDO: 11,

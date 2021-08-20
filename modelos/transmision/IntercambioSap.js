@@ -117,7 +117,6 @@ class IntercambioSap {
 
 	async #ejecutarLlamadaSap(parametros) {
 
-		global.L.trace(parametros);		
 		this.#intercambioEjecutado = true;
 		this.#solicitud = {
 			fecha: new Date(),

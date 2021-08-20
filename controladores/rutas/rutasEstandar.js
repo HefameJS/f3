@@ -21,6 +21,7 @@ const TransmisionConsultarAlbaran = require('controladores/transmisiones/albaran
 const TransmisionBuscarAlbaranes = require('controladores/transmisiones/albaranes/TransmisionBuscarAlbaranes');
 const TransmisionConfirmarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConfirmarAlbaran');
 
+const RetransmisionPedido = require('controladores/retransmisiones/RetransmisionPedido');
 
 
 
@@ -82,10 +83,10 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
-	/*
-	//app.route('/retransmitir/:txId')
-		//.get(tryCatch(controladores.retransmision.retransmitePedido));
-	*/
+	
+	app.route('/retransmitir/:txId')
+		.get(async (req, res) => Transmision.ejecutar(req, res, RetransmisionPedido));
+	
 
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.

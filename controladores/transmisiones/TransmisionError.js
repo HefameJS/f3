@@ -2,11 +2,11 @@
 const K = global.K;
 
 
-const Transmision = require('../../modelos/transmision/Transmision');
+const Transmision = require('modelos/transmision/Transmision');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
-const ResultadoTransmision = require('../../modelos/transmision/ResultadoTransmision');
-const CondicionesAutorizacion = require('../../modelos/transmision/CondicionesAutorizacion');
+const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
+const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
