@@ -57,6 +57,13 @@ class Token {
 	}
 
 	/**
+	 * Retorna el token tal cual, en un string sin procesar.
+	 */
+	getJwt() {
+		return this.#jwt; 
+	}
+
+	/**
 	 * Obtiene el objeto 'login' que hay que mandarle a SAP para informar del usuario/dominio de la operación
 	 * @returns 
 	 */
