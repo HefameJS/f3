@@ -16,14 +16,23 @@ class TransmisionCrearPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
+		retransmision: null					// Indica el ObjectID de la transmisión original (es decir, este pedido es una retransmisión)
 	};
 
 	#solicitud;
 	#respuesta;
 
 	// @Override
-	async operar() {
-		
+	async operar(datosExtra) {
+
+		/**
+		 * Datos extra:
+		 * - retransmision: Indica el ObjectID de la transmisión que está retransmitiendo
+		 * 
+		 */
+		this.metadatos.retransmision = datosExtra?.retransmision;
+
+
 		this.#solicitud = new SolicitudCrearPedido(this);
 
 		// PASO 1: Verificar si hay errores de protocolo
@@ -31,9 +40,11 @@ class TransmisionCrearPedido extends Transmision {
 			return new ResultadoTransmision(400, K.ESTADOS.PETICION_INCORRECTA, this.#solicitud.generarJSON('errores'));
 		}
 
-		// PASO 2: Verificar si el pedido es duplicado
-		if (await this.#solicitud.esDuplicado()) {
-			return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
+		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos retransmitiendo)
+		if (!this.metadatos.retransmision) {
+			if (await this.#solicitud.esDuplicado()) {
+				return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
+			}
 		}
 
 		// PASO 3: Enviamos el pedido a SAP a ver que devuelve 
@@ -100,7 +111,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.#solicitud.metadatos.codigoAlmacenSaneado) metadatos.codigoAlmacenSaneado = true;
 		if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = true;
 		if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
-		
+
 
 		if (this.#respuesta) {
 
@@ -131,6 +142,10 @@ class TransmisionCrearPedido extends Transmision {
 			metadatos.esTransfer = true;
 		}
 
+		// Opciones de retransmision
+		if (this.metadatos.retransmision) {
+			metadatos.retransmision = this.metadatos.retransmision;
+		}
 
 		this.setMetadatosOperacion('pedido', metadatos);
 	}

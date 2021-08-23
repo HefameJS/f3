@@ -83,10 +83,8 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
-	
 	app.route('/retransmitir/:txId')
 		.get(async (req, res) => Transmision.ejecutar(req, res, RetransmisionPedido));
-	
 
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.

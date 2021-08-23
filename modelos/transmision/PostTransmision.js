@@ -1,6 +1,7 @@
 'use strict';
 const M = global.M;
 const L = global.L;
+const FakeReq = require('./FakeReq');
 const FakeRes = require('./FakeRes');
 const MetadatosOperacion = require('./MetadatosOperacion');
 
@@ -64,13 +65,8 @@ class PostTransmision {
 
 	async prepararReejecucion() {
 
-		
-
 		return {
-			req: {
-				...this.#datosTransmision.conexion.solicitud,
-				getHeaders: () => this.#datosTransmision.conexion.headers
-			},
+			req: new FakeReq(this.#datosTransmision.conexion),
 			res: new FakeRes()
 		}
 
