@@ -17,18 +17,29 @@ class TransmisionConfirmarPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		estadoTransmisionPedido: null,		// (int) El estado al que se mueve la transmisión de pedido que se está confirmando con esta transmisión
-		idTransmisionPedido: null			// (ObjectID) El ID de la transisión que se está confirmando.
+		crcSap: null						// (int64) El CRC indicado en SAP
 	};
 
-
 	pedidosAsociadosSap;
-	crcSap;
+	idPedidoConfirmado;
 
 
 	// @Override
 	async operar() {
 		let json = this.req.body;
 
+		// Si podemos sacar el CRC de SAP, lo registramos
+		this.metadatos.crcSap = parseInt(json.crc, 16) || 0;
+
+		// El txId a confirmar lo obtenemos de la URL
+		if (!M.ObjectID.isValid(this.req.query.txId)) {
+			this.log.err('El ID de la transmisión a confirmar no es válido: ', this.req.query.txId);
+			return new ResultadoTransmision(200, K.ESTADOS.PETICION_INCORRECTA, { ok: true });
+		}
+		
+		this.idPedidoConfirmado = M.ObjectID.createFromHexString(this.req.query.txId);
+
+		// Los numeros de pedido los obtenemos del body
 		if (Array.isArray(json.sap_pedidosasociados) && json.sap_pedidosasociados.length) {
 			let setPedidosSap = new Set();
 			json.sap_pedidosasociados.forEach(numeroPedidoSap => {
@@ -40,13 +51,13 @@ class TransmisionConfirmarPedido extends Transmision {
 			this.pedidosAsociadosSap = [];
 		}
 
-		this.crcSap = parseInt(json.crc, 16) || 0;
 
+		// Determinamos el estado del pedido en base a si se ha obtenido numero de pedido por parte de SAP o no
 		if (this.pedidosAsociadosSap.length > 0) {
-			this.log.info(`SAP confirma la creación del pedido con CRC '${json.crc.toUpperCase()}' los siguientes números de pedido:`, this.pedidosAsociadosSap);
+			this.log.info(`SAP confirma la creación del pedido en la transmisión de pedido con ID '${this.idPedidoConfirmado}' los siguientes números de pedido:`, this.pedidosAsociadosSap);
 			this.metadatos.estadoTransmisionPedido = K.ESTADOS.COMPLETADO;
 		} else {
-			this.log.warn(`SAP no indica ningún número de pedido para la transmisión con CRC ${json.crc}`);
+			this.log.warn(`SAP no indica ningún número de pedido para la transmisión de pedido con ID ${this.idPedidoConfirmado}`);
 			this.metadatos.estadoTransmisionPedido = K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		}
 
@@ -62,15 +73,12 @@ class TransmisionConfirmarPedido extends Transmision {
 		fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
 
 		let consulta = {
-			tipo: K.TIPOS.CREAR_PEDIDO,
-			fechaCreacion: { $gt: fechaLimite },
-			'pedido.crcSap': this.crcSap
+			_id: this.idPedidoConfirmado
 		};
 
 
 		try {
 			let transmisionPedidoConfirmada = await PostTransmision.instanciar(consulta);
-			this.metadatos.idTransmisionPedido = transmisionPedidoConfirmada.txId;
 
 			transmisionPedidoConfirmada.setEstado(this.metadatos.estadoTransmisionPedido);
 			if (this.pedidosAsociadosSap?.length) {
@@ -85,7 +93,6 @@ class TransmisionConfirmarPedido extends Transmision {
 			return new ResultadoTransmision(200, K.ESTADOS.CONFIRMAR_PEDIDO.NO_ASOCIADA_A_PEDIDO, { ok: true });
 		}
 
-
 		return new ResultadoTransmision(200, K.ESTADOS.COMPLETADO, { ok: true });
 
 	}
@@ -95,8 +102,8 @@ class TransmisionConfirmarPedido extends Transmision {
 	// @Override
 	generarMetadatosOperacion() {
 		let metadatos = {
-			crcSap: M.toMongoLong(this.crcSap),
-			idPedidoConfirmado: this.metadatos.idTransmisionPedido
+			crcSap: M.toMongoLong(this.metadatos.crcSap),
+			idPedidoConfirmado: this.idPedidoConfirmado
 		};
 		this.setMetadatosOperacion('pedido.confirmar', metadatos);
 	}

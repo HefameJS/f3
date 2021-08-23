@@ -245,7 +245,7 @@ class SolicitudCrearPedido extends Modelo {
 	 * Genera la URL donde SAP debe confirmar la creación del pedido
 	 */
 	#generaUrlConfirmacion() {
-		return 'http://' + K.HOSTNAME + '.hefame.es:' + C.http.puertoConcentrador + '/confirmaPedido';
+		return 'http://' + K.HOSTNAME + '.hefame.es:' + C.http.puertoConcentrador + '/confirmaPedido?txId=' + this.transmision.txId.toHexString();
 	}
 
 
