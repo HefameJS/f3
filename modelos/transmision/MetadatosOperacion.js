@@ -4,17 +4,28 @@
  * Almacén de metadatos
  */
 class MetadatosOperacion {
-	
+
+	#metadatosOperacionSet = {}
 	#metadatosOperacion = {}
 
 	/**
 	 * Inserta el metadato con el nombre/valor indicados
-	 * @param {*} nombre 
+	 * @param {*} clave 
 	 * @param {*} valor 
 	 */
-	insertar(nombre, valor) {
-		this.#metadatosOperacion[nombre] = valor;
+	insertar(clave, valor, operacion = null) {
+
+		if (operacion) {
+			if (!this.#metadatosOperacion[operacion]) this.#metadatosOperacion[operacion] = {};
+			this.#metadatosOperacion[operacion][clave] = valor;
+		} else {
+			this.#metadatosOperacionSet[clave] = valor;
+		}
 	}
+
+
+
+
 
 	/**
 	 * Prepara los metadatos almacenados en el objeto y los inserta en una sentencia de update de mongodb.
@@ -23,10 +34,10 @@ class MetadatosOperacion {
 	sentenciar(sentencia) {
 
 		let metadatosAplanados = {};
-		MetadatosOperacion.#aplanarObjetoRecursivamente(this.#metadatosOperacion, '', metadatosAplanados);
+		MetadatosOperacion.#aplanarObjetoRecursivamente(this.#metadatosOperacionSet, '', metadatosAplanados);
 
 		if (!sentencia['$set']) sentencia['$set'] = {}
-		
+
 		for (const valor in metadatosAplanados) {
 			if (metadatosAplanados[valor]) {
 				sentencia['$set'][valor] = metadatosAplanados[valor]
@@ -37,10 +48,20 @@ class MetadatosOperacion {
 			delete sentencia['$set'];
 		}
 
+
+		for (let operacion in this.#metadatosOperacion) {
+			if (!sentencia[operacion]) sentencia[operacion] = {}
+
+			for (let clave in this.#metadatosOperacion[operacion]) {
+				sentencia[operacion][clave] = this.#metadatosOperacion[operacion][clave];
+			}
+		}
+
+
 	}
 
 
-	static #aplanarObjetoRecursivamente( objeto, claveBase, resultado ) {
+	static #aplanarObjetoRecursivamente(objeto, claveBase, resultado) {
 
 		for (let key in objeto) {
 			let valor = objeto[key];
@@ -49,7 +70,7 @@ class MetadatosOperacion {
 			if (valor && Object.getPrototypeOf(valor)?.constructor?.name === 'Object') {
 				MetadatosOperacion.#aplanarObjetoRecursivamente(valor, nombreAplanado, resultado);  // es un Objecto "plano", llamamos recursivamente
 			} else {
-				resultado[nombreAplanado] = valor;  
+				resultado[nombreAplanado] = valor;
 			}
 		}
 	}
