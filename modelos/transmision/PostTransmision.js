@@ -1,9 +1,12 @@
 'use strict';
 const M = global.M;
 const L = global.L;
+const SQLite = require('global/sqlite');
+
 const FakeReq = require('./FakeReq');
 const FakeRes = require('./FakeRes');
 const MetadatosOperacion = require('./MetadatosOperacion');
+
 
 /**
  * Clase que representa a una transmisión que ya está registrada en la base de datos.
@@ -41,6 +44,7 @@ class PostTransmision {
 	}
 	constructor(datosTransmision) {
 
+		
 		this.txId = datosTransmision._id;
 		this.#datosTransmision = datosTransmision;
 
@@ -77,9 +81,9 @@ class PostTransmision {
 	 * @param {*} nombre El nombre del flag
 	 * @param {*} valor El nuevo valor del flag
 	 */
-	setMetadatosOperacion(nombre, valor) {
-		this.log.debug(`Establecidos metadatos de la operacion '${nombre}':`, valor);
-		this.#metadatosOperacion.insertar(nombre, valor);
+	setMetadatosOperacion(nombre, valor, operacion) {
+		this.log.debug(`Establecidos metadatos de la operacion '${operacion||'$set'}'+'${nombre}':`, valor);
+		this.#metadatosOperacion.insertar(nombre, valor, operacion);
 	}
 
 	async actualizarTransmision() {
@@ -97,14 +101,13 @@ class PostTransmision {
 		// Metadatos de la operacion
 		this.#metadatosOperacion.sentenciar(sentencia);
 
-
 		try {
 			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });
 			this.log.debug('La transmision ha sido actualizada en la base de datos');
 		} catch (errorMongo) {
 			this.log.err('Error al actualizar la transmisión en la base de datos', errorMongo);
 			try {
-				let uid = await iSQLite.grabarTransaccion(sentencia);
+				let uid = 1//await SQLite.grabarTransaccion(sentencia);
 				this.log.warn(`La actualización ha sido registrada en la base de datos local con UID ${uid}`);
 			} catch (errorSQLite) {
 				this.log.fatal('La actualización no ha podido ser registrada', errorSQLite)
