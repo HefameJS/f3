@@ -22,7 +22,7 @@ class SolicitudCrearPedido extends Modelo {
 		tipoCrc: 'numeroPedidoOrigen',		// Indica el metodo de generación del CRC (numeroPedidoOrigen | lineas)
 		codigoAlmacenDesconocido: false,	// Indica si se ha encontrado un código de almacén desconocido.
 		codigoAlmacenSaneado: false,		// Indica si se ha modificado el código de almacén indicado por el usuario.
-		esDuplicado: false,
+		esDuplicadoDe: false,
 		esRetransmisionCliente: false,		// Indica si el pedido es un duplicado de otro que acabó en mal estado.
 		errorComprobacionDuplicado: false,	// Indica si hubo un error al comprobar si el pedido es duplicado.
 	};
@@ -257,7 +257,7 @@ class SolicitudCrearPedido extends Modelo {
 	 */
 	generarJSON(tipoReceptor = 'sap') {
 
-		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicado) {
+		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicadoDe) {
 			return this.metadatos.errores.getErrores() || [];
 		}
 
@@ -315,9 +315,9 @@ class SolicitudCrearPedido extends Modelo {
 					this.metadatos.esRetransmisionCliente = true;
 				} else {
 					this.log.warn('Se marca la transmisión como un duplicado');
-					this.metadatos.esDuplicado = true;
+					this.metadatos.esDuplicadoDe = transmisionOriginal._id;
 					this.metadatos.errores.insertar('PED-ERR-008', 'Pedido duplicado: ' + this.metadatos.crc, 400);
-					return true;
+					return transmisionOriginal._id;
 				}
 			} else {
 				this.log.debug('No se ha detectado pedido duplicado');

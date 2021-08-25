@@ -8,6 +8,7 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 
 const SolicitudCrearPedido = require('modelos/pedido/SolicitudCrearPedido');
 const RespuestaPedidoSap = require('modelos/pedido/RespuestaPedidoSap');
+const PostTransmision = require('modelos/transmision/PostTransmision');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -30,8 +31,7 @@ class TransmisionCrearPedido extends Transmision {
 		 * - retransmision: Indica el ObjectID de la transmisión que está retransmitiendo
 		 * 
 		 */
-		this.metadatos.retransmision = datosExtra?.retransmision;
-
+		this.metadatos.retransmision = datosExtra?.retransmision ?? null;
 
 		this.#solicitud = new SolicitudCrearPedido(this);
 
@@ -42,7 +42,12 @@ class TransmisionCrearPedido extends Transmision {
 
 		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos retransmitiendo)
 		if (!this.metadatos.retransmision) {
-			if (await this.#solicitud.esDuplicado()) {
+			let idTransmisionOriginal = await this.#solicitud.esDuplicado()
+			if (idTransmisionOriginal) {
+				PostTransmision.instanciar(idTransmisionOriginal).then((pedidoOriginal) => {
+					pedidoOriginal.setMetadatosOperacion('pedido.duplicados', this.txId, '$push');
+					/*await*/ pedidoOriginal.actualizarTransmision();
+				})
 				return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
 			}
 		}
@@ -111,6 +116,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.#solicitud.metadatos.codigoAlmacenSaneado) metadatos.codigoAlmacenSaneado = true;
 		if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = true;
 		if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
+		if (this.#solicitud.metadatos.esDuplicadoDe) metadatos.esDuplicadoDe = this.#solicitud.metadatos.esDuplicadoDe;
 
 
 		if (this.#respuesta) {
@@ -125,6 +131,7 @@ class TransmisionCrearPedido extends Transmision {
 			if (this.#respuesta.metadatos.servicioDemorado) metadatos.servicioDemorado = true;
 			if (this.#respuesta.metadatos.estupefaciente) metadatos.estupefaciente = true;
 			if (this.#respuesta.metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = true;
+			if (this.#respuesta.metadatos.esPedidoDuplicadoSap) metadatos.esPedidoDuplicadoSap = true;
 
 
 			if (this.#respuesta.metadatos.totales) metadatos.totales = this.#respuesta.metadatos.totales;
@@ -138,13 +145,13 @@ class TransmisionCrearPedido extends Transmision {
 
 		}
 
-		if (this.token.dominio = C.dominios.TRANSFER) {
+		if (this.token.dominio === C.dominios.TRANSFER) {
 			metadatos.esTransfer = true;
 		}
 
 		// Opciones de retransmision
 		if (this.metadatos.retransmision) {
-			metadatos.retransmision = this.metadatos.retransmision;
+			metadatos.esRetransmisionDe = this.metadatos.retransmision;
 		}
 
 		this.setMetadatosOperacion('pedido', metadatos);
