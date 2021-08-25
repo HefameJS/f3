@@ -24,10 +24,13 @@ class RetransmisionPedido extends Transmision {
 		try {
 			let oid = M.ObjectID.createFromHexString(txId);
 			let postTransmision = await PostTransmision.instanciar({ _id: oid}, true);
-
 			let {req, res} = await postTransmision.prepararReejecucion();
+			let reTransmision = await Transmision.ejecutar(req, res, TransmisionCrearPedido, { retransmision: oid })
 
-			await Transmision.ejecutar(req, res, TransmisionCrearPedido, { retransmision: oid })
+			// Actualizamos la transmision original, indicando la nueva retransmisión que se ha hecho sobre la misma
+			postTransmision.setMetadatosOperacion('pedido.retransmisiones', reTransmision.txId, '$push');
+			/*await*/ postTransmision.actualizarTransmision();
+
 			
 			return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, postTransmision.getDatos())
 		} catch (error) {
@@ -46,7 +49,7 @@ class RetransmisionPedido extends Transmision {
 RetransmisionPedido.TIPO = K.TIPOS.NO_CONTROLADA;
 RetransmisionPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupo: 'FED3_RETRANSMISOR',
 	simulaciones: false,
 	simulacionesEnProduccion: false
 });

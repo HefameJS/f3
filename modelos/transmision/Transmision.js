@@ -63,6 +63,8 @@ class Transmision extends Object {
 		}
 		// Registra en la base de datos el resultado de la transmisión.
 		if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.#actualizarTransmision();
+
+		return transmision;
 	}
 
 	constructor(req, res, tipo, condicionesAutorizacion) {
