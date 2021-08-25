@@ -21,7 +21,7 @@ const TransmisionConsultarAlbaran = require('controladores/transmisiones/albaran
 const TransmisionBuscarAlbaranes = require('controladores/transmisiones/albaranes/TransmisionBuscarAlbaranes');
 const TransmisionConfirmarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConfirmarAlbaran');
 
-const RetransmisionPedido = require('controladores/retransmisiones/RetransmisionPedido');
+const ReejecutarPedido = require('controladores/retransmisiones/ReejecutarPedido');
 
 
 
@@ -52,6 +52,9 @@ module.exports = (app) => {
 		.put(async (req, res) => { Transmision.ejecutar(req, res, TransmisionError, { errorFedicom: new ErrorFedicom('PED-ERR-999', 'El servicio de actualización de pedidos no está disponible.', 501) }); });
 	app.route('/pedidos/:numeroPedido')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarPedido));
+	app.route('/pedidos/reejecutar/:txId')
+		.put(async (req, res) => Transmision.ejecutar(req, res, ReejecutarPedido));
+
 	app.route('/confirmaPedido')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 
@@ -83,8 +86,6 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
-	app.route('/retransmitir/:txId')
-		.get(async (req, res) => Transmision.ejecutar(req, res, RetransmisionPedido));
 
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.

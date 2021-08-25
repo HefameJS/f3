@@ -14,7 +14,7 @@ const TransmisionCrearPedido = require('controladores/transmisiones/pedido/Trans
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
  */
-class RetransmisionPedido extends Transmision {
+class ModificarPedido extends Transmision {
 
 	// @Override
 	async operar() {
@@ -28,7 +28,7 @@ class RetransmisionPedido extends Transmision {
 			let reTransmision = await Transmision.ejecutar(req, res, TransmisionCrearPedido, { retransmision: oid })
 
 			// Actualizamos la transmision original, indicando la nueva retransmisión que se ha hecho sobre la misma
-			postTransmision.setMetadatosOperacion('pedido.retransmisiones', reTransmision.txId, '$push');
+			postTransmision.setMetadatosOperacion('pedido.modificaciones', reTransmision.txId, '$push');
 			/*await*/ postTransmision.actualizarTransmision();
 
 			
@@ -46,8 +46,8 @@ class RetransmisionPedido extends Transmision {
 
 
 
-RetransmisionPedido.TIPO = K.TIPOS.NO_CONTROLADA;
-RetransmisionPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
+ModificarPedido.TIPO = K.TIPOS.NO_CONTROLADA;
+ModificarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
 	grupo: 'FED3_RETRANSMISOR',
 	simulaciones: false,
@@ -55,4 +55,4 @@ RetransmisionPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 });
 
 
-module.exports = RetransmisionPedido;
+module.exports = ModificarPedido;

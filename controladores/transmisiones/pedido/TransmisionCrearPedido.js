@@ -17,7 +17,9 @@ class TransmisionCrearPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
-		retransmision: null					// Indica el ObjectID de la transmisión original (es decir, este pedido es una retransmisión)
+		esReejecucionDe: null,				// Indica el ObjectID de la transmisión original (es decir, este pedido es una retransmisión)
+		modificaciones: null,				// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
+		regenerarCrc: false					// Indica si debe generarse un CRC nuevo y único para este pedido, no haciendo el cálculo habitual de CRC.
 	};
 
 	#solicitud;
@@ -28,20 +30,27 @@ class TransmisionCrearPedido extends Transmision {
 
 		/**
 		 * Datos extra:
-		 * - retransmision: Indica el ObjectID de la transmisión que está retransmitiendo
-		 * 
+		 * - idTransmisionOriginal: Indica el ObjectID de la transmisión que está original que se está reejecutando
+		 * - modificaciones: Indica modificaciones que se han realizado sobre el pedido original
 		 */
-		this.metadatos.retransmision = datosExtra?.retransmision ?? null;
+		this.metadatos.esReejecucionDe = datosExtra?.idTransmisionOriginal ?? null;
+		this.metadatos.generarCrcUnico = datosExtra?.modificaciones?.generarCrcUnico ?? false;
+		this.metadatos.modificaciones = datosExtra?.modificaciones ?? null;
+		
 
 		this.#solicitud = new SolicitudCrearPedido(this);
+
+		if (this.metadatos.generarCrcUnico) {
+			this.#solicitud.generarCrcUnico();
+		}
 
 		// PASO 1: Verificar si hay errores de protocolo
 		if (this.#solicitud.contieneErroresProtocolo()) {
 			return new ResultadoTransmision(400, K.ESTADOS.PETICION_INCORRECTA, this.#solicitud.generarJSON('errores'));
 		}
 
-		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos retransmitiendo)
-		if (!this.metadatos.retransmision) {
+		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos reejecutando)
+		if (!this.metadatos.esReejecucionDe) {
 			let idTransmisionOriginal = await this.#solicitud.esDuplicado()
 			if (idTransmisionOriginal) {
 				PostTransmision.instanciar(idTransmisionOriginal).then((pedidoOriginal) => {
@@ -150,8 +159,12 @@ class TransmisionCrearPedido extends Transmision {
 		}
 
 		// Opciones de retransmision
-		if (this.metadatos.retransmision) {
-			metadatos.esRetransmisionDe = this.metadatos.retransmision;
+		if (this.metadatos.esReejecucionDe) {
+			metadatos.reEjecucionDe = this.metadatos.esReejecucionDe;
+
+			if (this.metadatos.modificaciones) {
+				metadatos.modificaciones = this.metadatos.modificaciones;
+			}
 		}
 
 		this.setMetadatosOperacion('pedido', metadatos);

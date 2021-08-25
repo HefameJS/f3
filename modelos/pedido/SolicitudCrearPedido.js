@@ -341,6 +341,13 @@ class SolicitudCrearPedido extends Modelo {
 		return this.metadatos.todasLineasInvalidas;
 	}
 
+	generarCrcUnico() {
+		this.metadatos.crc = this.transmision.txId;
+		this.metadatos.tipoCrc = 'crcAleatorio';
+
+		this.log.info(`Se regenera el CRC ${this.metadatos.crc} para el pedido usando ${this.metadatos.tipoCrc}`);
+	}
+
 }
 
 
