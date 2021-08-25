@@ -21,7 +21,7 @@ class TransmisionConfirmarPedido extends Transmision {
 	};
 
 	pedidosAsociadosSap;
-	idPedidoConfirmado;
+	idTransmisionConfirmada;
 
 
 	// @Override
@@ -37,7 +37,7 @@ class TransmisionConfirmarPedido extends Transmision {
 			return new ResultadoTransmision(200, K.ESTADOS.PETICION_INCORRECTA, { ok: true });
 		}
 		
-		this.idPedidoConfirmado = M.ObjectID.createFromHexString(this.req.query.txId);
+		this.idTransmisionConfirmada = M.ObjectID.createFromHexString(this.req.query.txId);
 
 		// Los numeros de pedido los obtenemos del body
 		if (Array.isArray(json.sap_pedidosasociados) && json.sap_pedidosasociados.length) {
@@ -54,10 +54,10 @@ class TransmisionConfirmarPedido extends Transmision {
 
 		// Determinamos el estado del pedido en base a si se ha obtenido numero de pedido por parte de SAP o no
 		if (this.pedidosAsociadosSap.length > 0) {
-			this.log.info(`SAP confirma la creación del pedido en la transmisión de pedido con ID '${this.idPedidoConfirmado}' los siguientes números de pedido:`, this.pedidosAsociadosSap);
+			this.log.info(`SAP confirma la creación del pedido en la transmisión de pedido con ID '${this.idTransmisionConfirmada}' los siguientes números de pedido:`, this.pedidosAsociadosSap);
 			this.metadatos.estadoTransmisionPedido = K.ESTADOS.COMPLETADO;
 		} else {
-			this.log.warn(`SAP no indica ningún número de pedido para la transmisión de pedido con ID ${this.idPedidoConfirmado}`);
+			this.log.warn(`SAP no indica ningún número de pedido para la transmisión de pedido con ID ${this.idTransmisionConfirmada}`);
 			this.metadatos.estadoTransmisionPedido = K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP;
 		}
 
@@ -73,7 +73,8 @@ class TransmisionConfirmarPedido extends Transmision {
 		fechaLimite.setTime(fechaLimite.getTime() - C.pedidos.antiguedadDuplicadosMaxima);
 
 		let consulta = {
-			_id: this.idPedidoConfirmado
+			_id: this.idTransmisionConfirmada,
+			tipo: K.TIPOS.CREAR_PEDIDO
 		};
 
 
@@ -103,7 +104,7 @@ class TransmisionConfirmarPedido extends Transmision {
 	generarMetadatosOperacion() {
 		let metadatos = {
 			crcSap: M.toMongoLong(this.metadatos.crcSap),
-			idPedidoConfirmado: this.idPedidoConfirmado
+			idTransmisionConfirmada: this.idTransmisionConfirmada
 		};
 		this.setMetadatosOperacion('pedido.confirmar', metadatos);
 	}
