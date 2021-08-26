@@ -19,7 +19,6 @@ class TransmisionCrearPedido extends Transmision {
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
 		esReejecucionDe: null,				// Indica el ObjectID de la transmisión original (es decir, este pedido es una retransmisión)
 		modificaciones: null,				// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
-		regenerarCrc: false					// Indica si debe generarse un CRC nuevo y único para este pedido, no haciendo el cálculo habitual de CRC.
 	};
 
 	#solicitud;
@@ -34,13 +33,11 @@ class TransmisionCrearPedido extends Transmision {
 		 * - modificaciones: Indica modificaciones que se han realizado sobre el pedido original
 		 */
 		this.metadatos.esReejecucionDe = datosExtra?.idTransmisionOriginal ?? null;
-		this.metadatos.generarCrcUnico = datosExtra?.modificaciones?.generarCrcUnico ?? false;
 		this.metadatos.modificaciones = datosExtra?.modificaciones ?? null;
-		
 
 		this.#solicitud = new SolicitudCrearPedido(this);
 
-		if (this.metadatos.generarCrcUnico) {
+		if (this.metadatos.modificaciones?.generarCrcUnico) {
 			this.#solicitud.generarCrcUnico();
 		}
 
@@ -162,7 +159,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.metadatos.esReejecucionDe) {
 			metadatos.reEjecucionDe = this.metadatos.esReejecucionDe;
 
-			if (this.metadatos.modificaciones) {
+			if (this.metadatos.modificaciones?.hayModificaciones()) {
 				metadatos.modificaciones = this.metadatos.modificaciones;
 			}
 		}
