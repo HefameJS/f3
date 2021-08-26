@@ -74,9 +74,9 @@ class ErrorFedicom {
 		}
 
 		// Se llama pasando otro error Fedicom
-		if (error?.esErrorFedicom?.()) {
+		if (ErrorFedicom.esErrorFedicom(error)) {
 			codigoRespuestaHttp = error.codigoRespuestaHttp;
-			this.#listaErroresFedicom = [...this.#listaErroresFedicom, ...error.listaErroresFedicom];
+			this.#listaErroresFedicom = [...this.#listaErroresFedicom, ...error.#listaErroresFedicom];
 			if (codigoRespuestaHttp) this.#codigoRespuestaHttp = parseInt(codigoRespuestaHttp) || CODIGO_HTTP_POR_DEFECTO;
 			return this;
 		}
@@ -96,6 +96,7 @@ class ErrorFedicom {
 		}
 
 		// Si los parámetros de la llamada no son válidos
+		L.warn('Insercion de error fedicom con parametros desconocidos', error);
 		this.#listaErroresFedicom.push({ codigo: 'HTTP-500', descripcion: 'Error desconocido' });
 		return this;
 	}
