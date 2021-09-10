@@ -13,6 +13,8 @@
  *  - simulacionesEnProduccion: Por defecto, las simulaciones en sistemas productivos son rechazadas. Activar esta opción para permitirlas igualmente. 
  * 	  Generalmente se usa para servicios de consulta donde no hay peligro en lanzarlos contra producción.
  * 	  Solo aplica si 'simulaciones' es true.
+ *  - llamadaMonitor: Indica que estamos ante una llamada a un servicio de monitor (los que la URL empieza por '~')
+ *    Estas llamadas requieren que el token recibido sea de los dominios HEFAME, INTERFEDICOM o MONITOR.
  */
 class CondicionesAutorizacion {
 
@@ -20,6 +22,7 @@ class CondicionesAutorizacion {
 	grupoRequerido = null;
 	simulaciones = false;
 	simulacionesEnProduccion = false;
+	llamadaMonitor = false;
 
 	constructor( condiciones ) {
 		if (!condiciones) condiciones = {};
@@ -28,6 +31,7 @@ class CondicionesAutorizacion {
 		if (condiciones.grupoRequerido) this.grupoRequerido = condiciones.grupoRequerido;
 		this.simulaciones = Boolean(condiciones.simulaciones);
 		this.simulacionesEnProduccion = Boolean(condiciones.simulacionesEnProduccion);
+		this.llamadaMonitor = Boolean(condiciones.llamadaMonitor);
 	}
 
 

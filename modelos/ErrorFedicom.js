@@ -1,6 +1,7 @@
 'use strict';
 
 const ResultadoTransmision = require("modelos/transmision/ResultadoTransmision");
+const ResultadoTransmisionLigera = require("./transmision/ResultadoTransmisionLigera");
 
 const CODIGO_HTTP_POR_DEFECTO = 500;
 
@@ -111,9 +112,13 @@ class ErrorFedicom {
 
 
 
-	generarResultadoTransmision(estado = K.ESTADOS.ERROR_GENERICO) {
+	generarResultadoTransmision(estado) {
+		if (estado) return new ResultadoTransmisionLigera(this.#codigoRespuestaHttp, this.getErrores())
 		return new ResultadoTransmision(this.#codigoRespuestaHttp, estado, this.getErrores())
 	}
+
+
+
 
 
 }

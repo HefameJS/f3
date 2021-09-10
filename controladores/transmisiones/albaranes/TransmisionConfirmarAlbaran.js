@@ -45,7 +45,7 @@ class TransmisionConfirmarAlbaran extends Transmision {
 TransmisionConfirmarAlbaran.TIPO = K.TIPOS.CONFIRMAR_ALBARAN;
 TransmisionConfirmarAlbaran.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: false,
 });

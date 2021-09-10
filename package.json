@@ -16,8 +16,8 @@
   "dependencies": {
     "activedirectory": "^0.7.2",
     "app-module-path": "^2.2.0",
-    "axios": "^0.21.1",
-    "bson": "^4.2.2",
+    "axios": "^0.21.4",
+    "bson": "^4.5.1",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
     "dateformat": "^4.5.1",
@@ -25,14 +25,14 @@
     "express-bearer-token": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
     "memory-cache": "git+https://github.com/AlejandroAbad/node-cache.git",
-    "mongodb": "^3.6.5",
-    "os": "^0.1.1",
+    "mongodb": "^4.1.1",
+    "os": "^0.1.2",
     "saslprep": "^1.0.3",
-    "sqlite3": "^4.2.0",
+    "sqlite3": "^5.0.2",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.12"
   },
   "repository": {
     "type": "git",

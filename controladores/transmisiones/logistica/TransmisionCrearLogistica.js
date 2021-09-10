@@ -108,7 +108,7 @@ class TransmisionCrearLogistica extends Transmision {
 TransmisionCrearLogistica.TIPO = K.TIPOS.CREAR_LOGISTICA;
 TransmisionCrearLogistica.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: false,
 });

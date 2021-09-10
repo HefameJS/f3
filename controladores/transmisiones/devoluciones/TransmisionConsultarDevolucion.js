@@ -144,7 +144,7 @@ class TransmisionConsultarDevolucion extends Transmision {
 TransmisionConsultarDevolucion.TIPO = K.TIPOS.CONSULTAR_DEVOLUCION;
 TransmisionConsultarDevolucion.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

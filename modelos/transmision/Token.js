@@ -44,6 +44,8 @@ class Token {
 		this.#condicionesAutorizacion = condicionesAutorizacion || new CondicionesAutorizacion();
 
 		let cabeceraAutorizacion = this.#transmision.req.headers?.authorization;
+		//this.#log.trace('Cabecera de autenticación recibida:', cabeceraAutorizacion);
+
 		if (cabeceraAutorizacion) {
 			if (cabeceraAutorizacion.startsWith('Bearer ')) {
 				this.#jwt = cabeceraAutorizacion.slice(7);
@@ -150,29 +152,28 @@ class Token {
 			this.#log.info('No se requiere token para esta operación, la transmisión queda autorizada');
 			return;
 		} else if (!this.#verificado) {
-			this.#log.warn('El token de la transmisión no es válido o no se especifica');
+			this.#log.warn('El token de la transmisión no es válido o no se especifica', );
 			this.#error = new ErrorFedicom('AUTH-001', 'Usuario no autentificado', 401);
 			return;
 		}
 
-		// El dominio 'INTERFEDICOM' solo se permite en llamadas al proceso de monitor
-		if (this.dominio === C.dominios.INTERFEDICOM) {
-			if (process.tipo === K.PROCESOS.TIPOS.MONITOR) {
-				// TODO: Falta hacer control de admision por IP origen
-				this.#log.info('La transmisión queda autorizada como INTERFEDICOM');
-				this.#autorizado = true;
+		// Las llamadas al monitor deben venir de los dominios INTERFEDICOM, MONITOR o HEFAME
+		if (opciones.llamadaMonitor){
+			let dominiosAdmitidos = [C.dominios.INTERFEDICOM, C.dominios.MONITOR, C.dominios.HEFAME];
+
+			if (dominiosAdmitidos.includes(this.dominio)){
+				this.#log.trace('La transmisión es de tipo monitor y contiene un domino válido');
+			} else {
+				this.#log.err(`Los tokens del dominio ${this.dominio} no se admiten en llamadas de tipo monitor.`);
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
 				return;
 			}
-
-			this.#log.err(`Los tokens del dominio ${this.dominio} solo se admiten en el proceso ${K.PROCESOS.TIPOS.MONITOR}`);
-			this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
-			return;
 		}
 
 		// Si se indica la opcion grupoRequerido, es absolutamente necesario que el token lo incluya
 		if (opciones.grupoRequerido) {
 			if (!this.grupos.includes(opciones.grupoRequerido)) {
-				this.#log.err(`El token no pertenece al grupo ${opciones.grupoRequerido}`);
+				this.#log.err(`El token no pertenece al grupo ${opciones.grupoRequerido}. Grupos: `, this.grupos);
 				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
 				return;
 			}
@@ -220,7 +221,7 @@ class Token {
 		}
 
 		this.#autorizado = true;
-		this.#log.info('El token transmitido queda autorizado');
+		this.#log.info(`El token transmitido queda autorizado. [usuario=${this.usuario}, dominio=${this.dominio}]`);
 		return;
 
 	}
@@ -237,13 +238,19 @@ class Token {
 
 	static generarToken(usuario, dominio, datosExtra) {
 
-		let { grupos } = datosExtra || {};
+		let { grupos, permanente } = datosExtra || {};
 
 		let datosToken = {
 			sub: usuario,
 			aud: dominio,
 			exp: Math.ceil((Date.fedicomTimestamp() / 1000) + C.jwt.ttl)
 		};
+
+		if (permanente) {
+			datosToken.iat = 1;
+			datosToken.exp = 9999999999;
+			datosToken.permanente = true;
+		}
 
 		if (grupos && grupos.forEach) datosToken.grupos = grupos;
 		return JsonWebToken.sign(datosToken, C.jwt.clave);

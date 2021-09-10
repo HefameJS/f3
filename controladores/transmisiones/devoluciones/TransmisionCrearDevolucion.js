@@ -45,9 +45,10 @@ class TransmisionCrearDevolucion extends Transmision {
 		}
 
 		this.#respuesta.insertarLineasRechazadas(this.#solicitud.getLineasErroneas());
-		if (this.#respuesta.metadatos.clienteNoExiste || this.#respuesta.metadatos.todasLineasRechazadas) {
+		if (this.#respuesta.haSidoCompletamenteRechazada()) {
 			return new ResultadoTransmision(400, K.ESTADOS.DEVOLUCION.RECHAZADA, this.#respuesta.generarJSON('errores'));
 		}
+		
 
 
 		let codigoRespuestaHttp = 201;
@@ -81,14 +82,17 @@ class TransmisionCrearDevolucion extends Transmision {
 		if (this.#respuesta) {
 			let r = this.#respuesta;
 			let m = r.metadatos;
+
 			if (m.clienteNoExiste) metadatos.clienteNoExiste = true;
 			if (m.devolucionDuplicadaSap) metadatos.devolucionDuplicadaSap = true;
+			if (m.arrayDeErroresSap) metadatos.arrayDeErroresSap = true;
 			if (m.incidenciasCabeceraSap) metadatos.incidenciasCabeceraSap = true;
 			if (m.creaOrdenLogistica) metadatos.creaOrdenLogistica = true;
 			if (m.lineasRechazadas.length) metadatos.contieneLineasRechazadas = true;
 			if (m.puntoEntrega) metadatos.puntoEntrega = m.puntoEntrega;
 			if (m.numerosDevolucionSap) metadatos.numerosDevolucionSap = m.numerosDevolucionSap;
-			if (m.totales) metadatos.totales = m.totales;
+
+			if (m.totales?.cantidad) metadatos.totales = m.totales;
 
 			if (r.numeroDevolucion) metadatos.numeroDevolucion = M.toMongoLong(parseInt(r.numeroDevolucion))
 			if (r.codigoRecogida) metadatos.numeroLogistica = M.toMongoLong(parseInt(r.codigoRecogida))

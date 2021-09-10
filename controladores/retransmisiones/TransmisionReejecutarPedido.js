@@ -10,7 +10,6 @@ const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision')
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const PostTransmision = require('modelos/transmision/PostTransmision');
 const TransmisionCrearPedido = require('controladores/transmisiones/pedido/TransmisionCrearPedido');
-const { default: axios } = require('axios');
 
 
 /**
@@ -144,7 +143,7 @@ class ModificacionesPedido {
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
  */
-class ReejecutarPedido extends Transmision {
+class TransmisionReejecutarPedido extends Transmision {
 
 	modificaciones = null;
 	// @Override
@@ -190,14 +189,11 @@ class ReejecutarPedido extends Transmision {
 				postTransmision.actualizarTransmision();
 			}
 
-
 			return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, req);
 		} catch (error) {
 			return (new ErrorFedicom(error)).generarResultadoTransmision(K.ESTADOS.NO_CONTROLADA);
 		}
 	}
-
-
 
 }
 
@@ -206,13 +202,13 @@ class ReejecutarPedido extends Transmision {
 
 
 
-ReejecutarPedido.TIPO = K.TIPOS.NO_CONTROLADA;
-ReejecutarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
+TransmisionReejecutarPedido.TIPO = K.TIPOS.NO_CONTROLADA;
+TransmisionReejecutarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: 'FED3_RETRANSMISOR',
+	grupoRequerido: 'FED3_RETRANSMISOR',
 	simulaciones: false,
 	simulacionesEnProduccion: false
 });
 
 
-module.exports = ReejecutarPedido;
+module.exports = TransmisionReejecutarPedido;

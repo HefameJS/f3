@@ -105,7 +105,7 @@ class TransmisionBuscarAlbaranes extends Transmision {
 TransmisionBuscarAlbaranes.TIPO = K.TIPOS.BUSCAR_ALBARANES;
 TransmisionBuscarAlbaranes.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

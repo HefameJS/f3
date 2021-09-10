@@ -76,7 +76,7 @@ class TransmisionConsultarLogistica extends Transmision {
 TransmisionConsultarLogistica.TIPO = K.TIPOS.CONSULTAR_LOGISTICA;
 TransmisionConsultarLogistica.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

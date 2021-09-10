@@ -21,8 +21,9 @@ const TransmisionConsultarAlbaran = require('controladores/transmisiones/albaran
 const TransmisionBuscarAlbaranes = require('controladores/transmisiones/albaranes/TransmisionBuscarAlbaranes');
 const TransmisionConfirmarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConfirmarAlbaran');
 
-const ReejecutarPedido = require('controladores/retransmisiones/ReejecutarPedido');
+const TransmisionReejecutarPedido = require('controladores/retransmisiones/TransmisionReejecutarPedido');
 
+const rutasMonitor = require('./rutasMonitor');
 
 
 module.exports = (app) => {
@@ -31,13 +32,11 @@ module.exports = (app) => {
 	// Detecta errores comunes en las peticiones entrantes tales como:
 	//  - Errores en el parseo del JSON entrante.
 	app.use(async (errorExpress, req, res, next) => {
-
 		if (errorExpress) {
 			Transmision.ejecutar(req, res, TransmisionError, { errorExpress })
 		} else {
 			next();
 		}
-
 	});
 
 
@@ -53,8 +52,7 @@ module.exports = (app) => {
 	app.route('/pedidos/:numeroPedido')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarPedido));
 	app.route('/pedidos/reejecutar/:txId')
-		.put(async (req, res) => Transmision.ejecutar(req, res, ReejecutarPedido));
-
+		.put(async (req, res) => Transmision.ejecutar(req, res, TransmisionReejecutarPedido));
 	app.route('/confirmaPedido')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 
@@ -86,6 +84,8 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
+
+	rutasMonitor(app);
 
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.

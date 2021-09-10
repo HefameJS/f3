@@ -47,7 +47,7 @@ const conexion = async function () {
 	}
 
 
-	global.M.ObjectID = MongoDb.ObjectID;
+	global.M.ObjectID = MongoDb.ObjectId;
 	global.M.toMongoLong = MongoDb.Long.fromNumber;
 
 

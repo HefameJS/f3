@@ -3,7 +3,7 @@ require('app-module-path').addPath(__dirname);
 console.log('Inicializando servicio de monitorización Fedicom v3', new Date());
 
 require('global/bootstrap')('monitor').then(() => {
-
+	
 	const C = global.C;
 	const L = global.L;
 
@@ -26,12 +26,14 @@ require('global/bootstrap')('monitor').then(() => {
 	let servidorHttp = app.listen(C.http.puertoConsultas)
 
 	servidorHttp.on('error', (errorServidorHTTP) => {
-		L.f("Ocurrió un error en el servicio HTTP");
-		L.f(errorServidorHTTP);
+		L.fatal('Ocurrió un error en el servicio HTTP:', errorServidorHTTP);
 		process.exit(1);
 	});
-	servidorHttp.on('listening', () => { L.i("Servidor HTTP a la escucha en el puerto " + C.http.puertoConsultas); });
-	servidorHttp.on('close', () => { L.f("Se ha cerrado el servicio HTTP"); });
+	servidorHttp.on('listening', () => {
+		L.info(`Servidor HTTP a la escucha en el puerto ${C.http.puertoConsultas}`);
+		//servidorHttp.on('connection', (socket) => {});
+	});
+	servidorHttp.on('close', () => { L.fatal("Se ha cerrado el servicio HTTP"); });
 
 });
 

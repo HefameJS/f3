@@ -49,7 +49,7 @@ class TransmisionError extends Transmision {
 TransmisionError.TIPO = K.TIPOS.RECHAZO;
 TransmisionError.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: true,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

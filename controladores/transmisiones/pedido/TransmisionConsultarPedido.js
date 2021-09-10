@@ -76,7 +76,7 @@ class TransmisionConsultarPedido extends Transmision {
 TransmisionConsultarPedido.TIPO = K.TIPOS.CONSULTAR_PEDIDO;
 TransmisionConsultarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

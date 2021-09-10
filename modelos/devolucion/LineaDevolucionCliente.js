@@ -66,7 +66,7 @@ class LineaDevolucionCliente extends Modelo {
 		// - Se describen los errores encontrados en el array de incidencias.
 		// - La posicion se marca como 'excluir=true' para que no se envíe a SAP.
 		if (errorFedicom.tieneErrores()) {
-			this.log.warn(`Posición ${numeroPosicion}: Se han detectado errores graves de protocolo en la línea`, errorFedicom);
+			this.log.warn(`Posición ${numeroPosicion}: Se han detectado errores graves de protocolo en la línea`, errorFedicom.getErrores());
 			this.metadatos.errorProtocolo = true;
 			this.metadatos.errores = errorFedicom;
 		}

@@ -141,7 +141,7 @@ class TransmisionConsultarAlbaran extends Transmision {
 TransmisionConsultarAlbaran.TIPO = K.TIPOS.CONSULTAR_ALBARAN;
 TransmisionConsultarAlbaran.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: true,
 });

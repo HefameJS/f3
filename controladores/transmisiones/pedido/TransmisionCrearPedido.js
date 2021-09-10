@@ -173,7 +173,7 @@ class TransmisionCrearPedido extends Transmision {
 TransmisionCrearPedido.TIPO = K.TIPOS.CREAR_PEDIDO;
 TransmisionCrearPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupo: null,
+	grupoRequerido: null,
 	simulaciones: true,
 	simulacionesEnProduccion: false,
 });

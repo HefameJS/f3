@@ -18,6 +18,7 @@ class RespuestaDevolucionSap extends Modelo {
 		clienteNoExiste: false,				// (bool) Indica si SAP ha indicado la incidencia de que el cliente no existe
 		devolucionDuplicadaSap: false,		// (bool) Indica si SAP ha indicado la incidencia de que la devolución es duplicada
 		incidenciasCabeceraSap: false,		// (bool) Indica si aparecen incidencias de cabecera "no controladas" en la respuesta de SAP
+		arrayDeErroresSap: null,			// (null|Array) Indica si SAP ha devuelto un array de errores en vez de objetos de devolución
 
 		creaOrdenLogistica: false,			// (bool) Indica si en este objeto se indica un código de orden de logística
 		puntoEntrega: null,					// (string) Indica el punto de entrega del cliente, o null si no se puede determinar
@@ -59,6 +60,26 @@ class RespuestaDevolucionSap extends Modelo {
 			this.log.err('SAP devuelve un cuerpo de respuesta que NO es un array:');
 			this.metadatos.error.insertar('DEV-ERR-999', 'No hemos podido grabar la devolución, reinténtelo mas tarde.');
 			this.metadatos.respuestaIncomprensible = true;
+			return;
+		}
+
+		// Comprobación inicial de que SAP no nos está indicando un array de errores.
+		
+		if (json[0]?.codigo || json[0]?.descripcion ) {
+			
+			this.metadatos.arrayDeErroresSap = json;
+
+			// Vemos si es un error concreto de fallo del dominio. Si lo es, no lo ocultamos al cliente.
+			// El resto de errores (no sabemos que errores pueden venir de SAP), los ocultamos
+			// { "codigo" : "AUTH-999", "descripcion" : "No existe el dominio" }
+			if (json[0]?.codigo === "AUTH-999" || json[0]?.descripcion === "No existe el dominio") {
+				this.log.warn('SAP indica que no se pueden crear devoluciones con el dominio');
+				this.metadatos.errores.insertar('DEV-ERR-999', 'No existe el dominio.');
+			} else{
+				this.log.warn('SAP indica un array de errores en su respuesta', json);
+				this.metadatos.errores.insertar('DEV-ERR-999', 'No hemos podido grabar la devolución, reinténtelo mas tarde.');
+			}
+
 			return;
 		}
 
@@ -192,8 +213,12 @@ class RespuestaDevolucionSap extends Modelo {
 		}
 	}
 
+	haSidoCompletamenteRechazada() {
+		return this.metadatos.clienteNoExiste || this.metadatos.todasLineasRechazadas || this.metadatos.arrayDeErroresSap?.length
+	}
+
 	generarJSON(tipoReceptor) {
-		if (this.metadatos.respuestaIncomprensible || this.metadatos.clienteNoExiste) {
+		if (this.metadatos.respuestaIncomprensible || this.metadatos.clienteNoExiste || this.metadatos.arrayDeErroresSap?.length) {
 			return this.metadatos.errores.getErrores() || [];
 		}
 
