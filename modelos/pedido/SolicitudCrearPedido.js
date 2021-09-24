@@ -16,13 +16,13 @@ class SolicitudCrearPedido extends Modelo {
 	metadatos = {							// Metadatos
 		errores: new ErrorFedicom(),		// Errores encontrados al instanciar la solicitud
 		errorProtocoloCabecera: false,		// Indica si la transmisión no tiene la cabecera según el protocolo
-		todasLineasInvalidas: true,		// Indica si la transmisión no contiene ninguna línea válida según el protocolo
+		todasLineasInvalidas: true,			// Indica si la transmisión no contiene ninguna línea válida según el protocolo
 		crc: '',							// El CRC de la solicitud
 		crcAcumuladoLineas: '',				// Acumulador del CRC de líneas
 		tipoCrc: 'numeroPedidoOrigen',		// Indica el metodo de generación del CRC (numeroPedidoOrigen | lineas)
 		codigoAlmacenDesconocido: false,	// Indica si se ha encontrado un código de almacén desconocido.
 		codigoAlmacenSaneado: false,		// Indica si se ha modificado el código de almacén indicado por el usuario.
-		esDuplicadoDe: false,
+		esDuplicado: false,					// Indica si el pedido es un duplicado de otro.
 		esRetransmisionCliente: false,		// Indica si el pedido es un duplicado de otro que acabó en mal estado.
 		errorComprobacionDuplicado: false,	// Indica si hubo un error al comprobar si el pedido es duplicado.
 	};
@@ -156,7 +156,7 @@ class SolicitudCrearPedido extends Modelo {
 	*/
 	#analizarPosiciones(lineasJson) {
 
-		
+
 		this.lineas = [];
 
 		let ordinales = [];
@@ -257,7 +257,7 @@ class SolicitudCrearPedido extends Modelo {
 	 */
 	generarJSON(tipoReceptor = 'sap') {
 
-		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicadoDe) {
+		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicado) {
 			return this.metadatos.errores.getErrores() || [];
 		}
 
@@ -301,21 +301,23 @@ class SolicitudCrearPedido extends Modelo {
 				'pedido.crc': this.metadatos.crc
 			}
 			let opcionesConsultaCRC = {
-				projection: { _id: 1, estado: 1 }
+				projection: { _id: 1, estado: 1 },
+				sort: { fechaCreacion: -1 }
 			}
 
 			let transmisionOriginal = await M.col.transmisiones.findOne(consultaCRC, opcionesConsultaCRC);
 
 			if (transmisionOriginal?._id) {
-				this.log.info(`Se ha detectado otra transmisión con idéntico CRC ${transmisionOriginal._id}`);
+				this.log.info(`Se ha detectado transmisión ID '${transmisionOriginal._id}' con idéntico CRC`);
 
 				// TODO: Determinar lista de estados que ignoraremos a nivel de configuración de clúster
 				if (transmisionOriginal.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP) {
 					this.log.info('La transmisión original fue rechazada por SAP, no la tomamos como repetida');
+					this.metadatos.esDuplicado = true;
 					this.metadatos.esRetransmisionCliente = true;
 				} else {
 					this.log.warn('Se marca la transmisión como un duplicado');
-					this.metadatos.esDuplicadoDe = transmisionOriginal._id;
+					this.metadatos.esDuplicado = true;
 					this.metadatos.errores.insertar('PED-ERR-008', 'Pedido duplicado: ' + this.metadatos.crc, 400);
 					return transmisionOriginal._id;
 				}
@@ -345,7 +347,14 @@ class SolicitudCrearPedido extends Modelo {
 		this.metadatos.crc = this.transmision.txId;
 		this.metadatos.tipoCrc = 'crcAleatorio';
 
-		this.log.info(`Se regenera el CRC ${this.metadatos.crc} para el pedido usando ${this.metadatos.tipoCrc}`);
+		this.log.info(`Se establece un CRC aleatorio para el pedido: '${this.metadatos.crc}'.`);
+	}
+
+	forzarCrc(crcForzado) {
+		this.metadatos.crc = crcForzado;
+		this.metadatos.tipoCrc = 'crcForzado';
+
+		this.log.info(`Se fuerza el CRC para el pedido: '${this.metadatos.crc}'.`);
 	}
 
 }

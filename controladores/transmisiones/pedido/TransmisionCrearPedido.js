@@ -17,8 +17,7 @@ class TransmisionCrearPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
-		esReejecucionDe: null,				// Indica el ObjectID de la transmisión original (es decir, este pedido es una retransmisión)
-		modificaciones: null,				// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
+		opcionesDeReejecucion: null// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
 	};
 
 	#solicitud;
@@ -29,17 +28,22 @@ class TransmisionCrearPedido extends Transmision {
 
 		/**
 		 * Datos extra:
-		 * - idTransmisionOriginal: Indica el ObjectID de la transmisión que está original que se está reejecutando
-		 * - modificaciones: Indica modificaciones que se han realizado sobre el pedido original
+		 * - opcionesDeReejecucion: Indica las opciones de reejecución que se hayan realizado sobre el pedido original
 		 */
-		this.metadatos.esReejecucionDe = datosExtra?.idTransmisionOriginal ?? null;
-		this.metadatos.modificaciones = datosExtra?.modificaciones ?? null;
+		this.metadatos.opcionesDeReejecucion = datosExtra?.opcionesDeReejecucion ?? null;
 
 		this.#solicitud = new SolicitudCrearPedido(this);
 
-		if (this.metadatos.modificaciones?.generarCrcUnico) {
-			this.#solicitud.generarCrcUnico();
+		// En caso de una reejecución, el CRC debe sobreescribirse según el tipo de reejecucion.
+		if (this.metadatos.opcionesDeReejecucion) {
+			if (this.metadatos.opcionesDeReejecucion.generaUnClon()) {
+				this.#solicitud.generarCrcUnico();
+			} else {
+				this.#solicitud.forzarCrc(this.metadatos.opcionesDeReejecucion.crcForzado());
+			}
 		}
+
+
 
 		// PASO 1: Verificar si hay errores de protocolo
 		if (this.#solicitud.contieneErroresProtocolo()) {
@@ -47,13 +51,17 @@ class TransmisionCrearPedido extends Transmision {
 		}
 
 		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos reejecutando)
-		if (!this.metadatos.esReejecucionDe) {
+		if (!this.metadatos.opcionesDeReejecucion) {
 			let idTransmisionOriginal = await this.#solicitud.esDuplicado()
 			if (idTransmisionOriginal) {
+				// Por el momento, no veo necesario actualizar la transmisión original, ya que ambas están
+				// enlazadas al tener el mismo CRC
+				/*
 				PostTransmision.instanciar(idTransmisionOriginal).then((pedidoOriginal) => {
 					pedidoOriginal.setMetadatosOperacion('pedido.duplicados', this.txId, '$push');
-					/*await*/ pedidoOriginal.actualizarTransmision();
+					pedidoOriginal.actualizarTransmision();
 				})
+				*/
 				return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
 			}
 		}
@@ -122,7 +130,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.#solicitud.metadatos.codigoAlmacenSaneado) metadatos.codigoAlmacenSaneado = true;
 		if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = true;
 		if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
-		if (this.#solicitud.metadatos.esDuplicadoDe) metadatos.esDuplicadoDe = this.#solicitud.metadatos.esDuplicadoDe;
+		if (this.#solicitud.metadatos.esDuplicado) metadatos.esDuplicado = true;
 
 
 		if (this.#respuesta) {
@@ -155,13 +163,10 @@ class TransmisionCrearPedido extends Transmision {
 			metadatos.esTransfer = true;
 		}
 
-		// Opciones de retransmision
-		if (this.metadatos.esReejecucionDe) {
-			metadatos.reEjecucionDe = this.metadatos.esReejecucionDe;
-
-			if (this.metadatos.modificaciones?.hayModificaciones()) {
-				metadatos.modificaciones = this.metadatos.modificaciones;
-			}
+		// Opciones de retransmision, si se está clonando otra transmisión
+		if (this.metadatos.opcionesDeReejecucion) {
+			metadatos.esReejecucion = true;
+			metadatos.opcionesDeReejecucion = this.metadatos.opcionesDeReejecucion.generarMetadatos();
 		}
 
 		this.setMetadatosOperacion('pedido', metadatos);

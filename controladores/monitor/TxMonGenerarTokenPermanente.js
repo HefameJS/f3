@@ -46,7 +46,6 @@ class TxMonGenerarTokenPermanente extends TransmisionLigera {
 
 
 TxMonGenerarTokenPermanente.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
-	llamadaMonitor: true,
 	grupoRequerido: 'FED3_TOKENS'
 });
 

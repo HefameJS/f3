@@ -2,6 +2,7 @@
 const L = global.L;
 const K = global.K;
 const M = global.M;
+// const WS = global.WS;
 
 const cluster = require('cluster');
 const OS = require('os');
@@ -44,8 +45,9 @@ module.exports = async () => {
 
 		try {
 			intervaloRegistroEnEjecucion = true;
-			await M.bd.collection('instancias').updateOne(ID_INSTANCIA, datosInstancia, { upsert: 1 })
-			//L.trace('Instancia registrada', datosInstancia['$set']);
+			let respuestaMongo = await M.bd.collection('instancias').updateOne(ID_INSTANCIA, datosInstancia, { upsert: true })
+			// WS.enviarMensaje('instancias', datosInstancia);
+			//L.trace('Instancia registrada', datosInstancia['$set'], respuestaMongo);
 		} catch (errorMongo) {
 			L.err('Capturado error en el registro de la instancia:', errorMongo);
 		} finally {

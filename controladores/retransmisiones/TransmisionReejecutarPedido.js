@@ -10,6 +10,7 @@ const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision')
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const PostTransmision = require('modelos/transmision/PostTransmision');
 const TransmisionCrearPedido = require('controladores/transmisiones/pedido/TransmisionCrearPedido');
+const { default: axios } = require('axios');
 
 
 /**
@@ -38,24 +39,31 @@ class ModificacionesPedido {
 	#req = null;
 	#jwt = null;
 
-	generarCrcUnico = false;
+	transmisionOriginal = null;
+	#mantenerCrcOriginal = true;
 	sistemaExterno = null;
+	#crcForzado = null;
 
-	modificaciones = {
+	#modificaciones = {
 	}
 
-	constructor(req) {
+	constructor(req, txIdOriginal) {
 		this.#req = req;
+		this.transmisionOriginal = txIdOriginal;
+
 		let modificacionesPropuestas = this.#req.body;
-		if (modificacionesPropuestas.generarCrcUnico) this.generarCrcUnico = true;
+		if (modificacionesPropuestas.generarCrcUnico) {
+			this.#modificaciones.generarCrcUnico = true;
+			this.#mantenerCrcOriginal = false;
+		}
 
 		if (modificacionesPropuestas.tipoPedido !== undefined) {
-			this.modificaciones.tipoPedido = modificacionesPropuestas.tipoPedido;
-			this.generarCrcUnico = true;
+			this.#modificaciones.tipoPedido = modificacionesPropuestas.tipoPedido;
+			this.#mantenerCrcOriginal = false;
 		}
 		if (modificacionesPropuestas.codigoAlmacenServicio !== undefined) {
-			this.modificaciones.codigoAlmacenServicio = modificacionesPropuestas.codigoAlmacenServicio;
-			this.generarCrcUnico = true;
+			this.#modificaciones.codigoAlmacenServicio = modificacionesPropuestas.codigoAlmacenServicio;
+			this.#mantenerCrcOriginal = false;
 		}
 
 		if (modificacionesPropuestas.sistemaExterno) {
@@ -65,8 +73,8 @@ class ModificacionesPedido {
 	}
 
 	aplicarModificacionesSobreRequest(req) {
-		if (this.modificaciones.tipoPedido) req.body.tipoPedido = this.modificaciones.tipoPedido
-		if (this.modificaciones.codigoAlmacenServicio) req.body.codigoAlmacenServicio = this.modificaciones.codigoAlmacenServicio
+		if (this.#modificaciones.tipoPedido) req.body.tipoPedido = this.#modificaciones.tipoPedido
+		if (this.#modificaciones.codigoAlmacenServicio) req.body.codigoAlmacenServicio = this.#modificaciones.codigoAlmacenServicio
 	}
 
 	async #obtenerTokenSistemaExterno() {
@@ -133,9 +141,28 @@ class ModificacionesPedido {
 	}
 
 	hayModificaciones() {
-		if (this.generarCrcUnico) return true;
-		if (Object.keys(this.modificaciones).length) return true;
+		if (Object.keys(this.#modificaciones).length) return true;
 		return false;
+	}
+
+	fuezaCrcConcreto(crc) {
+		this.#crcForzado = crc;
+	}
+
+	crcForzado() {
+		return this.#crcForzado;
+	}
+
+	generaUnClon() {
+		return !this.#mantenerCrcOriginal;
+	}
+
+	generarMetadatos() {
+		return {
+			transmisionOriginal: this.transmisionOriginal,
+			clonado: this.generaUnClon(),
+			...this.#modificaciones
+		}
 	}
 
 }
@@ -149,14 +176,16 @@ class TransmisionReejecutarPedido extends Transmision {
 	// @Override
 	async operar() {
 
+
 		let txId = this.req.params.txId;
-
-		this.modificaciones = new ModificacionesPedido(this.req);
-
-		this.log.info(`Solicitud de reejecución del pedido con ID ${txId} con modificaciones:`, this.modificaciones);
+		this.log.info(`Solicitud de reejecución del pedido con ID '${txId}'`);
 
 		try {
+
 			let oid = M.ObjectID.createFromHexString(txId);
+			this.modificaciones = new ModificacionesPedido(this.req, oid);
+
+			this.log.info(`Se indican las siguientes modificaciones:`, this.modificaciones);
 			let postTransmision = await PostTransmision.instanciar({ _id: oid }, true);
 			let { req, res } = await postTransmision.prepararReejecucion();
 			this.modificaciones.aplicarModificacionesSobreRequest(req);
@@ -176,21 +205,30 @@ class TransmisionReejecutarPedido extends Transmision {
 					return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, { resultado: errorFedicom.getErrores() });
 				}
 
-
 			} else {
 
+				if (!this.modificaciones.generaUnClon()) {
+					let crcOriginal = postTransmision.getDatos()?.pedido?.crc;
+					this.log.debug(`Se fuerza que aparezca el CRC del pedido original '${crcOriginal}'.`);
+					this.modificaciones.fuezaCrcConcreto(crcOriginal);
+				}
+
 				let reTransmision = await Transmision.ejecutar(req, res, TransmisionCrearPedido, {
-					idTransmisionOriginal: oid,
-					modificaciones: this.modificaciones
+					opcionesDeReejecucion: this.modificaciones
 				})
 
-				// Actualizamos la transmision original, indicando la nueva retransmisión que se ha hecho sobre la misma
-				postTransmision.setMetadatosOperacion('pedido.reejecuciones', reTransmision.txId, '$push');
-				postTransmision.actualizarTransmision();
+
+				if (this.modificaciones.generaUnClon()) {
+					// Actualizamos la transmision original, indicando la nueva retransmisión que se ha hecho sobre la misma
+					postTransmision.setMetadatosOperacion('pedido.clones', reTransmision.txId, '$push');
+					postTransmision.actualizarTransmision();
+				}
+
 			}
 
 			return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, req);
 		} catch (error) {
+			this.log.err(error);
 			return (new ErrorFedicom(error)).generarResultadoTransmision(K.ESTADOS.NO_CONTROLADA);
 		}
 	}
@@ -205,7 +243,7 @@ class TransmisionReejecutarPedido extends Transmision {
 TransmisionReejecutarPedido.TIPO = K.TIPOS.NO_CONTROLADA;
 TransmisionReejecutarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
-	grupoRequerido: 'FED3_RETRANSMISOR',
+	grupoRequerido: 'FED3_RETRANSMISION',
 	simulaciones: false,
 	simulacionesEnProduccion: false
 });

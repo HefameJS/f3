@@ -3,7 +3,7 @@ require('app-module-path').addPath(__dirname);
 
 console.log('Inicializando servicios Fedicom v3', new Date());
 
-require('global/bootstrap')('master').then(() => {
+require('global/bootstrap')('master').then(async () => {
 
 	const C = global.C;
 	const L = global.L;
@@ -13,6 +13,12 @@ require('global/bootstrap')('master').then(() => {
 
 	L.info(`Fedicom3 v${K.VERSION.SERVIDOR}`);
 	L.info(`Implementando norma Fedicom v${K.VERSION.PROTOCOLO} `);
+
+
+	// global.WS = await require('global/websocket')(8080);
+	// const WS = global.WS;
+
+
 
 	let worker;
 
@@ -59,8 +65,7 @@ require('global/bootstrap')('master').then(() => {
 	}
 
 
-	let registradorProcesos = require('global/registradorProcesos');
-	registradorProcesos();
+	require('global/registradorProcesos')();
 
 	cluster.on('exit', (workerMuerto, code, signal) => {
 		L.fatal(`Un worker ha muerto. Vamos a intentar levantarlo:`, {iid: workerMuerto.id, tipo: workerMuerto.tipo, code, signal});

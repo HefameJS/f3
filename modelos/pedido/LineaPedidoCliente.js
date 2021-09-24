@@ -10,7 +10,7 @@ class LineaPedidoCliente extends Modelo {
 
 	metadatos = {
 		numeroPosicion: null,
-		errores: null,
+		errores: new ErrorFedicom(),
 		tieneErroresDeProtocolo: false,
 		crc: null,
 		estupefaciente: false
@@ -40,7 +40,7 @@ class LineaPedidoCliente extends Modelo {
 		if (errorFedicom.tieneErrores()) {
 			this.log.warn(`Posición ${numeroPosicion}: La línea no cumple con la norma Fedicom3`, errorFedicom);
 			this.metadatos.tieneErroresDeProtocolo = true;
-			this.metadatos.errores.insertar(errorFedicom);
+			this.metadatos.errores = errorFedicom;
 		}
 
 

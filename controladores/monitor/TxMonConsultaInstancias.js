@@ -23,7 +23,7 @@ class TxMonConsultaProcesos extends TransmisionLigera {
 
 		try {
 			let instancias = await M.db.collection('instancias').find().toArray();
-			return new ResultadoTransmisionLigera(200,  instancias);
+			return new ResultadoTransmisionLigera(200, instancias);
 		} catch (error) {
 			return (new ErrorFedicom(error)).generarResultadoTransmision();
 		}
@@ -33,8 +33,7 @@ class TxMonConsultaProcesos extends TransmisionLigera {
 
 
 TxMonConsultaProcesos.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
-	llamadaMonitor: true
-	// grupoRequerido: 'MIS COJONES'
+	grupoRequerido: 'FED3_INSTANCIAS'
 });
 
 

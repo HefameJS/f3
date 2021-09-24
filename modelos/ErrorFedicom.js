@@ -113,7 +113,7 @@ class ErrorFedicom {
 
 
 	generarResultadoTransmision(estado) {
-		if (estado) return new ResultadoTransmisionLigera(this.#codigoRespuestaHttp, this.getErrores())
+		if (!estado) return new ResultadoTransmisionLigera(this.#codigoRespuestaHttp, this.getErrores())
 		return new ResultadoTransmision(this.#codigoRespuestaHttp, estado, this.getErrores())
 	}
 

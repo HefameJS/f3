@@ -39,7 +39,7 @@ class MetadatosOperacion {
 		if (!sentencia['$set']) sentencia['$set'] = {}
 
 		for (const valor in metadatosAplanados) {
-			if (metadatosAplanados[valor]) {
+			if (metadatosAplanados[valor] !== null) {
 				sentencia['$set'][valor] = metadatosAplanados[valor]
 			}
 		}

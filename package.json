@@ -29,7 +29,8 @@
     "os": "^0.1.2",
     "saslprep": "^1.0.3",
     "sqlite3": "^5.0.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "websocket": "^1.0.34"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

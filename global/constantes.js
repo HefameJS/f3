@@ -41,7 +41,7 @@ module.exports = async function () {
 	global.K.TIPOS = {
 		PLANTILLA: -1,
 		NO_CONTROLADA: 1000,
-		RECHAZO: 1001,	
+		RECHAZO: 1001,
 		AUTENTICACION: 0,
 		CREAR_PEDIDO: 10,
 		CONSULTAR_PEDIDO: 11,
@@ -89,6 +89,11 @@ module.exports = async function () {
 			SIMULADOR: 'simulador'
 		}
 	}
+	global.K.CANALES = [
+		{ id: 'instancias' },
+		{ id: 'jardin' },
+	]
+
 }
 
 

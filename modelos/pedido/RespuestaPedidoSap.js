@@ -263,6 +263,10 @@ class RespuestaPedidoSap extends Modelo {
 		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.alertas) json.alertas = this.alertas;
 
+		if (this.metadatos.pedidoProcesadoSap) {
+			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap
+		}
+
 		return json;
 	}
 
