@@ -83,9 +83,9 @@ class PedidoSap {
 				descripcion: inc.descripcion
 			}
 		});
-		
+
 		L.xt(this.txId, ['Incidencias saneadas', this.incidencias]);
-		
+
 
 	}
 
@@ -214,7 +214,7 @@ class PedidoSap {
 		if (this.alertas) json.alertas = this.alertas;
 
 		if (this.metadatos.pedidoProcesado) {
-			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap;
+			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap.map(p => parseInt(p));
 		}
 
 		return json;
