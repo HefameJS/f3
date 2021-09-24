@@ -213,6 +213,10 @@ class PedidoSap {
 		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.alertas) json.alertas = this.alertas;
 
+		if (this.metadatos.pedidoProcesado) {
+			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap;
+		}
+
 		return json;
 	}
 
