@@ -38,8 +38,18 @@ class TransmisionLigera extends Object {
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
-				transmision.log.fatal('LA TRANSMISION HA PEGADO UN TRUENO Y GENERANDO UN DUMP')
 				transmision.log.fatal(truenoTransmision.stack)
+
+				// Mandamos un mensaje de error generico si no se ha enviado nada al cliente
+				if (!transmision.res.headersSent) {
+					try {
+						let errorGenerico = new ErrorFedicom('HTTP-500', 'Error interno del servidor', 500);
+						await errorGenerico.generarResultadoTransmision().responderTransmision(transmision)
+					} catch (errorEnvioError) {
+						L.fatal('Hasta el envío del mensaje de error genérico falla', errorEnvioError)
+					}
+				}
+
 			}
 		}
 
@@ -50,7 +60,7 @@ class TransmisionLigera extends Object {
 		super();
 
 		this.txId = uuid();
-		this.log = L.instanciar(this);
+		this.log = L.instanciar(this, 'TransmisionLigera');
 		this.log.evento(`------------------------ ${this.txId} ------------------------`);
 		this.log.evento(`Se da entrada a la transmisión ligera: ${this.constructor.name}`);
 
@@ -101,6 +111,8 @@ class TransmisionLigera extends Object {
 			return;
 		}
 
+		this.#http.res.setHeader('X-TxID', this.txId);
+
 		this.#http.res.setHeader('Content-Type', contentType);
 		if (nombreFichero) this.#http.res.setHeader('Content-Disposition', 'attachment; filename=' + nombreFichero);
 
@@ -114,7 +126,7 @@ class TransmisionLigera extends Object {
 		try {
 			let respuesta = await this.#http.res.status(codigoEstado).send(datos);
 			this.log.info(`Se ha enviado una respuesta ${respuesta.statusCode} - ${respuesta.statusMessage} al cliente`);
-			
+
 		} catch (errorRespuesta) {
 			this.log.err('No se pudo enviar la respuesta al cliente por un error en el socket', errorRespuesta);
 		}

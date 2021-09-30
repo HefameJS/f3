@@ -26,7 +26,7 @@ module.exports.listadoProcesos = async function (req, res) {
 
 
 	try {
-		let instancias = await M.db.collection('instancias').find({}).toArray();
+		let instancias = await M.col.instancias.find({}).toArray();
 		let respuesta = {};
 		instancias.forEach(({ _id, ...datosInstancia }) => {
 			respuesta[_id] = datosInstancia;

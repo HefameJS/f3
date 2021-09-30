@@ -89,10 +89,22 @@ module.exports = async function () {
 			SIMULADOR: 'simulador'
 		}
 	}
-	global.K.CANALES = [
+	global.K.DOMINIOS = {
+		FEDICOM: "FEDICOM",
+		TRANSFER: "transfer_laboratorio",
+		HEFAME: "HEFAME",
+		EMPLEADO: "empleado",
+		FMASONLINE: "FMAS",
+		PORTAL_HEFAME: "PORTAL_HEFAME",
+		SAP_BACKGROUND: "SAP_BG",
+		INTERFEDICOM: "INTERFEDICOM",
+		MONITOR: "MONITOR",
+		resolver: (id) => Object.keys(global.K.DOMINIOS).find(dominio => dominio === id) || "FEDICOM"
+	}
+	/*global.K.CANALES = [
 		{ id: 'instancias' },
 		{ id: 'jardin' },
-	]
+	]*/
 
 }
 

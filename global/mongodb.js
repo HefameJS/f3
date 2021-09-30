@@ -26,7 +26,9 @@ const conexion = async function () {
 	let colecciones = {
 		transmisiones: new ColeccionDummy(),
 		configuracion: new ColeccionDummy(),
-		descartes: new ColeccionDummy()
+		descartes: new ColeccionDummy(),
+		instancias: new ColeccionDummy(),
+		maestros: new ColeccionDummy(),
 	};
 
 	let opcionesColeccion1 = { writeConcern: { w: 1, wtimeout: 1000 } }
@@ -35,9 +37,14 @@ const conexion = async function () {
 	try {
 		cliente = await cliente.connect();
 		baseDatos = cliente.db(C.mongodb.database);
+
 		colecciones.transmisiones = baseDatos.collection('transmisiones', opcionesColeccion1);
-		colecciones.descartes = baseDatos.collection('descartes', opcionesColeccion2);
 		colecciones.configuracion = baseDatos.collection('configuracion', opcionesColeccion1);
+		colecciones.instancias = baseDatos.collection('instancias', opcionesColeccion1);
+		colecciones.maestros = baseDatos.collection('maestros', opcionesColeccion1);
+		colecciones.logs = baseDatos.collection('logs', opcionesColeccion2);
+		colecciones.descartes = baseDatos.collection('descartes', opcionesColeccion2);
+
 		L.info('Conexión a MongoDB establecida')
 	}
 	catch (error) {
@@ -58,6 +65,9 @@ const conexion = async function () {
 	global.M.col = {
 		transmisiones: colecciones.transmisiones,
 		configuracion: colecciones.configuracion,
+		instancias: colecciones.instancias,
+		maestros: colecciones.maestros,
+		logs: colecciones.logs,
 		descartes: colecciones.descartes,
 	}
 

@@ -33,11 +33,11 @@ class TransmisionAutenticacion extends Transmision {
 		}
 
 		switch (this.#solicitud.dominio) {
-			case C.dominios.FEDICOM:
-			case C.dominios.TRANSFER:
+			case K.DOMINIOS.FEDICOM:
+			case K.DOMINIOS.TRANSFER:
 				// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
 				return await this.#autenticarContraSAP();
-			case C.dominios.HEFAME:
+			case K.DOMINIOS.HEFAME:
 				// Las peticiones al dominio HEFAME se verifica contra el LDAP
 				return await this.#autenticarContraLDAP();
 			default: {

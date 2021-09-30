@@ -79,12 +79,9 @@ class Configuracion {
 	static async cargarConfiguracionCluster() {
 		global.C.jwt = await ConfiguracionJwt.cargar();
 		global.C.sap = await ConfiguracionSap.cargar();
-		global.C.dominios = await ConfiguracionDominios.cargar();
-		global.C.flags = await ConfiguracionFlags.cargar();
 		global.C.ldap = await ConfiguracionLdap.cargar();
 		global.C.pedidos = await ConfiguracionPedidos.cargar();
 		global.C.devoluciones = await ConfiguracionDevoluciones.cargar();
-		global.C.softwareId = await ConfiguracionSoftwareId.cargar();
 		global.C.watchdogPedidos = await ConfiguracionWatchdogPedidos.cargar();
 		global.C.sqlite = await ConfiguracionSqlite.cargar();
 		global.C.balanceador = await ConfiguracionBalanceadores.cargar();
@@ -167,7 +164,7 @@ class ConfiguracionMongodb {
 class ConfiguracionLog {
 	constructor(config) {
 		this.consola = Boolean(config?.consola);
-		this.directorio = global.C.directorioCache + SUBDIR.LOGS + SEPARADOR_DIRECTORIOS;
+		this.directorio = global.C.directorioCache + SUBDIR.LOGS ;
 	}
 }
 
@@ -258,74 +255,7 @@ class ConfiguracionSap {
 
 }
 
-class ConfiguracionDominios {
 
-	constructor(config) {
-
-
-		if (!config) throw new Error("No se ha definido la configuracion de dominios de autenticacion ($.dominios)");
-		if (!config.dominios) throw new Error("No se ha definido la configuracion de dominios de autenticacion ($.dominios.dominios)");
-		if (!Object.keys(config.dominios).length) throw new Error("La lista de dominios de autenticacion está vacía ($.dominios.dominios)");
-
-		Object.assign(this, config.dominios)
-
-		this.nombreDominioPorDefecto = config.dominioPorDefecto || Object.keys(config.dominios)[0];
-		this.principal = this[this.nombreDominioPorDefecto];
-
-		if (!this.principal) throw new Error("No existe el dominio por defecto ($.dominios.dominios)");
-
-	}
-
-	static async cargar() {
-		let config = await Configuracion.cargarObjetoCluster('dominios');
-		return new ConfiguracionDominios(config);
-	}
-
-	/**
-	 * Obtiene el valor del dominio con el ID especificado, o null si no existe
-	 */
-	getDominio(clave) {
-
-		return this[clave];
-	}
-
-	/**
-	 * Obtiene el valor del dominio por defecto
-	 */
-	getPrincipal() {
-		return this[this.principal];
-	}
-
-	/**
-	 * Resuelve el ID del dominio y en caso de no existir devuelve el dominio
-	 * por defecto.
-	 */
-	resolver(id) {
-		for (let clave in this) {
-			if (this[clave] === id)
-				return this[clave];
-		}
-
-		return this.getPrincipal()
-	}
-
-}
-
-class ConfiguracionFlags {
-
-	constructor(config) {
-		if (!config) throw new Error("No se ha definido la configuracion de flags ($.flags)");
-		if (!config.flags) throw new Error("No se ha definido la configuracion de flags ($.flags.flags)");
-		if (!Object.keys(config.flags).length) throw new Error("La lista de flags está vacía ($.flags.flags)");
-		Object.assign(this, config.flags);
-	}
-
-	static async cargar() {
-		let config = await Configuracion.cargarObjetoCluster('flags');
-		return new ConfiguracionFlags(config);
-	}
-
-}
 
 class ConfiguracionLdap {
 
@@ -397,19 +327,6 @@ class ConfiguracionDevoluciones {
 
 	motivoExentoDeAlbaran(motivo) {
 		return this.motivosExtentosAlbaran.includes(motivo);
-	}
-}
-
-class ConfiguracionSoftwareId {
-	constructor(config) {
-		this.servidor = config.servidor;
-		this.retransmisor = config.retransmisor;
-		this.codigos = { ...config.codigos };
-	}
-
-	static async cargar() {
-		let config = await Configuracion.cargarObjetoCluster('softwareId');
-		return new ConfiguracionSoftwareId(config);
 	}
 }
 

@@ -159,7 +159,7 @@ class TransmisionCrearPedido extends Transmision {
 
 		}
 
-		if (this.token.dominio === C.dominios.TRANSFER) {
+		if (this.token.dominio === K.DOMINIOS.TRANSFER) {
 			metadatos.esTransfer = true;
 		}
 

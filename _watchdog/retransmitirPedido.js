@@ -268,7 +268,7 @@ const _construyeRespuestaCliente = (txId, codigoEstadoHttp, cuerpoRespuesta) => 
 		statusCode: codigoEstadoHttp,
 		headers: {
 			'x-txid': txId,
-			'software-id': C.softwareId.servidor,
+			'software-id': K.SOFTWARE_ID.SERVIDOR,
 			'content-api-version': K.VERSION.PROTOCOLO,
 			'content-type': 'application/json; charset=utf-8',
 			'content-length': cuerpoRespuesta ? '' + cuerpoRespuesta.length : '0'

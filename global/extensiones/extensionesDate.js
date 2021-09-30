@@ -15,8 +15,6 @@ if (!Date.fedicomTimestamp) {
 }
 
 
-
-
 dateFormat.masks.fedicomDate = 'dd/mm/yyyy';
 dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
 
@@ -24,6 +22,9 @@ dateFormat.masks.sapDate = 'yyyymmdd';
 
 dateFormat.masks.shortDate = 'yyyymmdd';
 dateFormat.masks.shortTime = 'HHMMss.l';
+
+dateFormat.masks.logCorto = 'yyyymmdd';
+dateFormat.masks.logLargo = 'dd-mm-yyyy-HH:MM:ss.l';
 
 /**
  * Date.toFedicomDate(date)
@@ -38,6 +39,7 @@ if (!Date.toFedicomDate) {
 		return dateFormat(date, "fedicomDate")
 	}
 }
+
 
 /**
  * Date.toFedicomDateTime(date)
@@ -176,5 +178,30 @@ if (!Date.siguienteDiaHabil) {
 			elDiaD.setDate(elDiaD.getDate() + 1);
 
 		return Date.toFedicomDate(elDiaD);
+	}
+}
+
+
+
+
+/**
+ * Date.logCorto()
+ * 
+ * -> 'yyyymmdd'
+ */
+if (!Date.logCorto) {
+	Date.logCorto = () => {
+		return dateFormat(new Date(), "logCorto")
+	}
+}
+
+/**
+ * Date.logCorto()
+ * 
+ * -> 'yyyy-mm-dd HH:MM:ss'
+ */
+if (!Date.logLargo) {
+	Date.logLargo = () => {
+		return dateFormat(new Date(), "logLargo")
 	}
 }

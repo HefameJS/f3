@@ -26,14 +26,6 @@ class Tipo {
 	}
 }
 
-class Almacen {
-	constructor(codigo, descripcion) {
-		this.codigo = codigo;
-		this.descripcion = descripcion;
-	}
-}
-
-
 let MAESTRO = {
 	transmisiones: {
 		pedidos: {
@@ -271,130 +263,6 @@ let MAESTRO = {
 			],
 		}
 	},
-	codigosProgramaFarmacia: {
-		8: "Bidafarma Informatica",
-		10: "Farmabrain Centro Farmaceutico",
-		12: "Unycop",
-		18: "Ecaputo Quadrom Services",
-		26: "HEFAME",
-		28: "IOFWin Fedefarma",
-		33: "FarmaLOG Eurosof2000",
-		35: "Consoft",
-		36: "Kernel informatica",
-		38: "Farmatic Consoft",
-		40: "Efiplan Soluciones",
-		48: "Pulso Informatica",
-		54: "Bidafarma",
-		56: "Farmacia Manoteras",
-		58: "C.O.F. Santa Cruz de Tenerife",
-		59: "Tedifarma",
-		61: "Tedifarma 2",
-		64: "Acofarma",
-		67: "Merck Sharp & Dohme España",
-		68: "Assoes SLU Software Andorra",
-		70: "Belta Mar",
-		71: "BitFarma",
-		74: "Farmacia Reche Europa",
-		78: "Profesionalfarma",
-		79: "Grupodwes Web Design",
-		80: "ekon",
-		81: "Hiberus Digital",
-		82: "Quadralia",
-		87: "Xeosefa",
-		91: "LR Informatica",
-		92: "Marka Informática",
-		93: "Medigest Consultores",
-		94: "Medigest Consultores",
-		95: "Farmages",
-		97: "Desarrollos Lugonet",
-		98: "Desarrollos Lugonet",
-		99: "Gularis Soft",
-		101: "Bidafarma Informatica",
-		104: "Cefisa Informatica",
-		105: "40300047E",
-		106: "Farmacia Carme Vilaltella",
-		107: "Etron Software S.L.",
-		108: "Farmacia Herrera Martín",
-		109: "Novofarma",
-		111: "Farmacia Araceli Pérez",
-		112: "Farmacia Araceli Pérez",
-		113: "PharmaEthikos",
-		118: "Farmacia Marta Castro",
-		121: "Farmacia Ines Alvarez",
-		9000: "Postman",
-		9001: "Simulador",
-		9002: "Retransmisor",
-		9003: "Test Unitario",
-		9100: "Traductor Fedicom2",
-		9700: "Aplicacion Empleado Hefame",
-		9800: "F+Online",
-		9801: "Portal Web Hefame",
-		9802: "MICOF - Muy Ilustre Colegio Oficial de Farmacéuticos de Valencia",
-		9991: "SAP D01",
-		9992: "SAP T01",
-		9993: "SAP P01"
-	},
-	almacenes: {
-		"RG01": "Santomera",
-		"RG02": "Borgino",
-		"RG03": "Cartagena",
-		"RG04": "Madrid",
-		"RG05": "Barcelona viejo",
-		"RG06": "Alicante",
-		"RG07": "Almería",
-		"RG08": "Albacete",
-		"RG09": "Málaga viejo",
-		"RG10": "Valencia",
-		"RG13": "Madrid viejo",
-		"RG15": "Barcelona",
-		"RG16": "Tortosa",
-		"RG17": "Melilla",
-		"RG18": "Granada",
-		"RG19": "Malaga",
-		"RG99": "Almacén de prueba"
-	},
-	laboratorios: {
-		'60200357': 'INDAS',
-		'60200614': 'PFIZER',
-		'60200118': 'CINFA',
-		'60201909': 'STADA',
-		'60202977': 'TEVA',
-		'60201230': 'MEDA-PHARMA',
-		'60203056': 'QUALIGEN',
-		'60202713': 'KERN',
-		'60202056': 'RATIOPHARM',
-		'60203087': 'ACTAVIS',
-		'60202004': 'ITALFARMACO',
-		'60202331': 'RINTER',
-		'60202979': 'RINTER CORONA',
-		'60202707': 'IODES',
-		'60200002': 'ABBOT PEDIASURE',
-		'60200561': 'NORMON',
-		'60203123': 'Lab60203123',
-		'60203226': 'PFIZER_2',
-		'60200767': 'HARTMANN',
-		'60203449': 'ABBOT-BGP',
-		'60202422': 'MABOFARMA',
-		'60202740': 'APOTEX',
-		'60203401': 'Lab60203401',
-		'60200282': 'SANDOZ',
-		'60202659': 'BEXAL',
-		'60203016': 'Lab60203016',
-		'60202637': 'Lab60202637',
-		'60200223': 'ESTEVE',
-		'60202374': 'EFFIK',
-		'60202256': 'Lab60202256',
-		'60202257': 'Lab60202257',
-		'60202833': 'MYLAN',
-		'60200253': 'FERRER INTERNACIONAL',
-		'60200020': 'DAIICHI-SANKYO',
-		'60202430': 'OMEGA-PHARMA'
-	},
-	tiposTransfer: {
-		TR: 'Transfer normal',
-		TG: 'Transfer gratuito',
-		TP: 'Transfer portal'
-	}
 }
 
 
@@ -404,9 +272,6 @@ MAESTRO.transmisiones.getEstadoById = function (codigoEstado, tipoTransmision) {
 	return MAESTRO.transmisiones[tipoTransmision]?.estados.find(e => e.codigo === codigoEstado);
 }
 
-MAESTRO.almacenes.getNombreById = function (codigoAlmacen) {
-	return MAESTRO.almacenes[codigoAlmacen] || 'Almacén desconocido';
-}
 
 
 module.exports = MAESTRO;

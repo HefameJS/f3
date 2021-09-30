@@ -9,6 +9,8 @@ const TxMonGenerarTokenObservador = require('controladores/monitor/TxMonGenerarT
 const TxMonGenerarTokenPermanente = require('controladores/monitor/TxMonGenerarTokenPermanente');
 const TxMonBorrarRegistroInstancia = require('controladores/monitor/TxMonBorrarRegistroInstancia');
 const TxMonConsultaPedido = require('controladores/monitor/TxMonConsultaPedido');
+const TxMonConsultaMaestro = require('controladores/monitor/TxMonConsultaMaestro');
+const TxMonConsultaTransmision = require('controladores/monitor/TxMonConsultaTransmision');
 
 
 
@@ -35,6 +37,14 @@ module.exports = (app) => {
 
 	app.route('/~/consulta/pedidos/:crc')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaPedido));
+
+	app.route('/~/consulta/transmisiones/:txId/:tipoConsulta?')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaTransmision));
+
+
+	app.route('/~/maestro/:idMaestro/:idElemento?')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaMaestro));
+	
 
 
 	// RUTAS NUEVAS v1

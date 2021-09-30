@@ -23,7 +23,7 @@ class TxMonGenerarTokenObservador extends TransmisionLigera {
 		this.log.info('Solicitud de generación de token de observador');
 
 		try {
-			let jwt = Token.generarToken('Observador', C.dominios.MONITOR, { permanente: true });
+			let jwt = Token.generarToken('Observador', K.DOMINIOS.MONITOR, { permanente: true });
 			let cuerpoRespuesta = {
 				auth_token: jwt, // Se manda 'auth_token' para que el campo se llame igual que el del protocolo Fedicom3
 				datos: Token.extraerDatosToken(jwt)

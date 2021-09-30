@@ -17,7 +17,7 @@ class ServidorWebSocket {
 	constructor(puerto) {
 
 		this.#puerto = puerto;
-		this.#log = L.instanciar({ txId: 'WebSocketServer' });
+		// this.#log = L.instanciar({ txId: 'WebSocketServer' });
 
 		this.#servidorHttp = http.createServer((request, response) => {
 			response.writeHead(404);
@@ -83,7 +83,7 @@ class ConexionWebSocket {
 	constructor(id, padre, req) {
 		this.#idConexion = id;
 		this.#servidor = padre;
-		this.#log = L.instanciar({ txId: 'WebSocketCon#' + id })
+		// this.#log = L.instanciar({ txId: 'WebSocketCon#' + id })
 		this.#conexion = req.accept();
 
 		this.#log.info(`Aceptada conexión entrante con ID ${this.#idConexion} desde ${this.#conexion.remoteAddress}`);

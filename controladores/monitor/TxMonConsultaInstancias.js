@@ -22,7 +22,7 @@ class TxMonConsultaProcesos extends TransmisionLigera {
 		this.log.info('Solicitud de consulta de instancias');
 
 		try {
-			let instancias = await M.db.collection('instancias').find().toArray();
+			let instancias = await M.col.instancias.find().toArray();
 			return new ResultadoTransmisionLigera(200, instancias);
 		} catch (error) {
 			return (new ErrorFedicom(error)).generarResultadoTransmision();

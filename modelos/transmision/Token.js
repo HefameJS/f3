@@ -159,7 +159,7 @@ class Token {
 
 		// Las llamadas al monitor deben venir de los dominios INTERFEDICOM, MONITOR o HEFAME
 		if (opciones.llamadaMonitor){
-			let dominiosAdmitidos = [C.dominios.INTERFEDICOM, C.dominios.MONITOR, C.dominios.HEFAME];
+			let dominiosAdmitidos = [K.DOMINIOS.INTERFEDICOM, K.DOMINIOS.MONITOR, K.DOMINIOS.HEFAME];
 
 			if (dominiosAdmitidos.includes(this.dominio)){
 				this.#log.trace('La transmisión es de tipo monitor y contiene un domino válido');
@@ -180,7 +180,7 @@ class Token {
 		}
 
 		// Si se indica que se admiten simulaciones y el token es del dominio HEFAME, comprobamos si es posible realizar la simulacion
-		if (opciones.simulaciones && this.dominio === C.dominios.HEFAME) {
+		if (opciones.simulaciones && this.dominio === K.DOMINIOS.HEFAME) {
 
 			// Si el nodo está en modo productivo, se debe especificar la opción 'admitirSimulacionesEnProduccion' o se rechaza la petición
 			if (C.produccion === true && !opciones.simulacionesEnProduccion) {

@@ -40,14 +40,14 @@ class SolicitudAutenticacion extends Modelo {
 
 		this.usuario = json.user.trim();
 		this.clave = json.password.trim();
-		this.dominio = C.dominios.resolver(json.domain);
+		this.dominio = K.DOMINIOS.resolver(json.domain);
 
 		this.log.debug(`Se resuelve el dominio ${json.domain} -> ${this.dominio}`)
 
 		// Es posible que la solicitud sea para transfer, en cuyo caso actualizamos el dominio.
-		if (this.dominio === C.dominios.FEDICOM && this.usuario.search(/^T[RGP]/) !== -1) {
+		if (this.dominio === K.DOMINIOS.FEDICOM && this.usuario.search(/^T[RGP]/) !== -1) {
 			this.log.info(`La petición cumple la norma de pedidos transfer`);
-			this.dominio = C.dominios.TRANSFER;
+			this.dominio = K.DOMINIOS.TRANSFER;
 		}
 
 		this.log.info(`Petición de autenticación para ${this.usuario} en el dominio ${this.dominio}`);
@@ -68,7 +68,7 @@ class SolicitudAutenticacion extends Modelo {
 	}
 
 	esTransfer() {
-		return this.dominio === C.dominios.TRANSFER;
+		return this.dominio === K.DOMINIOS.TRANSFER;
 	}
 
 	#generarToken(datosExtra) {

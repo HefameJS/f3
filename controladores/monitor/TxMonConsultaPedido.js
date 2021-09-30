@@ -24,7 +24,6 @@ class TxMonConsultaPedido extends TransmisionLigera {
 		try {
 			let parametroCrc = this.req.params?.crc;
 
-
 			if (!M.ObjectID.isValid(parametroCrc)) {
 				this.log.warn(`El número de pedido indicado '${parametroCrc}' no es un ObjectID válido`);
 				let error = new ErrorFedicom('MON-400', 'El número del pedido no es válido', 400);
@@ -52,7 +51,9 @@ class TxMonConsultaPedido extends TransmisionLigera {
 			}
 
 
-			let transmisiones = await M.db.collection('transmisiones').find(filtro, opciones).toArray();
+			let transmisiones = await M.col.transmisiones.find(filtro, opciones).toArray();
+
+			
 			return new ResultadoTransmisionLigera(200, transmisiones);
 		} catch (error) {
 			this.log.err(error);

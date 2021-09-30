@@ -18,8 +18,6 @@ require('global/bootstrap')('master').then(async () => {
 	// global.WS = await require('global/websocket')(8080);
 	// const WS = global.WS;
 
-
-
 	let worker;
 
 	// Lanzamiento de los workers

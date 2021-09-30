@@ -1,25 +1,42 @@
 'use strict';
-
-const fs = require('fs/promises'); fs.constants = require('fs').constants;
+const M = global.M;
 const util = require('util');
+const fs = require('fs/promises');
+const fsc = require('fs');
+const path = require('path');
+const SEPARADOR_DIRECTORIOS = path.sep;
+
+const Transmision = require('modelos/transmision/Transmision');
+const TransmisionLigera = require('modelos/transmision/TransmisionLigera');
+
+
 
 class RegistroLog {
 	fecha;
 	nivel;
 	datos;
-	padre;
 
-	constructor(datos, nivel, padre) {
-		this.fecha = new Date();
+	constructor(datos, nivel, ) {
+		this.fecha = Date.logLargo();
 		this.datos = datos;
 		this.nivel = nivel;
-		this.padre = padre;
+	}
 
-		// Imprimimos
+	obtenerMensajes() {
+		let mensajes = [];
 		this.datos.forEach(dato => {
-
 			let mensaje = dato?.message || dato;
-			let nivel = this.nivel + (padre.prefijo ? '@' + padre.prefijo : '');
+			if (Array.isArray(mensaje) || typeof mensaje === "object") mensaje = util.inspect(mensaje)
+			mensajes.push(`${this.fecha}|${this.nivel}|${mensaje}`)
+			if (dato?.stack) mensajes.push(dato.stack);
+		});
+		return mensajes;
+	}
+
+	imprimirEnConsola(prefijo) {
+		this.datos.forEach(dato => {
+			let mensaje = dato?.message || dato;
+			let nivel = this.nivel + (prefijo ? '@' + prefijo : '');
 
 			switch (this.nivel) {
 				case Log.FATAL:
@@ -40,104 +57,254 @@ class RegistroLog {
 					console.log('\u001b[' + 32 + 'm', nivel, '\u001b[0m', mensaje);
 				//32
 			}
-
 			if (dato?.stack) {
 				console.log(dato.stack)
 			}
-
 		});
 	}
-
 }
 
-
 class RegistroDump {
-	fecha;
-	datos;
-	padre;
 
-	constructor(datos, padre) {
-		this.fecha = new Date();
-		this.datos = datos;
-		this.padre = padre;
+	rutaFicheroDump;
 
-		let ficheroDump = this.#generarNombreFichero(true);
-		let mensaje = (new Date).toUTCString()
-		mensaje += this.#datos({
-			tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker
-		}, 'DATOS DEL PROCESO');
+	constructor(datos, prefijo, transmision) {
+		let fecha = new Date();
 
-		if (this.padre.transmision) {
-			let req = this.padre.transmision.req;
-			mensaje += this.#datos({
-				txId: this.padre.transmision.txId,
+		let directorio = C.log.directorio + SEPARADOR_DIRECTORIOS +
+			'dump' + SEPARADOR_DIRECTORIOS +
+			Date.logCorto() + SEPARADOR_DIRECTORIOS;
+		let extension = Date.fedicomTimestamp() + '.dump';
+		this.rutaFicheroDump = directorio + prefijo + '.' + extension;
+
+		let mensaje = fecha.toUTCString()
+		mensaje += '\n\n----------------------------------------\n DATOS DEL PROCESO \n----------------------------------------\n';
+
+		mensaje += util.inspect({
+			tipo: process.tipo,
+			titulo: process.titulo,
+			iid: process.iid,
+			pid: process.pid,
+			wid: process.worker
+		}, 10);
+
+		if (transmision) {
+			let req = transmision.req;
+			mensaje += '\n\n----------------------------------------\n DATOS DE LA TRANSMISION \n----------------------------------------\n';
+			mensaje += util.inspect({
+				txId: transmision.txId,
 				body: req.body,
 				method: req.method,
 				url: req.originalUrl,
 				httpVersion: req.httpVersion,
 				headers: req.headers,
-
-			}, 'DATOS DE LA TRANSMISION');
+			}, 10);
 		}
 
-		this.datos.forEach((dato, i) => {
-			mensaje += this.#datos(dato, `ARGUMENTO ${i}`)
+		datos.forEach((dato, i) => {
+			mensaje += `\n\n----------------------------------------\n ARGUMENTO ${i} \n----------------------------------------\n`;
+			mensaje += util.inspect(dato, 10)
 		});
 
-		fs.appendFile(ficheroDump, mensaje);
+		fs.mkdir(directorio, { recursive: true, mode: 0o755 })
+			.then(() => fs.appendFile(this.rutaFicheroDump, mensaje, { encoding: 'utf8' }))
+			.catch((error) => {
+				console.error('ERROR AL ESCRIBIR FICHERO DE DUUMP', error);
+				console.error(mensaje);
+			})
 	}
-
-	#datos(dato, titulo) {
-		return '\n\n----------------------------------------\n' + titulo + '\n----------------------------------------\n' + util.inspect(dato, 10);
-	}
-
-	#generarNombreFichero(dump = false) {
-		if (this.padre.transmision) {
-			return C.log.directorio + this.padre.transmision.txId + '-' + Date.toSapDate() + (dump ? '.dump' : '.log')
-		}
-		return C.log.directorio + this.padre.prefijo + '-' + Date.toSapDate() + (dump ? '.dump' : '.log')
-	}
-
 }
-
 
 class Log {
 
 	prefijo;
 	transmision;
+	tipo = 'Proceso';
 
-	constructor(prefijo, transmision) {
-		this.prefijo = prefijo;
+	constructor(transmision, tipo, prefijo) {
 		this.transmision = transmision;
+		this.tipo = tipo;
+		this.prefijo = prefijo;
 	}
 
-	#grabarEntrada(datos, nivel) {
-		new RegistroLog(datos, nivel, this)
+	insertarEntradaLog(datos, nivel) {
+		let entrada = new RegistroLog(datos, nivel);
+		if (C.log.consola) entrada.imprimirEnConsola(this.prefijo);
+		return entrada;
 	}
 
 	dump(...datos) {
-		new RegistroDump(datos, this);
+		let dump = new RegistroDump(datos, this.prefijo, this.transmision);
+		this.insertarEntradaLog(['################## GENERADO DUMP:', dump.rutaFicheroDump], Log.FATAL);
 	}
 	trace(...datos) {
-		this.#grabarEntrada(datos, Log.TRACE);
+		this.insertarEntradaLog(datos, Log.TRACE);
 	}
 	debug(...datos) {
-		this.#grabarEntrada(datos, Log.DEBUG);
+		this.insertarEntradaLog(datos, Log.DEBUG);
 	}
 	info(...datos) {
-		this.#grabarEntrada(datos, Log.INFO);
+		this.insertarEntradaLog(datos, Log.INFO);
 	}
 	warn(...datos) {
-		this.#grabarEntrada(datos, Log.WARN);
+		this.insertarEntradaLog(datos, Log.WARN);
 	}
 	err(...datos) {
-		this.#grabarEntrada(datos, Log.ERROR);
+		this.insertarEntradaLog(datos, Log.ERROR);
 	}
 	fatal(...datos) {
-		this.#grabarEntrada(datos, Log.FATAL);
+		this.insertarEntradaLog(datos, Log.FATAL);
 	}
 	evento(...datos) {
-		this.#grabarEntrada(datos, Log.EVENT);
+		this.insertarEntradaLog(datos, Log.EVENT);
+	}
+}
+
+class LogMongo extends Log {
+
+	bufferEntradas = [];
+	entradaPendienteEscribir = null;
+
+	constructor(transmision, tipo, prefijo) {
+		super(transmision, tipo, prefijo);
+	}
+
+
+	moverCola() {
+
+		// Ya es esta escribiendo
+		if (this.entradaPendienteEscribir) return;
+
+		this.entradaPendienteEscribir = this.bufferEntradas.shift();
+
+		if (this.entradaPendienteEscribir) {
+			setTimeout(async () => {
+				try {
+					await M.col.logs.updateOne(
+						{ _id: this.prefijo },
+						{ '$push': { l: this.entradaPendienteEscribir } },
+						{ upsert: true }
+					);
+
+					this.entradaPendienteEscribir = null;
+					this.moverCola();
+				}
+				catch (error) {
+					console.error('ERROR ESCRIBIENDO LOG A MONGO', error)
+				}
+			}, 1)
+		}
+	}
+
+	insertarEntradaLog(datos, nivel) {
+		let entrada = super.insertarEntradaLog(datos, nivel);
+		this.bufferEntradas.push(entrada);
+		this.moverCola();
+	}
+}
+
+class LogFichero extends Log {
+
+	fechaGeneracionDirectiorioLog = null;
+	ficheroLog = null;
+	stream;
+
+	bufferEntradas = [];
+	entradaPendienteEscribir = null;
+
+	constructor(transmision, tipo, prefijo) {
+		super(transmision, tipo, prefijo);
+	}
+
+	async generarNombreFichero() {
+
+		// El destino de los logs de 'Transmision', no varía el destino del fichero ya que solo depende del txId
+		// por lo que podemos cachear el nombre del mismo.
+		if (this.tipo === 'Transmision' && this.ficheroLog) return this.ficheroLog;
+
+		// Si no ha cambiado la fecha de generacion del fichero de log, retornamos el mismo nombre de fichero
+		let fechaActual = Date.logCorto()
+		if (this.ficheroLog && fechaActual === this.fechaGeneracionDirectiorioLog) {
+			return this.ficheroLog;
+		}
+
+		this.fechaGeneracionDirectiorioLog = fechaActual;
+		let directorioBase = C.log.directorio + SEPARADOR_DIRECTORIOS + fechaActual + SEPARADOR_DIRECTORIOS;
+
+		switch (this.tipo) {
+			case 'Transmision': {
+				// Los 8 primeros dígitos en hex de un ObjectID son el timestamp (8 digitos hex -> 4 bytes).
+				// Cogiendo los 6 primeros digitos del ID para generar un subdirectorio estaríamos
+				// quitando 1 byte del total, luego redondeamos a 2^8 = 256 segundos =)
+				// Así evitamos tener miles de ficheros en un mismo directorio
+				let subdir1 = this.transmision.txId.toHexString().substring(0, 6);
+				directorioBase = C.log.directorio + SEPARADOR_DIRECTORIOS + 'transmisiones' + SEPARADOR_DIRECTORIOS + subdir1 + SEPARADOR_DIRECTORIOS;
+				let fichero = this.transmision.txId + '.log';
+				this.ficheroLog = {
+					directorio: directorioBase,
+					fichero,
+					rutaCompleta: directorioBase + fichero
+				}
+				break;
+			}
+			case 'TransmisionLigera': {
+				this.ficheroLog = {
+					directorio: directorioBase,
+					fichero: 'monitor.log',
+					rutaCompleta: directorioBase + 'monitor.log'
+				}
+				break;
+			}
+			default: {
+				let fichero = this.prefijo + '.log'
+				this.ficheroLog = {
+					directorio: directorioBase,
+					fichero,
+					rutaCompleta: directorioBase + fichero
+				}
+			}
+		}
+
+		await fs.mkdir(this.ficheroLog.directorio, { recursive: true, mode: 0o755 });
+		if (this.stream) this.stream.end();
+		this.stream = fsc.createWriteStream(this.ficheroLog.rutaCompleta, { flags: 'a', encoding: 'utf8' });
+
+	}
+
+	moverCola() {
+
+		// Ya es esta escribiendo
+		if (this.entradaPendienteEscribir) return;
+
+		this.entradaPendienteEscribir = this.bufferEntradas.shift();
+		if (this.entradaPendienteEscribir) {
+			setTimeout(async () => {
+				try {
+					await this.generarNombreFichero();
+					let mensajes = this.entradaPendienteEscribir.obtenerMensajes();
+					if (mensajes.length) {
+						let texto = mensajes.join('\r\n')
+						await new Promise((resolve, reject) => {
+							this.stream.write(texto + '\r\n', 'utf8', (error) => {
+								if (error) reject(error)
+								resolve();
+							})
+						})
+					}
+					this.entradaPendienteEscribir = null;
+					this.moverCola();
+				}
+				catch (error) {
+					console.error('ERROR ESCRIBIENDO LOG', error)
+				}
+			}, 1)
+		}
+	}
+
+	insertarEntradaLog(datos, nivel) {
+		let entrada = super.insertarEntradaLog(datos, nivel);
+		this.bufferEntradas.push(entrada);
+		this.moverCola();
 	}
 }
 
@@ -155,18 +322,29 @@ Log.DUMP = 'DMP';
 
 
 module.exports = async function (prefijo) {
-	let l = new Log(prefijo);
 
-	global.L.trace = (...datos) => l.trace(...datos);
-	global.L.debug = (...datos) => l.debug(...datos);
-	global.L.info = (...datos) => l.info(...datos);
-	global.L.warn = (...datos) => l.warn(...datos);
-	global.L.err = (...datos) => l.err(...datos);
-	global.L.fatal = (...datos) => l.fatal(...datos);
-	global.L.evento = (...datos) => l.evento(...datos);
-	global.L.dump = (...datos) => l.dump(...datos);
+	let loggerProceso = new LogFichero(null, 'Proceso', prefijo);
 
-	global.L.instanciar = (transmision) => new Log(transmision.txId, transmision);
+	global.L.trace = (...datos) => loggerProceso.trace(...datos);
+	global.L.debug = (...datos) => loggerProceso.debug(...datos);
+	global.L.info = (...datos) => loggerProceso.info(...datos);
+	global.L.warn = (...datos) => loggerProceso.warn(...datos);
+	global.L.err = (...datos) => loggerProceso.err(...datos);
+	global.L.fatal = (...datos) => loggerProceso.fatal(...datos);
+	global.L.evento = (...datos) => loggerProceso.evento(...datos);
+	global.L.dump = (...datos) => loggerProceso.dump(...datos);
+
+	global.L.instanciar = (transmision, tipo) => {
+		switch (tipo) {
+			case 'Transmision':
+				return new LogMongo(transmision, tipo, transmision.txId);
+			case 'TransmisionLigera':
+				return new LogFichero(transmision, tipo, transmision.txId);
+			default:
+				return loggerProceso;
+		}
+
+	}
 
 	return;
 }

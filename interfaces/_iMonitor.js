@@ -63,7 +63,7 @@ module.exports.llamadaMonitorMultiple = async function (destinos, ruta, opciones
 
 module.exports.llamadaTodosMonitores = async function (ruta, opciones) {
 
-	let monitores = await M.db.collection('instancias')
+	let monitores = await M.col.instancias
 		.find({ 'procesos.tipo': K.PROCESOS.TIPOS.MONITOR })
 		.project({ _id: 1 })
 		.toArray();

@@ -3,6 +3,7 @@
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const Transmision = require('modelos/transmision/Transmision');
+const TransmisionLigera = require('modelos/transmision/TransmisionLigera');
 const TransmisionError = require('controladores/transmisiones/TransmisionError');
 
 const TransmisionAutenticacion = require('controladores/transmisiones/autenticacion/TransmisionAutenticacion');
@@ -52,7 +53,7 @@ module.exports = (app) => {
 	app.route('/pedidos/:numeroPedido')
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarPedido));
 	app.route('/pedidos/reejecutar/:txId')
-		.put(async (req, res) => Transmision.ejecutar(req, res, TransmisionReejecutarPedido));
+		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TransmisionReejecutarPedido));
 	app.route('/confirmaPedido')
 		.post(async (req, res) => Transmision.ejecutar(req, res, TransmisionConfirmarPedido));
 

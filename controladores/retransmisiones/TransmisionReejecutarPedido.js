@@ -2,15 +2,17 @@
 const K = global.K;
 const M = global.M;
 
-
 const Transmision = require('modelos/transmision/Transmision');
+const TransmisionLigera = require('modelos/transmision/TransmisionLigera');
+
 const ErrorFedicom = require('modelos/ErrorFedicom');
 
-const ResultadoTransmision = require('modelos/transmision/ResultadoTransmision');
+const ResultadoTransmisionLigera = require('modelos/transmision/ResultadoTransmisionLigera');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
 const PostTransmision = require('modelos/transmision/PostTransmision');
 const TransmisionCrearPedido = require('controladores/transmisiones/pedido/TransmisionCrearPedido');
 const { default: axios } = require('axios');
+const clone = require('clone');
 
 
 /**
@@ -88,7 +90,7 @@ class ModificacionesPedido {
 			data: {
 				user: this.sistemaExterno.autenticacion.usuario,
 				password: this.sistemaExterno.autenticacion.password,
-				domain: this.sistemaExterno.autenticacion.dominio || C.dominios.nombreDominioPorDefecto
+				domain: this.sistemaExterno.autenticacion.dominio || K.DOMINIOS.FEDICOM
 			},
 			validateStatus: () => true
 		};
@@ -158,11 +160,17 @@ class ModificacionesPedido {
 	}
 
 	generarMetadatos() {
-		return {
+		let metadatos = {
 			transmisionOriginal: this.transmisionOriginal,
 			clonado: this.generaUnClon(),
-			...this.#modificaciones
+			...this.#modificaciones,
 		}
+		if (this.sistemaExterno) {
+			metadatos.sistemaExterno = clone(this.sistemaExterno);
+			if (metadatos.sistemaExterno.autenticacion)
+				metadatos.sistemaExterno.autenticacion.password = '*******';
+		}
+		return metadatos;
 	}
 
 }
@@ -170,7 +178,7 @@ class ModificacionesPedido {
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
  */
-class TransmisionReejecutarPedido extends Transmision {
+class TransmisionReejecutarPedido extends TransmisionLigera {
 
 	modificaciones = null;
 	// @Override
@@ -185,24 +193,40 @@ class TransmisionReejecutarPedido extends Transmision {
 			let oid = M.ObjectID.createFromHexString(txId);
 			this.modificaciones = new ModificacionesPedido(this.req, oid);
 
-			this.log.info(`Se indican las siguientes modificaciones:`, this.modificaciones);
+			this.log.info(`Se indican las siguientes modificaciones:`, this.modificaciones.generarMetadatos());
 			let postTransmision = await PostTransmision.instanciar({ _id: oid }, true);
+
+			postTransmision.log.info(`La solicitud '${this.txId}' lanza una reejecucion del pedido`);
+			postTransmision.log.info(`Usuario que ordena la reejecución: [usuario=${this.token.usuario}, dominio=${this.token.dominio}]`);
+			postTransmision.log.info(`Modificaciones indicadas sobre el pedido`, this.modificaciones.generarMetadatos());
+
 			let { req, res } = await postTransmision.prepararReejecucion();
 			this.modificaciones.aplicarModificacionesSobreRequest(req);
 
 			if (this.modificaciones.sistemaExterno) {
 
 				this.log.info('Se procede al envío de la petición al sistema externo');
+				postTransmision.log.info('La reejecución es sobre un sistema externo');
 
 				try {
 					let parametros = await this.modificaciones.prepararLlamadaSistemaExterno(req);
 					let respuesta = await axios(parametros);
 					this.log.info(`La llamada al sistema externo ha finalizado con código HTTP ${respuesta.status}`);
-					return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, { resultado: respuesta.data });
+
+					if (respuesta.headers?.['x-txid']) {
+						postTransmision.log.info(`El sistema externo indica que se ha generado el ID '${respuesta.headers['x-txid']}'`);
+						this.log.info(`El sistema externo indica que se ha generado el ID ${respuesta.headers['x-txid']}`);
+					}
+
+					return new ResultadoTransmisionLigera(200, { codigoEstado: respuesta.status, datos: respuesta.data });
 				} catch (error) {
-					this.log.warn('La llamada al sistema externo ha fallado:', error);
+
 					let errorFedicom = new ErrorFedicom(error);
-					return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, { resultado: errorFedicom.getErrores() });
+
+					postTransmision.log.info('La llamada al sistema externo ha fallado:', errorFedicom.getErrores());
+					this.log.warn('La llamada al sistema externo ha fallado:', errorFedicom.getErrores());
+
+					return new ResultadoTransmisionLigera(200, { errores: errorFedicom.getErrores() });
 				}
 
 			} else {
@@ -220,16 +244,19 @@ class TransmisionReejecutarPedido extends Transmision {
 
 				if (this.modificaciones.generaUnClon()) {
 					// Actualizamos la transmision original, indicando la nueva retransmisión que se ha hecho sobre la misma
+					postTransmision.log.info(`Se ha clonado la transmisión con ID '${reTransmision.txId}' como resultado`);
 					postTransmision.setMetadatosOperacion('pedido.clones', reTransmision.txId, '$push');
 					postTransmision.actualizarTransmision();
+				} else {
+					postTransmision.log.info(`Generada transmisión con ID '${reTransmision.txId}' como resultado`);
 				}
 
 			}
 
-			return new ResultadoTransmision(200, K.ESTADOS.NO_CONTROLADA, req);
+			return new ResultadoTransmisionLigera(200, req);
 		} catch (error) {
 			this.log.err(error);
-			return (new ErrorFedicom(error)).generarResultadoTransmision(K.ESTADOS.NO_CONTROLADA);
+			return (new ErrorFedicom(error)).generarResultadoTransmision();
 		}
 	}
 
@@ -239,8 +266,6 @@ class TransmisionReejecutarPedido extends Transmision {
 
 
 
-
-TransmisionReejecutarPedido.TIPO = K.TIPOS.NO_CONTROLADA;
 TransmisionReejecutarPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,
 	grupoRequerido: 'FED3_RETRANSMISION',

@@ -57,8 +57,18 @@ class Transmision extends Object {
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
-				transmision.log.fatal('LA TRANSMISION HA PEGADO UN TRUENO Y GENERANDO UN DUMP')
 				transmision.log.fatal(truenoTransmision.stack)
+
+				// Mandamos un mensaje de error generico si no se ha enviado nada al cliente
+				if (!transmision.res.headersSent) {
+					try {
+						let errorGenerico = new ErrorFedicom('HTTP-500', 'Error interno del servidor', 500);
+						await errorGenerico.generarResultadoTransmision().responderTransmision(transmision)
+					} catch (errorEnvioError) {
+						L.fatal('Hasta el envío del mensaje de error genérico falla', errorEnvioError)
+					}
+				}
+				
 			}
 		}
 		// Registra en la base de datos el resultado de la transmisión.
@@ -75,7 +85,7 @@ class Transmision extends Object {
 		this.#estado = K.ESTADOS.RECEPCIONADO;
 		this.#tipo = tipo;
 
-		this.log = L.instanciar(this);
+		this.log = L.instanciar(this, 'Transmision');
 		this.log.evento(`------------------------ ${this.txId} ------------------------`);
 		this.log.evento(`Se da entrada a la transmisión ${this.constructor.name}. [tipo=${this.#tipo}, estado=${this.#estado}]`);
 

@@ -6,7 +6,7 @@ const L = global.L;
 // Interfaces
 //const iTokens = require('global/tokens');
 const iMongo = require('interfaces/_imongo/iMongo');
-const Maestro = require('global/maestro');
+const Maestro = require('global/_maestro');
 
 // Modelos
 const SensorPrtg = require('modelos/_prtg/SensorPrtg');
