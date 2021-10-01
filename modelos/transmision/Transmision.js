@@ -42,7 +42,7 @@ class Transmision extends Object {
 		// Instancia la transmisión (notese que las transmisiones NO DEBEN sobreescribir el constructor por defecto)
 		let transmision = new ClaseTransmision(req, res, ClaseTransmision.TIPO, ClaseTransmision.CONDICIONES_AUTORIZACION);
 		// Registra en la base de datos la transisión como recepcionada
-		if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.#registrarTransmision();
+		await transmision.#registrarTransmision();
 
 		// Comprobación de que el usuario pueda ejecutar la transmisión.
 		let ejecucionAutorizada = await transmision.#chequeoAutorizacion()
@@ -53,11 +53,14 @@ class Transmision extends Object {
 				// Responde al cliente HTTP y establece el estado de la transmisión
 				await resultadoOperacion.responderTransmision(transmision);
 				// Genera los metadatos de la transmisión
-				if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.generarMetadatosOperacion();
+				await transmision.generarMetadatosOperacion();
+
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
-				transmision.log.fatal(truenoTransmision.stack)
+				transmision.log.fatal(truenoTransmision.stack);
+
+				transmision.setEstado(K.ESTADOS.ERROR_CONCENTRADOR);
 
 				// Mandamos un mensaje de error generico si no se ha enviado nada al cliente
 				if (!transmision.res.headersSent) {
@@ -72,7 +75,7 @@ class Transmision extends Object {
 			}
 		}
 		// Registra en la base de datos el resultado de la transmisión.
-		if (ClaseTransmision.TIPO !== K.TIPOS.NO_CONTROLADA) await transmision.#actualizarTransmision();
+		await transmision.#actualizarTransmision();
 
 		return transmision;
 	}

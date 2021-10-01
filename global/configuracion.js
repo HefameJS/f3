@@ -164,7 +164,7 @@ class ConfiguracionMongodb {
 class ConfiguracionLog {
 	constructor(config) {
 		this.consola = Boolean(config?.consola);
-		this.directorio = global.C.directorioCache + SUBDIR.LOGS ;
+		this.directorio = global.C.directorioCache + SUBDIR.LOGS;
 	}
 }
 
@@ -300,12 +300,24 @@ class ConfiguracionLdap {
 
 }
 
+// "estadosQueAceptanEjecucionDeDuplicados": ["ERROR_CONCENTRADOR", "PEDIDO.RECHAZADO_SAP"]
 class ConfiguracionPedidos {
 	constructor(config) {
 		this.umbralLineasCrc = parseInt(config.umbralLineasCrc) || 10;
 		this.antiguedadDuplicadosMaxima = (parseInt(config.antiguedadDuplicadosMaxima) || 10080) * 60000;
 		this.antiguedadDuplicadosPorLineas = (parseInt(config.antiguedadDuplicadosPorLineas) || 180) * 60000;
 		this.tipificadoFaltas = { ...config.tipificadoFaltas };
+
+		this.estadosQueAceptanEjecucionDeDuplicados = config.estadosQueAceptanEjecucionDeDuplicados?.map?.(nombreEstado => {
+			let trozosNombre = nombreEstado.split('.');
+			let constante = K.ESTADOS;
+			trozosNombre.forEach(trozo => (constante = constante[trozo]))
+			return constante;
+		})
+	}
+
+	sePermiteEjecutarDuplicado( estado ) {
+		return this.estadosQueAceptanEjecucionDeDuplicados.includes(estado);
 	}
 
 	static async cargar() {

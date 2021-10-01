@@ -31,7 +31,7 @@ class TxMonConsultaPedido extends TransmisionLigera {
 		}
 
 		let crc = M.ObjectID.createFromHexString(parametroCrc);
-		let filtro = {			'pedido.crc': crc		}
+		let filtro = { 'pedido.crc': crc }
 
 		let opciones = {
 			sort: {
@@ -40,6 +40,57 @@ class TxMonConsultaPedido extends TransmisionLigera {
 		}
 
 		let nodos = await M.col.transmisiones.find(filtro, opciones).toArray();
+
+		let nodoVigente = null;
+		let nodoInformado = null;
+
+		nodos.forEach(nodo => {
+			nodo.es = {
+				vigente: false,
+				informado: false
+			};
+
+			nodo.es.interna = nodo.pedido.esReejecucion;
+			nodo.es.externa = !nodo.pedido.esReejecucion;
+			nodo.es.rechazo = nodo.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP;
+			nodo.es.duplicado = nodo.pedido.esDuplicado || nodo.pedido.esPedidoDuplicadoSap || false;
+			nodo.es.relevante = !nodo.es.rechazo && !nodo.es.duplicado;
+
+			switch (nodo.estado) {
+				case K.ESTADOS.DUPLICADO:
+				case K.ESTADOS.PEDIDO.RECHAZADO_SAP:
+					nodo.es.estado = 'warning';
+					break;
+				case K.ESTADOS.ERROR_CONCENTRADOR:
+				case K.ESTADOS.PEDIDO.NO_SAP:
+				case K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP:
+					nodo.es.estado = 'error';
+					break;
+				case K.ESTADOS.RECEPCIONADO:
+				case K.ESTADOS.PEDIDO.ESPERANDO_NUMERO_PEDIDO:
+					nodo.es.estado = 'pendiente';
+					break;
+				case K.ESTADOS.COMPLETADO:
+					nodo.es.estado = 'ok'; 
+					break;
+				default:
+					nodo.es.estado = 'desconocido';
+			}
+
+
+			if (nodo.es.externa) {
+				if (nodo.es.relevante || !nodoInformado) {
+					nodoInformado = nodo;
+				}
+			}
+			if (nodo.es.relevante || !nodoVigente) {
+				nodoVigente = nodo;
+			}
+		})
+
+		if (nodoVigente) nodoVigente.es.vigente = true;
+		if (nodoInformado) nodoInformado.es.informado = true;
+
 		return new ResultadoTransmisionLigera(200, nodos);
 
 	}

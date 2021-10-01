@@ -310,9 +310,8 @@ class SolicitudCrearPedido extends Modelo {
 			if (transmisionOriginal?._id) {
 				this.log.info(`Se ha detectado transmisión ID '${transmisionOriginal._id}' con idéntico CRC`);
 
-				// TODO: Determinar lista de estados que ignoraremos a nivel de configuración de clúster
-				if (transmisionOriginal.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP) {
-					this.log.info('La transmisión original fue rechazada por SAP, no la tomamos como repetida');
+				if (C.pedidos.sePermiteEjecutarDuplicado(transmisionOriginal.estado)) {
+					this.log.info(`La transmisión original está en el estado ${transmisionOriginal.estado} que permite la reejecución de duplicados`);
 					this.metadatos.esDuplicado = true;
 					this.metadatos.esRetransmisionCliente = true;
 				} else {

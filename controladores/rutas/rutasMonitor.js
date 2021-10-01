@@ -1,8 +1,6 @@
 'use strict';
 
 
-//const TransmisionError = require('controladores/transmisiones/TransmisionError');
-//const ErrorFedicom = require('modelos/ErrorFedicom');
 const TransmisionLigera = require('modelos/transmision/TransmisionLigera');
 const TxMonConsultaInstancias = require('controladores/monitor/TxMonConsultaInstancias');
 const TxMonGenerarTokenObservador = require('controladores/monitor/TxMonGenerarTokenObservador');
@@ -11,6 +9,7 @@ const TxMonBorrarRegistroInstancia = require('controladores/monitor/TxMonBorrarR
 const TxMonConsultaPedido = require('controladores/monitor/TxMonConsultaPedido');
 const TxMonConsultaMaestro = require('controladores/monitor/TxMonConsultaMaestro');
 const TxMonConsultaTransmision = require('controladores/monitor/TxMonConsultaTransmision');
+const TxMonListadoPedidos = require('controladores/monitor/TxMonListadoPedidos');
 
 
 
@@ -35,8 +34,12 @@ module.exports = (app) => {
 		.delete(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonBorrarRegistroInstancia));
 
 
+	app.route('/~/consulta/pedidos')
+		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))
 	app.route('/~/consulta/pedidos/:crc')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaPedido));
+
+
 
 	app.route('/~/consulta/transmisiones/:txId/:tipoConsulta?')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaTransmision));
