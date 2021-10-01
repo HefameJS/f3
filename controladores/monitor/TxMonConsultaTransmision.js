@@ -43,8 +43,8 @@ class TxMonConsultaTransmision extends TransmisionLigera {
 
 
 		switch (this.#parametros.tipoConsulta) {
-			case 'logs': return await this.#consultaLogs()
-			default: return await this.#consultaEstandard()
+			case 'logs': return this.#consultaLogs()
+			default: return this.#consultaEstandard()
 		}
 
 	}
@@ -60,14 +60,12 @@ class TxMonConsultaTransmision extends TransmisionLigera {
 
 
 	async #consultaLogs() {
-
-		let transmision = await M.col.logs.findOne({ _id: this.#parametros.txId });
-		if (!transmision?.l) {
+		let logs = await M.col.logs.findOne({ _id: this.#parametros.txId });
+		if (!logs?.l) {
 			let error = new ErrorFedicom('HTTP-404', 'No exiten logs para la transmisión indicada', 404);
 			return error.generarResultadoTransmision();
 		}
-		return new ResultadoTransmisionLigera(200, transmision.l);
-
+		return new ResultadoTransmisionLigera(200, logs.l);
 	}
 
 
