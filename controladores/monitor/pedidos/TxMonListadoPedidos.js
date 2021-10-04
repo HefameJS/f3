@@ -16,7 +16,7 @@ const { EJSON } = require('bson');
  * 		"filtro": {
  * 			"_id": { "$oid": "5EC290F44783DB681D4E5E04" }
  * 		},
- * 		"proyeccion": {"authenticatingUser": 1},
+ * 		"proyeccion": {"pedido": 1},
  *  	"orden": {},
  * 		"skip": 0,
  * 		"limite": 10
