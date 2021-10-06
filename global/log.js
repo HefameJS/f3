@@ -86,7 +86,7 @@ class RegistroDump {
 			iid: process.iid,
 			pid: process.pid,
 			wid: process.worker
-		}, 10);
+		}, false, 10);
 
 		if (transmision) {
 			let req = transmision.req;
@@ -98,18 +98,18 @@ class RegistroDump {
 				url: req.originalUrl,
 				httpVersion: req.httpVersion,
 				headers: req.headers,
-			}, 10);
+			}, false, 10);
 		}
 
 		datos.forEach((dato, i) => {
 			mensaje += `\n\n----------------------------------------\n ARGUMENTO ${i} \n----------------------------------------\n`;
-			mensaje += util.inspect(dato, 10)
+			mensaje += util.inspect(dato, false, 10)
 		});
 
 		fs.mkdir(directorio, { recursive: true, mode: 0o755 })
 			.then(() => fs.appendFile(this.rutaFicheroDump, mensaje, { encoding: 'utf8' }))
 			.catch((error) => {
-				console.error('ERROR AL ESCRIBIR FICHERO DE DUUMP', error);
+				console.error('ERROR AL ESCRIBIR FICHERO DE DUMP', error);
 				console.error(mensaje);
 			})
 	}
