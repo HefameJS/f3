@@ -211,13 +211,13 @@ class ConsultaAlbaran extends Modelo {
 
 	async #buscaPorCrc() {
 
-		if (!M.ObjectId.isValid(this.numeroPedido)) {
+		if (!M.ObjectID.isValid(this.numeroPedido)) {
 			this.log.info('El número de pedido no puede convertirse a ObjectID')
 			return null;
 		}
 
 		try {
-			let crc = new M.ObjectId(this.numeroPedido);
+			let crc = new M.ObjectID(this.numeroPedido);
 			let consulta = {
 				type: K.TIPOS.CREAR_PEDIDO,
 				'pedido.crc': crc
