@@ -11,7 +11,7 @@ class LineaPedidoSap extends Modelo {
 		numeroPosicion: null,
 		tipificadoFalta: null,
 		estupefaciente: false,
-		almacenDeRebote: false
+		almacenDeRebote: null
 	}
 
 	orden;
@@ -96,11 +96,12 @@ class LineaPedidoSap extends Modelo {
 
 	gestionarReboteFaltas(almacenCabecera) {
 
-		// Si el almacén de cabecera y posicion son distintos Y se indica que se sirve todo o parte de la cantidad
+		// Si el almacén de cabecera y posición son distintos Y la línea no es falta total
 		if (almacenCabecera && this.codigoAlmacenServicio && almacenCabecera !== this.codigoAlmacenServicio && this.cantidad !== this.cantidadFalta) {
 
 			this.metadatos.almacenDeRebote = this.codigoAlmacenServicio;
-			this.log.info(`Posicion ${this.metadados.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
+			
+			this.log.info(`Posición ${this.metadatos.numeroPosicion}: Detectado rebote de faltas para la línea ${almacenCabecera} != ${this.codigoAlmacenServicio}`)
 
 			if (this.servicioDemorado) {
 
@@ -114,7 +115,7 @@ class LineaPedidoSap extends Modelo {
 
 			} else {
 
-				this.log.info(`Posición ${this.medatados.numeroPosicion}: Hay rebote pero no se admite servicio demorado, se añaden incidencias`);
+				this.log.info(`Posición ${this.metadatos.numeroPosicion}: Hay rebote pero no se admite servicio demorado, se añaden incidencias`);
 
 				let advertenciaRebote = new ErrorFedicom();
 				if (this.cantidadFalta === 0) {

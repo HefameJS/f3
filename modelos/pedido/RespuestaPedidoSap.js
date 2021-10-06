@@ -21,7 +21,7 @@ class RespuestaPedidoSap extends Modelo {
 		pedidosAsociadosSap: [],
 		pedidoAgrupadoSap: null,
 		esPedidoDuplicadoSap: false,
-		almacenDeRebote: false,
+		almacenesDeRebote: [],
 		porRazonDesconocida: false,
 		pedidoProcesadoSinNumero: false,
 		servicioDemorado: false,
@@ -194,7 +194,8 @@ class RespuestaPedidoSap extends Modelo {
 			
 			lineaSap.gestionarReboteFaltas(this.codigoAlmacenServicio);
 			if (lineaSap.metadatos.almacenDeRebote) {
-				this.metadatos.almacenDeRebote = lineaSap.metadatos.almacenDeRebote
+				if (!this.metadatos.almacenesDeRebote.includes(lineaSap.metadatos.almacenDeRebote) )
+					this.metadatos.almacenesDeRebote.push(lineaSap.metadatos.almacenDeRebote)
 			}
 
 			this.metadatos.totales.lineas++;

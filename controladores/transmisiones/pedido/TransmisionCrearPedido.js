@@ -138,9 +138,11 @@ class TransmisionCrearPedido extends Transmision {
 			if (this.#respuesta.metadatos.erroresOcultados.tieneErrores()) metadatos.erroresOcultados = this.#respuesta.metadatos.erroresOcultados.getErrores();
 
 			if (this.#respuesta.codigoAlmacenServicio) metadatos.codigoAlmacenServicio = this.#respuesta.codigoAlmacenServicio;
-
+			if (this.#respuesta.metadatos.almacenesDeRebote.length) {
+				metadatos.reboteFaltas = true;
+				metadatos.almacenesDeRebote = this.#respuesta.metadatos.almacenesDeRebote;
+			}
 			if (this.#respuesta.metadatos.pedidoProcesadoSap) metadatos.pedidoProcesadoSap = true;
-			if (this.#respuesta.metadatos.reboteFaltas) metadatos.reboteFaltas = true;
 			if (this.#respuesta.metadatos.porRazonDesconocida) metadatos.porRazonDesconocida = true;
 			if (this.#respuesta.metadatos.servicioDemorado) metadatos.servicioDemorado = true;
 			if (this.#respuesta.metadatos.estupefaciente) metadatos.estupefaciente = true;
