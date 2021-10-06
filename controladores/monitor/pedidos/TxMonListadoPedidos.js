@@ -58,8 +58,10 @@ class TxMonListadoPedidos extends TransmisionLigera {
 
 		this.log.debug('Se realiza la consulta a MongoDB:', filtro, opciones)
 
-		let nodos = await M.col.transmisiones.find(filtro, opciones).toArray();
-		return new ResultadoTransmisionLigera(200, nodos);
+		let numeroResultados = await M.col.transmisiones.count( filtro)
+
+		let resultados = await M.col.transmisiones.find(filtro, opciones).toArray();
+		return new ResultadoTransmisionLigera(200, { totalResultados: numeroResultados, resultados });
 
 	}
 
