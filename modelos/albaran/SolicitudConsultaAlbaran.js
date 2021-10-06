@@ -219,7 +219,7 @@ class ConsultaAlbaran extends Modelo {
 		try {
 			let crc = new M.ObjectID(this.numeroPedido);
 			let consulta = {
-				type: K.TIPOS.CREAR_PEDIDO,
+				tipo: K.TIPOS.CREAR_PEDIDO,
 				'pedido.crc': crc
 			}
 			let opciones = {
