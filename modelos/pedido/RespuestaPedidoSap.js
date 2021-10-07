@@ -118,7 +118,7 @@ class RespuestaPedidoSap extends Modelo {
 		this.metadatos.pedidoProcesadoSap = json.sap_pedidoprocesado || false;
 		this.metadatos.puntoEntrega = json.sap_punto_entrega || null;
 		this.metadatos.tipoPedidoSap = json.sap_tipopedido || null;
-		this.metadatos.motivoPedidoSap = json.sap_motivopedido || null;
+		this.metadatos.motivoPedidoSap = json.sap_motivo_pedido || null;
 		this.metadatos.clienteSap = json.sap_cliente || null;
 		this.metadatos.pedidoAgrupadoSap = parseInt(json.numeropedido) || null;
 		if (Array.isArray(json.sap_pedidosasociados) && json.sap_pedidosasociados.length) {
@@ -233,7 +233,7 @@ class RespuestaPedidoSap extends Modelo {
 			return Tupla(K.ESTADOS.PEDIDO.RECHAZADO_SAP, 400);
 		}
 
-		if (this.metadatos.pedidoProcesado) {
+		if (this.metadatos.pedidoProcesadoSap) {
 			return Tupla(K.ESTADOS.COMPLETADO, 201);
 		} else {
 			return Tupla(K.ESTADOS.PEDIDO.ESPERANDO_NUMERO_PEDIDO, 201);
