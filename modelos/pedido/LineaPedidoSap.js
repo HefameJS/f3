@@ -1,6 +1,5 @@
 'use strict';
 const C = global.C;
-const Maestro = require('global/_maestro');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Modelo = require('modelos/transmision/Modelo');
 
