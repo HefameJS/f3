@@ -29,7 +29,7 @@ class ModeloNodoPedido {
 		this.es.externa = Boolean(!nodo.pedido.esReejecucion);
 		this.es.rechazo = Boolean(nodo.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP);
 		this.es.duplicado = Boolean(nodo.pedido.esDuplicado);
-		this.es.relevante = Boolean(!this.es.rechazo && !this.es.duplicado);
+		this.es.relevante = Boolean(!nodo.pedido.esPedidoDuplicadoSap && !this.es.rechazo && !this.es.duplicado);
 
 		switch (nodo.estado) {
 			case K.ESTADOS.DUPLICADO:
@@ -87,7 +87,6 @@ class ModeloNodoPedido {
 			json.noEnviaFaltas = p.noEnviaFaltas;
 			json.retransmisionCliente = p.retransmisionCliente;
 			json.erroresOcultados = p.erroresOcultados;
-			json.reboteFaltas = p.reboteFaltas;
 			json.ip = cm.ip;
 			json.autenticacion = cm.autenticacion;
 			json.programa = cm.programa;
@@ -108,6 +107,8 @@ class ModeloNodoPedido {
 			json.codigoAlmacenServicio = p.codigoAlmacenServicio;
 			json.codigoAlmacenDesconocido = p.codigoAlmacenDesconocido;
 			json.codigoAlmacenSaneado = p.codigoAlmacenSaneado;
+			json.reboteFaltas = p.reboteFaltas;
+			json.almacenesDeRebote = p.almacenesDeRebote;
 
 			json.servicioDemorado = p.servicioDemorado;
 			json.estupefaciente = p.estupefaciente;
