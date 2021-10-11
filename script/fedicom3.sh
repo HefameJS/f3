@@ -137,7 +137,7 @@ limpiar_log() {
 	then
 		LOGDIR="$CACHEDIR/logs"
 		echo -e "\n$C_BLUE # LIMPIANDO LOGS ANTIGUOS DEL CONCENTRADOR (No se eliminaran los DUMPS) #$C_RESET\n"
-		find $LOGDIR -name "*.log" -ls -exec rm -f {} \;
+		rm -fr $LOGDIR
 		echo -e "\n"
 	fi
 }
