@@ -33,9 +33,10 @@ class MaestroLaboratorios {
 
 	async porNombre(codigoLaboratorio) {
 		if (!this.#laboratorios.length) await this.cargarLaboratorios();
+		codigoLaboratorio = parseInt(codigoLaboratorio);
 		let laboratorio = this.#laboratorios.find(objLaboratorio => objLaboratorio.id === codigoLaboratorio)
 		if (laboratorio) return laboratorio;
-		return { id: 0, nombre: 'Laboratorio desconocido'};
+		return { id: 0, nombre: 'Laboratorio desconocido' };
 	}
 
 }
