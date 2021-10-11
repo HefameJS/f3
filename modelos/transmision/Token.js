@@ -71,7 +71,7 @@ class Token {
 	 */
 	getDatosLoginSap() {
 		return {
-			user: this.usuario,
+			username: this.usuario,
 			domain: this.dominio
 		}
 	}
