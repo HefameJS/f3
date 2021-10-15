@@ -97,7 +97,6 @@ class ModeloNodoPedido {
 				respuesta: c.respuesta
 			}
 		}
-
 		if (this.es.vigente) {
 			json.codigoCliente = p.codigoCliente;
 			json.numeroPedidoOrigen = p.numeroPedidoOrigen;
@@ -117,11 +116,16 @@ class ModeloNodoPedido {
 			json.totales = p.totales;
 			json.puntoEntrega = p.puntoEntrega;
 
+			json.tipoPedido = p.tipoPedido;
 			json.tipoPedidoSap = p.tipoPedidoSap;
 			json.motivoPedidoSap = p.motivoPedidoSap;
 			json.clienteSap = p.clienteSap;
 			json.pedidosAsociadosSap = p.pedidosAsociadosSap;
 			json.pedidoAgrupadoSap = p.pedidoAgrupadoSap;
+			json.transmision = {
+				solicitud: c.solicitud,
+				respuesta: c.respuesta
+			}
 		}
 		return json;
 	}
