@@ -257,7 +257,7 @@ class SolicitudCrearPedido extends Modelo {
 	 */
 	generarJSON(tipoReceptor = 'sap') {
 
-		if (this.metadatos.errorProtocoloCabecera || this.metadatos.esDuplicado) {
+		if (this.metadatos.errorProtocoloCabecera || (tipoReceptor !== 'sap' && this.metadatos.esDuplicado)) {
 			return this.metadatos.errores.getErrores() || [];
 		}
 
