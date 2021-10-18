@@ -17,7 +17,7 @@ class RegistroLog {
 	datos;
 
 	constructor(datos, nivel, ) {
-		this.fecha = Date.logLargo();
+		this.fecha = new Date();
 		this.datos = datos;
 		this.nivel = nivel;
 	}
@@ -27,7 +27,7 @@ class RegistroLog {
 		this.datos.forEach(dato => {
 			let mensaje = dato?.message || dato;
 			if (Array.isArray(mensaje) || typeof mensaje === "object") mensaje = util.inspect(mensaje)
-			mensajes.push(`${this.fecha}|${this.nivel}|${mensaje}`)
+			mensajes.push(`${Date.logLargo(this.fecha)}|${this.nivel}|${mensaje}`)
 			if (dato?.stack) mensajes.push(dato.stack);
 		});
 		return mensajes;
