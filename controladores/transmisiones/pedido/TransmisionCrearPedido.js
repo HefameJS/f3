@@ -76,7 +76,7 @@ class TransmisionCrearPedido extends Transmision {
 			this.log.err('Incidencia en la comunicación con SAP, se simulan las faltas del pedido', errorLlamadaSap);
 			//this.addError('PED-WARN-001', 'Su pedido se ha recibido correctamente, pero no hemos podido informar las faltas.');
 			this.metadatos.noEnviaFaltas = true;
-			return new ResultadoTransmision(201, K.ESTADOS.PEDIDO.NO_SAP, this.#solicitud.generarJSON('errores'));
+			return new ResultadoTransmision(201, K.ESTADOS.ERROR_RESPUESTA_SAP, this.#solicitud.generarJSON('errores'));
 		}
 
 		// PASO 4: A ver que nos ha mandado SAP...
@@ -99,7 +99,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.#respuesta.metadatos.esRespuestaIncompresible) {
 			this.log.err('SAP devuelve un cuerpo de respuesta que no es un objeto válido. Se devuelve error de faltas simuladas', cuerpoRespuestaSap);
 			this.metadatos.noEnviaFaltas = true;
-			return new ResultadoTransmision(409, K.ESTADOS.PEDIDO.NO_SAP, this.#solicitud.generarJSON('noSap'));
+			return new ResultadoTransmision(409, K.ESTADOS.ERROR_RESPUESTA_SAP, this.#solicitud.generarJSON('noSap'));
 		}
 
 		let respuestaCliente = this.#respuesta.generarJSON();

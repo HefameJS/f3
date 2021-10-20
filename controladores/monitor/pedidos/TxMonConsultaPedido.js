@@ -37,7 +37,7 @@ class ModeloNodoPedido {
 				this.es.estado = 'warning';
 				break;
 			case K.ESTADOS.ERROR_CONCENTRADOR:
-			case K.ESTADOS.PEDIDO.NO_SAP:
+			case K.ESTADOS.ERROR_RESPUESTA_SAP:
 			case K.ESTADOS.PEDIDO.SIN_NUMERO_PEDIDO_SAP:
 				this.es.estado = 'error';
 				break;
