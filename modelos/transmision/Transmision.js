@@ -267,7 +267,7 @@ class Transmision extends Object {
 				tipo: this.#tipo,
 				v: K.VERSION.TRANSMISION,
 				'conexion.solicitud': {
-					method: this.#http.req.method,
+					metodo: this.#http.req.method,
 					url: this.#http.req.originalUrl,
 					headers: this.#http.req.headers,
 					body: this.#http.req.body
@@ -305,7 +305,7 @@ class Transmision extends Object {
 				tipo: this.#tipo,
 				'conexion.respuesta': {
 					fechaEnvio: new Date(),
-					codigo: this.#http.respuesta.codigo,
+					estado: this.#http.respuesta.codigo,
 					headers: this.#http.res.getHeaders(),
 					body: this.#http.respuesta.datos,
 					error: (this.#http.respuesta.error ? this.#http.respuesta.error.toString() : undefined)
