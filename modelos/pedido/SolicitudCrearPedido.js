@@ -7,6 +7,7 @@ const Crc = require('global/crc');
 const Validador = require('global/validador');
 const LineaPedidoCliente = require('modelos/pedido/LineaPedidoCliente');
 const Modelo = require('modelos/transmision/Modelo');
+const ModeloPedido = require('./ModeloPedido');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -156,7 +157,6 @@ class SolicitudCrearPedido extends Modelo {
 	*/
 	#analizarPosiciones(lineasJson) {
 
-
 		this.lineas = [];
 
 		let ordinales = [];
@@ -290,9 +290,9 @@ class SolicitudCrearPedido extends Modelo {
 	async esDuplicado() {
 
 		try {
-			let fechaLimite = new Date();
 
 			let margenDeTiempo = this.metadatos.tipoCrc === 'lineas' ? C.pedidos.antiguedadDuplicadosPorLineas : C.pedidos.antiguedadDuplicadosMaxima;
+			let fechaLimite = new Date();
 			fechaLimite.setTime(fechaLimite.getTime() - margenDeTiempo);
 
 			let consultaCRC = {
@@ -301,24 +301,35 @@ class SolicitudCrearPedido extends Modelo {
 				'pedido.crc': this.metadatos.crc
 			}
 			let opcionesConsultaCRC = {
-				projection: { _id: 1, estado: 1 },
-				sort: { fechaCreacion: -1 }
+				projection: {
+					_id: 1, 
+					estado: 1, 
+					'pedido.esReejecucion': 1, 
+					'pedido.esDuplicado': 1, 
+					'pedido.esPedidoDuplicadoSap': 1,
+					'conexion.respuesta.body': 1,
+					'conexion.respuesta.codigo': 1
+				},
+				sort: { fechaCreacion: 1 }
 			}
 
-			let transmisionOriginal = await M.col.transmisiones.findOne(consultaCRC, opcionesConsultaCRC);
+			let nodos = await M.col.transmisiones.find(consultaCRC, opcionesConsultaCRC).toArray();
 
-			if (transmisionOriginal?._id) {
-				this.log.info(`Se ha detectado transmisión ID '${transmisionOriginal._id}' con idéntico CRC`);
+			if (nodos?.length > 0) {
 
-				if (C.pedidos.sePermiteEjecutarDuplicado(transmisionOriginal.estado)) {
-					this.log.info(`La transmisión original está en el estado ${transmisionOriginal.estado} que permite la reejecución de duplicados`);
+				let pedido = new ModeloPedido(nodos);
+				let nodoVigente = pedido.nodoVigente;
+
+				this.log.info(`Ya existe una cadena de transmisiones con idéntico CRC cuyo nodo vigente tiene ID '${nodoVigente.id}'`);
+
+				if (C.pedidos.sePermiteEjecutarDuplicado(nodoVigente.estado)) {
+					this.log.info(`La transmisión original está en el estado ${nodoVigente.estado} que permite la reejecución de duplicados`);
 					this.metadatos.esDuplicado = true;
 					this.metadatos.esRetransmisionCliente = true;
 				} else {
 					this.log.warn('Se marca la transmisión como un duplicado');
 					this.metadatos.esDuplicado = true;
-					this.metadatos.errores.insertar('PED-ERR-008', 'Pedido duplicado: ' + this.metadatos.crc, 400);
-					return transmisionOriginal._id;
+					return nodoVigente;
 				}
 			} else {
 				this.log.debug('No se ha detectado pedido duplicado');

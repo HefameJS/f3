@@ -9,6 +9,7 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 const SolicitudCrearPedido = require('modelos/pedido/SolicitudCrearPedido');
 const RespuestaPedidoSap = require('modelos/pedido/RespuestaPedidoSap');
 const PostTransmision = require('modelos/transmision/PostTransmision');
+const ErrorFedicom = require('modelos/ErrorFedicom');
 
 /**
  * Clase que representa una transmisión de una solicitud de autenticación.
@@ -52,17 +53,23 @@ class TransmisionCrearPedido extends Transmision {
 
 		// PASO 2: Verificar si el pedido es duplicado (Este caso no se aplica en el caso de que estemos reejecutando)
 		if (!this.metadatos.opcionesDeReejecucion) {
-			let idTransmisionOriginal = await this.#solicitud.esDuplicado()
-			if (idTransmisionOriginal) {
-				// Por el momento, no veo necesario actualizar la transmisión original, ya que ambas están
-				// enlazadas al tener el mismo CRC
-				/*
-				PostTransmision.instanciar(idTransmisionOriginal).then((pedidoOriginal) => {
-					pedidoOriginal.setMetadatosOperacion('pedido.duplicados', this.txId, '$push');
-					pedidoOriginal.actualizarTransmision();
-				})
-				*/
-				return new ResultadoTransmision(400, K.ESTADOS.DUPLICADO, this.#solicitud.generarJSON('errores'));
+			let nodoVigente = await this.#solicitud.esDuplicado()
+			if (nodoVigente) {
+
+				let codigoRespuesta = nodoVigente.codigoRespuestaCliente;
+				let cuerpoRespuesta = nodoVigente.cuerpoRespuestaCliente;
+				let errorDuplicado = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado', 400);
+
+				if (codigoRespuesta && cuerpoRespuesta) {
+					this.log.info('Se envía al cliente un duplicado de la respuesta del nodo vigente');
+					let errorDuplicado = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado', 400);
+					if (!Array.isArray(cuerpoRespuesta.incidencias)) cuerpoRespuesta.incidencias = [];
+					cuerpoRespuesta.incidencias = cuerpoRespuesta.incidencias.concat(errorDuplicado.getErrores())
+					return new ResultadoTransmision(codigoRespuesta, K.ESTADOS.DUPLICADO, cuerpoRespuesta);
+				} else {
+					this.log.warn('El nodo vigente no tiene respuesta, enviamos el mensaje de pedido duplicado');
+					return errorDuplicado.generarResultadoTransmision(K.ESTADOS.DUPLICADO);
+				}
 			}
 		}
 
