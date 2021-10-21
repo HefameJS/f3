@@ -58,10 +58,6 @@ class ModeloNodoPedido {
 		return this.#raw.conexion?.respuesta?.codigo;
 	}
 
-	get raw() {
-		console.log(this.#raw);
-	}
-
 	getDatos() {
 		let d = this.#raw;
 		let p = d.pedido;
@@ -88,7 +84,7 @@ class ModeloNodoPedido {
 			json.sap = d.sap.metadatos;
 		}
 
-		if (this.es.informado) {
+		if (this.es.externa || p.opcionesDeReejecucion?.clonado) {
 			json.noEnviaFaltas = p.noEnviaFaltas;
 			json.retransmisionCliente = p.retransmisionCliente;
 			json.erroresOcultados = p.erroresOcultados;
@@ -97,6 +93,8 @@ class ModeloNodoPedido {
 			json.programa = cm.programa;
 			json.ssl = cm.ssl;
 			json.balanceador = cm.balanceador;
+		}
+		if (this.es.informado) {
 			json.transmision = {
 				solicitud: c.solicitud,
 				respuesta: c.respuesta

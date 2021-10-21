@@ -10,13 +10,16 @@ class ModeloPedido {
 	constructor(nodos) {
 		this.#nodos = nodos.map(nodo => new ModeloNodoPedido(nodo))
 		this.#nodos.forEach(nodo => {
-			if (nodo.es.externa) {
-				if (nodo.es.relevante || !this.#nodoInformado) {
-					this.#nodoInformado = nodo;
-				}
-			}
 			if (nodo.es.relevante || !this.#nodoVigente) {
 				this.#nodoVigente = nodo;
+			}
+			if (nodo.es.externa) {
+				if (!this.#nodoInformado || nodo.es.relevante || this.#nodoVigente) {
+					this.#nodoInformado = nodo;
+				}
+				if (!nodo.es.relevante && this.#nodoVigente !== nodo) {
+					this.#nodoInformado = this.#nodoVigente;
+				}
 			}
 		})
 
