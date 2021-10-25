@@ -56,16 +56,16 @@ class TransmisionCrearPedido extends Transmision {
 			let nodoVigente = await this.#solicitud.esDuplicado()
 			if (nodoVigente) {
 
-				let codigoRespuesta = nodoVigente.codigoRespuestaCliente;
+				let codigoEstadoRespuesta = nodoVigente.codigoEstadoRespuestaCliente;
 				let cuerpoRespuesta = nodoVigente.cuerpoRespuestaCliente;
 				let errorDuplicado = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado', 400);
 
-				if (codigoRespuesta && cuerpoRespuesta) {
+				if (codigoEstadoRespuesta && cuerpoRespuesta) {
 					this.log.info('Se envía al cliente un duplicado de la respuesta del nodo vigente');
 					let errorDuplicado = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado', 400);
 					if (!Array.isArray(cuerpoRespuesta.incidencias)) cuerpoRespuesta.incidencias = [];
 					cuerpoRespuesta.incidencias = cuerpoRespuesta.incidencias.concat(errorDuplicado.getErrores())
-					return new ResultadoTransmision(codigoRespuesta, K.ESTADOS.DUPLICADO, cuerpoRespuesta);
+					return new ResultadoTransmision(codigoEstadoRespuesta, K.ESTADOS.DUPLICADO, cuerpoRespuesta);
 				} else {
 					this.log.warn('El nodo vigente no tiene respuesta, enviamos el mensaje de pedido duplicado');
 					return errorDuplicado.generarResultadoTransmision(K.ESTADOS.DUPLICADO);

@@ -54,8 +54,8 @@ class ModeloNodoPedido {
 	get cuerpoRespuestaCliente() {
 		return this.#raw.conexion?.respuesta?.body;
 	}
-	get codigoRespuestaCliente() {
-		return this.#raw.conexion?.respuesta?.codigo;
+	get codigoEstadoRespuestaCliente() {
+		return this.#raw.conexion?.respuesta?.estado;
 	}
 
 	getDatos() {

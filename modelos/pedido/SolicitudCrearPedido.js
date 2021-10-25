@@ -308,7 +308,7 @@ class SolicitudCrearPedido extends Modelo {
 					'pedido.esDuplicado': 1, 
 					'pedido.esPedidoDuplicadoSap': 1,
 					'conexion.respuesta.body': 1,
-					'conexion.respuesta.codigo': 1
+					'conexion.respuesta.estado': 1
 				},
 				sort: { fechaCreacion: 1 }
 			}
