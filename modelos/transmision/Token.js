@@ -80,7 +80,8 @@ class Token {
 		if (this.#verificado) {
 			let flag = {
 				usuario: this.usuario,
-				dominio: this.dominio
+				dominio: this.dominio,
+				usuarioNormalizado: Token.normalizaNombreUsuario(this.usuario, this.dominio)
 			};
 
 			if (this.#solicitante) {
@@ -89,6 +90,16 @@ class Token {
 			return flag;
 		}
 		return null;
+	}
+
+	static normalizaNombreUsuario(usuario, dominio) {
+		// Caso Hefame 00000000@hefame
+		if (/^[0-9]{8}@hefame$/.test(usuario)) return parseInt(usuario.substr(3, 5));
+		// Caso BorginoFarma BF0000000000
+		if (/^BF[0-9]{10}}$/.test(usuario)) return parseInt(usuario.slice(-5));
+		// Caso Transfer TR00000000, TG00000000, TP00000000
+		if (/^T(R|G|P)[0-9]{8}$/.test(usuario)) return parseInt(usuario.slice(-8));
+		return usuario.toUpperCase();
 	}
 
 
