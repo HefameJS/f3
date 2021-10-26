@@ -32,7 +32,7 @@ module.exports = async function () {
 			RECHAZADA: 29100
 		},
 		LOGISTICA: {
-			RECHAZADO_SAP: 3120,
+			RECHAZADO_SAP: 3121,
 			SIN_NUMERO_LOGISTICA: 9141
 		}
 	};
