@@ -18,6 +18,7 @@ class MaestroEstados {
 						nombre: datosDelEstado.nombre,
 						descripcion: datosDelEstado.descripcion,
 						color: datosDelEstado.color,
+						grupo: datosDelEstado.grupo,
 					}
 				})
 				L.debug('Maestro de estados cargado con éxito');
@@ -45,6 +46,7 @@ class MaestroEstados {
 			nombre: 'DESCONOCIDO',
 			descripcion: 'No se conoce el estado',
 			color: 'warning',
+			grupo: "ERROR"
 		}
 	}
 
