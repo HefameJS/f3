@@ -4,19 +4,15 @@
 
 
 const TransmisionLigera = require('modelos/transmision/TransmisionLigera');
-
 const TxMonGenerarTokenObservador = require('controladores/monitor/tokens/TxMonGenerarTokenObservador');
 const TxMonGenerarTokenPermanente = require('controladores/monitor/tokens/TxMonGenerarTokenPermanente');
-
 const TxMonConsultaInstancias = require('controladores/monitor/instancias/TxMonConsultaInstancias');
 const TxMonBorrarRegistroInstancia = require('controladores/monitor/instancias/TxMonBorrarRegistroInstancia');
-
 const TxMonConsultaMaestro = require('controladores/monitor/maestros/TxMonConsultaMaestro');
-
 const TxMonConsultaTransmision = require('controladores/monitor/transmisiones/TxMonConsultaTransmision');
-
 const TxMonConsultaPedido = require('controladores/monitor/pedidos/TxMonConsultaPedido');
 const TxMonListadoPedidos = require('controladores/monitor/pedidos/TxMonListadoPedidos');
+const TxMonListadoTransmisiones = require('controladores/monitor/transmisiones/TxMonListadoTransmisiones');
 
 
 
@@ -41,14 +37,15 @@ module.exports = (app) => {
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaPedido));
 
 
-
+	app.route('/~/consulta/transmisiones')
+		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoTransmisiones));
 	app.route('/~/consulta/transmisiones/:txId/:tipoConsulta?')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaTransmision));
 
 
 	app.route('/~/maestro/:idMaestro/:idElemento?')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaMaestro));
-	
+
 
 
 };
