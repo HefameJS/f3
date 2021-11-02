@@ -13,6 +13,11 @@ const TxMonConsultaTransmision = require('controladores/monitor/transmisiones/Tx
 const TxMonConsultaPedido = require('controladores/monitor/pedidos/TxMonConsultaPedido');
 const TxMonListadoPedidos = require('controladores/monitor/pedidos/TxMonListadoPedidos');
 const TxMonListadoTransmisiones = require('controladores/monitor/transmisiones/TxMonListadoTransmisiones');
+const TxMonMongoReplicaSet = require('controladores/monitor/mongodb/TxMonMongoReplicaSet');
+const TxMonMongoColeccion = require('controladores/monitor/mongodb/TxMonMongoColeccion');
+const TxMonMongoBaseDatos = require('controladores/monitor/mongodb/TxMonMongoBaseDatos');
+const TxMonMongoOperaciones = require('controladores/monitor/mongodb/TxMonMongoOperaciones');
+const TxMonMongoLogs = require('controladores/monitor/mongodb/TxMonMongoLogs');
 
 
 
@@ -30,6 +35,19 @@ module.exports = (app) => {
 	app.route('/~/instancias/:idInstancia')
 		.delete(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonBorrarRegistroInstancia));
 
+
+	app.route('/~/mongodb')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
+	app.route('/~/mongodb/replicaset')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
+	app.route('/~/mongodb/coleccion/:coleccion?')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoColeccion));
+	app.route('/~/mongodb/basedatos')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoBaseDatos));
+	app.route('/~/mongodb/operaciones')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoOperaciones));
+	app.route('/~/mongodb/logs/:tipoLog?')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoLogs));
 
 	app.route('/~/consulta/pedidos')
 		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))
