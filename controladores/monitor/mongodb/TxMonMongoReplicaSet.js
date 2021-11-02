@@ -12,16 +12,16 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 
 const estadoDeNodo = (codigoEstado) => {
 	switch (codigoEstado) {
-		case 0: return { code: 0, name: 'INICIANDO', desc: 'La instancia está iniciandose' }
-		case 1: return { code: 1, name: 'PRIMARIA', desc: 'Copia primaria de la base de datos' }
-		case 2: return { code: 2, name: 'SECUNDARIA', desc: 'Instancia replicando datos' }
-		case 4: return { code: 4, name: 'SINCRONIZANDO', desc: 'La instancia se está sincronizando' }
-		case 5: return { code: 5, name: 'UNIENDOSE', desc: 'La instancia se está uniendo al clúster' }
-		case 7: return { code: 7, name: 'ARBITRO', desc: 'Instancia sin datos para tiebreak' }
-		case 8: return { code: 8, name: 'DOWN', desc: 'La instancia no es accesible' }
-		case 9: return { code: 9, name: 'ROLLBACK', desc: 'Recuperandose tras un failover' }
-		case 10: return { code: 10, name: 'ELIMINADA', desc: 'Ya no forma parde del clúster' }
-		default: return { code: codigoEstado, name: 'DESCONOCIDO', desc: `No se conoce el estado '${codigoEstado}'` };
+		case 0: return { codigo: 0, nombre: 'INICIANDO', descripcion: 'La instancia está iniciandose' }
+		case 1: return { codigo: 1, nombre: 'PRIMARIA', descripcion: 'Copia primaria de la base de datos' }
+		case 2: return { codigo: 2, nombre: 'SECUNDARIA', descripcion: 'Instancia replicando datos' }
+		case 4: return { codigo: 4, nombre: 'SINCRONIZANDO', descripcion: 'La instancia se está sincronizando' }
+		case 5: return { codigo: 5, nombre: 'UNIENDOSE', descripcion: 'La instancia se está uniendo al clúster' }
+		case 7: return { codigo: 7, nombre: 'ARBITRO', descripcion: 'Instancia sin datos para tiebreak' }
+		case 8: return { codigo: 8, nombre: 'DOWN', descripcion: 'La instancia no es accesible' }
+		case 9: return { codigo: 9, nombre: 'ROLLBACK', descripcion: 'Recuperandose tras un failover' }
+		case 10: return { codigo: 10, nombre: 'ELIMINADA', descripcion: 'Ya no forma parde del clúster' }
+		default: return { codigo: codigoEstado, nombre: 'DESCONOCIDO', descripcion: `No se conoce el estado '${codigoEstado}'` };
 	}
 }
 
