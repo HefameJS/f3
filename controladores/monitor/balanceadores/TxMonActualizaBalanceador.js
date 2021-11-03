@@ -33,7 +33,7 @@ class TxMonActualizaBalanceador extends TransmisionLigera {
 		this.log.debug('La modificación solicitada es:', peticion);
 
 		try {
-			let resultado = await balanceador.actualizarEstado(this, peticion.balanceador, peticion.worker, peticion.estado, peticion.peso);
+			let resultado = await balanceador.actualizarEstado(this, peticion);
 			return new ResultadoTransmisionLigera(200, resultado);
 		} catch (error) {
 			return (new ErrorFedicom(error)).generarResultadoTransmision();

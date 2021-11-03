@@ -176,7 +176,7 @@ class Balanceador {
 				return datos;
 			} catch (errorIntercomunicacion) {
 				transmision.log.err(`Error al obtener datos del balanceador ${this.nombre}:`, errorIntercomunicacion)
-				return  {
+				return {
 					ok: false,
 					nombre: this.nombre,
 					url: this.base,
@@ -189,15 +189,17 @@ class Balanceador {
 		}
 
 	}
-//actualizarEstado(this, peticion.grupoBalanceo, peticion.worker, peticion.estado, peticion.peso)
-	async actualizarEstado(transmision, grupoBalanceo, worker, estado = {}, peso = "1") {
+
+	async actualizarEstado(transmision, peticion) {
+
+		let { balanceador, worker, estado = {}, peso = "1" } = peticion;
 
 		if (this.#esLocal()) {
 			transmision.log.debug(`El balanceador ${this.nombre} es local. Cambiamos su estado`)
 			let estadoActual = await this.consultaEstado(transmision);
-			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
+			let nonce = estadoActual?.balanceadores?.[balanceador]?.nonce;
 			if (!nonce) {
-				transmision.log.err(`No se encontro el nonce para el grupo de balanceo ${grupoBalanceo}`);
+				transmision.log.err(`No se encontro el nonce para el grupo de balanceo ${balanceador}`);
 				return {
 					ok: false,
 					nombre: this.nombre,
@@ -219,7 +221,7 @@ class Balanceador {
 			urlEncodedParams.append("w_status_H", (estado.standby ? "1" : "0"));
 			urlEncodedParams.append("w_status_S", (estado.stop ? "1" : "0"));
 			urlEncodedParams.append("w", worker);
-			urlEncodedParams.append("b", grupoBalanceo);
+			urlEncodedParams.append("b", balanceador);
 			urlEncodedParams.append("nonce", nonce);
 
 			let parametrosLlamada = {
@@ -246,7 +248,14 @@ class Balanceador {
 			transmision.log.debug(`El balanceador ${this.nombre} es remoto. Lanzamos modificación contra su proxy en ${this.proxy}`)
 			try {
 				let interComunicador = new InterComunicador(transmision);
-				let datos = await interComunicador.llamadaMonitorRemoto(this.proxy, '/~/balanceadores/' + this.nombre, {method: 'PUT'})
+				let parametrosHttp = {
+					method: 'PUT',
+					data: peticion,
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+				let datos = await interComunicador.llamadaMonitorRemoto(this.proxy, '/~/balanceadores/' + this.nombre, parametrosHttp)
 				transmision.log.debug(`El balanceador remoto ${this.nombre} responde`, datos)
 				return datos;
 			} catch (errorIntercomunicacion) {
