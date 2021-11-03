@@ -18,10 +18,11 @@ const TxMonMongoColeccion = require('controladores/monitor/mongodb/TxMonMongoCol
 const TxMonMongoBaseDatos = require('controladores/monitor/mongodb/TxMonMongoBaseDatos');
 const TxMonMongoOperaciones = require('controladores/monitor/mongodb/TxMonMongoOperaciones');
 const TxMonMongoLogs = require('controladores/monitor/mongodb/TxMonMongoLogs');
-const TxMonBalanceador = require('controladores/monitor/balanceadores/TxMonListadoBalanceadores');
 const TxMonListadoBalanceadores = require('controladores/monitor/balanceadores/TxMonListadoBalanceadores');
 const TxMonConsultaBalanceador = require('controladores/monitor/balanceadores/TxMonConsultaBalanceador');
 const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/TxMonActualizaBalanceador');
+const TxMonConectividadSap = require('controladores/monitor/sap/TxMonConectividadSap');
+const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
 
 
 
@@ -58,6 +59,12 @@ module.exports = (app) => {
 	app.route('/~/balanceadores/:nombreBalanceador')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaBalanceador))
 		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonActualizaBalanceador));
+
+
+	app.route('/~/sap')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonDestinosSap));
+	app.route('/~/sap/ping')
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConectividadSap));
 		
 	app.route('/~/consulta/pedidos')
 		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))

@@ -17,6 +17,9 @@ class IntercambioSap {
 	#intercambioEjecutado;				// Indica si se ha intentado realizar el intercambio
 	#timeout;							// Timeout a esperar antes de abortar la llamada HTTP
 	#funcionValidadora;					// Funcion a la que se llamará con la respuesta de SAP para determinar si esta es correcta o no.
+	#devuelveEnCrudo = false;			// Indica si las respuestas de SAP se devuelven tal cual AXIOS las retorna (con cabeceras y codigo de estado)
+
+
 
 	#solicitud = {
 		fecha: null,		// Hora a la que se genera la solicitud a SAP
@@ -42,6 +45,10 @@ class IntercambioSap {
 		this.#intercambioEjecutado = false;
 		this.#timeout = C.sap.timeout.realizarPedido;
 		this.#funcionValidadora = IntercambioSap.validador.estandard;
+	}
+
+	setDevuelveEnCrudo(devuelveEnCrudo) {
+		this.#devuelveEnCrudo = devuelveEnCrudo;
 	}
 
 	setTimeout(timeout) {
@@ -156,6 +163,7 @@ class IntercambioSap {
 		this.#transmision.setEstado(K.ESTADOS.OBTENIDA_RESPUESTA_DE_SAP);
 
 		if (errorLlamadaSap) throw errorLlamadaSap;
+		if (this.#devuelveEnCrudo) return respuestaSap;
 		return respuestaSap?.data
 
 	}

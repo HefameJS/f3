@@ -97,6 +97,14 @@ class TransmisionLigera extends Object {
 	}
 
 	/**
+	 * Metodo para que TransmisionLigera pueda pasar como Transmision normal.
+	 * Realmente la transmision ligera no tiene estado.
+	 */
+	setEstado() {
+		// SIN OPERACION
+	}
+
+	/**
 	 * Envía una respuesta a la solicitud HTTP del cliente.
 	 * 
 	 * @param {ErrorFedicom|Object|Buffer} datos Los datos a enviar

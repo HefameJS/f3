@@ -1,5 +1,4 @@
 'use strict';
-const L = global.L;
 const K = global.K;
 const M = global.M;
 
@@ -31,46 +30,39 @@ class InterComunicador {
 
 	}
 
+	async llamadaMonitorMultiple(destinos, ruta, opciones) {
+
+		this.log.debug(`Se procede a realizar la llamada '${ruta}' a multiples destinos`, destinos);
+
+		if (!destinos || destinos.length === 0) {
+			this.log.err('No está permitido llamar a _llamadaAMultiplesDestinos() sin especificar ningún destino !');
+			throw new Error('No se ha especificado ningún destino');
+		}
+
+		let promesas = destinos.map(destino => this.llamadaMonitorRemoto(destino, ruta, opciones));
+		let respuestas = await Promise.allSettled(promesas);
+
+		let resultado = {};
+		destinos.forEach(( destino, i) => {
+			resultado[destino] = {
+				ok: respuestas[i].status === "fulfilled",
+				respuesta: respuestas[i].value ?? respuestas[i].reason?.message
+			}
+		})
+
+		return resultado;
+
+	}
+
+	async llamadaTodosMonitores (ruta, opciones) {
+		let monitores = await M.col.instancias
+			.find({})
+			.project({ _id: 1 })
+			.toArray();
+		monitores = monitores.map(monitor => monitor._id);
+		return await this.llamadaMonitorMultiple(monitores, ruta, opciones)
+	}
+
 }
 
 module.exports = InterComunicador;
-
-/*
-module.exports.llamadaMonitorMultiple = async function (destinos, ruta, opciones) {
-
-	L.d(['Se procede a realizar la llamada a multiples destinos', destinos, ruta]);
-
-	if (!destinos || destinos.length === 0) {
-		L.e(['No está permitido llamar a _llamadaAMultiplesDestinos() sin especificar ningún destino !', destinos]);
-		callback(new Error('No se ha especificado ningún destino'), null);
-		return;
-	}
-
-	let promesas = destinos.map(destino => module.exports.llamadaMonitorRemoto(destino, ruta, opciones));
-	let respuestas = await Promise.allSettled(promesas);
-
-	let resultado = {};
-	for (let i = 0; i < destinos.length; i++) {
-		resultado[destinos[i]] = {
-			ok: respuestas[i].status === "fulfilled",
-			respuesta: respuestas[i].value ?? respuestas[i].reason?.message
-		}
-	}
-
-	return resultado;
-
-}
-
-
-module.exports.llamadaTodosMonitores = async function (ruta, opciones) {
-
-	let monitores = await M.col.instancias
-		.find({ 'procesos.tipo': K.PROCESOS.TIPOS.MONITOR })
-		.project({ _id: 1 })
-		.toArray();
-	monitores = monitores.map(monitor => monitor._id);
-
-	return await module.exports.llamadaMonitorMultiple(monitores, ruta, opciones)
-
-}
-*/
