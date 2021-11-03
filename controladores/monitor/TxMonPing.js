@@ -12,7 +12,12 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 class TxMonPing extends TransmisionLigera {
 	// @Override
 	async operar() {
-		return new ResultadoTransmisionLigera(200, { pong: true, fecha: new Date() });
+		return new ResultadoTransmisionLigera(200, { 
+			pong: true, 
+			fecha: new Date(), 
+			concentrador: K.HOSTNAME,
+			balanceador: this.req.headers?.['x-balanceador']?.toLowerCase?.() || null
+		});
 	}
 }
 
