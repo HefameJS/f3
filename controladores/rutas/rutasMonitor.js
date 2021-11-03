@@ -23,11 +23,14 @@ const TxMonConsultaBalanceador = require('controladores/monitor/balanceadores/Tx
 const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/TxMonActualizaBalanceador');
 const TxMonConectividadSap = require('controladores/monitor/sap/TxMonConectividadSap');
 const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
+const TxMonPing = require('controladores/monitor/TxMonPing');
 
 
 
 
 module.exports = (app) => {
+
+	app.route('/~/ping').get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonPing))
 
 	{ // TOKENS
 		app.route('/~/token')
