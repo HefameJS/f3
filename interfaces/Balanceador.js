@@ -1,9 +1,10 @@
 'use strict';
-
+const K = global.K;
 
 const OS = require('os');
 const axios = require('axios');
 const { URLSearchParams } = require('url');
+const InterComunicador = require('./InterComunicador');
 
 class MatchEnlace {
 
@@ -65,7 +66,6 @@ class MatchEnlace {
 		return this.extra;
 	}
 }
-
 
 class BalanceadorApache {
 	constructor(enlace) {
@@ -139,14 +139,13 @@ class Balanceador {
 	}
 
 	#esLocal() {
-		if (!this.proxy) return true;
-		return OS.hostname().toLowerCase() === this.proxy;
+		return !this.proxy || K.HOSTNAME === this.proxy;
 	}
 
-	async consultaEstado() {
+	async consultaEstado(transmision) {
 
 		if (this.#esLocal()) {
-
+			transmision.log.debug(`El balanceador ${this.nombre} es local. Consultamos su estado`)
 			let parametrosLlamada = {
 				url: this.base + '/balancer-manager',
 				headers: {
@@ -156,17 +155,37 @@ class Balanceador {
 
 			let respuesta = await axios(parametrosLlamada);
 			let cuerpoHttp = respuesta.data;
-			return {
+
+			let datos = {
+				ok: true,
 				nombre: this.nombre,
 				url: this.base,
 				tipo: this.tipo,
 				proxy: this.proxy,
 				balanceadores: _analizaDatosBalanceadores(cuerpoHttp)
 			}
+			transmision.log.debug(`Datos del balanceador ${this.nombre}:`, datos)
+			return datos;
 
 		} else {
-			const iMonitor = require('interfaces/_iMonitor');
-			return await iMonitor.llamadaMonitorRemoto(this.proxy, '/v1/balanceadores/' + this.nombre)
+			transmision.log.debug(`El balanceador ${this.nombre} es remoto. Lanzamos consulta remota contra su proxy en ${this.proxy}`)
+			try {
+				let interComunicador = new InterComunicador(transmision);
+				let datos = await interComunicador.llamadaMonitorRemoto(this.proxy, '/~/balanceadores/' + this.nombre)
+				transmision.log.debug(`El balanceador remoto ${this.nombre} responde`, datos)
+				return datos;
+			} catch (errorIntercomunicacion) {
+				transmision.log.err(`Error al obtener datos del balanceador ${this.nombre}:`, errorIntercomunicacion)
+				return  {
+					ok: false,
+					nombre: this.nombre,
+					url: this.base,
+					tipo: this.tipo,
+					proxy: this.proxy,
+					error: errorIntercomunicacion.message
+				}
+			}
+
 		}
 
 	}
@@ -179,7 +198,7 @@ class Balanceador {
 			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
 
 			if (!nonce) {
-				global.L.e( ['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual] );
+				global.L.e(['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual]);
 				throw new Error('Imposible encontrar el nonce para el grupo de balanceo');
 			}
 
@@ -204,7 +223,7 @@ class Balanceador {
 					referer: this.base + '/balancer-manager'
 				},
 				data: urlEncodedParams.toString()
-				
+
 			}
 
 			let respuesta = await axios(parametrosLlamada);
