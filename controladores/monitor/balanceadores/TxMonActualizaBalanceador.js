@@ -10,13 +10,13 @@ const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutoriza
 /**
  * Transmision que devuelve un token de observador
  */
-class TxMonConsultaBalanceador extends TransmisionLigera {
+class TxMonActualizaBalanceador extends TransmisionLigera {
 
 
 	// @Override
 	async operar() {
 		let nombreBalanceador = this.req.params.nombreBalanceador || null;
-		this.log.info(`Consulta de balanceador [nombre=${nombreBalanceador}]`);
+		this.log.info(`Solicitud de modificación de balanceador [nombre=${nombreBalanceador}]`);
 		if (!nombreBalanceador) {
 			this.log.warn('No se indica el nombre del balanceador')
 			return (new ErrorFedicom('HTTP-400', 'Debe indicar el nombre del concentrador', 400)).generarResultadoTransmision();
@@ -29,8 +29,11 @@ class TxMonConsultaBalanceador extends TransmisionLigera {
 			return (new ErrorFedicom('HTTP-404', 'El balanceador indicado no existe', 404)).generarResultadoTransmision();
 		}
 
+		let peticion = this.req.body || {}
+		this.log.debug('La modificación solicitada es:', peticion);
+
 		try {
-			let resultado = await balanceador.consultaEstado(this);
+			let resultado = await balanceador.actualizarEstado(this, peticion.balanceador, peticion.worker, peticion.estado, peticion.peso);
 			return new ResultadoTransmisionLigera(200, resultado);
 		} catch (error) {
 			return (new ErrorFedicom(error)).generarResultadoTransmision();
@@ -40,9 +43,9 @@ class TxMonConsultaBalanceador extends TransmisionLigera {
 }
 
 
-TxMonConsultaBalanceador.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
+TxMonActualizaBalanceador.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	grupoRequerido: 'FED3_BALANCEADOR'
 });
 
 
-module.exports = TxMonConsultaBalanceador;
+module.exports = TxMonActualizaBalanceador;

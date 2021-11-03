@@ -5,8 +5,6 @@ const ErrorFedicom = require('modelos/ErrorFedicom');
 
 const ResultadoTransmisionLigera = require('modelos/transmision/ResultadoTransmisionLigera');
 const CondicionesAutorizacion = require('modelos/transmision/CondicionesAutorizacion');
-const Token = require('modelos/transmision/Token');
-const InterComunicador = require('interfaces/InterComunicador');
 
 
 /**
@@ -34,12 +32,8 @@ class TxMonListadoBalanceadores extends TransmisionLigera {
 			let resultados = await Promise.allSettled(promesas);
 
 			resultados = resultados.map(resultado => {
-				return {
-					ok: resultado.status === 'fulfilled',
-					resultado: resultado.value || resultado.reason?.message
-				}
+				return resultado.value || resultado.reason;
 			})
-			
 
 			return new ResultadoTransmisionLigera(200, resultados);
 			

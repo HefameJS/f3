@@ -21,6 +21,7 @@ const TxMonMongoLogs = require('controladores/monitor/mongodb/TxMonMongoLogs');
 const TxMonBalanceador = require('controladores/monitor/balanceadores/TxMonListadoBalanceadores');
 const TxMonListadoBalanceadores = require('controladores/monitor/balanceadores/TxMonListadoBalanceadores');
 const TxMonConsultaBalanceador = require('controladores/monitor/balanceadores/TxMonConsultaBalanceador');
+const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/TxMonActualizaBalanceador');
 
 
 
@@ -55,8 +56,8 @@ module.exports = (app) => {
 	app.route('/~/balanceadores')
 		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoBalanceadores));
 	app.route('/~/balanceadores/:nombreBalanceador')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaBalanceador));
-
+		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaBalanceador))
+		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonActualizaBalanceador));
 		
 	app.route('/~/consulta/pedidos')
 		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))

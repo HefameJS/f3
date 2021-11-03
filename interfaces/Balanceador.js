@@ -86,8 +86,8 @@ class WorkerApache {
 
 		this.peso = parseInt(extra.factor);
 		this.vecesElegido = parseInt(extra.elected);
-		this.enviado = extra.to;
-		this.recibido = extra.from;
+		this.enviado = extra.to.trim();
+		this.recibido = extra.from.trim();
 		this.estado = {
 			ignoraErrores: /Ign/.test(extra.status),
 			drenando: /Drn/.test(extra.status),
@@ -189,17 +189,23 @@ class Balanceador {
 		}
 
 	}
-
-	async actualizarEstado(grupoBalanceo, worker, estado = {}, peso = "1") {
+//actualizarEstado(this, peticion.grupoBalanceo, peticion.worker, peticion.estado, peticion.peso)
+	async actualizarEstado(transmision, grupoBalanceo, worker, estado = {}, peso = "1") {
 
 		if (this.#esLocal()) {
-
-			let estadoActual = await this.consultaEstado();
+			transmision.log.debug(`El balanceador ${this.nombre} es local. Cambiamos su estado`)
+			let estadoActual = await this.consultaEstado(transmision);
 			let nonce = estadoActual?.balanceadores?.[grupoBalanceo]?.nonce;
-
 			if (!nonce) {
-				global.L.e(['No se encontro el nonce para el grupo de balanceo', grupoBalanceo, estadoActual]);
-				throw new Error('Imposible encontrar el nonce para el grupo de balanceo');
+				transmision.log.err(`No se encontro el nonce para el grupo de balanceo ${grupoBalanceo}`);
+				return {
+					ok: false,
+					nombre: this.nombre,
+					url: this.base,
+					tipo: this.tipo,
+					proxy: this.proxy,
+					error: 'Imposible encontrar el nonce para el grupo de balanceo'
+				}
 			}
 
 			let urlEncodedParams = new URLSearchParams();
@@ -223,22 +229,38 @@ class Balanceador {
 					referer: this.base + '/balancer-manager'
 				},
 				data: urlEncodedParams.toString()
-
 			}
 
 			let respuesta = await axios(parametrosLlamada);
 
-
 			let cuerpoHttp = respuesta.data;
 			return {
+				ok: true,
 				nombre: this.nombre,
 				url: this.base,
 				tipo: this.tipo,
 				proxy: this.proxy,
 				balanceadores: _analizaDatosBalanceadores(cuerpoHttp)
 			}
+		} else {
+			transmision.log.debug(`El balanceador ${this.nombre} es remoto. Lanzamos modificación contra su proxy en ${this.proxy}`)
+			try {
+				let interComunicador = new InterComunicador(transmision);
+				let datos = await interComunicador.llamadaMonitorRemoto(this.proxy, '/~/balanceadores/' + this.nombre, {method: 'PUT'})
+				transmision.log.debug(`El balanceador remoto ${this.nombre} responde`, datos)
+				return datos;
+			} catch (errorIntercomunicacion) {
+				transmision.log.err(`Error al modificar el balanceador ${this.nombre}:`, errorIntercomunicacion)
+				return {
+					ok: false,
+					nombre: this.nombre,
+					url: this.base,
+					tipo: this.tipo,
+					proxy: this.proxy,
+					error: errorIntercomunicacion.message
+				}
+			}
 		}
-		return null;
 	}
 
 
