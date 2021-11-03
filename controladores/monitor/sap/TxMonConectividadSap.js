@@ -33,7 +33,7 @@ class TxMonConectividadSap extends TransmisionLigera {
 				let lagDeSapMicrosegundos = parseInt(respuestaSap?.headers?.['sap-perf-fesrec']);
 
 				return new ResultadoTransmisionLigera(200, {
-					alcanzado: respuestaSap.status,
+					alcanzado: respuestaSap.status === 200,
 					servidorSap,
 					lagSapMs: lagDeSapMicrosegundos / 1000,
 					rttMs: despues - antes
