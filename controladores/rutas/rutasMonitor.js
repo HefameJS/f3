@@ -29,58 +29,68 @@ const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
 
 module.exports = (app) => {
 
-	app.route('/~/token')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonGenerarTokenObservador))
-		.post(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonGenerarTokenPermanente));
+	{ // TOKENS
+		app.route('/~/token')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonGenerarTokenObservador))
+			.post(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonGenerarTokenPermanente));
+	}
 
+	{ // INSTANCIAS 
+		app.route('/~/instancias')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaInstancias));
 
-	app.route('/~/instancias')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaInstancias));
+		app.route('/~/instancias/:idInstancia')
+			.delete(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonBorrarRegistroInstancia));
+	}
 
-	app.route('/~/instancias/:idInstancia')
-		.delete(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonBorrarRegistroInstancia));
+	{ // MONGO DB
+		app.route('/~/mongodb')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
+		app.route('/~/mongodb/replicaset')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
+		app.route('/~/mongodb/coleccion/:coleccion?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoColeccion));
+		app.route('/~/mongodb/basedatos')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoBaseDatos));
+		app.route('/~/mongodb/operaciones')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoOperaciones));
+		app.route('/~/mongodb/logs/:tipoLog?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoLogs));
+	}
 
+	{ // BALANCEADORES DE CARGA
+		app.route('/~/balanceadores')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoBalanceadores));
+		app.route('/~/balanceadores/:nombreBalanceador')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaBalanceador))
+			.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonActualizaBalanceador));
+	}
 
-	app.route('/~/mongodb')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
-	app.route('/~/mongodb/replicaset')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoReplicaSet));
-	app.route('/~/mongodb/coleccion/:coleccion?')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoColeccion));
-	app.route('/~/mongodb/basedatos')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoBaseDatos));
-	app.route('/~/mongodb/operaciones')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoOperaciones));
-	app.route('/~/mongodb/logs/:tipoLog?')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonMongoLogs));
+	{ // SAP
+		app.route('/~/sap')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonDestinosSap));
+		app.route('/~/sap/ping')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConectividadSap));
+	}
 
-	app.route('/~/balanceadores')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoBalanceadores));
-	app.route('/~/balanceadores/:nombreBalanceador')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaBalanceador))
-		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonActualizaBalanceador));
+	{ // PEDIDOS
+		app.route('/~/consulta/pedidos')
+			.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))
+		app.route('/~/consulta/pedidos/:crc')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaPedido));
+	}
 
+	{ // TRANSMISIONES
+		app.route('/~/consulta/transmisiones')
+			.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoTransmisiones));
+		app.route('/~/consulta/transmisiones/:txId/:tipoConsulta?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaTransmision));
+	}
 
-	app.route('/~/sap')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonDestinosSap));
-	app.route('/~/sap/ping')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConectividadSap));
-		
-	app.route('/~/consulta/pedidos')
-		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoPedidos))
-	app.route('/~/consulta/pedidos/:crc')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaPedido));
-
-
-	app.route('/~/consulta/transmisiones')
-		.put(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonListadoTransmisiones));
-	app.route('/~/consulta/transmisiones/:txId/:tipoConsulta?')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaTransmision));
-
-
-	app.route('/~/maestro/:idMaestro/:idElemento?')
-		.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaMaestro));
-
+	{ // MAESTROS
+		app.route('/~/maestro/:idMaestro/:idElemento?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaMaestro));
+	}
 
 
 };
