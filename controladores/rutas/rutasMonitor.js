@@ -24,6 +24,7 @@ const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/T
 const TxMonConectividadSap = require('controladores/monitor/sap/TxMonConectividadSap');
 const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
 const TxMonPing = require('controladores/monitor/TxMonPing');
+const TxMonConsultaDump = require('controladores/monitor/dumps/TxMonConsultaDump');
 
 
 
@@ -95,5 +96,9 @@ module.exports = (app) => {
 			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaMaestro));
 	}
 
+	{ // DUMPS
+		app.route('/~/dumps/:servidor?/:idDump?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaDump));
+	}
 
 };
