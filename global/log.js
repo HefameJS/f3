@@ -16,7 +16,7 @@ class RegistroLog {
 	nivel;
 	datos;
 
-	constructor(datos, nivel, ) {
+	constructor(datos, nivel,) {
 		this.fecha = new Date();
 		this.datos = datos;
 		this.nivel = nivel;
@@ -71,9 +71,7 @@ class RegistroDump {
 	constructor(datos, prefijo, transmision) {
 		let fecha = new Date();
 
-		let directorio = C.log.directorio + SEPARADOR_DIRECTORIOS +
-			'dump' + SEPARADOR_DIRECTORIOS +
-			Date.logCorto() + SEPARADOR_DIRECTORIOS;
+		let directorio = C.log.getDirectorioDump(true);
 		let extension = Date.fedicomTimestamp() + '.dump';
 		this.rutaFicheroDump = directorio + prefijo + '.' + extension;
 

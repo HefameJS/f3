@@ -166,6 +166,12 @@ class ConfiguracionLog {
 		this.consola = Boolean(config?.consola);
 		this.directorio = global.C.directorioCache + SUBDIR.LOGS;
 	}
+
+	getDirectorioDump(incluirDia) {
+		let base = this.directorio + SEPARADOR_DIRECTORIOS + 'dump' + SEPARADOR_DIRECTORIOS;
+		if (incluirDia) return base + Date.logCorto() + SEPARADOR_DIRECTORIOS;
+		return base;
+	}
 }
 
 class ConfiguracionPid {
