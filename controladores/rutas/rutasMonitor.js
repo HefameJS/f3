@@ -31,7 +31,14 @@ const TxMonConsultaDump = require('controladores/monitor/dumps/TxMonConsultaDump
 
 module.exports = (app) => {
 
-	app.route('/~/ping').get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonPing))
+	app.route('/~/ping').get(async (req, res) => {
+		res.status(200).json({
+			pong: true,
+			fecha: new Date(),
+			concentrador: K.HOSTNAME,
+			balanceador: req?.headers?.['x-balanceador']?.toLowerCase?.() || null
+		})
+	})
 
 	{ // TOKENS
 		app.route('/~/token')
