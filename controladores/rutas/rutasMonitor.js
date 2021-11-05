@@ -23,7 +23,6 @@ const TxMonConsultaBalanceador = require('controladores/monitor/balanceadores/Tx
 const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/TxMonActualizaBalanceador');
 const TxMonConectividadSap = require('controladores/monitor/sap/TxMonConectividadSap');
 const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
-const TxMonPing = require('controladores/monitor/TxMonPing');
 const TxMonConsultaDump = require('controladores/monitor/dumps/TxMonConsultaDump');
 
 
