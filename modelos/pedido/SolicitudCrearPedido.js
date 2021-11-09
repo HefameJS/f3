@@ -275,7 +275,12 @@ class SolicitudCrearPedido extends Modelo {
 		if (this.aplazamiento) json.aplazamiento = this.aplazamiento;
 		if (this.observaciones) json.observaciones = this.observaciones;
 
-		if (this.metadatos.errores) json.incidencias = this.metadatos.errores.getErrores();
+		if (tipoReceptor === 'errores') {
+			this.metadatos.errores.insertar('PED-WARN-001', 'Pedido recibido pero pendiente de tramitar');
+			json.numeroPedido = this.metadatos.crc;
+		}
+
+		if (this.metadatos.errores.tieneErrores()) json.incidencias = this.metadatos.errores.getErrores();
 
 		if (tipoReceptor === 'sap') {
 			json.sap_url_confirmacion = this.#generaUrlConfirmacion();

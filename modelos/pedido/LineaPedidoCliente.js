@@ -151,7 +151,7 @@ class LineaPedidoCliente extends Modelo {
 		}
 		if (this.fechaLimiteServicio) json.fechaLimiteServicio = this.fechaLimiteServicio;
 		if (this.observaciones) json.observaciones = this.observaciones;
-		if (this.metadatos.errores) json.incidencias = this.metadatos.errores.getErrores();
+		if (this.metadatos.errores.tieneErrores()) json.incidencias = this.metadatos.errores.getErrores();
 
 		if (tipoReceptor === 'sap') {
 			if (this.metadatos.tieneErroresDeProtocolo) json.sap_ignore = true;
