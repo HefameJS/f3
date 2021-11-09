@@ -170,6 +170,7 @@ class LineaPedidoSap extends Modelo {
 					descripcion: "BAJA HEFAME"
 				}
 			]
+			json.observaciones = 'El artículo tiene varias incidencias :O'
 		}
 		// TEMPORAL PRUEBAS UNYCOP
 
