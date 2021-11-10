@@ -1,5 +1,6 @@
 'use strict';
 const C = global.C;
+const Maestro = require('global/maestros/Maestro');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Modelo = require('modelos/transmision/Modelo');
 
@@ -126,7 +127,7 @@ class LineaPedidoSap extends Modelo {
 				if (this.incidencias) this.incidencias.concat(advertenciaRebote.getErrores());
 				else this.incidencias = advertenciaRebote.getErrores();
 
-				this.observaciones = `El artículo se sirve por '${this.codigoAlmacenServicio}'`;
+				this.observaciones = `El artículo se sirve por '${Maestro.almacenes.getNombreSync(this.codigoAlmacenServicio)}'`;
 			}
 		}
 	}
