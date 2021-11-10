@@ -158,22 +158,6 @@ class LineaPedidoSap extends Modelo {
 		if (this.observaciones) json.observaciones = this.observaciones;
 		if (this.incidencias) json.incidencias = this.incidencias;
 
-		// TEMPORAL PRUEBAS UNYCOP
-		if (this.codigoArticulo === '8470001012975') {
-			json.incidencias = [
-				{
-					codigo: "LIN-PED-WARN-001",
-					descripcion: "NO HAY EXISTENCIAS"
-				},
-				{
-					codigo: "LIN-PED-WARN-010",
-					descripcion: "BAJA HEFAME"
-				}
-			]
-			json.observaciones = 'El artículo tiene varias incidencias :O'
-		}
-		// TEMPORAL PRUEBAS UNYCOP
-
 		return json;
 	}
 
