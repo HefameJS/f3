@@ -28,6 +28,7 @@ class PedidoSap {
 			pedidoAgrupadoSap: json.numeropedido || null,
 			pedidoDuplicadoSap: false,
 			reboteFaltas: false,
+			almacenesDeRebote: [],
 			totales: {
 				lineas: 0,
 				lineasIncidencias: 0,
@@ -53,12 +54,28 @@ class PedidoSap {
 		this.fechaServicio = json.fechaservicio || null;
 		this.aplazamiento = json.aplazamiento || null;
 		this.empresaFacturadora = json.empresafacturadora || null;
-		this.observaciones = json.observaciones || null;
+		this.observaciones = json.observaciones ? [json.observaciones] : [];
+		this.alertas = (Array.isArray(json.alertas) && json.alertas.length) ? json.alertas : [];
 		this.#extraerLineas(json.lineas);
 		this.#sanearIncidenciasSap(json.incidencias);
-		this.alertas = json.alertas?.length > 0 ? json.alertas : null;
+		
 
 		L.xt(this.txId, ['Metadatos', this.metadatos]);
+
+		if (this.metadatos.almacenesDeRebote.length) {
+			
+			let listaAlmacenes;
+			if (this.metadatos.almacenesDeRebote.length === 1) {
+				listaAlmacenes = this.metadatos.almacenesDeRebote[0];
+			} else {
+				let ultimoAlmacen = this.metadatos.almacenesDeRebote.pop();
+				listaAlmacenes = this.metadatos.almacenesDeRebote.join(', ');
+				listaAlmacenes += ` y ${ultimoAlmacen}`
+			}
+			this.observaciones.push(`Algunos artículos se sirven por ${listaAlmacenes}`);
+		}
+
+
 
 		this.#establecerFlags();
 	}
@@ -116,6 +133,8 @@ class PedidoSap {
 
 			if (lineaSap.metadatos.reboteFaltas) {
 				this.metadatos.reboteFaltas = true;
+				this.metadatos.almacenesDeRebote.push(lineaSap.metadatos.reboteFaltas)
+				this.alertas.push(`El artículo ${lineaSap.codigoArticulo} (${lineaSap.descripcionArticulo}) se sirve por ${lineaSap.metadatos.reboteFaltas}`);
 			}
 
 			return lineaSap;
@@ -208,10 +227,10 @@ class PedidoSap {
 		if (this.fechaServicio) json.fechaServicio = this.fechaServicio;
 		if (this.aplazamiento) json.aplazamiento = this.aplazamiento;
 		if (this.empresaFacturadora) json.empresaFacturadora = this.empresaFacturadora;
-		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.observaciones.length) json.observaciones = this.observaciones.join(' - ');
 		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
 		if (this.incidencias) json.incidencias = this.incidencias;
-		if (this.alertas) json.alertas = this.alertas;
+		if (this.alertas.length) json.alertas = this.alertas;
 
 		if (this.metadatos.pedidoProcesado) {
 			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap.map(p => parseInt(p));
