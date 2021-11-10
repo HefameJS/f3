@@ -8,6 +8,7 @@ const iFlags = require('interfaces/iflags/iFlags')
 
 // Modelos
 const LineaPedidoSap = require('./ModeloLineaPedidoSap');
+const Maestro = require('global/maestro');
 
 
 class PedidoSap {
@@ -63,13 +64,13 @@ class PedidoSap {
 		L.xt(this.txId, ['Metadatos', this.metadatos]);
 
 		if (this.metadatos.almacenesDeRebote.length) {
-			
+			let nombresAlmacenes = this.metadatos.almacenesDeRebote.map(codigo => Maestro.almacenes.getNombreById(codigo))
 			let listaAlmacenes;
-			if (this.metadatos.almacenesDeRebote.length === 1) {
-				listaAlmacenes = this.metadatos.almacenesDeRebote[0];
+			if (nombresAlmacenes.length === 1) {
+				listaAlmacenes = nombresAlmacenes[0];
 			} else {
-				let ultimoAlmacen = this.metadatos.almacenesDeRebote.pop();
-				listaAlmacenes = this.metadatos.almacenesDeRebote.join(', ');
+				let ultimoAlmacen = nombresAlmacenes.pop();
+				listaAlmacenes = nombresAlmacenes.join(', ');
 				listaAlmacenes += ` y ${ultimoAlmacen}`
 			}
 			this.observaciones.push(`Algunos artículos se sirven por ${listaAlmacenes}`);
@@ -134,7 +135,8 @@ class PedidoSap {
 			if (lineaSap.metadatos.reboteFaltas) {
 				this.metadatos.reboteFaltas = true;
 				this.metadatos.almacenesDeRebote.push(lineaSap.metadatos.reboteFaltas)
-				this.alertas.push(`El artículo ${lineaSap.codigoArticulo} (${lineaSap.descripcionArticulo}) se sirve por ${lineaSap.metadatos.reboteFaltas}`);
+				let nombreAlmacenServicio = Maestro.almacenes.getNombreById(lineaSap.metadatos.reboteFaltas);
+				this.alertas.push(`El artículo ${lineaSap.codigoArticulo} (${lineaSap.descripcionArticulo}) se sirve por ${nombreAlmacenServicio}`);
 			}
 
 			return lineaSap;

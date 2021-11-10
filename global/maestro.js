@@ -404,7 +404,7 @@ MAESTRO.transmisiones.getEstadoById = function (codigoEstado, tipoTransmision) {
 }
 
 MAESTRO.almacenes.getNombreById = function (codigoAlmacen) {
-	return MAESTRO.almacenes[codigoAlmacen] || 'Almacén desconocido';
+	return MAESTRO.almacenes[codigoAlmacen] || codigoAlmacen;
 }
 
 
