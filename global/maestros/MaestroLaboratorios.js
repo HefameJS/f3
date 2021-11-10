@@ -24,6 +24,7 @@ class MaestroLaboratorios {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de laboratorios', error);
 		}
+		return ({ maestro: 'Lab', cargados: this.#laboratorios.length })
 	}
 
 	async lista() {

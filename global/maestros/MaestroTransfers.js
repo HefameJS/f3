@@ -24,6 +24,7 @@ class MaestroTransfers {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de transfers', error);
 		}
+		return ({ maestro: 'Transfers', cargados: this.#transfers.length })
 	}
 
 	async lista() {

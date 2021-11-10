@@ -28,6 +28,7 @@ class MaestroTipos {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de tipos', error);
 		}
+		return ({maestro: 'Tipos', cargados: this.#tipos.length})
 	}
 
 	async lista() {

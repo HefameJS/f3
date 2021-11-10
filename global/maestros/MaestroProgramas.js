@@ -24,6 +24,7 @@ class MaestroProgramas {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de programas', error);
 		}
+		return ({ maestro: 'Programa', cargados: this.#programas.length })
 	}
 
 	async lista() {

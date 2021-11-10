@@ -59,6 +59,9 @@ module.exports = async function (tipoProceso) {
 	// Al tener conexión a mongo, podemos cargar la configuración del clúster
 	await C.cargarConfiguracionCluster();
 
+	// Cachea los maestros
+	const Maestro = require('./maestros/Maestro');
+	Maestro.cachearMaestros();
 }
 
 

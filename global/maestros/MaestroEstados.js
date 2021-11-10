@@ -29,6 +29,7 @@ class MaestroEstados {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de estados', error);
 		}
+		return ({ maestro: 'Estado', cargados: this.#estados.length })
 	}
 
 	async lista() {

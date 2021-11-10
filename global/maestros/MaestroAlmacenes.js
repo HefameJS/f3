@@ -1,3 +1,4 @@
+'use strict';
 const M = global.M;
 const L = global.L;
 
@@ -24,6 +25,7 @@ class MaestroAlmacenes {
 		catch (error) {
 			L.err('Ocurrió una excepción al obtener el maestro de almacenes', error);
 		}
+		return ({ maestro: 'Almacen', cargados: this.#almacenes.length })
 	}
 
 	async lista() {
@@ -36,6 +38,12 @@ class MaestroAlmacenes {
 		let almacen = this.#almacenes.find(objAlmacen => objAlmacen.id === codigoAlmacen)
 		if (almacen) return almacen;
 		return { id: 'X', nombre: 'Almacén desconocido' };
+	}
+
+	getNombreSync(codigoAlmacen) {
+		if (!this.#almacenes.length) return codigoAlmacen;
+		let almacen = this.#almacenes.find(objAlmacen => objAlmacen.id === codigoAlmacen)
+		return almacen?.nombre || codigoAlmacen;
 	}
 
 }
