@@ -1,5 +1,6 @@
 'use strict';
 const K = global.K;
+const Maestro = require('global/maestros/Maestro');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const Modelo = require('modelos/transmision/Modelo');
 const LineaPedidoSap = require('./LineaPedidoSap');
@@ -108,10 +109,24 @@ class RespuestaPedidoSap extends Modelo {
 		if (json.fechaservicio) this.fechaServicio = json.fechaservicio;
 		if (json.aplazamiento) this.aplazamiento = json.aplazamiento;
 		if (json.empresafacturadora) this.empresaFacturadora = json.empresafacturadora;
-		if (json.observaciones) this.observaciones = json.observaciones;
+		this.observaciones = json.observaciones ? [json.observaciones] : [];
+		this.alertas = (Array.isArray(json.alertas) && json.alertas.length) ? json.alertas :  [];
 		this.#procesarIncidenciasSap(json.incidencias);
 		this.#extraerLineas(json.lineas);
-		if (Array.isArray(json.alertas) && json.alertas.length) this.alertas = json.alertas;
+
+		if (this.metadatos.almacenesDeRebote.length) {
+			let nombresAlmacenesDeRebote = this.metadatos.almacenesDeRebote.map(codigo => Maestro.almacenes.getNombreSync(codigo) )
+			let listaAlmacenes;
+			if (nombresAlmacenesDeRebote.length === 1) {
+				listaAlmacenes = nombresAlmacenesDeRebote[0];
+			} else {
+				let ultimoAlmacen = nombresAlmacenesDeRebote.pop();
+				listaAlmacenes = nombresAlmacenesDeRebote.join(', ');
+				listaAlmacenes += ` y ${ultimoAlmacen}`
+			}
+			this.observaciones.push(`Algunos artículos se sirven por ${listaAlmacenes}`);
+		}
+		
 		
 		// Metadatos
 
@@ -196,7 +211,11 @@ class RespuestaPedidoSap extends Modelo {
 			if (lineaSap.metadatos.almacenDeRebote) {
 				if (!this.metadatos.almacenesDeRebote.includes(lineaSap.metadatos.almacenDeRebote) )
 					this.metadatos.almacenesDeRebote.push(lineaSap.metadatos.almacenDeRebote)
+				
+				let nombreAlmacenDeRebote = Maestro.almacenes.getNombreSync(lineaSap.metadatos.almacenDeRebote)
+				this.alertas.push(`El artículo ${lineaSap.codigoArticulo} (${lineaSap.descripcionArticulo}) se sirve por ${nombreAlmacenDeRebote}`);
 			}
+			
 
 			this.metadatos.totales.lineas++;
 			this.metadatos.totales.cantidad += lineaSap.cantidad;
@@ -259,10 +278,10 @@ class RespuestaPedidoSap extends Modelo {
 		if (this.fechaServicio) json.fechaServicio = this.fechaServicio;
 		if (this.aplazamiento) json.aplazamiento = this.aplazamiento;
 		if (this.empresaFacturadora) json.empresaFacturadora = this.empresaFacturadora;
-		if (this.observaciones) json.observaciones = this.observaciones;
+		if (this.observaciones.length) json.observaciones = this.observaciones.join(' - ');
 		if (this.lineas) json.lineas = this.lineas.map(linea => linea.generarJSON());
 		if (this.incidencias) json.incidencias = this.incidencias;
-		if (this.alertas) json.alertas = this.alertas;
+		if (this.alertas.length) json.alertas = this.alertas;
 
 		if (this.metadatos.pedidoProcesadoSap) {
 			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap
