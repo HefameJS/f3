@@ -113,6 +113,12 @@ class ConsultaAlbaran extends Modelo {
 
 	#procesarFechas(fechaAlbaran, fechaDesde, fechaHasta) {
 
+		// Si vienen parámetros repetidos en la URL, express los agrupa como Arrays.
+		// Si se da el caso, nos quedamos con el primer valor y el resto se ignora.
+		if (Array.isArray(fechaAlbaran) && fechaAlbaran.length) fechaAlbaran = fechaAlbaran[0]
+		if (Array.isArray(fechaDesde) && fechaDesde.length) fechaDesde = fechaDesde[0]
+		if (Array.isArray(fechaHasta) && fechaHasta.length) fechaHasta = fechaHasta[0]
+
 		// Si viene fechaAlbaran, esta manda sobre el resto.
 		// De lo contrario, se usa fechaDesde/fechaHasta. Si alguno no aparece, se establece a la fecha actual.
 		fechaAlbaran = Date.fromFedicomDate(fechaAlbaran);
