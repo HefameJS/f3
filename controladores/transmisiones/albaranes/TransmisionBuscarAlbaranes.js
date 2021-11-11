@@ -80,17 +80,17 @@ class TransmisionBuscarAlbaranes extends Transmision {
 		}
 
 		if (this.req.query) {
-			metadatos.query = {};
+			metadatos.consultaCliente = {};
 			if (this.req.query.codigoCliente) {
-				metadatos.query.codigoCliente = this.req.query.codigoCliente;
+				metadatos.consultaCliente.codigoCliente = this.req.query.codigoCliente;
 				metadatos.codigoCliente = parseInt(this.req.query.codigoCliente.slice(-5));
 			}
-			if (this.req.query.fechaDesde) metadatos.query.fechaDesde = this.req.query.fechaDesde;
-			if (this.req.query.fechaHasta) metadatos.query.fechaHasta = this.req.query.fechaHasta;
-			if (this.req.query.numeroAlbaran) metadatos.query.numeroAlbaran = this.req.query.numeroAlbaran;
-			if (this.req.query.fechaAlbaran) metadatos.query.fechaAlbaran = this.req.query.fechaAlbaran;
-			if (this.req.query.numeroPedido) metadatos.query.numeroPedido = this.req.query.numeroPedido;
-			if (this.req.query.numeroPedidoOrigen) metadatos.query.numeroPedidoOrigen = this.req.query.numeroPedidoOrigen;
+			if (this.req.query.fechaDesde) metadatos.consultaCliente.fechaDesde = this.req.query.fechaDesde;
+			if (this.req.query.fechaHasta) metadatos.consultaCliente.fechaHasta = this.req.query.fechaHasta;
+			if (this.req.query.numeroAlbaran) metadatos.consultaCliente.numeroAlbaran = this.req.query.numeroAlbaran;
+			if (this.req.query.fechaAlbaran) metadatos.consultaCliente.fechaAlbaran = this.req.query.fechaAlbaran;
+			if (this.req.query.numeroPedido) metadatos.consultaCliente.numeroPedido = this.req.query.numeroPedido;
+			if (this.req.query.numeroPedidoOrigen) metadatos.consultaCliente.numeroPedidoOrigen = this.req.query.numeroPedidoOrigen;
 		}
 
 		if (this.metadatos.sabemosQueNoDaResultado) metadatos.sabemosQueNoDaResultado = true;
