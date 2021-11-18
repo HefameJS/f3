@@ -130,7 +130,7 @@ class PedidoCliente {
 		// 15.02.2021 - Para pedidos de mas de (C.pedidos.umbralLineasCrc) líneas, vamos a generar el CRC en función de las propias
 		// líneas y no del numeroPedidoOrigen.
 		// 19.04.2021 - Se incluye el código de almacén de servicio 
-		if (this.lineas.length > C.pedidos.umbralLineasCrc ) {
+		if (this.lineas.length > C.pedidos.umbralLineasCrc) {
 			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas, this.codigoAlmacenServicio);
 			this.metadatos.crcDeLineas = true;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando las lineas del mismo', this.crc], 'txCRC')
@@ -197,6 +197,13 @@ class PedidoCliente {
 	 * era Santomera. Este conver se ha sacado del codigo fuente de Fedicom v2.
 	 */
 	#converAlmacen() {
+
+		if (this.codigoAlmacenServicio === 'RG11') {
+			L.xw(this.txId, ['El almacén de Ribarroja no se admite temporalmente - Se elimina el campo']);
+			delete this.codigoAlmacenServicio;
+			this.addIncidencia(K.INCIDENCIA_FEDICOM.WARN_PED, 'El almacén de Ribarroja no se admite temporalmente - Se le asigna su almacén habitual');
+			return;
+		}
 
 		if (!this.codigoAlmacenServicio.startsWith('RG')) {
 
