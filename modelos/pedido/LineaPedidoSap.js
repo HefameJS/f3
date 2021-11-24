@@ -159,6 +159,93 @@ class LineaPedidoSap extends Modelo {
 		if (this.observaciones) json.observaciones = this.observaciones;
 		if (this.incidencias) json.incidencias = this.incidencias;
 
+		// Artículos que al transmitir den faltas y tengan varias incidencias en el rdo.
+		if (this.codigoArticulo === '8470006565650') {
+			json.cantidadFalta = json.cantidad;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				},
+				{
+					"codigo": "LIN-PED-WARN-002",
+					"descripcion": "SERVICIO PARCIAL"
+				}
+			]
+			//json.observaciones = 'Artículos que al transmitir den faltas y tengan varias incidencias en el rdo.'
+		}
+		// Artículos que al transmitir NO den faltas y tengan varias incidencias en el rdo.
+		if (this.codigoArticulo === '8470009049126') {
+			delete json.cantidadFalta;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				},
+				{
+					"codigo": "LIN-PED-WARN-002",
+					"descripcion": "SERVICIO PARCIAL"
+				}
+			]
+			//json.observaciones = 'Artículos que al transmitir NO den faltas y tengan varias incidencias en el rdo.'
+		}
+
+		// Artículos que al transmitir den faltas y tengas observaciones y alertas.
+		if (this.codigoArticulo === '8470007290612') {
+			json.cantidadFalta = json.cantidad;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				}
+			]
+			json.observaciones = 'Artículos que al transmitir den faltas y tengas observaciones y alertas.'
+		}
+
+		// Artículos que al transmitir NO den faltas y tengan observaciones y alertas.
+		if (this.codigoArticulo === '8470007505211') {
+			delete json.cantidadFalta;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				}
+			]
+			json.observaciones = 'Artículos que al transmitir NO den faltas y tengan observaciones y alertas.'
+		}
+
+		// Artículos que al transmitir den faltas y tengas varias incidencias, observaciones y alertas.
+		if (this.codigoArticulo === '8470007600176') {
+			json.cantidadFalta = json.cantidad;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				},
+				{
+					"codigo": "LIN-PED-WARN-002",
+					"descripcion": "SERVICIO PARCIAL"
+				}
+			]
+			json.observaciones = 'Artículos que al transmitir den faltas y tengas varias incidencias, observaciones y alertas.'
+		}
+
+		// Artículos que al transmitir NO den faltas y tengan varias incidencias, observaciones y alertas.
+		if (this.codigoArticulo === '8470006541791') {
+			delete json.cantidadFalta;
+			json.incidencias = [
+				{
+					"codigo": "LIN-PED-WARN-001",
+					"descripcion": "NO HAY EXISTENCIAS"
+				},
+				{
+					"codigo": "LIN-PED-WARN-002",
+					"descripcion": "SERVICIO PARCIAL"
+				}
+			]
+			json.observaciones = 'Artículos que al transmitir NO den faltas y tengan varias incidencias, observaciones y alertas.'
+		}
+
 		return json;
 	}
 
