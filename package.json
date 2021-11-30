@@ -15,7 +15,7 @@
   "dependencies": {
     "activedirectory": "^0.7.2",
     "app-module-path": "^2.2.0",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "bson": "^4.2.2",
     "clone": "^2.1.2",
     "cors": "^2.8.5",
