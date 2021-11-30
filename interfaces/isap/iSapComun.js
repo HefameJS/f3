@@ -1,6 +1,6 @@
 'use strict';
 //const C = global.config;
-//const L = global.logger;
+const L = global.logger;
 //const K = global.constants;
 
 // Externas
@@ -62,9 +62,11 @@ const ejecutarLlamadaSap = async function (txId, parametros, opciones = {}) {
 
 	try {
 		respuestaSap = await axios(parametros);
+		if (txId) L.xd(txId, ['Obtenida respuesta SAP', respuestaSap.status])
 	} catch (errorComunicacion) {
-		let errorLlamadaSap = new ErrorLlamadaSap(ERROR_SAP_INALCANZABLE, errorComunicacion.errno, errorComunicacion.code)
+		if (txId) L.xe(txId, ['Error ERROR_SAP_INALCANZABLE', errorComunicacion.errno, errorComunicacion.code])
 		
+		let errorLlamadaSap = new ErrorLlamadaSap(ERROR_SAP_INALCANZABLE, errorComunicacion.errno, errorComunicacion.code)
 		if (txId) iFlags.sap.generaFlags(txId, null, ERROR_SAP_INALCANZABLE);
 		if (txId && !noGenerarEvento) iEventos.sap.finLlamadaSap(txId, errorLlamadaSap, null);
 
