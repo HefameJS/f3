@@ -13,7 +13,7 @@ class MaestroEstados {
 				this.#estados = Object.keys(respuesta.estados).map(codigoEstado => {
 					let datosDelEstado = respuesta.estados[codigoEstado];
 					return {
-						codigo: datosDelEstado.codigo,
+						id: datosDelEstado.codigo,
 						ambito: datosDelEstado.ambito,
 						nombre: datosDelEstado.nombre,
 						descripcion: datosDelEstado.descripcion,
@@ -42,7 +42,7 @@ class MaestroEstados {
 		let estado = this.#estados.find(objEstado => objEstado.codigo === parseInt(codigoEstado))
 		if (estado) return estado;
 		return {
-			codigo: 0,
+			id: 0,
 			ambito: null,
 			nombre: 'DESCONOCIDO',
 			descripcion: 'No se conoce el estado',

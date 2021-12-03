@@ -13,7 +13,7 @@ class MaestroTipos {
 				this.#tipos = Object.keys(respuesta.tipos).map(codigoTipo => {
 					let datosDelTipo = respuesta.tipos[codigoTipo];
 					return {
-						codigo: datosDelTipo.codigo,
+						id: datosDelTipo.codigo,
 						nombre: datosDelTipo.nombre,
 						descripcion: datosDelTipo.descripcion,
 						color: datosDelTipo.color,
@@ -41,7 +41,7 @@ class MaestroTipos {
 		let tipo = this.#tipos.find(objTipo => objTipo.codigo === parseInt(codigoTipo))
 		if (tipo) return tipo;
 		return {
-			codigo: 0,
+			id: 0,
 			nombre: 'DESCONOCIDO',
 			descripcion: 'No se conoce el tipo',
 			color: 'warning',
