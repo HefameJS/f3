@@ -4,6 +4,6 @@ config.json
 /db/
 *.log
 *.pid
-test.js
+test.*
 console.log
 console.err
