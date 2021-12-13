@@ -227,8 +227,8 @@ class SolicitudCrearLogistica extends Modelo {
 			codigoCliente: this.codigoCliente,
 			numeroLogisticaOrigen: this.numeroLogisticaOrigen,
 			tipoLogistica: this.tipoLogistica,
-			origen: this.origen,
-			destino: this.destino,
+			origen: this.origen.generarJSON(tipoReceptor),
+			destino: this.destino.generarJSON(tipoReceptor),
 		}
 
 		if (this.fechaRecogidaSolicitada) json.fechaRecogidaSolicitada = this.fechaRecogidaSolicitada;
