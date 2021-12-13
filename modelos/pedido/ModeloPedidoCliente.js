@@ -291,7 +291,7 @@ class PedidoCliente {
 
 		let respuesta = {
 			codigoCliente: this.codigoCliente,
-			numeroPedidoOrigen: this.codigoCliente,
+			numeroPedidoOrigen: this.numeroPedidoOrigen,
 			lineas: this.lineas.map(l => l.generarJSON(false)),
 			incidencias: [errorFedicom],
 			fechaPedido: Date.toFedicomDateTime(),
