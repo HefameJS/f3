@@ -51,7 +51,8 @@ module.exports = async function () {
 		BUSCAR_FACTURAS: 40,
 		CONSULTAR_FACTURA: 41,
 		CREAR_LOGISTICA: 50,
-		CONSULTAR_LOGISTICA: 51
+		CONSULTAR_LOGISTICA: 51,
+		CONSULTAR_STOCK: 61
 	};
 	global.K.HOSTNAME = os.hostname().toLowerCase();
 	global.K.VERSION = {

@@ -22,6 +22,8 @@ const TransmisionConsultarAlbaran = require('controladores/transmisiones/albaran
 const TransmisionBuscarAlbaranes = require('controladores/transmisiones/albaranes/TransmisionBuscarAlbaranes');
 const TransmisionConfirmarAlbaran = require('controladores/transmisiones/albaranes/TransmisionConfirmarAlbaran');
 
+const TransmisionConsultarStock = require('controladores/transmisiones/stock/TransmisionConsultarStock');
+
 const TransmisionReejecutarPedido = require('controladores/retransmisiones/TransmisionReejecutarPedido');
 
 const rutasMonitor = require('./rutasMonitor');
@@ -85,6 +87,8 @@ module.exports = (app) => {
 		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarLogistica));
 
 
+	app.route('/stock')
+		.get(async (req, res) => Transmision.ejecutar(req, res, TransmisionConsultarStock));
 
 	rutasMonitor(app);
 
