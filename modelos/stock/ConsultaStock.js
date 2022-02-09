@@ -49,7 +49,7 @@ class ConsultaStock extends Modelo {
 		// aprovechando que la búsqueda se realiza entre todos los códigos del mismo cliente.
 
 		if (codigoCliente.length < 8) {
-			let usuarioToken = this.transmision.token.getDatos().usuario;
+			let usuarioToken = this.transmision.token.usuario;
 
 			let codigoClienteLargo = codigoCliente;
 			// Casos en donde el usuario es de la forma xxxxxxxx@hefame
