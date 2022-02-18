@@ -10,6 +10,7 @@ class ModeloNodoPedido {
 		rechazo: null,
 		duplicado: null,
 		relevante: null,
+		ultimoNodoCliente: false,
 		estado: 'desconocido'
 	}
 
@@ -94,7 +95,7 @@ class ModeloNodoPedido {
 			json.ssl = cm.ssl;
 			json.balanceador = cm.balanceador;
 		}
-		if (this.es.informado) {
+		if (this.es.informado || this.es.ultimoNodoCliente) {
 			json.transmision = {
 				solicitud: c.solicitud,
 				respuesta: c.respuesta

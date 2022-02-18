@@ -9,11 +9,14 @@ class ModeloPedido {
 
 	constructor(nodos) {
 		this.#nodos = nodos.map(nodo => new ModeloNodoPedido(nodo))
+
+		let ultimoNodoCliente = null;
 		this.#nodos.forEach(nodo => {
 			if (nodo.es.relevante || !this.#nodoVigente) {
 				this.#nodoVigente = nodo;
 			}
 			if (nodo.es.externa) {
+				ultimoNodoCliente = nodo;
 				if (!this.#nodoInformado || nodo.es.relevante || this.#nodoVigente) {
 					this.#nodoInformado = nodo;
 				}
@@ -23,6 +26,8 @@ class ModeloPedido {
 			}
 		})
 
+		
+		if (ultimoNodoCliente) ultimoNodoCliente.es.ultimoNodoCliente = true;
 		if (this.#nodoVigente) this.#nodoVigente.es.vigente = true;
 		if (this.#nodoInformado) this.#nodoInformado.es.informado = true;
 	}
