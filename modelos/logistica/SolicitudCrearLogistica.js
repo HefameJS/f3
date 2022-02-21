@@ -107,7 +107,8 @@ class SolicitudCrearLogistica extends Modelo {
 		}
 
 		// Generación del CRC
-		this.metadatos.crc = Crc.generar(this.codigoCliente, this.numeroLogisticaOrigen);
+		let fechaCrc = this.transmision.fechaCreacion.aCrc();
+		this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.numeroLogisticaOrigen);
 		this.log.info(`Se asigna el siguiente CRC ${this.metadatos.crc} para la orden de logística`);
 	}
 

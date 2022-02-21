@@ -9,8 +9,8 @@ const dateFormat = require('dateformat');
  * - -> UNIX
  */
 if (!Date.fedicomTimestamp) {
-	Date.fedicomTimestamp = () => { 
-		return new Date().getTime(); 
+	Date.fedicomTimestamp = () => {
+		return new Date().getTime();
 	}
 }
 
@@ -25,6 +25,17 @@ dateFormat.masks.shortTime = 'HHMMss.l';
 
 dateFormat.masks.logCorto = 'yyyymmdd';
 dateFormat.masks.logLargo = 'dd-mm-yyyy-HH:MM:ss.l';
+
+
+if (!Date.prototype.aCrc) {
+	// Date.prototype.formatear = {}
+	// let funciones = Date.prototype.formatear;
+
+	Date.prototype.aCrc = function() {
+		console.log(this)
+		return dateFormat(this, "yyyymmdd")
+	}
+}
 
 /**
  * Date.toFedicomDate(date)
@@ -83,7 +94,7 @@ if (!Date.fromFedicomDateTime) {
 
 		let dateParts = parts[0].split(/[\/\-]/g);
 		if (dateParts.length != 3) return null;
-		
+
 		if (parseInt(dateParts[2]) < 100) dateParts[2] = parseInt(dateParts[2]) + 2000; // Si el año es de 2 dígitos, le sumamos 2000. Ej. 21/11/19 -> 21/11/2019
 
 		let timeParts = [0, 0, 0];
@@ -174,7 +185,7 @@ if (!Date.siguienteDiaHabil) {
 		let diaSemana = elDiaD.getDay();
 		if (diaSemana === 6) // Si es sábado, rebotamos al lunes (+2 días)
 			elDiaD.setDate(elDiaD.getDate() + 2);
-		else 
+		else
 			elDiaD.setDate(elDiaD.getDate() + 1);
 
 		return Date.toFedicomDate(elDiaD);

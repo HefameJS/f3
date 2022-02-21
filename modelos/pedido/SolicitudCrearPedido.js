@@ -136,13 +136,15 @@ class SolicitudCrearPedido extends Modelo {
 			this.metadatos.errores.insertar('PED-ERR-999', 'Existen errores en todas las líneas, el pedido no se procesa.');
 		}
 
+		
 		// Para pedidos de mas de (C.pedidos.umbralLineasCrc) líneas, vamos a generar el CRC en función de las propias
 		// líneas y no del numeroPedidoOrigen.
+		let fechaCrc = this.transmision.fechaCreacion.aCrc();
 		if (this.lineas.length > C.pedidos.umbralLineasCrc) {
-			this.metadatos.crc = Crc.generar(this.codigoCliente, this.metadatos.crcAcumuladoLineas, this.codigoAlmacenServicio);
+			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.metadatos.crcAcumuladoLineas, this.codigoAlmacenServicio);
 			this.metadatos.tipoCrc = 'lineas';
 		} else {
-			this.metadatos.crc = Crc.generar(this.codigoCliente, this.numeroPedidoOrigen);
+			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.numeroPedidoOrigen);
 			this.metadatos.tipoCrc = 'numeroPedidoOrigen';
 		}
 		this.log.info(`Se asigna el siguiente CRC ${this.metadatos.crc} para el pedido usando ${this.metadatos.tipoCrc}`);
