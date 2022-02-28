@@ -86,6 +86,7 @@ class Configuracion {
 		global.C.sqlite = await ConfiguracionSqlite.cargar();
 		global.C.balanceador = await ConfiguracionBalanceadores.cargar();
 		global.C.logistica = await ConfiguracionLogistica.cargar();
+		global.C.monitor = await ConfiguracionMonitor.cargar();
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -398,6 +399,23 @@ class ConfiguracionLogistica {
 		return new ConfiguracionLogistica(config);
 	}
 }
+
+
+
+class ConfiguracionMonitor {
+	constructor(config) {
+		this.http = { ...config.http };
+		this.websocket = { ...config.websocket };
+	}
+
+	static async cargar() {
+		let config = await Configuracion.cargarObjetoCluster('monitor');
+		return new ConfiguracionMonitor(config);
+	}
+
+	
+}
+
 
 module.exports = async function (ficheroConfiguracion) {
 	await Configuracion.cargarDatosFichero(ficheroConfiguracion);

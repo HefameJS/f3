@@ -56,6 +56,7 @@ module.exports = async function (tipoProceso) {
 	// Carga de MongoDB
 	await require('global/mongodb')();
 
+	
 
 	// Al tener conexión a mongo, podemos cargar la configuración del clúster
 	await C.cargarConfiguracionCluster();

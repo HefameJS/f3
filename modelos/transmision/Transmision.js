@@ -9,6 +9,7 @@ const IntercambioSap = require('./IntercambioSap');
 const ResultadoTransmision = require('./ResultadoTransmision');
 const SQLite = require('global/sqlite');
 const ErrorFedicom = require('modelos/ErrorFedicom');
+const WS = require('global/websocket')
 
 
 /**
@@ -276,6 +277,14 @@ class Transmision extends Object {
 			}
 		}
 
+		WS.enviarColector({
+			_id: this.txId,
+			fechaCreacion: this.fechaCreacion,
+			estado: this.#estado,
+			tipo: this.#tipo
+		});
+
+
 		try {
 			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });
 			this.log.debug('La transmision ha sido registrada en la base de datos');
@@ -322,6 +331,13 @@ class Transmision extends Object {
 		// Metadatos de la operacion
 		this.#metadatosOperacion.sentenciar(sentencia);
 
+		WS.enviarColector({
+			_id: this.txId,
+			fechaCreacion: this.fechaCreacion,
+			estado: this.#estado,
+			tipo: this.#tipo,
+			datos: this.#metadatosOperacion.metodoPruebaWebsocket()
+		});
 
 		try {
 			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });

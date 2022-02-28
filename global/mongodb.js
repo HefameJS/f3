@@ -52,7 +52,7 @@ const conexion = async function () {
 		L.err(`Se reintentará la conexión en ${C.mongodb.intervaloReconexion} milisegundos`)
 		setTimeout(() => conexion(), C.mongodb.intervaloReconexion)
 	}
-
+	
 
 	global.M.ObjectID = MongoDb.ObjectId;
 	global.M.toMongoLong = MongoDb.Long.fromNumber;

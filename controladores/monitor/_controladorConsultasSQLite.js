@@ -6,7 +6,7 @@ const L = global.L;
 // Interfaces
 const iTokens = require('global/tokens');
 const iMonitor = require('interfaces/_iMonitor');
-const iSQLite = require('global/sqlite');
+const SQLite = require('global/sqlite');
 
 // Modelos
 const ErrorFedicom = require('modelos/ErrorFedicom');
@@ -36,7 +36,7 @@ const consultaRegistros = async function (req, res) {
 
 	if (req.query.servidor === 'local') {
 		try {
-			let registros = await iSQLite.consultaRegistros(opcionesConsulta)
+			let registros = await SQLite.consultaRegistros(opcionesConsulta)
 			res.status(200).json(registros);
 		} catch (errorSQLite) {
 			L.xe(txId, ['Ocurrió un error al consultar los registros de SQLite', errorSQLite])
@@ -69,7 +69,7 @@ const recuentoRegistros = async function (req, res) {
 
 	if (req.query.servidor === 'local') {
 		try {
-			let recuento = await iSQLite.recuentoRegistros();
+			let recuento = await SQLite.recuentoRegistros();
 			let resultado = {};
 			recuento.forEach(elemento => {
 				resultado[elemento.estado] = elemento.cantidad;

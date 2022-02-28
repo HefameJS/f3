@@ -2,8 +2,8 @@
 require('app-module-path').addPath(__dirname);
 console.log('Inicializando servicio de monitorización Fedicom v3', new Date());
 
-require('global/bootstrap')('monitor').then(() => {
-	
+require('global/bootstrap')('monitor').then(async () => {
+
 	const C = global.C;
 	const L = global.L;
 
@@ -34,6 +34,14 @@ require('global/bootstrap')('monitor').then(() => {
 		//servidorHttp.on('connection', (socket) => {});
 	});
 	servidorHttp.on('close', () => { L.fatal("Se ha cerrado el servicio HTTP"); });
+
+	// Arranque del servidor de WS
+	const WS = require('global/websocket');
+	WS.arrancarServicioColector(C.monitor.websocket.puerto);
+	WS.arrancarServicioConcentrador(C.monitor.websocket.puerto + 1);
+
+	
+	
 
 });
 

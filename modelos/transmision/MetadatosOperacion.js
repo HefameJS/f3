@@ -23,10 +23,6 @@ class MetadatosOperacion {
 		}
 	}
 
-
-
-
-
 	/**
 	 * Prepara los metadatos almacenados en el objeto y los inserta en una sentencia de update de mongodb.
 	 * @param {*} sentencia 
@@ -58,6 +54,10 @@ class MetadatosOperacion {
 		}
 
 
+	}
+
+	metodoPruebaWebsocket() {
+		return this.#metadatosOperacionSet;
 	}
 
 
