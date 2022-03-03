@@ -4,27 +4,33 @@ let WebSocketClient = require('websocket').client;
 class ClienteWorker {
 	#cliente;
 	#conexion;
+	#log;
 
 	constructor() {
+		this.#log = L.instanciar({ txId: 'WSWorker' });
+		this.#conectarConServidor();
+	}
+
+	#conectarConServidor() {
 		this.#cliente = new WebSocketClient();
 
 		this.#cliente.on('connectFailed', (error) => {
-			console.log('Connect Error: ' + error.toString());
+			this.#log.error('Connect Error: ' + error.toString());
 		});
 
 		this.#cliente.on('connect', (connection) => {
 			this.#conexion = connection;
-			console.log('WebSocket Client Connected');
+			this.#log.info('Conectado al servidor de recolección');
 
 			connection.on('error', function (error) {
-				console.log("Connection Error: " + error.toString());
+				this.#log.error("Connection Error: " + error.toString());
 			});
 			connection.on('close', function () {
-				console.log('echo-protocol Connection Closed');
+				this.#log.info('echo-protocol Connection Closed');
 			});
 			connection.on('message', function (message) {
 				if (message.type === 'utf8') {
-					console.log("Received: '" + message.utf8Data + "'");
+					this.#log.trace("Recibido desde el colector: '" + message.utf8Data + "'");
 				}
 			});
 		});

@@ -277,7 +277,7 @@ class Transmision extends Object {
 			}
 		}
 
-		WS.enviarColector({
+		WS.enviarMensajeAColector({
 			_id: this.txId,
 			fechaCreacion: this.fechaCreacion,
 			estado: this.#estado,
@@ -331,12 +331,12 @@ class Transmision extends Object {
 		// Metadatos de la operacion
 		this.#metadatosOperacion.sentenciar(sentencia);
 
-		WS.enviarColector({
+		WS.enviarMensajeAColector({
 			_id: this.txId,
 			fechaCreacion: this.fechaCreacion,
 			estado: this.#estado,
 			tipo: this.#tipo,
-			datos: this.#metadatosOperacion.metodoPruebaWebsocket()
+			//datos: this.#metadatosOperacion.metodoPruebaWebsocket()
 		});
 
 		try {

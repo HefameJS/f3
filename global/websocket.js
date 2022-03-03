@@ -2,9 +2,6 @@
 
 const ServidorWebSocketColector = require('global/websocket/websocketColector');
 const ServidorWebSocketConcentrador = require('global/websocket/websocketConcentrador');
-
-
-
 let clienteWorker = null; ;
 
 
@@ -22,7 +19,7 @@ module.exports = {
 			accept(new ServidorWebSocketConcentrador(puerto));
 		})
 	},
-	enviarColector: async (mensaje) => {
+	enviarMensajeAColector: async (mensaje) => {
 		if (!clienteWorker) {
 			clienteWorker = await require('global/websocket/clienteWorker')();
 		}
