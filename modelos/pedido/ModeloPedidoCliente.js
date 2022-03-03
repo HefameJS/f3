@@ -198,10 +198,10 @@ class PedidoCliente {
 	 */
 	#converAlmacen() {
 
-		if (this.codigoAlmacenServicio === 'RG11') {
-			L.xw(this.txId, ['El almacén de Ribarroja no se admite temporalmente - Se elimina el campo']);
+		if (this.codigoAlmacenServicio === 'RG02') {
+			L.xw(this.txId, ['El almacén de BorginoFarma no se admite - Se elimina el campo']);
 			delete this.codigoAlmacenServicio;
-			this.addIncidencia(K.INCIDENCIA_FEDICOM.WARN_PED, 'El almacén de Ribarroja no se admite temporalmente - Se le asigna su almacén habitual');
+			this.addIncidencia(K.INCIDENCIA_FEDICOM.WARN_PED, 'El almacén de BorginoFarma no se admite - Se le asigna su almacén habitual');
 			return;
 		}
 
