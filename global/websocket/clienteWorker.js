@@ -1,48 +1,91 @@
-
-let WebSocketClient = require('websocket').client;
+const L = global.L;
+const C = global.C;
+let WebSocket = require('ws').WebSocket;
 
 class ClienteWorker {
-	#cliente;
-	#conexion;
+
+	#intervaloReconexion;
+	#numeroEntradasBuffer;
+	#buffer;
+	
+
+	#timeoutConexion;
+	#websocket;
 	#log;
 
 	constructor() {
-		this.#log = L.instanciar({ txId: 'WSWorker' });
+		this.#log = L.instanciar('WSWorker', 'WebSocket');
+		this.#buffer = require('global/extensiones/fifo')();
+
+		this.#intervaloReconexion = C.monitor.websocket.clienteWorker.intervaloReconexion;
+		this.#numeroEntradasBuffer = C.monitor.websocket.clienteWorker.numeroEntradasBuffer;
+
 		this.#conectarConServidor();
 	}
 
 	#conectarConServidor() {
-		this.#cliente = new WebSocketClient();
 
-		this.#cliente.on('connectFailed', (error) => {
-			this.#log.error('Connect Error: ' + error.toString());
+		if (this.#websocket) this.#websocket.terminate();
+
+
+
+		this.#log.info('Estableciendo conexión con el servicio de recolección de eventos');
+		this.#websocket = new WebSocket(C.monitor.getUrlWebsocketColector());
+
+		this.#websocket.on('error', (error) => {
+			this.#log.warn('Error conexión al servicio de recolección', error.message);
 		});
 
-		this.#cliente.on('connect', (connection) => {
-			this.#conexion = connection;
-			this.#log.info('Conectado al servidor de recolección');
-
-			connection.on('error', function (error) {
-				this.#log.error("Connection Error: " + error.toString());
-			});
-			connection.on('close', function () {
-				this.#log.info('echo-protocol Connection Closed');
-			});
-			connection.on('message', function (message) {
-				if (message.type === 'utf8') {
-					this.#log.trace("Recibido desde el colector: '" + message.utf8Data + "'");
-				}
-			});
+		this.#websocket.on('close', (codigo) => {
+			this.#log.warn(`Se ha cerrado la conexión con el servidor. [codigo=${codigo}]`);
+			this.#log.debug(`Se reintenta la conexión en ${this.#intervaloReconexion}ms`);
+			this.#timeoutConexion = setTimeout(() => this.#conectarConServidor(), this.#intervaloReconexion);
 		});
 
-		this.#cliente.connect('ws://localhost:5002/asd-33');
+		this.#websocket.on('open', () => {
+			this.#log.info('Conexión con el servicio establecida');
+			clearTimeout(this.#timeoutConexion);
+			this.#limpiarBuffer();
+		});
+
+		this.#websocket.on('message', function (mensaje) {
+			this.#log.trace("Recibido desde el colector: '" + mensaje + "'");
+		});
+
 	}
 
-	enviarMensaje(mensaje) {
-		if (this.#conexion?.connected) {
-			this.#conexion.sendUTF(JSON.stringify(mensaje));
+	enviarMensaje(mensaje, envioDesdeBuffer) {
+		this.#log.trace('Enviando mensaje al recolector', mensaje)
+
+		if (!this.#websocket) {
+			this.#log.trace('No existe la conexión al recolector')
+			if (!envioDesdeBuffer) this.#insertarEnBuffer(mensaje);
+			return;
+		}
+		else {
+			if (this.#websocket.readyState === WebSocket.OPEN) {
+				this.#websocket.send(JSON.stringify(mensaje), { binary: false },);
+			} else {
+				this.#log.trace(`La conexión está en un estado no válido [readyState=${this.#websocket.readyState}]`)
+				if (!envioDesdeBuffer) this.#insertarEnBuffer(mensaje);
+			}
 		}
 	}
+
+	#insertarEnBuffer(mensaje) {
+		this.#buffer.push(mensaje);
+		if (this.#buffer.length > this.#numeroEntradasBuffer) {
+			this.#buffer.shift();
+		}
+	}
+
+	#limpiarBuffer() {
+		let mensaje;
+		while (mensaje = this.#buffer.shift()) {
+			this.enviarMensaje(mensaje);
+		}
+	}
+
 }
 
-module.exports = () => Promise.resolve(new ClienteWorker()) ;
+module.exports = ClienteWorker;

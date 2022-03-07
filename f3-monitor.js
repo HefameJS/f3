@@ -38,7 +38,7 @@ require('global/bootstrap')('monitor').then(async () => {
 	// Arranque del servidor de WS
 	const WS = require('global/websocket');
 	WS.arrancarServicioColector(C.monitor.websocket.puerto);
-	WS.arrancarServicioConcentrador(C.monitor.websocket.puerto + 1);
+	// WS.arrancarServicioConcentrador(C.monitor.websocket.puerto + 1);
 
 	
 	

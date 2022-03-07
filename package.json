@@ -30,7 +30,7 @@
     "saslprep": "^1.0.3",
     "sqlite3": "^5.0.2",
     "uuid": "^8.3.2",
-    "websocket": "^1.0.34"
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"

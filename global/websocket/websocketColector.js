@@ -1,15 +1,15 @@
 const L = global.L;
 const K = global.K;
 
-const WebSocketServer = require('websocket').server;
-const http = require('http');
+const WebSocketServer = require('ws').WebSocketServer;
+// const http = require('http');
 
 
 class ServidorWebSocketColector {
 
 	#puerto;
 	#log;
-	#servidorHttp;
+	//#servidorHttp;
 	#servidorWs;
 
 	#clientes = {};
@@ -17,23 +17,40 @@ class ServidorWebSocketColector {
 	constructor(puerto) {
 
 		this.#puerto = puerto;
-		this.#log = L.instanciar({ txId: 'WSColector' });
+		this.#log = L.instanciar('WSColector', 'WebSocket');
 
-		this.#servidorHttp = http.createServer((request, response) => {
+		/*this.#servidorHttp = http.createServer((request, response) => {
 			response.writeHead(404);
 			response.end();
-		});
+		});*/
 
-		this.#servidorHttp.listen(this.#puerto, () => {
+		/*this.#servidorHttp.listen(this.#puerto, () => {
 			this.#log.info(`Servidor WebSocket Colector a la escucha en el puerto ${this.#puerto}`);
-		});
+		});*/
 
 		this.#servidorWs = new WebSocketServer({
-			httpServer: this.#servidorHttp,
-			autoAcceptConnections: false
+			port: this.#puerto,
+			clientTracking: false
 		});
 
-		this.#servidorWs.on('request', (request) => {
+
+		//connection(websocket, request)
+		//headers(headers, request)
+
+
+		this.#servidorWs.on('listening', () => {
+			this.#log.info('Servicio a la escucha', this.#servidorWs.address());
+		});
+
+		this.#servidorWs.on('close', () => {
+			this.#log.info('Servicio cerrado');
+		});
+
+		this.#servidorWs.on('error', (error) => {
+			this.#log.error('Error en el servicio', error);
+		});
+
+		this.#servidorWs.on('connection', (websocket, request) => {
 			let idWorker = IdentificadorWorker.desdeRequest(request);
 
 			this.#log.info(`Petición de worker entrante desde ${request.host} con identificador ${idWorker}`)
@@ -44,13 +61,12 @@ class ServidorWebSocketColector {
 				return;
 			}
 
-
 			if (this.#clientes[idWorker.toString()]) {
 				this.#log.warn(`Ya existe un cliente con el mismo ID. Desconectamos el más antiguo`)
 				this.#clientes[idWorker.toString()].desconectar()
 			}
-			
-			let cliente = new ConexionWorker(idWorker, this, request);
+
+			let cliente = new ConexionWorker(idWorker, this, websocket, request);
 			this.#clientes[idWorker.toString()] = cliente;
 		});
 	}
@@ -58,9 +74,8 @@ class ServidorWebSocketColector {
 
 	desconectarCliente(idWorker) {
 		delete this.#clientes[idWorker.toString()];
-		console.log(this.#clientes)
 	}
-	
+
 
 }
 
@@ -73,7 +88,7 @@ class IdentificadorWorker {
 	}
 
 	static desdeRequest(request) {
-		let recurso = request.resource;
+		let recurso = request.url;
 		let entreBarras = recurso.split('/');
 		if (entreBarras[1]?.length) {
 			let entreGuiones = entreBarras[1].split('-');
@@ -89,7 +104,7 @@ class IdentificadorWorker {
 	}
 
 	toString() {
-		return this.servidor + ':' + this.pid;
+		return this.servidor + '-' + this.pid;
 	}
 }
 
@@ -98,47 +113,47 @@ class ConexionWorker {
 
 	#idConexion;
 	#log;
-	#conexion;
+	#websocket;
 	#servidor;
+	#socket;
 
-	constructor(idWorker, padre, req) {
+	constructor(idWorker, servidor, websocket, request) {
 		this.#idConexion = idWorker;
-		this.#servidor = padre;
-		this.#log = L.instanciar({ txId: 'WebSocketCon#' + idWorker })
-		this.#conexion = req.accept();
+		this.#servidor = servidor;
+		this.#websocket = websocket;
+		this.#socket = request.socket;
 
-		this.#log.info(`Aceptada conexión entrante con ID ${idWorker} desde ${this.#conexion.remoteAddress}`);
+		this.#log = L.instanciar('WSColector_' + idWorker, 'WebSocket')
 
-		this.#conexion.on('message', (a) => this.#onMensajeEntrante(a));
-		this.#conexion.on('close', (a, b) => this.#onConexionCerrada(a, b));
+		this.#log.info(`Aceptada conexión entrante con ID ${idWorker} en ${this.#socket.localAddress} desde ${this.#socket.remoteAddress}`);
+
+		this.#websocket.on('message', (a) => this.#onMensajeEntrante(a));
+		this.#websocket.on('close', (a, b) => this.#onConexionCerrada(a, b));
 	}
 
 	desconectar() {
-		this.enviarMensaje({accion: 'desconectar'});
-		this.#conexion.close(1000);
+		this.enviarMensaje({ accion: 'desconectar' });
+		this.#websocket.close(1000);
 	}
 
 	enviarMensaje(mensaje) {
-		this.#conexion.sendUTF(JSON.stringify(mensaje));
+		this.#websocket.sendUTF(JSON.stringify(mensaje));
 	}
 
 	#onMensajeEntrante(mensaje) {
 		try {
-			if (mensaje.type === 'utf8') {
-				let json = JSON.parse(mensaje.utf8Data);
-				this.#log.trace('Recibido mensaje', json);
 
-				switch (json.accion) {
-					case 'suscribir': this.suscribir(json); return;
-					case 'desuscribir': this.desuscribir(json); return;
-					default: return; //No-Op
-				}
+			let json = JSON.parse(mensaje);
+			this.#log.trace('Recibido mensaje', json);
 
-			} else {
-				this.#log.warn('Recibido mensaje binario que no se procesa');
+			switch (json.accion) {
+				case 'suscribir': this.suscribir(json); return;
+				case 'desuscribir': this.desuscribir(json); return;
+				default: return; //No-Op
 			}
+
 		} catch (error) {
-			this.#log.warn('Recibido texto erroneo', error.message, mensaje.utf8Data)
+			this.#log.warn('Recibido texto erroneo', error.message, mensaje)
 		}
 	}
 

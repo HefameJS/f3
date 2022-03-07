@@ -253,6 +253,14 @@ class LogFichero extends Log {
 				}
 				break;
 			}
+/*			case 'WebSocket': {
+				this.ficheroLog = {
+					directorio: directorioBase,
+					fichero: 'websocket.log',
+					rutaCompleta: directorioBase + 'websocket.log'
+				}
+				break;
+			}*/
 			default: {
 				let fichero = this.prefijo + '.log'
 				this.ficheroLog = {
@@ -338,6 +346,8 @@ module.exports = async function (prefijo) {
 				return new LogMongo(transmision, tipo, transmision.txId);
 			case 'TransmisionLigera':
 				return new LogFichero(transmision, tipo, transmision.txId);
+			case 'WebSocket':
+				return new LogFichero(null, tipo, transmision.txId || transmision);
 			default:
 				return loggerProceso;
 		}

@@ -386,7 +386,6 @@ class ConfiguracionBalanceadores {
 	}
 }
 
-
 class ConfiguracionLogistica {
 	constructor(config) {
 
@@ -400,12 +399,22 @@ class ConfiguracionLogistica {
 	}
 }
 
-
-
 class ConfiguracionMonitor {
 	constructor(config) {
-		this.http = { ...config.http };
-		this.websocket = { ...config.websocket };
+		this.http = { 
+			direccion: config.http?.direccion,
+			puerto: parseInt(config.http?.puerto) || 5001,
+			https: Boolean(config.http?.https),
+		};
+		this.websocket = { 
+			direccion: config.websocket?.direccion,
+			puerto: parseInt(config.websocket?.puerto) || 5002,
+			wss: Boolean(config.websocket?.wss),
+			clienteWorker: {
+				intervaloReconexion: parseInt(config.websocket?.clienteWorker?.intervaloReconexion) * 1000 || 10000,
+				numeroEntradasBuffer: parseInt(config.websocket?.clienteWorker?.numeroEntradasBuffer) || 1000,
+			}
+		};
 	}
 
 	static async cargar() {
@@ -413,6 +422,13 @@ class ConfiguracionMonitor {
 		return new ConfiguracionMonitor(config);
 	}
 
+	getUrlWebsocketColector() {
+		let url = this.websocket.wss ? 'wss://' : 'ws://';
+		url += this.websocket.direccion;
+		url += ':' + this.websocket.puerto;
+		url += '/' + process.iid;
+		return url;
+	}
 	
 }
 
