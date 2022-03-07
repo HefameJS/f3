@@ -27,15 +27,17 @@ class Transmision extends Object {
 	//		.error (Error) Un objeto de error si la respuesta no pudo enviarse (null si no hay error)
 
 
-	txId;						// (ObjectID) El ID único de la transmisión.
-	log;						// (Log) El gestor de log para esta transmisión.
-	fechaCreacion;				// (Date) Fecha de creación de la transmisión.
-	#estado;					// (integer) El estado de la transmisión. Ej, RECEPCIONADA, ESPERANDO FALTAS ....
-	#tipo;						// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
-	token;						// (Token) Datos del token transmitido en la transmisión.
-	#intercambioSap				// (IntercambioSap) Interfaz de comunicación con SAP.
-	#metadatosConexionEntrante;	// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
-	#metadatosOperacion;		// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
+	txId;							// (ObjectID) El ID único de la transmisión.
+	log;							// (Log) El gestor de log para esta transmisión.
+	fechaCreacion;					// (Date) Fecha de creación de la transmisión.
+	#estado;						// (integer) El estado de la transmisión. Ej, RECEPCIONADA, ESPERANDO FALTAS ....
+	#tipo;							// (integer) El tipo de la transmisión. Ej. AUTENTICACION, CREAR PEDIDO, ....
+	token;							// (Token) Datos del token transmitido en la transmisión.
+	#intercambioSap					// (IntercambioSap) Interfaz de comunicación con SAP.
+	#metadatosConexionEntrante;		// (MetadatosConexionEntrante) Metadatos de la conexión entrante.
+	#metadatosOperacion;			// (MetadatosOperacion) Objeto en el que se manejan los metadatos de la operación llevada a cabo en esta transmision.
+	#registrarWebsocket = false;	// (Boolean) Indica si la transacción debe enviar evento por el WebSocket al registrarse
+	#metadatosWebsocket				// (Objeto) El objeto que se envía al websocket colector
 
 
 	static async ejecutar(req, res, ClaseTransmision, datosDeOperacion) {
@@ -55,7 +57,7 @@ class Transmision extends Object {
 				await resultadoOperacion.responderTransmision(transmision);
 				// Genera los metadatos de la transmisión
 				await transmision.generarMetadatosOperacion();
-
+				await transmision.generarMetadatosWebsocket();
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
 				transmision.log.dump(truenoTransmision);
@@ -72,7 +74,7 @@ class Transmision extends Object {
 						L.fatal('Hasta el envío del mensaje de error genérico falla', errorEnvioError)
 					}
 				}
-				
+
 			}
 		}
 		// Registra en la base de datos el resultado de la transmisión.
@@ -120,14 +122,6 @@ class Transmision extends Object {
 		return new ResultadoTransmision(503, K.ESTADOS.PETICION_INCORRECTA,)
 	}
 
-	/**
-	 * Método abstracto que las clases que hereden deben implementar.
-	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
-	 */
-	async generarMetadatosOperacion() {
-		this.log.warn('El objeto de transmisión no tiene redefinido el método generarMetadatosOperacion()');
-	}
-
 
 	/**
 	 * Obtiene el objecto request de express
@@ -150,7 +144,6 @@ class Transmision extends Object {
 		return this.#intercambioSap;
 	}
 
-
 	/**
 	 * Establece el estado de la transmision
 	 * @param {*} estado El nuevo estado
@@ -158,6 +151,16 @@ class Transmision extends Object {
 	setEstado(estado) {
 		this.log.evento(`La transmisión pasa de estado ${this.#estado} a ${estado}`);
 		this.#estado = estado;
+	}
+
+
+	/* #region  METADATOS DE LA OPERACION */
+	/**
+	 * Método abstracto que las clases que hereden deben implementar.
+	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
+	 */
+	async generarMetadatosOperacion() {
+		this.log.warn('El objeto de transmisión no tiene redefinido el método generarMetadatosOperacion()');
 	}
 
 	/**
@@ -169,6 +172,30 @@ class Transmision extends Object {
 		this.log.debug(`Establecidos metadatos de la operacion '${nombre}':`, valor);
 		this.#metadatosOperacion.insertar(nombre, valor);
 	}
+	/* #endregion */
+
+
+	/* #region  METADATOS DEL WEBSOCKET */
+	/**
+	 * Método abstracto que las clases que hereden deben implementar.
+	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
+	 */
+	async generarMetadatosWebsocket() {
+		this.log.trace('No se definen metadatos para el websocket.');
+		return null;
+	}
+
+	/**
+	 * Establece el valor de los metadatos para enviar al websocket
+	 * @param {*} nombre El nombre del flag
+	 * @param {*} valor El nuevo valor del flag
+	 */
+	setMetadatosWebsocket(valor) {
+		this.log.debug('Establecidos metadatos del websocket', valor);
+		this.#metadatosWebsocket = valor
+	}
+	/* #endregion */
+
 
 	/**
 	 * Envía una respuesta a la solicitud HTTP del cliente.
@@ -277,12 +304,14 @@ class Transmision extends Object {
 			}
 		}
 
-		WS.enviarMensajeAColector({
-			_id: this.txId,
-			fechaCreacion: this.fechaCreacion,
-			estado: this.#estado,
-			tipo: this.#tipo
-		});
+		if (this.constructor.REGISTRAR_WEBSOCKET) {
+			WS.enviarMensajeAColector({
+				_id: this.txId,
+				fechaCreacion: this.fechaCreacion,
+				estado: this.#estado,
+				tipo: this.#tipo
+			});
+		}
 
 
 		try {
@@ -331,13 +360,15 @@ class Transmision extends Object {
 		// Metadatos de la operacion
 		this.#metadatosOperacion.sentenciar(sentencia);
 
-		WS.enviarMensajeAColector({
-			_id: this.txId,
-			fechaCreacion: this.fechaCreacion,
-			estado: this.#estado,
-			tipo: this.#tipo,
-			//datos: this.#metadatosOperacion.metodoPruebaWebsocket()
-		});
+		if (this.#metadatosWebsocket) {
+			WS.enviarMensajeAColector({
+				_id: this.txId,
+				fechaCreacion: this.fechaCreacion,
+				estado: this.#estado,
+				tipo: this.#tipo,
+				datos: this.#metadatosWebsocket
+			});
+		}
 
 		try {
 			await M.col.transmisiones.updateOne({ _id: this.txId }, sentencia, { upsert: true });

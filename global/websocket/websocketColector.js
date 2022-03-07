@@ -1,15 +1,10 @@
 const L = global.L;
-const K = global.K;
-
 const WebSocketServer = require('ws').WebSocketServer;
-// const http = require('http');
-
 
 class ServidorWebSocketColector {
 
 	#puerto;
 	#log;
-	//#servidorHttp;
 	#servidorWs;
 
 	#clientes = {};
@@ -19,24 +14,10 @@ class ServidorWebSocketColector {
 		this.#puerto = puerto;
 		this.#log = L.instanciar('WSColector', 'WebSocket');
 
-		/*this.#servidorHttp = http.createServer((request, response) => {
-			response.writeHead(404);
-			response.end();
-		});*/
-
-		/*this.#servidorHttp.listen(this.#puerto, () => {
-			this.#log.info(`Servidor WebSocket Colector a la escucha en el puerto ${this.#puerto}`);
-		});*/
-
 		this.#servidorWs = new WebSocketServer({
 			port: this.#puerto,
 			clientTracking: false
 		});
-
-
-		//connection(websocket, request)
-		//headers(headers, request)
-
 
 		this.#servidorWs.on('listening', () => {
 			this.#log.info('Servicio a la escucha', this.#servidorWs.address());

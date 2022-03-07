@@ -180,10 +180,81 @@ class TransmisionCrearPedido extends Transmision {
 
 		this.setMetadatosOperacion('pedido', metadatos);
 	}
+
+	// @Override
+	generarMetadatosWebsocket() {
+
+		if (this.#solicitud.contieneErroresProtocoloEnCabecera()) {
+			this.setMetadatosWebsocket({
+				contieneErroresProtocolo: true
+			});
+			return;
+		}
+
+		let metadatos = {
+			codigoCliente: parseInt(this.#solicitud.codigoCliente.slice(-5)) || this.codigoCliente,
+			//numeroPedidoOrigen: this.#solicitud.numeroPedidoOrigen,
+			//tipoPedido: parseInt(this.#solicitud.tipoPedido) || 0,
+			crc: this.#solicitud.metadatos.crc,
+			//crcSap: M.toMongoLong(parseInt(this.#solicitud.metadatos.crc.toString().substring(0, 8), 16)),
+			//tipoCrc: this.#solicitud.metadatos.tipoCrc
+		};
+
+		if (this.metadatos.noEnviaFaltas) metadatos.noEnviaFaltas = true;
+
+		//if (this.#solicitud.metadatos.codigoAlmacenDesconocido) metadatos.codigoAlmacenDesconocido = true;
+		//if (this.#solicitud.metadatos.codigoAlmacenSaneado) metadatos.codigoAlmacenSaneado = true;
+		//if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = true;
+		//if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = true;
+		if (this.#solicitud.metadatos.esDuplicado) metadatos.esDuplicado = true;
+
+
+		if (this.#respuesta) {
+
+			//if (this.#respuesta.metadatos.erroresOcultados.tieneErrores()) metadatos.erroresOcultados = this.#respuesta.metadatos.erroresOcultados.getErrores();
+
+			if (this.#respuesta.codigoAlmacenServicio) metadatos.codigoAlmacenServicio = this.#respuesta.codigoAlmacenServicio;
+			/*
+			if (this.#respuesta.metadatos.almacenesDeRebote.length) {
+				metadatos.reboteFaltas = true;
+				metadatos.almacenesDeRebote = this.#respuesta.metadatos.almacenesDeRebote;
+			}
+			*/
+			//if (this.#respuesta.metadatos.pedidoProcesadoSap) metadatos.pedidoProcesadoSap = true;
+			if (this.#respuesta.metadatos.porRazonDesconocida) metadatos.porRazonDesconocida = true;
+			//if (this.#respuesta.metadatos.servicioDemorado) metadatos.servicioDemorado = true;
+			//if (this.#respuesta.metadatos.estupefaciente) metadatos.estupefaciente = true;
+			if (this.#respuesta.metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = true;
+			if (this.#respuesta.metadatos.esPedidoDuplicadoSap) metadatos.esPedidoDuplicadoSap = true;
+
+
+			if (this.#respuesta.metadatos.totales?.lineas) metadatos.totales = this.#respuesta.metadatos.totales;
+			//if (this.#respuesta.metadatos.puntoEntrega) metadatos.puntoEntrega = this.#respuesta.metadatos.puntoEntrega;
+			//if (this.#respuesta.metadatos.tipoPedidoSap) metadatos.tipoPedidoSap = this.#respuesta.metadatos.tipoPedidoSap;
+			//if (this.#respuesta.metadatos.motivoPedidoSap) metadatos.motivoPedidoSap = this.#respuesta.metadatos.motivoPedidoSap;
+			//if (this.#respuesta.metadatos.clienteSap) metadatos.clienteSap = this.#respuesta.metadatos.clienteSap;
+
+			if (this.#respuesta.metadatos.pedidosAsociadosSap?.length) metadatos.pedidosAsociadosSap = this.#respuesta.metadatos.pedidosAsociadosSap.map(nPed => M.toMongoLong(nPed));
+			//if (this.#respuesta.metadatos.pedidoAgrupadoSap) metadatos.pedidoAgrupadoSap = M.toMongoLong(this.#respuesta.metadatos.pedidoAgrupadoSap);
+
+		}
+
+		if (this.token.dominio === K.DOMINIOS.TRANSFER) {
+			metadatos.esTransfer = true;
+		}
+
+		// Opciones de retransmision, si se está clonando otra transmisión
+		if (this.metadatos.opcionesDeReejecucion) {
+			metadatos.esReejecucion = true;
+			metadatos.opcionesDeReejecucion = this.metadatos.opcionesDeReejecucion.generarMetadatos();
+		}
+
+		this.setMetadatosWebsocket(metadatos);
+	}
 }
 
 
-
+TransmisionCrearPedido.REGISTRAR_WEBSOCKET = true;
 TransmisionCrearPedido.TIPO = K.TIPOS.CREAR_PEDIDO;
 TransmisionCrearPedido.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,

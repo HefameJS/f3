@@ -101,9 +101,44 @@ class TransmisionCrearDevolucion extends Transmision {
 		this.setMetadatosOperacion('devolucion', metadatos);
 	}
 
+	// @Override
+	generarMetadatosWebsocket() {
+		if (this.#solicitud.contieneErroresProtocolo()) {
+			return;
+		}
+
+		let metadatos = {
+			codigoCliente: parseInt(this.#solicitud.codigoCliente.slice(-5)),
+		}
+
+		if (this.#solicitud.metadatos.contieneLineasErroneas) metadatos.contieneLineasErroneas = true;
+		if (this.#solicitud.metadatos.errorProtocoloTodasLineas) metadatos.todasLineasErroneas = true;
+
+		if (this.#respuesta) {
+			let r = this.#respuesta;
+			let m = r.metadatos;
+
+			if (m.clienteNoExiste) metadatos.clienteNoExiste = true;
+			if (m.devolucionDuplicadaSap) metadatos.devolucionDuplicadaSap = true;
+			//if (m.arrayDeErroresSap) metadatos.arrayDeErroresSap = true;
+			//if (m.incidenciasCabeceraSap) metadatos.incidenciasCabeceraSap = true;
+			//if (m.creaOrdenLogistica) metadatos.creaOrdenLogistica = true;
+			//if (m.lineasRechazadas.length) metadatos.contieneLineasRechazadas = true;
+			//if (m.puntoEntrega) metadatos.puntoEntrega = m.puntoEntrega;
+			//if (m.numerosDevolucionSap) metadatos.numerosDevolucionSap = m.numerosDevolucionSap;
+
+			if (m.totales?.cantidad) metadatos.totales = m.totales;
+
+			if (r.numeroDevolucion) metadatos.numeroDevolucion = parseInt(r.numeroDevolucion)
+			//if (r.codigoRecogida) metadatos.numeroLogistica = M.toMongoLong(parseInt(r.codigoRecogida))
+		}
+
+		this.setMetadatosWebsocket(metadatos);
+	}
+
 }
 
-
+TransmisionCrearDevolucion.REGISTRAR_WEBSOCKET = true;
 TransmisionCrearDevolucion.TIPO = K.TIPOS.CREAR_DEVOLUCION;
 TransmisionCrearDevolucion.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,

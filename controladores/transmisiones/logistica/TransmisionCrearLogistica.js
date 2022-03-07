@@ -98,13 +98,40 @@ class TransmisionCrearLogistica extends Transmision {
 		}
 
 		this.setMetadatosOperacion('logistica', metadatos);
+	}
 
+	// @Override
+	generarMetadatosWebsocket() {
+
+		if (this.#solicitud.contieneErroresProtocoloEnCabecera()) {
+			return;
+		}
+
+		let metadatos = {};
+		// Metadatos de la SOLICITUD
+		metadatos.codigoCliente = parseInt(this.#solicitud.codigoCliente.slice(-5)) || this.#solicitud.codigoCliente;
+		metadatos.tipoLogistica = this.#solicitud.tipoLogistica;
+		metadatos.crc = this.#solicitud.metadatos.crc;
+		//if (this.#solicitud.metadatos.esRetransmisionCliente) metadatos.retransmisionCliente = this.#solicitud.metadatos.esRetransmisionCliente;
+		//if (this.#solicitud.metadatos.errorComprobacionDuplicado) metadatos.errorComprobacionDuplicado = this.#solicitud.metadatos.errorComprobacionDuplicado;
+
+		// Metadatos de la RESPUESTA
+
+		if (this.#respuesta) {
+			if (this.#respuesta.numeroLogistica) metadatos.numeroLogistica = M.toMongoLong(parseInt(this.#respuesta.numeroLogistica));
+			//if (this.#respuesta.metadatos.puntoEntrega) metadatos.puntoEntrega = this.#respuesta.metadatos.puntoEntrega;
+			//if (this.#respuesta.metadatos.erroresOcultados.tieneErrores()) metadatos.erroresOcultados = this.#respuesta.metadatos.erroresOcultados.getErrores();
+			if (this.#respuesta.metadatos.clienteBloqueadoSap) metadatos.clienteBloqueadoSap = this.#respuesta.metadatos.clienteBloqueadoSap;
+			if (this.#respuesta.metadatos.totales) metadatos.totales = this.#respuesta.metadatos.totales;
+		}
+
+		this.setMetadatosWebsocket(metadatos);
 	}
 
 }
 
 
-
+TransmisionCrearLogistica.REGISTRAR_WEBSOCKET = true;
 TransmisionCrearLogistica.TIPO = K.TIPOS.CREAR_LOGISTICA;
 TransmisionCrearLogistica.CONDICIONES_AUTORIZACION = new CondicionesAutorizacion({
 	admitirSinTokenVerificado: false,

@@ -108,6 +108,18 @@ class TransmisionConfirmarPedido extends Transmision {
 		};
 		this.setMetadatosOperacion('pedido.confirmar', metadatos);
 	}
+
+	// @Override
+	generarMetadatosWebsocket() {
+
+		let metadatos = {
+			txIdConfirmada: this.idTransmisionConfirmada,
+			nuevoEstado: this.metadatos.estadoTransmisionPedido,
+			pedidosAsociadosSap: this.pedidosAsociadosSap
+		};
+
+		this.setMetadatosWebsocket(metadatos);
+	}
 }
 
 
