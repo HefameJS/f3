@@ -117,7 +117,7 @@ class RegistroDump {
 			await fs.mkdir(this.#directorio, { recursive: true, mode: 0o755 });
 			await fs.appendFile(this.#rutaFicheroDump, this.#mensaje, { encoding: 'utf8' })
 
-			if (C.log.console) {
+			if (C.log.consola) {
 				console.log(this.#mensaje)
 			}
 		}
