@@ -1,25 +1,24 @@
-
-
-const ServidorWebSocketColector = require('global/websocket/websocketColector');
-//const ServidorWebSocketConcentrador = require('global/websocket/websocketConcentrador');
-const ClienteWorker = require('global/websocket/clienteWorker');
+const ServidorWebSocketInterior = require('global/websocket/websocketInterior');
+const ServidorWebSocketExterior = require('global/websocket/websocketExterior');
+const ClienteWorker = require('global/websocket/clienteWebsocketInterior');
 let clienteWorker = null;
 
 module.exports = {
-	arrancarServicioColector: async (puerto) => {
-		return new ServidorWebSocketColector(puerto)
+	arrancarServicioInterior: async () => {
+		return new ServidorWebSocketInterior()
 	},
-	/*
-	arrancarServicioConcentrador: (puerto) => {
-		return new Promise((accept, reject) => {
-			accept(new ServidorWebSocketConcentrador(puerto));
-		})
+	arrancarServicioExterior: () => {
+		return new ServidorWebSocketExterior()
 	},
-	*/
 	enviarMensajeAColector: async (mensaje) => {
 
-		if (!clienteWorker) clienteWorker = new ClienteWorker();
-		clienteWorker.enviarMensaje(mensaje)
+		try {
+			if (!clienteWorker) clienteWorker = new ClienteWorker();
+			clienteWorker.enviarMensaje(mensaje)
+		} catch (error) {
+			L.err('Error al enviar mensaje al servicio websocket colector', error);
+		}
+		
 		
 	}
 

@@ -1,7 +1,7 @@
 const L = global.L;
 const WebSocketServer = require('ws').WebSocketServer;
 
-class ServidorWebSocketColector {
+class ServidorWebSocketInterior {
 
 	#puerto;
 	#log;
@@ -9,10 +9,10 @@ class ServidorWebSocketColector {
 
 	#clientes = {};
 
-	constructor(puerto) {
+	constructor() {
 
-		this.#puerto = puerto;
-		this.#log = L.instanciar('WSColector', 'WebSocket');
+		this.#puerto = C.monitor.websocket.interior.puerto;
+		this.#log = L.instanciar('wsInterno', 'WebSocket');
 
 		this.#servidorWs = new WebSocketServer({
 			port: this.#puerto,
@@ -47,7 +47,7 @@ class ServidorWebSocketColector {
 				this.#clientes[idWorker.toString()].desconectar()
 			}
 
-			let cliente = new ConexionWorker(idWorker, this, websocket, request);
+			let cliente = new ClienteWebsocketInterno(idWorker, this, websocket, request);
 			this.#clientes[idWorker.toString()] = cliente;
 		});
 	}
@@ -90,7 +90,7 @@ class IdentificadorWorker {
 }
 
 
-class ConexionWorker {
+class ClienteWebsocketInterno {
 
 	#idConexion;
 	#log;
@@ -104,7 +104,7 @@ class ConexionWorker {
 		this.#websocket = websocket;
 		this.#socket = request.socket;
 
-		this.#log = L.instanciar('WSColector_' + idWorker, 'WebSocket')
+		this.#log = L.instanciar('wsInterno_' + idWorker, 'WebSocket')
 
 		this.#log.info(`Aceptada conexión entrante con ID ${idWorker} en ${this.#socket.localAddress} desde ${this.#socket.remoteAddress}`);
 
@@ -146,6 +146,4 @@ class ConexionWorker {
 }
 
 
-
-
-module.exports = ServidorWebSocketColector;
+module.exports = ServidorWebSocketInterior;

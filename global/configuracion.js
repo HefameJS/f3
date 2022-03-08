@@ -323,7 +323,7 @@ class ConfiguracionPedidos {
 		})
 	}
 
-	sePermiteEjecutarDuplicado( estado ) {
+	sePermiteEjecutarDuplicado(estado) {
 		return this.estadosQueAceptanEjecucionDeDuplicados.includes(estado);
 	}
 
@@ -401,15 +401,22 @@ class ConfiguracionLogistica {
 
 class ConfiguracionMonitor {
 	constructor(config) {
-		this.http = { 
+		this.http = {
 			direccion: config.http?.direccion,
 			puerto: parseInt(config.http?.puerto) || 5001,
 			https: Boolean(config.http?.https),
 		};
-		this.websocket = { 
-			direccion: config.websocket?.direccion,
-			puerto: parseInt(config.websocket?.puerto) || 5002,
-			wss: Boolean(config.websocket?.wss),
+		this.websocket = {
+			interior: {
+				direccion: config.websocket?.interior?.direccion,
+				puerto: parseInt(config.websocket?.interior?.puerto) || 5002,
+				wss: Boolean(config.websocket?.interior?.wss),
+			},
+			exterior: {
+				puerto: parseInt(config.websocket?.exterior?.puerto) || 5003,
+				wss: Boolean(config.websocket?.exterior?.wss),
+				numeroMaximoConexiones: parseInt(config.websocket?.exterior?.numeroMaximoConexiones) || 50
+			},
 			clienteWorker: {
 				intervaloReconexion: parseInt(config.websocket?.clienteWorker?.intervaloReconexion) * 1000 || 10000,
 				numeroEntradasBuffer: parseInt(config.websocket?.clienteWorker?.numeroEntradasBuffer) || 1000,
@@ -423,13 +430,13 @@ class ConfiguracionMonitor {
 	}
 
 	getUrlWebsocketColector() {
-		let url = this.websocket.wss ? 'wss://' : 'ws://';
-		url += this.websocket.direccion;
-		url += ':' + this.websocket.puerto;
+		let url = this.websocket.interior.wss ? 'wss://' : 'ws://';
+		url += this.websocket.interior.direccion;
+		url += ':' + this.websocket.interior.puerto;
 		url += '/' + process.iid;
 		return url;
 	}
-	
+
 }
 
 

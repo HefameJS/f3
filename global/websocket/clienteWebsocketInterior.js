@@ -2,7 +2,7 @@ const L = global.L;
 const C = global.C;
 let WebSocket = require('ws').WebSocket;
 
-class ClienteWorker {
+class ClienteWebsocketInterior {
 
 	#intervaloReconexion;
 	#numeroEntradasBuffer;
@@ -14,7 +14,7 @@ class ClienteWorker {
 	#log;
 
 	constructor() {
-		this.#log = L.instanciar('WSWorker', 'WebSocket');
+		this.#log = L.instanciar('wsCliente', 'WebSocket');
 		this.#buffer = require('global/extensiones/fifo')();
 
 		this.#intervaloReconexion = C.monitor.websocket.clienteWorker.intervaloReconexion;
@@ -88,4 +88,4 @@ class ClienteWorker {
 
 }
 
-module.exports = ClienteWorker;
+module.exports = ClienteWebsocketInterior;
