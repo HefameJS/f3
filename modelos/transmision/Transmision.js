@@ -60,7 +60,7 @@ class Transmision extends Object {
 				await transmision.generarMetadatosWebsocket();
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
-				transmision.log.dump(truenoTransmision);
+				await transmision.log.dump(truenoTransmision);
 				transmision.log.fatal(truenoTransmision.stack);
 
 				transmision.setEstado(K.ESTADOS.ERROR_CONCENTRADOR);

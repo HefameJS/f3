@@ -37,7 +37,7 @@ class TransmisionLigera extends Object {
 				// Genera los metadatos de la transmisión
 			} catch (truenoTransmision) {
 				// En caso de fallo, generamos un DUMP!
-				transmision.log.dump(truenoTransmision);
+				await transmision.log.dump(truenoTransmision);
 				transmision.log.fatal(truenoTransmision.stack)
 
 				// Mandamos un mensaje de error generico si no se ha enviado nada al cliente

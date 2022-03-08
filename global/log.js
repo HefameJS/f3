@@ -66,19 +66,21 @@ class RegistroLog {
 
 class RegistroDump {
 
-	rutaFicheroDump;
+	#rutaFicheroDump;
+	#directorio;
+	#mensaje;
 
 	constructor(datos, prefijo, transmision) {
 		let fecha = new Date();
 
-		let directorio = C.log.getDirectorioDump(true);
+		this.#directorio = C.log.getDirectorioDump(true);
 		let extension = Date.fedicomTimestamp() + '.dump';
-		this.rutaFicheroDump = directorio + prefijo + '.' + extension;
+		this.#rutaFicheroDump = this.#directorio + prefijo + '.' + extension;
 
-		let mensaje = fecha.toUTCString()
-		mensaje += '\n\n----------------------------------------\n DATOS DEL PROCESO \n----------------------------------------\n';
+		this.mensaje = fecha.toUTCString()
+		this.#mensaje += '\n\n----------------------------------------\n DATOS DEL PROCESO \n----------------------------------------\n';
 
-		mensaje += util.inspect({
+		this.#mensaje += util.inspect({
 			tipo: process.tipo,
 			titulo: process.titulo,
 			iid: process.iid,
@@ -88,8 +90,8 @@ class RegistroDump {
 
 		if (transmision) {
 			let req = transmision.req;
-			mensaje += '\n\n----------------------------------------\n DATOS DE LA TRANSMISION \n----------------------------------------\n';
-			mensaje += util.inspect({
+			this.#mensaje += '\n\n----------------------------------------\n DATOS DE LA TRANSMISION \n----------------------------------------\n';
+			this.#mensaje += util.inspect({
 				txId: transmision.txId,
 				body: req.body,
 				method: req.method,
@@ -100,16 +102,29 @@ class RegistroDump {
 		}
 
 		datos.forEach((dato, i) => {
-			mensaje += `\n\n----------------------------------------\n ARGUMENTO ${i} \n----------------------------------------\n`;
-			mensaje += util.inspect(dato, false, 10)
+			this.#mensaje += `\n\n----------------------------------------\n ARGUMENTO ${i} \n----------------------------------------\n`;
+			this.#mensaje += util.inspect(dato, false, 10)
 		});
 
-		fs.mkdir(directorio, { recursive: true, mode: 0o755 })
-			.then(() => fs.appendFile(this.rutaFicheroDump, mensaje, { encoding: 'utf8' }))
-			.catch((error) => {
-				console.error('ERROR AL ESCRIBIR FICHERO DE DUMP', error);
-				console.error(mensaje);
-			})
+	}
+
+	get rutaFicheroDump() {
+		return this.#rutaFicheroDump;
+	}
+
+	async escribirFichero() {
+		try {
+			await fs.mkdir(this.#directorio, { recursive: true, mode: 0o755 });
+			await fs.appendFile(this.#rutaFicheroDump, this.#mensaje, { encoding: 'utf8' })
+
+			if (C.log.console) {
+				console.log(this.#mensaje)
+			}
+		}
+		catch (error) {
+			console.error('ERROR AL ESCRIBIR FICHERO DE DUMP', error);
+			console.error(this.#mensaje);
+		}
 	}
 }
 
@@ -131,8 +146,9 @@ class Log {
 		return entrada;
 	}
 
-	dump(...datos) {
+	async dump(...datos) {
 		let dump = new RegistroDump(datos, this.prefijo, this.transmision);
+		await dump.escribirFichero()
 		this.insertarEntradaLog(['################## GENERADO DUMP:', dump.rutaFicheroDump], Log.FATAL);
 	}
 	trace(...datos) {
@@ -253,14 +269,14 @@ class LogFichero extends Log {
 				}
 				break;
 			}
-/*			case 'WebSocket': {
-				this.ficheroLog = {
-					directorio: directorioBase,
-					fichero: 'websocket.log',
-					rutaCompleta: directorioBase + 'websocket.log'
-				}
-				break;
-			}*/
+			/*			case 'WebSocket': {
+							this.ficheroLog = {
+								directorio: directorioBase,
+								fichero: 'websocket.log',
+								rutaCompleta: directorioBase + 'websocket.log'
+							}
+							break;
+						}*/
 			default: {
 				let fichero = this.prefijo + '.log'
 				this.ficheroLog = {
@@ -338,7 +354,7 @@ module.exports = async function (prefijo) {
 	global.L.err = (...datos) => loggerProceso.err(...datos);
 	global.L.fatal = (...datos) => loggerProceso.fatal(...datos);
 	global.L.evento = (...datos) => loggerProceso.evento(...datos);
-	global.L.dump = (...datos) => loggerProceso.dump(...datos);
+	global.L.dump = async (...datos) => await loggerProceso.dump(...datos);
 
 	global.L.instanciar = (transmision, tipo) => {
 		switch (tipo) {
