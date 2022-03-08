@@ -44,6 +44,7 @@ module.exports = async function (tipoProceso) {
 	L.info('Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker });
 	L.info(`Servidor ${tipoProceso} v${K.VERSION.SERVIDOR} compilado el ${(new Date(K.VERSION.GIT.timestamp)).toString()} (GIT: ${K.VERSION.GIT.commit})`);
 	process.on('uncaughtException', async (excepcionNoControlada) => {
+		L.fatal('process.on(uncaughtException)')
 		await L.dump(excepcionNoControlada);
 		C.pid.borrarFicheroPid();
 		process.exit(1);
