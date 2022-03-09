@@ -37,9 +37,9 @@ class ServidorWebSocketExterior {
 
 		this.#servidorWs.on('connection', (websocket, request) => {
 			
-			this.#log.info(`Petición de cliente entrante desde ${request.host}`)
+			this.#log.info(`Petición de cliente entrante desde ${request.socket.remoteAddress}`)
 
-			for (let i = 0; i < tshis.#numeroMaximoConexiones; i++) {
+			for (let i = 0; i < this.#numeroMaximoConexiones; i++) {
 				if (!this.#clientes[i]) {
 					this.#clientes[i] = new ClienteWebsocketExterno(i, this, websocket, request);;
 					return;

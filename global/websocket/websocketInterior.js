@@ -34,7 +34,7 @@ class ServidorWebSocketInterior {
 		this.#servidorWs.on('connection', (websocket, request) => {
 			let idWorker = IdentificadorWorker.desdeRequest(request);
 
-			this.#log.info(`Petición de worker entrante desde ${request.host} con identificador ${idWorker}`)
+			this.#log.info(`Petición de worker entrante desde ${request.socket.remoteAddress} con identificador ${idWorker}`)
 
 			if (!idWorker) {
 				this.#log.warn(`Se rechaza la petición por no indicar identificador de worker`)
@@ -43,7 +43,7 @@ class ServidorWebSocketInterior {
 			}
 
 			if (this.#clientes[idWorker.toString()]) {
-				this.#log.warn(`Ya existe un cliente con el mismo ID. Desconectamos el más antiguo`)
+				this.#log.warn(`Ya existe un cliente con el mismo ID.Desconectamos el más antiguo`)
 				this.#clientes[idWorker.toString()].desconectar()
 			}
 
@@ -106,7 +106,7 @@ class ClienteWebsocketInterno {
 
 		this.#log = L.instanciar('wsInterno_' + idWorker, 'WebSocket')
 
-		this.#log.info(`Aceptada conexión entrante con ID ${idWorker} en ${this.#socket.localAddress} desde ${this.#socket.remoteAddress}`);
+		this.#log.info('Instanciado cliente websocket');
 
 		this.#websocket.on('message', (a) => this.#onMensajeEntrante(a));
 		this.#websocket.on('close', (a, b) => this.#onConexionCerrada(a, b));
@@ -139,7 +139,7 @@ class ClienteWebsocketInterno {
 	}
 
 	#onConexionCerrada(reasonCode, description) {
-		this.#log.info(`Cliente ID ${this.#idConexion} desconectado. ${reasonCode}: ${description}`);
+		this.#log.info(`Cliente ID ${this.#idConexion} desconectado.${reasonCode}: ${description}`);
 		this.#servidor.desconectarCliente(this.#idConexion);
 	}
 
