@@ -42,7 +42,7 @@ class LineaAlbaran {
 				}
 			});
 
-		if (posicion.imp_porcent > 0) this.impuesto = new ImpuestoAlbaran(posicion);
+		/*if (posicion.imp_porcent > 0) */this.impuesto = new ImpuestoAlbaran(posicion);
 
 		if (posicion.des_importe > 0) this.descuento = [{
 			tipo: posicion.des_tipo,
