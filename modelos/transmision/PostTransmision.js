@@ -35,7 +35,7 @@ class PostTransmision {
 			if (datosTransmision?._id) {
 				return new PostTransmision(datosTransmision);
 			} else {
-				throw new Error('No se encuentra ninguna transmisión con el filtro indicado.');
+				return null;
 			}
 		} catch (errorMongo) {
 			throw errorMongo;

@@ -3,9 +3,10 @@
 
 class FakeRes {
 
-	headers = [];
+	headers = {};
 	statusCode = 0;
 	headersSent = false;
+	body = null;
 
 	constructor() {
 
@@ -24,8 +25,8 @@ class FakeRes {
 		return this;
 	}
 
-	send() {
-		//noop
+	send(body) {
+		this.body = body;
 		this.headersSent = true;
 		return this;
 	}

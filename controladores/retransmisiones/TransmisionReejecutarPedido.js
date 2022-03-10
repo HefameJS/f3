@@ -196,6 +196,11 @@ class TransmisionReejecutarPedido extends TransmisionLigera {
 			this.log.info(`Se indican las siguientes modificaciones:`, this.modificaciones.generarMetadatos());
 			let postTransmision = await PostTransmision.instanciar({ _id: oid }, true);
 
+			if (!postTransmision) {
+				let error = new ErrorFedicom('RTX-ERR-001', 'No se encuentra la transmisión original');
+				return new ResultadoTransmisionLigera(200, { errores: error.getErrores() });
+			}
+
 			postTransmision.log.info(`La solicitud '${this.txId}' lanza una reejecucion del pedido`);
 			postTransmision.log.info(`Usuario que ordena la reejecución: [usuario=${this.token.usuario}, dominio=${this.token.dominio}]`);
 			postTransmision.log.info(`Modificaciones indicadas sobre el pedido`, this.modificaciones.generarMetadatos());
@@ -253,7 +258,7 @@ class TransmisionReejecutarPedido extends TransmisionLigera {
 
 			}
 
-			return new ResultadoTransmisionLigera(200, req);
+			return new ResultadoTransmisionLigera(200, res);
 		} catch (error) {
 			this.log.err(error);
 			return (new ErrorFedicom(error)).generarResultadoTransmision();
