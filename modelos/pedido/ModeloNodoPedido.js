@@ -20,7 +20,7 @@ class ModeloNodoPedido {
 		this.es.externa = Boolean(!nodo.pedido.esReejecucion);
 		this.es.rechazo = Boolean(nodo.estado === K.ESTADOS.PEDIDO.RECHAZADO_SAP);
 		this.es.duplicado = Boolean(nodo.pedido.esDuplicado);
-		this.es.relevante = Boolean(!nodo.pedido.esPedidoDuplicadoSap && !this.es.rechazo && !this.es.duplicado);
+		this.es.relevante = Boolean(/*!nodo.pedido.esPedidoDuplicadoSap &&*/ !this.es.rechazo && !this.es.duplicado);
 
 		switch (nodo.estado) {
 			case K.ESTADOS.DUPLICADO:
