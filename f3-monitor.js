@@ -12,6 +12,7 @@ require('global/bootstrap')('monitor').then(async () => {
 	const cors = require('cors');
 
 	const routerMonitor = require('controladores/rutas/rutasMonitor');
+	const routerConcentrador = require('controladores/rutas/rutasEstandar');
 
 	let app = express();
 	app.use(cors({ exposedHeaders: ['X-txId', 'Software-ID', 'Content-Api-Version'] }));
@@ -21,16 +22,18 @@ require('global/bootstrap')('monitor').then(async () => {
 	app.use(require('express-bearer-token')());
 
 	// Carga de rutas
-	routerMonitor(app);
 
-	let servidorHttp = app.listen(C.http.puertoConsultas)
+	routerMonitor(app);
+	routerConcentrador(app);
+
+	let servidorHttp = app.listen(C.monitor.http.puerto)
 
 	servidorHttp.on('error', (errorServidorHTTP) => {
 		L.fatal('Ocurrió un error en el servicio HTTP:', errorServidorHTTP);
 		process.exit(1);
 	});
 	servidorHttp.on('listening', () => {
-		L.info(`Servidor HTTP a la escucha en el puerto ${C.http.puertoConsultas}`);
+		L.info(`Servidor HTTP a la escucha en el puerto ${C.monitor.http.puerto}`);
 		//servidorHttp.on('connection', (socket) => {});
 	});
 	servidorHttp.on('close', () => { L.fatal("Se ha cerrado el servicio HTTP"); });
