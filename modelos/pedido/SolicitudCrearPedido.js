@@ -223,12 +223,13 @@ class SolicitudCrearPedido extends Modelo {
 				case 5: cambiarAlmacen('RG15'); break; // Barcelona viejo
 				case 9: cambiarAlmacen('RG19'); break; // Málaga viejo
 				case 13: cambiarAlmacen('RG04'); break; // Madrid viejo
+				case 10: cambiarAlmacen('RG11'); break; // Valencia viejo pasa a Ribarroja
 				case 3: /* Cartagena */
 				case 4: /* Madrid nuevo */
 				case 6: /* Alicante */
 				case 7: /* Almería */
 				case 8: /* Albacete */
-				case 10: /* Valencia */
+				case 11: /* Valencia */
 				case 15: /* Barcelona */
 				case 16: /* Tortosa */
 				case 17: /* Melilla */
