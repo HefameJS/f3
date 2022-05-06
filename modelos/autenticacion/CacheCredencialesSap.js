@@ -1,46 +1,58 @@
 'use strict';
-//const C = global.C;
-//const L = global.L;
-//const K = global.K;
+const M = global.M;
 
 // Externos
-const memoryCache = require('memory-cache');
+const Crc = require('global/crc');
 
 
-const cacheCredencialesFedicom = new memoryCache.Cache();
-cacheCredencialesFedicom.countStats(true);
+const chequearSolicitud = async (solicitudAutenticacion) => {
 
+	const log = solicitudAutenticacion.log;
 
-const chequearSolicitud = (solicitudAutenticacion) => {
-	let passwordEnCache = cacheCredencialesFedicom.get(solicitudAutenticacion.usuario);
-	return (passwordEnCache && passwordEnCache === solicitudAutenticacion.clave)
+	log.info('Verificando en caché las credenciales del usuario')
+	try {
+		let entradaCache = await M.col.cacheUsuarios.findOne({ _id: solicitudAutenticacion.usuario });
+
+		if (entradaCache) {
+
+			let crc = Crc.generar(solicitudAutenticacion.clave, entradaCache.fechaCacheo.getTime(), solicitudAutenticacion.usuario)
+			let crcCoindicen = crc.equals(entradaCache.crcClave);
+			if (crcCoindicen)
+				log.debug('Encontrada entrada en caché para el usuario y coincide con los datos de la solicitud')
+			else
+				log.warn('La entrada en caché NO coindice con la indicada en la solicitud')
+			return crcCoindicen;
+		}
+		log.debug('No existe la entrada en caché para el usuario')
+		return false;
+	} catch (error) {
+		log.error('Ocurrió un error al comprobar la caché', error)
+		return false;
+	}
+
 }
 
-const agregarEntrada = (solicitudAutenticacion) => {
-	cacheCredencialesFedicom.put(solicitudAutenticacion.usuario, solicitudAutenticacion.clave);
-}
+const agregarEntrada = async (solicitudAutenticacion) => {
 
-const estadisticas = () => {
-	let aciertos = cacheCredencialesFedicom.hits();
-	let fallos = cacheCredencialesFedicom.misses();
-	let total = aciertos + fallos;
-	let ratio = total ? (aciertos * 100) / total : 0;
-
-	return {
-		hit: aciertos,
-		miss: fallos,
-		entries: cacheCredencialesFedicom.size(),
-		hitRatio: ratio
-	};
-}
-
-const clear = () => {
-	cacheCredencialesFedicom.clear();
+	const log = solicitudAutenticacion.log;
+	log.info('Grabando las credenciales del usuario en caché')
+	let fechaCacheo = new Date();
+	await M.col.cacheUsuarios.updateOne({ _id: solicitudAutenticacion.usuario },
+		{
+			$setOnInsert: {
+				_id: solicitudAutenticacion.usuario,
+			},
+			$set: {
+				fechaCacheo: fechaCacheo,
+				crcClave: Crc.generar(solicitudAutenticacion.clave, fechaCacheo.getTime(), solicitudAutenticacion.usuario)
+			}
+		},
+		{ upsert: true })
 }
 
 
 module.exports = {
 	chequearSolicitud,
 	agregarEntrada,
-	estadisticas
+	//	estadisticas
 }

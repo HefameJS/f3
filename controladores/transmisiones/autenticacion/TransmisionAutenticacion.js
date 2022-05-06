@@ -58,7 +58,7 @@ class TransmisionAutenticacion extends Transmision {
 		// Comprobacion de si la credencial del usuario se encuenta en la caché
 		if (!this.#solicitud.metadatos.evitarCache) {
 
-			let resultadoCache = CacheCredencialesSap.chequearSolicitud(this.#solicitud);
+			let resultadoCache = await CacheCredencialesSap.chequearSolicitud(this.#solicitud);
 
 			if (resultadoCache) {
 				this.log.info('Se produjo un acierto de caché con las credenciales de usuario');

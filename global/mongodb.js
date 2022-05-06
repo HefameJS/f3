@@ -29,6 +29,7 @@ const conexion = async function () {
 		descartes: new ColeccionDummy(),
 		instancias: new ColeccionDummy(),
 		maestros: new ColeccionDummy(),
+		cacheUsuarios: new ColeccionDummy()
 	};
 
 	let opcionesColeccion1 = { writeConcern: { w: 1, wtimeout: 1000 } }
@@ -44,6 +45,7 @@ const conexion = async function () {
 		colecciones.maestros = baseDatos.collection('maestros', opcionesColeccion1);
 		colecciones.logs = baseDatos.collection('logs', opcionesColeccion2);
 		colecciones.descartes = baseDatos.collection('descartes', opcionesColeccion2);
+		colecciones.cacheUsuarios = baseDatos.collection('cacheUsuarios', opcionesColeccion2);
 
 		L.info('Conexión a MongoDB establecida')
 	}
@@ -69,6 +71,7 @@ const conexion = async function () {
 		maestros: colecciones.maestros,
 		logs: colecciones.logs,
 		descartes: colecciones.descartes,
+		cacheUsuarios: colecciones.cacheUsuarios
 	}
 
 	global.M.conectado = () => {

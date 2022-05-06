@@ -24,6 +24,8 @@ const TxMonActualizaBalanceador = require('controladores/monitor/balanceadores/T
 const TxMonConectividadSap = require('controladores/monitor/sap/TxMonConectividadSap');
 const TxMonDestinosSap = require('controladores/monitor/sap/TxMonDestinosSap');
 const TxMonConsultaDump = require('controladores/monitor/dumps/TxMonConsultaDump');
+const TxMonBorrarCacheUsuarios = require('controladores/monitor/cacheUsuarios/TxMonBorrarCacheUsuarios');
+const TxMonConsultarCacheUsuarios = require('controladores/monitor/cacheUsuarios/TxMonConsultarCacheUsuarios');
 
 
 
@@ -105,6 +107,12 @@ module.exports = (app) => {
 	{ // DUMPS
 		app.route('/~/dumps/:servidor?/:idDump?')
 			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultaDump));
+	}
+
+	{ // CACHE DE CREDENCIALES
+		app.route('/~/cache/usuarios/:idUsuario?')
+			.get(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonConsultarCacheUsuarios))
+			.delete(async (req, res) => TransmisionLigera.ejecutar(req, res, TxMonBorrarCacheUsuarios));
 	}
 
 };
