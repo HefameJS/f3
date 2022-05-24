@@ -163,7 +163,7 @@ class LineaAlbaran {
 		this.precioAlbaran = posicion.precio_alb;
 		this.precioPvf = this.precioAlbaran;
 		this.precioPvl = 0;
-		
+
 
 		this.importeLineaNeto = Math.round(this.precioNeto * this.cantidadServida * 100) / 100;
 		this.importeLineaBruto = Math.round(this.precioAlbaran * this.cantidadServida * 100) / 100;
@@ -196,7 +196,7 @@ class Impuesto {
 	constructor(posicion) {
 		this.tipo = posicion.imp_tipo ? posicion.imp_tipo.replace(/\s+/g, '') : 'DESCONOCIDO';
 		this.porcentaje = posicion.imp_porcent;
-		this.base = posicion.imp_base * posicion.und_serv;
+		this.base = Math.round((posicion.imp_base * posicion.und_serv) * 100) / 100;
 		this.importe = Math.round(this.base * (this.porcentaje / 100) * 100) / 100;
 		this.porcentajeRecargo = posicion.imp_porcent_rec;
 		this.importeRecargo = Math.round(this.base * (this.porcentajeRecargo / 100) * 100) / 100;
