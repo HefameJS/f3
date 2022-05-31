@@ -168,7 +168,7 @@ class LineaAlbaran {
 		this.importeLineaNeto = Math.round(this.precioNeto * this.cantidadServida * 100) / 100;
 		this.importeLineaBruto = Math.round(this.precioAlbaran * this.cantidadServida * 100) / 100;
 
-		if (posicion.imp_porcent > 0) this.impuesto = new Impuesto(posicion);
+		if (posicion.imp_porcent >= 0) this.impuesto = new Impuesto(posicion);
 
 		if (posicion.des_importe > 0) this.descuento = [{
 			tipo: posicion.des_tipo,
