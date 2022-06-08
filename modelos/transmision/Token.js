@@ -99,6 +99,13 @@ class Token {
 		if (/^BF[0-9]{10}}$/.test(usuario)) return parseInt(usuario.slice(-5));
 		// Caso Transfer TR00000000, TG00000000, TP00000000
 		if (/^T(R|G|P)[0-9]{8}$/.test(usuario)) return parseInt(usuario.slice(-8));
+		// Es un entero
+		if (/^[0-9]+$/.test(usuario)) {
+			// Si es 602xxxxx, asumimos que es laboratorio y lo dejamos tal cual
+			if (usuario.startsWith('602')) return parseInt(usuario);
+			// En cualquier otro caso, lo convertimos a entero
+			return parseInt(usuario.slice(-5));
+		}
 		return usuario.toUpperCase();
 	}
 
