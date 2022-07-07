@@ -12,7 +12,7 @@ const ErrorLlamadaSap = require('./ErrorLlamadaSap');
 class IntercambioSap {
 
 	#transmision;						// Referencia a la transmisión que origina el intercambio con SAP
-	log;								// Referencia a this.#transmision.log;
+	#log;								// Referencia a this.#transmision.log;
 
 	#intercambioEjecutado;				// Indica si se ha intentado realizar el intercambio
 	#timeout;							// Timeout a esperar antes de abortar la llamada HTTP
@@ -43,7 +43,7 @@ class IntercambioSap {
 	 */
 	constructor(transmision) {
 		this.#transmision = transmision;
-		this.log = this.#transmision.log;
+		this.#log = this.#transmision.log;
 
 		this.#intercambioEjecutado = false;
 		this.#timeout = C.sap.timeout.realizarPedido;
