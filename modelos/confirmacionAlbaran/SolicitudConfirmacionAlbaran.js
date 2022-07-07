@@ -109,7 +109,7 @@ class SolicitudConfirmacionAlbaran extends Modelo {
 		}
 
 		if (tipoDestino === 'sap') {
-			json.login = this.token.generaDatosLogin();
+			json.login = this.token.generaDatosLoginSap();
 		}
 
 		return json;

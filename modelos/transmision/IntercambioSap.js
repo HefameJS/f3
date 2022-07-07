@@ -37,7 +37,10 @@ class IntercambioSap {
 		body: null			// Cuerpo de respuesta
 	}
 
-
+	/**
+	 * Prepara el intercambiador para realizar la llamada a SAP
+	 * @param {*} transmision La transmisión que realiza la llamada.
+	 */
 	constructor(transmision) {
 		this.#transmision = transmision;
 		this.log = this.#transmision.log;
@@ -47,20 +50,49 @@ class IntercambioSap {
 		this.#funcionValidadora = IntercambioSap.validador.estandard;
 	}
 
+	/**
+	 * Generalmente, tras una llamda a SAP se devuelve únicamente el cuerpo del mensaje retornado.
+	 * Si activamos este flag, se devolverá el objeto de respuesta tal cual AXIOS lo retorna,
+	 * con cabeceras y codigo de estado.
+	 * @param {*} devuelveEnCrudo (true | false)
+	 */
 	setDevuelveEnCrudo(devuelveEnCrudo) {
 		this.#devuelveEnCrudo = devuelveEnCrudo;
 	}
 
+	/**
+	 * Establece el timeout tras el cual la petición a SAP será abortada.
+	 * Por defecto, se establece el valor de `C.sap.timeout.realizarPedido`
+	 * @param {*} timeout Número de segundos para esperar
+	 * @returns 
+	 */
 	setTimeout(timeout) {
 		this.#timeout = timeout;
 		return this;
 	}
 
-	setFuncionValidadora(fValidadora) {
-		this.#funcionValidadora = fValidadora;
+	/**
+	 * Función que se ejecutará para determinar si la respuesta de SAP es un error o no. Ver `IntercambioSap.validador`.
+	 * Por omisión, la función validadora por defecto simplemente comprueba que el código de retorno sea de la forma 2xx.
+	 * 
+	 * Motivo principal de esta función: SAP funciona mal.
+	 * Ejemplo: En algunos casos, como en la llamada a consultas de albaranes, que se devuelve un error 500 cuando no
+	 * existe el albarán. Esto hace que, si no se comprueba, parezca que SAP está caído.
+	 * @param {*} fnValidadora 
+	 * @returns 
+	 */
+	setFuncionValidadora(fnValidadora) {
+		this.#funcionValidadora = fnValidadora;
 		return this;
 	}
 
+	/**
+	 * Realiza una llamada GET a la URL indicada del sistema SAP destino configurado.
+	 * Resuelve el body de la respuesta obtenido (o el objeto respuesta de AXIOS, ver `setDevuelveEnCrudo()`)
+	 * En caso de error, hace reject con el mismo.
+	 * @param {*} url 
+	 * @returns 
+	 */
 	async get(url) {
 		let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 			method: 'GET',
@@ -70,6 +102,14 @@ class IntercambioSap {
 		return await this.#ejecutarLlamadaSap(parametrosHttp);
 	}
 
+	/**
+	 * Realiza una llamada POST a la URL indicada del sistema SAP destino configurado.
+	 * Resuelve el body de la respuesta obtenido (o el objeto respuesta de AXIOS, ver `setDevuelveEnCrudo()`)
+	 * En caso de error, hace reject con el mismo.
+	 * @param {*} url 
+	 * @param {*} body 
+	 * @returns 
+	 */
 	async post(url, body) {
 		let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
 			method: 'POST',
@@ -80,19 +120,39 @@ class IntercambioSap {
 		return await this.#ejecutarLlamadaSap(parametrosHttp);
 	}
 
-	
+	/**
+	 * Obtiene el cuerpo de la respuesta devuelto por la llamada a SAP.
+	 * @returns 
+	 */
 	getRespuesta() {
 		return this.#respuesta.body;
 	}
 
+	/**
+	 * Devuelve el error producido durante la llamada a SAP, si existe.
+	 * Los errores son de tipo ErrorLlamadaSap
+	 * @returns 
+	 */
 	getError() {
 		return this.#respuesta.error;
 	}
 
+	/**
+	 * Indica si la llamada a SAP se ha ejecutado ya o no.
+	 * @returns 
+	 */
 	intercambioEjecutado() {
 		return this.#intercambioEjecutado;
 	}
 
+	/**
+	 * ***INTERNO***
+	 * Esta función se invoca durante el flujo de ejecución de la transmisión, y no tiene demasiado
+	 * sentido invocarla fuera de este flujo.
+	 * Devuelve un objeto con los metadatos/resumen de la llamada a SAP, que será insertado en la 
+	 * base de datos cuando se registre la transmisión.
+	 * @returns 
+	 */
 	generarMetadatosSap() {
 		if (!this.#intercambioEjecutado) return undefined;
 
@@ -121,7 +181,17 @@ class IntercambioSap {
 		}
 	}
 
-
+	/**
+	 * Lanza una petición contra el destino SAP indicado en la configuración.
+	 * 
+	 * @param {*} parametros Es un objeto de la forma {
+	 * 	url: La URL a la que hacer la petición
+	 *  metodo: El método HTTP (GET, POST, PUT, DELETE)
+	 *  headers: Las cabeceras de la petición
+	 *  body: El cuerpo del mensaje de la petición
+	 * }
+	 * @returns 
+	 */
 	async #ejecutarLlamadaSap(parametros) {
 
 		this.#intercambioEjecutado = true;
@@ -141,14 +211,15 @@ class IntercambioSap {
 
 		try {
 			respuestaSap = await axios(parametros);
-			
+
+			// Con la respuesta obtenida, llamamos a la función validadora (si existe), que debe retornar un booleano.
 			if (!this.#funcionValidadora(respuestaSap.status, respuestaSap.data)) {
 				this.log.err(`La llamada SAP ha devuelto un codigo de estado ${respuestaSap.status}`);
 				errorLlamadaSap = new ErrorLlamadaSap(ErrorLlamadaSap.ERROR_RESPUESTA_HTTP, respuestaSap.status, respuestaSap.statusText, respuestaSap.data);
 			}
 
 		} catch (errorComunicacion) {
-			this.log.err('La llamada SAP no se ha podido realizar por un error en la comunicación', errorComunicacion);
+			this.#log.err('La llamada SAP no se ha podido realizar por un error en la comunicación', errorComunicacion);
 			errorLlamadaSap = new ErrorLlamadaSap(ErrorLlamadaSap.ERROR_SAP_INALCANZABLE, errorComunicacion.errno, errorComunicacion.code)
 		}
 
@@ -184,7 +255,6 @@ IntercambioSap.validador = {
 
 	consultaAlbaranJSON: function (estado, body) {
 		if (IntercambioSap.validador.estandard(estado, body)) return true;
-
 		// Cuando el albarán no existe, SAP devuelve un código HTTP 503 y en el cuerpo de respuesta:
 		// {type: 'E', id: 'E202004011151', .... , message: 'La informacion no esta disponible..'
 		return (estado === 503 && body?.message === 'La informacion no esta disponible..')
@@ -192,7 +262,6 @@ IntercambioSap.validador = {
 
 	consultaDevolucionPDF: function (estado, body) {
 		if (IntercambioSap.validador.estandard(estado, body)) return true;
-
 		// Cuando la devolución no existe, SAP devuelve un 500 y la incidencia:
 		// [ { id: 4, message: 'Error en la generacion del PDF' } ]
 

@@ -18,6 +18,11 @@ class ResultadoTransmision {
 		this.cuerpoRespuestaHttp = cuerpoRespuestaHttp;
 	}
 
+	/**
+	 * ***INTERNO***
+	 * Función para uso interno dentro del flujo de ejecución de cualquier transmisión.
+	 * @param {*} transmision 
+	 */
 	async responderTransmision(transmision) {
 		await transmision.responder(this.cuerpoRespuestaHttp, this.codigoEstadoHttp);
 		transmision.setEstado(this.codigoEstadoTransmision);

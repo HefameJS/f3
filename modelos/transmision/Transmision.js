@@ -40,6 +40,15 @@ class Transmision extends Object {
 	#metadatosWebsocket				// (Objeto) El objeto que se envía al websocket colector
 
 
+	/**
+	 * Instancia y realiza todo el proceso de ejecución de la transmisión del tipo 'ClaseTransmision' que se indique.
+	 * 
+	 * @param {*} req El objeto HttpRequest de la comunicación HTTP que ha disparado la ejecución de la transmisión.
+	 * @param {*} res El objeto HttpResponse de la comunicación HTTP que ha disparado la ejecución de la transmisión.
+	 * @param {*} ClaseTransmision El constructor de la clase de transmisión concreta que vamos a ejecutar
+	 * @param {*} datosDeOperacion Datos adicionales que se pasarán al método operar() de la transmisión
+	 * @returns 
+	 */
 	static async ejecutar(req, res, ClaseTransmision, datosDeOperacion) {
 
 		// Instancia la transmisión (notese que las transmisiones NO DEBEN sobreescribir el constructor por defecto)
@@ -113,7 +122,9 @@ class Transmision extends Object {
 	}
 
 
+
 	/**
+	 * ABSTRACTO
 	 * Método abstracto que las clases que hereden deben implementar.
 	 * DEBE DEVOLVER UN OBJETO ResultadoTransmision.
 	 */
@@ -131,7 +142,8 @@ class Transmision extends Object {
 	}
 
 	/**
-	 * Obtiene el objecto response de express
+	 * Obtiene el objecto response de express.
+	 * TODO: Este getter actualmente solo es útil para 
 	 */
 	get res() {
 		return this.#http.res;
@@ -145,7 +157,11 @@ class Transmision extends Object {
 	}
 
 	/**
-	 * Establece el estado de la transmision
+	 * Establece el estado de la transmision.
+	 * Nota: usar esta operación dentro del método operar() para el objeto de transmisión actual
+	 * (esto es, llamar a this.setEstado(estado) desde el método operar()) no tiene efecto, ya que
+	 * el estado final de la transmisión será el indicado en el objeto ResultadoTransmision retornado
+	 * por el propio método operar()
 	 * @param {*} estado El nuevo estado
 	 */
 	setEstado(estado) {
@@ -156,9 +172,11 @@ class Transmision extends Object {
 
 	/* #region  METADATOS DE LA OPERACION */
 	/**
+	 * ABSTRACTO
 	 * Método abstracto que las clases que hereden deben implementar.
 	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
 	 */
+	// asbstracto
 	async generarMetadatosOperacion() {
 		this.log.warn('El objeto de transmisión no tiene redefinido el método generarMetadatosOperacion()');
 	}
@@ -177,6 +195,7 @@ class Transmision extends Object {
 
 	/* #region  METADATOS DEL WEBSOCKET */
 	/**
+	 * ABSTRACTO
 	 * Método abstracto que las clases que hereden deben implementar.
 	 * Debe usar el método setMetadatosOperacion(nombre, valor) para establecer tantos metadatos como necesite
 	 */
@@ -198,6 +217,8 @@ class Transmision extends Object {
 
 
 	/**
+	 * **INTERNO**
+	 * 
 	 * Envía una respuesta a la solicitud HTTP del cliente.
 	 * 
 	 * @param {ErrorFedicom|Object|Buffer} datos Los datos a enviar

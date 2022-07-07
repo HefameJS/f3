@@ -18,6 +18,7 @@ class ResultadoTransmisionPdf extends ResultadoTransmision {
 		this.nombreFichero = nombreFichero;
 	}
 
+	// @Override
 	async responderTransmision(transmision) {
 		await transmision.responder(this.cuerpoRespuestaHttp, this.codigoEstadoHttp, 'application/pdf', this.nombreFichero);
 		transmision.setEstado(this.codigoEstadoTransmision);
