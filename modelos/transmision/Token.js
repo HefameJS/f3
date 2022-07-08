@@ -232,6 +232,13 @@ class Token {
 				return;
 			}
 
+			// No se puede simular en nombre de otro usuario del dominio HEFAME !
+			if (dominioSimulado === K.DOMINIOS.HEFAME) {
+				this.#log.err(`No se puede simular en nombre de un usuario del dominio ${K.DOMINIOS.HEFAME}`);
+				this.#error = new ErrorFedicom('AUTH-006', 'El usuario no tiene permisos para realizar esta acción', 403);
+				return;
+			}
+
 			this.#solicitante = {
 				usuario: this.usuario,
 				dominio: this.dominio
