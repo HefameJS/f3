@@ -18,7 +18,7 @@ class TransmisionCrearPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
-		opcionesDeReejecucion: null// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
+		opcionesDeReejecucion: null			// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
 	};
 
 	#solicitud;
