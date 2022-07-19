@@ -155,6 +155,8 @@ class PedidoCliente {
 		this.lineas = [];
 		let ordenes = [];
 
+		lineas.sort((a, b) => a.codigoArticulo < b.codigoArticulo ? -1 : 1);
+
 		lineas.forEach((linea, i) => {
 			let lineaPedido = new LineaPedidoCliente(linea, txId, i);
 
