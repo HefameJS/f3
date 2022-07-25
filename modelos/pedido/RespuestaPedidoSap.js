@@ -61,7 +61,7 @@ class RespuestaPedidoSap extends Modelo {
 		let json = this.transmision.sap.getRespuesta();
 		this.log.trace('Creando objeto de respuesta de pedido SAP con los datos obtenidos');
 
-
+		// EL objeto devuelto es una "respuesta de errores". SAP está rechazando el pedido.
 		if (Array.isArray(json)) {
 
 			this.metadatos.esRespuestaDeErrores = true;
@@ -97,7 +97,7 @@ class RespuestaPedidoSap extends Modelo {
 			return;
 		}
 
-
+		// Si la ejecución ha llegado hasta aquí, es porque la respuesta de SAP es una respuesta de faltas correcta.
 		if (numeroPedido) this.numeroPedido = numeroPedido;
 		if (json.codigocliente) this.codigoCliente = json.codigocliente;
 		if (Array.isArray(json.notificaciones) && json.notificaciones.length) this.notificaciones = json.notificaciones;
