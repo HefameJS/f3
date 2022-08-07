@@ -18,7 +18,7 @@ class TransmisionCrearPedido extends Transmision {
 
 	metadatos = {							// Metadatos
 		noEnviaFaltas: false,				// Indica si no se enviaron faltas al cliente.
-		opcionesDeReejecucion: null// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
+		opcionesDeReejecucion: null			// Indica cambios a realizar en el pedido en el caso de que sea una reejecución
 	};
 
 	#solicitud;
@@ -106,7 +106,7 @@ class TransmisionCrearPedido extends Transmision {
 		if (this.#respuesta.metadatos.esRespuestaIncompresible) {
 			this.log.err('SAP devuelve un cuerpo de respuesta que no es un objeto válido. Se devuelve error de faltas simuladas', cuerpoRespuestaSap);
 			this.metadatos.noEnviaFaltas = true;
-			return new ResultadoTransmision(409, K.ESTADOS.ERROR_RESPUESTA_SAP, this.#solicitud.generarJSON('noSap'));
+			return new ResultadoTransmision(409, K.ESTADOS.ERROR_RESPUESTA_SAP, this.#solicitud.generarJSON('errores'));
 		}
 
 		let respuestaCliente = this.#respuesta.generarJSON();

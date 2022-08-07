@@ -33,8 +33,12 @@ class MetadatosConexionEntrante {
 	#obtenerDireccionIp(req) {
 		let ip = req.ip;
 
-		if (req.headers && req.headers['x-forwarded-for'])
-			ip = req.headers['x-forwarded-for'];
+		if (req.headers) {
+			if (req.headers['x-ip-cliente'])
+				ip = req.headers['x-ip-cliente'];
+			else if (req.headers['x-forwarded-for'])
+				ip = req.headers['x-forwarded-for'];
+		}
 
 		if (ip === '::1')
 			return '127.0.0.1'

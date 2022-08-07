@@ -162,7 +162,7 @@ class SolicitudCrearPedido extends Modelo {
 		this.lineas = [];
 
 		let ordinales = [];
-
+		lineasJson.sort((a, b) => a.codigoArticulo < b.codigoArticulo ? -1 : 1);
 		lineasJson.forEach((linea, i) => {
 			let lineaPedido = new LineaPedidoCliente(this.transmision, linea, i);
 

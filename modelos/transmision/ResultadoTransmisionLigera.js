@@ -13,7 +13,7 @@ class ResultadoTransmisionLigera extends ResultadoTransmision {
 		super(codigoEstadoHttp, null, cuerpoRespuestaHttp)
 	}
 
-	// Override
+	// @Override
 	async responderTransmision(transmision) {
 		await transmision.responder(this.cuerpoRespuestaHttp, this.codigoEstadoHttp);
 	}

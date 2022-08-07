@@ -58,7 +58,7 @@ class TransmisionAutenticacion extends Transmision {
 		// Comprobacion de si la credencial del usuario se encuenta en la caché
 		if (!this.#solicitud.metadatos.evitarCache) {
 
-			let resultadoCache = CacheCredencialesSap.chequearSolicitud(this.#solicitud);
+			let resultadoCache = await CacheCredencialesSap.chequearSolicitud(this.#solicitud);
 
 			if (resultadoCache) {
 				this.log.info('Se produjo un acierto de caché con las credenciales de usuario');
@@ -93,7 +93,7 @@ class TransmisionAutenticacion extends Transmision {
 			} else {
 				this.log.warn('SAP indica que las credenciales del usuario son incorrectas', respuestaSap);
 				let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
-				return errorFedicom.generarResultadoTransmision(K.ESTADOS.PETICION_INCORRECTA);
+				return errorFedicom.generarResultadoTransmision(K.ESTADOS.FALLO_AUTENTICACION);
 			}
 
 		} catch (errorLlamadaSap) {
@@ -113,7 +113,7 @@ class TransmisionAutenticacion extends Transmision {
 		} catch (errorLdap) {
 			this.log.err('La autenticación LDAP no fue satisfatoria. No se genera token', errorLdap);
 			let errorFedicom = new ErrorFedicom('AUTH-005', 'Usuario o contraseña inválidos', 401);
-			return errorFedicom.generarResultadoTransmision(K.ESTADOS.PETICION_INCORRECTA);
+			return errorFedicom.generarResultadoTransmision(K.ESTADOS.FALLO_AUTENTICACION);
 		}
 
 	}

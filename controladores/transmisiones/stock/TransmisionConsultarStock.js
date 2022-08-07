@@ -15,7 +15,7 @@ const RespuestaStock = require('modelos/stock/RespuestaStock');
 
 
 /**
- * Clase que representa una transmisión de una solicitud de autenticación.
+ * Clase que representa una transmisión de una consulta de stock.
  */
 class TransmisionConsultarStock extends Transmision {
 
@@ -53,7 +53,7 @@ class TransmisionConsultarStock extends Transmision {
 			let stockJson = cuerpoSap.map(stockSap => new RespuestaStock(stockSap));
 			return new ResultadoTransmision(200, K.ESTADOS.COMPLETADO, stockJson);
 		} else {
-			this.log.warn("SAP no ha devuelto albaranes:", cuerpoSap);
+			this.log.warn("SAP no ha devuelto artículos:", cuerpoSap);
 			let errorFedicom = new ErrorFedicom('STOCK-ERR-001', 'No se encuentran artículos', 404);
 			return errorFedicom.generarResultadoTransmision(K.ESTADOS.CONSULTA.NO_EXISTE);
 		}
