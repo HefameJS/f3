@@ -40,8 +40,8 @@ require('global/bootstrap')('monitor').then(async () => {
 
 	// Arranque del servidor de WS
 	const WS = require('global/websocket');
-	WS.arrancarServicioInterior();
-	WS.arrancarServicioExterior();
+	WS.interior();
+	WS.exterior();
 
 	
 	

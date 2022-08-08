@@ -24,20 +24,20 @@ class ServidorWebSocketExterior {
 		});
 
 		this.#servidorWs.on('listening', () => {
-			this.#log.info('Servicio a la escucha', this.#servidorWs.address());
+			this.#log.info('Servicio WS exterior a la escucha', this.#servidorWs.address());
 		});
 
 		this.#servidorWs.on('close', () => {
-			this.#log.info('Servicio cerrado');
+			this.#log.info('Servicio WS exterior cerrado');
 		});
 
 		this.#servidorWs.on('error', (error) => {
-			this.#log.err('Error en el servicio', error);
+			this.#log.err('Error en el servicio WS exterior', error);
 		});
 
 		this.#servidorWs.on('connection', (websocket, request) => {
 			
-			this.#log.info(`Petición de cliente entrante desde ${request.socket.remoteAddress}`)
+			this.#log.info(`Petición de cliente exterior entrante desde ${request.socket.remoteAddress}`)
 
 			for (let i = 0; i < this.#numeroMaximoConexiones; i++) {
 				if (!this.#clientes[i]) {
@@ -51,9 +51,14 @@ class ServidorWebSocketExterior {
 		});
 	}
 
-
 	desconectarCliente(idWorker) {
 		this.#clientes[idWorker] = null;
+	}
+
+	enviarMensaje(canal, mensaje) {
+		this.#clientes.forEach(cliente => {
+			cliente.enviarMensaje(mensaje)
+		});
 	}
 
 
@@ -88,7 +93,7 @@ class ClienteWebsocketExterno {
 	}
 
 	enviarMensaje(mensaje) {
-		this.#websocket.sendUTF(JSON.stringify(mensaje));
+		this.#websocket.send(JSON.stringify(mensaje), { binary: false },);
 	}
 
 	#onMensajeEntrante(mensaje) {
@@ -98,8 +103,8 @@ class ClienteWebsocketExterno {
 			this.#log.trace('Recibido mensaje', json);
 
 			switch (json.accion) {
-				case 'suscribir': this.suscribir(json); return;
-				case 'desuscribir': this.desuscribir(json); return;
+				//case 'suscribir': this.suscribir(json); return;
+				//case 'desuscribir': this.desuscribir(json); return;
 				default: return; //No-Op
 			}
 
@@ -109,7 +114,7 @@ class ClienteWebsocketExterno {
 	}
 
 	#onConexionCerrada(reasonCode, description) {
-		this.#log.info(`Cliente desconectado. ${reasonCode}: ${description}`);
+		this.#log.info(`Cliente exterior desconectado. ${reasonCode}: ${description}`);
 		this.#servidor.desconectarCliente(this.#idConexion);
 	}
 

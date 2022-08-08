@@ -1,4 +1,5 @@
 const L = global.L;
+
 const WebSocketServer = require('ws').WebSocketServer;
 
 class ServidorWebSocketInterior {
@@ -20,15 +21,15 @@ class ServidorWebSocketInterior {
 		});
 
 		this.#servidorWs.on('listening', () => {
-			this.#log.info('Servicio a la escucha', this.#servidorWs.address());
+			this.#log.info('Servicio WS interior a la escucha', this.#servidorWs.address());
 		});
 
 		this.#servidorWs.on('close', () => {
-			this.#log.info('Servicio cerrado');
+			this.#log.info('Servicio WS interior cerrado');
 		});
 
 		this.#servidorWs.on('error', (error) => {
-			this.#log.error('Error en el servicio', error);
+			this.#log.error('Error en el servicio WS interior', error);
 		});
 
 		this.#servidorWs.on('connection', (websocket, request) => {
@@ -118,28 +119,26 @@ class ClienteWebsocketInterno {
 	}
 
 	enviarMensaje(mensaje) {
-		this.#websocket.sendUTF(JSON.stringify(mensaje));
+		this.#websocket.send(JSON.stringify(mensaje), { binary: false },);
 	}
 
 	#onMensajeEntrante(mensaje) {
 		try {
 
 			let json = JSON.parse(mensaje);
-			this.#log.trace('Recibido mensaje', json);
+			this.#log.trace(`Recibido mensaje de worker ${this.#idConexion}`, json);
 
-			switch (json.accion) {
-				case 'suscribir': this.suscribir(json); return;
-				case 'desuscribir': this.desuscribir(json); return;
-				default: return; //No-Op
-			}
+			// Enviar por WS externo
+			const WS = require('global/websocket');
+			WS.exterior().enviarMensaje('canal', json);
 
 		} catch (error) {
 			this.#log.warn('Recibido texto erroneo', error.message, mensaje)
 		}
 	}
 
-	#onConexionCerrada(reasonCode, description) {
-		this.#log.info(`Cliente ID ${this.#idConexion} desconectado.${reasonCode}: ${description}`);
+	#onConexionCerrada(codigoMotivo, description) {
+		this.#log.info(`Cliente ID ${this.#idConexion} desconectado.${codigoMotivo}: ${description}`);
 		this.#servidor.desconectarCliente(this.#idConexion);
 	}
 
