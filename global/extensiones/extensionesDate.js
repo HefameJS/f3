@@ -1,6 +1,8 @@
 'use strict';
+
 // Externos
-const dateFormat = require('dateformat');
+const { format, isSaturday, isFriday } = require("date-fns");
+
 
 /**
  * Date.fedicomTimestamp()
@@ -14,26 +16,28 @@ if (!Date.fedicomTimestamp) {
 	}
 }
 
+const FORMATOS = {
+	fedicomDate: 'dd/MM/yyyy',
+	fedicomDateTime: 'dd/MM/yyyy HH:mm:ss',
+	sapDate: 'yyyyMMdd',
 
-dateFormat.masks.fedicomDate = 'dd/mm/yyyy';
-dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
+	shortDate: 'yyyyMMdd',
+	shortTime: 'HHMMss.S',
 
-dateFormat.masks.sapDate = 'yyyymmdd';
+	logCorto: 'yyyyMMdd',
+	logLargo: 'dd-MM-yyyy-HH:mm:ss.SSS',
 
-dateFormat.masks.shortDate = 'yyyymmdd';
-dateFormat.masks.shortTime = 'HHMMss.l';
+	crc: 'yyyyMMdd'
+}
 
-dateFormat.masks.logCorto = 'yyyymmdd';
-dateFormat.masks.logLargo = 'dd-mm-yyyy-HH:MM:ss.l';
 
 
 if (!Date.prototype.aCrc) {
 	// Date.prototype.formatear = {}
 	// let funciones = Date.prototype.formatear;
 
-	Date.prototype.aCrc = function() {
-		console.log(this)
-		return dateFormat(this, "yyyymmdd")
+	Date.prototype.aCrc = function () {
+		return format(this, FORMATOS.crc)
 	}
 }
 
@@ -47,7 +51,7 @@ if (!Date.prototype.aCrc) {
 if (!Date.toFedicomDate) {
 	Date.toFedicomDate = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "fedicomDate")
+		return format(date, FORMATOS.fedicomDate)
 	}
 }
 
@@ -62,7 +66,7 @@ if (!Date.toFedicomDate) {
 if (!Date.toFedicomDateTime) {
 	Date.toFedicomDateTime = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "fedicomDateTime")
+		return format(date, FORMATOS.fedicomDateTime)
 	}
 }
 
@@ -145,7 +149,7 @@ if (!Date.fromSAPtoFedicomDate) {
 if (!Date.toSapDate) {
 	Date.toSapDate = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "sapDate")
+		return format(date, FORMATOS.sapDate)
 	}
 }
 
@@ -158,7 +162,7 @@ if (!Date.toSapDate) {
 if (!Date.toShortDate) {
 	Date.toShortDate = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "shortDate")
+		return format(date, FORMATOS.shortDate)
 	}
 }
 
@@ -171,23 +175,23 @@ if (!Date.toShortDate) {
 if (!Date.toShortTime) {
 	Date.toShortTime = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "shortTime")
+		return format(date, FORMATOS.shortTime)
 	}
 }
 
 /**
- * ate.prototype.siguienteDiaHabil
+ * Date.prototype.siguienteDiaHabil
  */
 if (!Date.siguienteDiaHabil) {
 	Date.siguienteDiaHabil = () => {
+
 		let elDiaD = new Date();
-
-		let diaSemana = elDiaD.getDay();
-		if (diaSemana === 6) // Si es sábado, rebotamos al lunes (+2 días)
-			elDiaD.setDate(elDiaD.getDate() + 2);
-		else
-			elDiaD.setDate(elDiaD.getDate() + 1);
-
+		let retrasoEnDias = 1;
+		if (isFriday(elDiaD)) retrasoEnDias = 3
+		else if (isSaturday(elDiaD)) retrasoEnDias = 2
+			
+		addDays(elDiaD, retrasoEnDias);
+		
 		return Date.toFedicomDate(elDiaD);
 	}
 }
@@ -202,7 +206,7 @@ if (!Date.siguienteDiaHabil) {
  */
 if (!Date.logCorto) {
 	Date.logCorto = () => {
-		return dateFormat(new Date(), "logCorto")
+		return format(new Date(), FORMATOS.logCorto)
 	}
 }
 
@@ -213,6 +217,6 @@ if (!Date.logCorto) {
  */
 if (!Date.logLargo) {
 	Date.logLargo = () => {
-		return dateFormat(new Date(), "logLargo")
+		return format(new Date(), FORMATOS.logLargo)
 	}
 }
