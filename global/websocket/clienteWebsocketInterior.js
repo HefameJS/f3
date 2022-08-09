@@ -55,7 +55,7 @@ class ClienteWebsocketInterior {
 	}
 
 	enviarMensaje(mensaje, envioDesdeBuffer) {
-		this.#log.trace('Enviando mensaje al recolector', mensaje)
+		// this.#log.trace('Enviando mensaje al recolector', mensaje)
 
 		if (!this.#websocket) {
 			this.#log.trace('No existe la conexión al recolector')
