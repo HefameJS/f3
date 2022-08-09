@@ -219,8 +219,8 @@ class IntercambioSap {
 			}
 
 		} catch (errorComunicacion) {
-			this.#log.err('La llamada SAP no se ha podido realizar por un error en la comunicación', errorComunicacion);
-			errorLlamadaSap = new ErrorLlamadaSap(ErrorLlamadaSap.ERROR_SAP_INALCANZABLE, errorComunicacion.errno, errorComunicacion.code)
+			this.#log.err('La llamada SAP no se ha podido realizar por un error en la comunicación', errorComunicacion.message);
+			errorLlamadaSap = new ErrorLlamadaSap(ErrorLlamadaSap.ERROR_SAP_INALCANZABLE, errorComunicacion.code, errorComunicacion.message || String(errorComunicacion.errno))
 		}
 
 		this.#respuesta = {
