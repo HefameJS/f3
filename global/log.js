@@ -204,7 +204,9 @@ class LogMongo extends Log {
 					this.moverCola();
 				}
 				catch (error) {
-					console.error('ERROR ESCRIBIENDO LOG A MONGO', error)
+					console.error('ERROR ESCRIBIENDO LOG A MONGO');
+					console.error(error);
+					console.error(this.entradaPendienteEscribir);
 				}
 			}, 1)
 		}
