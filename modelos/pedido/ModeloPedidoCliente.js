@@ -131,11 +131,11 @@ class PedidoCliente {
 		// líneas y no del numeroPedidoOrigen.
 		// 19.04.2021 - Se incluye el código de almacén de servicio 
 		if (this.lineas.length > C.pedidos.umbralLineasCrc) {
-			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas, this.codigoAlmacenServicio);
+			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas, this.codigoAlmacenServicio, this.tipoPedido);
 			this.metadatos.crcDeLineas = true;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando las lineas del mismo', this.crc], 'txCRC')
 		} else {
-			this.crc = CRC.generar(this.codigoCliente, this.numeroPedidoOrigen);
+			this.crc = CRC.generar(this.codigoCliente, this.numeroPedidoOrigen, this.tipoPedido);
 			this.metadatos.crcDeLineas = false;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando el numeroPedidoOrigen', this.crc], 'txCRC')
 		}
