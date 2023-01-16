@@ -141,10 +141,10 @@ class SolicitudCrearPedido extends Modelo {
 		// líneas y no del numeroPedidoOrigen.
 		let fechaCrc = this.transmision.fechaCreacion.aCrc();
 		if (this.lineas.length > C.pedidos.umbralLineasCrc) {
-			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.metadatos.crcAcumuladoLineas, this.codigoAlmacenServicio);
+			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.metadatos.crcAcumuladoLineas, this.codigoAlmacenServicio, this.tipoPedido);
 			this.metadatos.tipoCrc = 'lineas';
 		} else {
-			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.numeroPedidoOrigen);
+			this.metadatos.crc = Crc.generar(fechaCrc, this.codigoCliente, this.numeroPedidoOrigen, this.tipoPedido);
 			this.metadatos.tipoCrc = 'numeroPedidoOrigen';
 		}
 		this.log.info(`Se asigna el siguiente CRC ${this.metadatos.crc} para el pedido usando ${this.metadatos.tipoCrc}`);
