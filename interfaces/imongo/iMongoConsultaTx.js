@@ -109,7 +109,7 @@ const duplicadoDeCRC = async function(txId, pedido) {
 				crc: crc
 			}
 
-			let resultado = await M.col.tx.findOne(consultaCRC, { _id: 1, status: 1 });
+			let resultado = await M.col.tx.findOne(consultaCRC, { projection: {	_id: 1, status: 1 }, sort: { createdAt: -1 }});
 			return resultado || false;
 
 		} catch (errorMongo) {
