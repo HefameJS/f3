@@ -39,7 +39,7 @@ class DevolucionCliente {
 
 		// 30/03/2023 - Evitamos que clientes Aliance-Health hagan devoluciones
 		this.codigoCliente = json.codigoCliente.trim();
-		if (this.codigoCliente.matches(/^(((00)?101)?4)[0-9]{4}/)) {
+		if (this.codigoCliente.match(/^(((00)?101)?4)[0-9]{4}/)) {
 			L.xe(txId, 'La devolución es de un cliente Aliance. No se admite.');
 			errorFedicom.insertar('DEV-ERR-999', 'Servicio de devoluciones no disponible', 418)
 		}
