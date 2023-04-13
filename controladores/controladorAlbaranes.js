@@ -66,7 +66,8 @@ const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoA
 	let txId = req.txId;
 
 	try {
-		let cuerpoSap = await iSap.albaranes.consultaAlbaranJSON(numAlbaran, txId);
+		let codigoClienteAutenticado = req.token.sub;
+		let cuerpoSap = await iSap.albaranes.consultaAlbaranJSON(numAlbaran, codigoClienteAutenticado, txId);
 
 		// Comprobamos que SAP haya devuelto al menos un objeto con el campo de posiciones
 		if (cuerpoSap?.t_pos) {

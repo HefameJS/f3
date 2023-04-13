@@ -10,10 +10,12 @@ const iFlags = require('interfaces/iflags/iFlags');
 const { ejecutarLlamadaSap } = require('./iSapComun');
 
 
-exports.consultaAlbaranJSON = async function (numeroAlbaran, txId) {
+exports.consultaAlbaranJSON = async function (numeroAlbaran, cliente, txId ) {
+
+	let url = `/api/zsd_orderlist_api/view/${numeroAlbaran}?cliente=${cliente}`;
 
 	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
-		url: '/api/zsd_orderlist_api/view/' + numeroAlbaran,
+		url: url,
 		method: 'GET',
 		timeout: C.sap.timeout.consultaAlbaranJSON
 	});
