@@ -62,7 +62,7 @@ const _consultaAlbaranPDF = async function (req, res, numAlbaran) {
 
 }
 
-const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoArray, numAlbaranOriginal) {
+const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoArray) {
 	let txId = req.txId;
 
 	try {
@@ -72,7 +72,6 @@ const _consultaAlbaranJSON = async function (req, res, numAlbaran, devolverComoA
 		// Comprobamos que SAP haya devuelto al menos un objeto con el campo de posiciones
 		if (cuerpoSap?.t_pos) {
 			let datosAlbaran = new Albaran(cuerpoSap);
-			datosAlbaran.numeroAlbaran = numAlbaranOriginal;
 			if (devolverComoArray) datosAlbaran = [datosAlbaran];
 			res.status(200).json(datosAlbaran);
 			iEventos.consultas.consultaAlbaran(req, res, { json: numAlbaran }, K.TX_STATUS.OK, numAlbaran, 'JSON');
@@ -137,7 +136,7 @@ const consultaAlbaran = async function (req, res) {
 
 	switch (formatoAlbaran) {
 		case 'JSON':
-			return _consultaAlbaranJSON(req, res, numAlbaranSaneado, false, numAlbaran);
+			return _consultaAlbaranJSON(req, res, numAlbaranSaneado);
 		case 'PDF':
 			return _consultaAlbaranPDF(req, res, numAlbaranSaneado);
 		default:
