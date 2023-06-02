@@ -72,6 +72,9 @@ class TransmisionConsultarAlbaran extends Transmision {
 			if (cuerpoSap?.t_pos) {
 				let datosAlbaran = new Albaran(cuerpoSap);
 				if (datosAlbaran.codigoCliente) this.metadatos.codigoCliente = datosAlbaran.codigoCliente;
+				// 02/06/2023 - Se fuerza que el numero de albarán en la respuesta sea exactamente
+				// el mismo que se pide en la petición.
+				datosAlbaran.numeroAlbaran = this.metadatos.numeroAlbaran;
 				return new ResultadoTransmision(200, K.ESTADOS.COMPLETADO, datosAlbaran);
 			} else {
 				this.log.info('SAP no ha devuelto ningún documento. Esta es la manera "especial" de SAP de indicarnos esto:', cuerpoSap);
