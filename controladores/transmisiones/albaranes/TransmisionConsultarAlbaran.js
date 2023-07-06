@@ -65,7 +65,7 @@ class TransmisionConsultarAlbaran extends Transmision {
 
 			this.sap.setTimeout(C.sap.timeout.consultaDevolucionPDF);
 			this.sap.setFuncionValidadora(IntercambioSap.validador.consultaAlbaranJSON);
-			await this.sap.get('/api/zsd_orderlist_api/view/' + this.metadatos.numeroAlbaran.toString().padStart(10, '0'));
+			await this.sap.get('/api/zsd_orderlist_api/view/' + this.metadatos.numeroAlbaran.toString().padStart(10, '0') + '?cliente=' + this.token.usuario);
 
 			let cuerpoSap = this.sap.getRespuesta();
 
