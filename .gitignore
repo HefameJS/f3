@@ -1,9 +1,5 @@
-/ssl/
+/cache/
 /node_modules/
 config.json
-/db/
-*.log
-*.pid
-test.*
 console.log
 console.err
