@@ -29,6 +29,10 @@ module.exports = (app) => {
 		logistica: require('controladores/controladorLogistica'),
 	}
 
+	app.route('/ping').get((req, res) => {
+		res.status(200).json({ok: true})
+	})
+
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	// Detecta errores comunes en las peticiones entrantes tales como:
 	//  - Errores en el parseo del JSON entrante.
@@ -119,10 +123,6 @@ module.exports = (app) => {
 	app.route('/logistica/:numeroLogistica')
 		.get(tryCatch(controladores.logistica.consultaLogistica));
 
-
-	app.route('/ping').get((req, res) => {
-		res.status(200).json({ok: true})
-	})
 
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
