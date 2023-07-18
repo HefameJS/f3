@@ -120,6 +120,10 @@ module.exports = (app) => {
 		.get(tryCatch(controladores.logistica.consultaLogistica));
 
 
+	app.route('/ping').get((req, res) => {
+		res.status(200).json({ok: true})
+	})
+
 	// Middleware que se ejecuta tras no haberse hecho matching con ninguna ruta.
 	app.use((req, res, next) => {
 		let txId = req.txId;
