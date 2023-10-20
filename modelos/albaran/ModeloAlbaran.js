@@ -156,7 +156,7 @@ class LineaAlbaran {
 			});
 
 		this.cantidadPedida = posicion.und_ped;
-		this.cantidadServida = posicion.und_serv;
+		this.cantidadServida = posicion.und_serv + posicion.und_bonif;
 		this.cantidadBonificada = posicion.und_bonif;
 		this.precioPvp = posicion.precio_pvp;
 		this.precioNeto = posicion.precio_neto;
