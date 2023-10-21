@@ -29,6 +29,10 @@ module.exports = (app) => {
 		logistica: require('controladores/controladorLogistica'),
 	}
 
+	app.route('/ping').get((req, res) => {
+		res.status(200).json({ok: true})
+	})
+
 	// Middleware que se ejecuta antes de buscar la ruta correspondiente.
 	// Detecta errores comunes en las peticiones entrantes tales como:
 	//  - Errores en el parseo del JSON entrante.

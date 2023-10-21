@@ -156,8 +156,10 @@ limpiar_sqlite() {
 actualizar_git() {
 	if [ $UPDATE_GIT == 'yes' ]
 	then
-		echo -e "\n$C_BLUE # ACTUALIZANDO CODIGO FUNENTE DESDE EL REPOSITORIO GIT #$C_RESET\n"
+		echo -e "\n$C_BLUE # ACTUALIZANDO CODIGO FUENTE DESDE EL REPOSITORIO GIT #$C_RESET\n"
 		cd $SRCDIR
+		echo -e "Rama actual: $(git rev-parse --abbrev-ref HEAD)"
+		
 		git config --global credential.helper cache >/dev/null 2>/dev/null
 		git stash >/dev/null 2>/dev/null
 		git stash clear >/dev/null 2>/dev/null
