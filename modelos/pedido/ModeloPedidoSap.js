@@ -236,6 +236,9 @@ class PedidoSap {
 
 		if (this.metadatos.pedidoProcesado) {
 			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap.map(p => parseInt(p));
+			if (this.numeroPedido && this.numeroPedidoOrigen) {
+				json.numeroRefenciaSap = this.numeroPedidoOrigen.padEnd(12, ' ').substring(0, 12) + this.numeroPedido.substring(0, 8);
+			}
 		}
 
 		return json;
