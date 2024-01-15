@@ -69,8 +69,12 @@ exports.crearPedido = async function (req, res) {
 				L.xi(txId, ['La transmisión original fue rechazada por SAP, no la tomamos como repetida', txIdOriginal.status]);
 				iFlags.set(txId, C.flags.REINTENTO_CLIENTE, txIdOriginal._id);
 			} else {
-				let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
-				let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				let cuerpoRespuesta = txOriginal.clientResponse?.body
+				if (!cuerpoRespuesta || Array.isArray(cuerpoRespuesta)) {
+					let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
+					cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+				}
+				res.status(201).send(cuerpoRespuesta)
 				iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
 				return;
 			}
