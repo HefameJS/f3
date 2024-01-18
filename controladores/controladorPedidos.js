@@ -44,6 +44,11 @@ exports.crearPedido = async function (req, res) {
 		return;
 	}
 
+	// Añade flag de lista negra
+	if (pedidoCliente.metadatos.clienteListaNegra) {
+		iFlags.set(txId, C.flags.CLIENTE_LISTA_NEGRA)
+	}
+
 	// Si la transmisión no contiene ningúna línea válida, no se hace nada mas con esta.
 	if (!pedidoCliente.contieneLineasValidas()) {
 		L.xw(txId, ['Todas las lineas contienen errores, se responden las incidencias sin llamar a SAP']);

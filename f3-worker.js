@@ -37,6 +37,10 @@ require('bootstrap')(K.PROCESOS.TIPOS.WORKER).then(() => {
 	servidorHttp.on('close', () => { L.f("Se ha cerrado el servicio HTTP"); });
 	//servidorHttp.on('connection', (socket) => {});
 
+	// 
+	let refrescadorListaNegra = require('watchdog/refrescadorListaNegra');
+	refrescadorListaNegra();
+
 
 });
 

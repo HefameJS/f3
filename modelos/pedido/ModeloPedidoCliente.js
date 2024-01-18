@@ -14,6 +14,7 @@ const CRC = require('modelos/CRC');
 
 // Helpers
 const Validador = require('global/validador');
+const MAESTRO = require('global/maestro');
 
 /** 
  * Objeto que representa la petición de creación de un pedido por parte del cliente
@@ -50,10 +51,19 @@ class PedidoCliente {
 		}
 
 
+
+
 		// Copiamos las propiedades de la CABECERA que son relevantes
 		// Valores comprobados previamente y que son obligatorios:
 		this.codigoCliente = json.codigoCliente.trim();
 		this.numeroPedidoOrigen = json.numeroPedidoOrigen.trim();
+
+		// Chequeo del cliente en la lista negra
+		if (MAESTRO.listaNegra.clientes.includes(this.codigoCliente)) {
+			L.xw(txId, ['El cliente se encuentra en la lista negra, se aplicarán chequeos de duplicidad adicionales']);
+			this.metadatos.clienteListaNegra = true;
+		}
+
 
 		// Valores que no han sido comprobados previamente:
 		// notificaciones: [{tipo: string, valor: string}]
@@ -130,7 +140,7 @@ class PedidoCliente {
 		// 15.02.2021 - Para pedidos de mas de (C.pedidos.umbralLineasCrc) líneas, vamos a generar el CRC en función de las propias
 		// líneas y no del numeroPedidoOrigen.
 		// 19.04.2021 - Se incluye el código de almacén de servicio 
-		if (this.lineas.length > C.pedidos.umbralLineasCrc) {
+		if (this.lineas.length > C.pedidos.umbralLineasCrc || this.metadatos.clienteListaNegra === true) {
 			this.crc = CRC.generar(this.codigoCliente, this.metadatos.crcLineas, this.codigoAlmacenServicio, this.tipoPedido);
 			this.metadatos.crcDeLineas = true;
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando las lineas del mismo', this.crc], 'txCRC')
