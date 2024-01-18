@@ -393,6 +393,9 @@ let MAESTRO = {
 		TR: 'Transfer normal',
 		TG: 'Transfer gratuito',
 		TP: 'Transfer portal'
+	},
+	listaNegra: {
+		clientes: []
 	}
 }
 
