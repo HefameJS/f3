@@ -1,4 +1,5 @@
 'use strict';
+const C = global.config;
 const L = global.logger;
 const M = global.mongodb;
 
@@ -31,7 +32,7 @@ module.exports = async function() {
 
 	}
 
-	idIntervalo = setInterval(funcionListaNegra, 60000);
+	idIntervalo = setInterval(funcionListaNegra,  C.listaNegra.intervaloRefresco);
 	funcionListaNegra();
 
 	return idIntervalo;

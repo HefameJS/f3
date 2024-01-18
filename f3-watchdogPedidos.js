@@ -13,16 +13,23 @@ require('bootstrap')(K.PROCESOS.TIPOS.WATCHDOG_PEDIDOS).then(() => {
 	L.i(['Iniciado proceso', { tipo: process.tipo, titulo: process.titulo, iid: process.iid, pid: process.pid, wid: process.worker }], 'cluster');
 
 	let funcionWatchdog = require('watchdog/watchdogMongodb');
+	let funcionCalculaListaNegra = require('watchdog/calculadorListaNegra');
 	let idIntervalo = null;
+	let idIntervaloCalculaListaNegra = null;
 
 	let reiniciaIntervalo = () => {
 		if (C.watchdogPedidos.soyMaestro()) {
 			L.i(['Soy el Watchdog Pedidos elegido']);
 			idIntervalo = funcionWatchdog();
+			idIntervaloCalculaListaNegra = funcionCalculaListaNegra();
+
 		} else {
 			L.w(['NO soy el Watchdog Pedidos elegido']);
 			if (idIntervalo)
 				clearInterval(idIntervalo);
+
+			if (idIntervaloCalculaListaNegra)
+				clearInterval(idIntervaloCalculaListaNegra);
 		}
 	}
 	
