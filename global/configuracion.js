@@ -105,6 +105,7 @@ class Configuracion {
 		this.sqlite = await ConfiguracionSqlite.cargar(this);
 		this.balanceador = await ConfiguracionBalanceadores.cargar(this);
 		this.logistica = await ConfiguracionLogistica.cargar(this);
+		this.listaNegra = await ConfiguracionListaNegra.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -185,7 +186,7 @@ class ConfiguracionMongodb {
 			loggerLevel: 'warn'
 		};
 	}
-	//TODO: asdasdasd
+
 }
 
 class ConfiguracionLog {
@@ -231,8 +232,6 @@ class ConfiguracionSqlite {
 		C.sqlite.intervalo = (parseInt(config.intervalo) || 10) * 1000;
 		return C.sqlite;
 	}
-
-
 
 }
 
@@ -473,7 +472,6 @@ class ConfiguracionBalanceadores {
 	}
 }
 
-
 class ConfiguracionLogistica {
 	constructor(C, config) {
 
@@ -484,6 +482,23 @@ class ConfiguracionLogistica {
 	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('logistica');
 		return new ConfiguracionLogistica(C, config);
+	}
+}
+
+
+class ConfiguracionListaNegra {
+	constructor(C, config) {
+
+		this.horaCorte = parseInt(config.horaCorte, 10) || 8;
+		this.limitePedido = parseInt(config.limitePedido, 10) || 25;
+		this.intervaloRefresco = (parseInt(config.intervaloRefresco, 10) || 60) * 1000;
+		this.intervaloRecalculo = (parseInt(config.intervaloRecalculo, 10) || 60) * 1000;
+
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('listaNegra');
+		return new ConfiguracionListaNegra(C, config);
 	}
 }
 
