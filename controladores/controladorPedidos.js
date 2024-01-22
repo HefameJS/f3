@@ -89,6 +89,12 @@ exports.crearPedido = async function (req, res) {
 					if (Array.isArray(cuerpoRespuesta.lineas)) {
 						cuerpoRespuesta.lineas.forEach(linea => {
 							linea.cantidadFalta = linea.cantidad;
+							linea.incidencias = [
+								{
+									codigo: "LIN-PED-WARN-002",
+									descripcion: "FALTA DE SUMINISTRO"
+								}
+							];
 						});
 					}
 				}
