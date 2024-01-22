@@ -15,6 +15,7 @@ const iFlags = require('interfaces/iflags/iFlags');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const PedidoCliente = require('modelos/pedido/ModeloPedidoCliente');
 const PedidoSap = require('modelos/pedido/ModeloPedidoSap');
+const { default: axios } = require('axios');
 
 
 
@@ -151,6 +152,30 @@ exports.crearPedido = async function (req, res) {
 			numeroPedidoAgrupado: pedidoSap.getNumeroPedidoAgrupado(),
 			numerosPedidoSAP: pedidoSap.getNumerosPedidoSap()
 		});
+
+		// Añadimos información adicional si el pedido es de F+Online
+
+		if (C.datosAdicionalesFmas.activo && pedidoCliente.login.domain === C.dominios.FMASONLINE) {
+			respuestaCliente.numerosPedidoSap.forEach(async numPedSap => {
+				try {
+					let respuesta = await axios({
+						url: C.datosAdicionalesFmas.url,
+						method: "POST",
+						data: {
+							ZDATOS_ADIC: {
+								MANDT: "020",
+								VBELN: String(numPedSap),
+								NUM_PED_WEB: pedidoCliente.numeroPedidoOrigen.substring(0, 20),
+								NOMBRE_CLI: pedidoCliente.nombreConsumidorFinal || ""
+							}
+						}
+					})
+					L.xd(txId, ["Insertados datos de pedidos adicionales para el pedido", numPedSap, respuesta.data]);
+				} catch (error) {
+					L.xw(txId, ["Error al insertar datos adicionales del pedido en SAP:", error.message]);
+				}
+			});
+		}
 
 
 	} catch (errorLlamadaSap) {
