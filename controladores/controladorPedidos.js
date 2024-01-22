@@ -15,6 +15,7 @@ const iFlags = require('interfaces/iflags/iFlags');
 const ErrorFedicom = require('modelos/ErrorFedicom');
 const PedidoCliente = require('modelos/pedido/ModeloPedidoCliente');
 const PedidoSap = require('modelos/pedido/ModeloPedidoSap');
+const CRC = require('modelos/CRC');
 
 
 
@@ -79,6 +80,25 @@ exports.crearPedido = async function (req, res) {
 					let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
 					cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				}
+
+				// Adaptación del cuerpo de respuesta para ocultar que es un duplicado
+				if (pedidoCliente.metadatos.clienteListaNegra) {
+					cuerpoRespuesta.fechaPedido = Date.toFedicomDateTime();
+					cuerpoRespuesta.numeroPedido = CRC.generar(cuerpoRespuesta.fechaPedido);
+					cuerpoRespuesta.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
+					if (Array.isArray(cuerpoRespuesta.lineas)) {
+						cuerpoRespuesta.lineas.forEach(linea => {
+							linea.cantidadFalta = linea.cantidad;
+							linea.incidencias = [
+								{
+									codigo: "LIN-PED-WARN-002",
+									descripcion: "FALTA DE SUMINISTRO"
+								}
+							];
+						});
+					}
+				}
+
 				res.status(201).send(cuerpoRespuesta)
 				iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
 				return;
