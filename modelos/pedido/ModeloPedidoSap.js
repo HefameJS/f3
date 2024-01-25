@@ -13,7 +13,7 @@ const Maestro = require('global/maestro');
 
 class PedidoSap {
 
-	constructor(json, crc, txId) {
+	constructor(json, pedidoCliente, txId) {
 
 		this.txId = txId;
 		L.xt(txId, ['Instanciando objeto PedidoSap con los datos del cuerpo HTTP', json]);
@@ -44,7 +44,7 @@ class PedidoSap {
 		}
 
 
-		this.numeroPedido = crc || null; // Este CRC lo recibe del PedidoCliente directamente
+		this.numeroPedido = pedidoCliente.crc || null; // Este CRC lo recibe del PedidoCliente directamente
 		this.codigoCliente = json.codigocliente || null;
 		this.notificaciones = json.notificaciones?.length > 0 ? json.notificaciones : null;
 		this.direccionEnvio = json.direccionenvio || null;
@@ -57,6 +57,7 @@ class PedidoSap {
 		this.empresaFacturadora = json.empresafacturadora || null;
 		this.observaciones = json.observaciones ? [json.observaciones] : [];
 		this.alertas = (Array.isArray(json.alertas) && json.alertas.length) ? json.alertas : [];
+		this.nombreConsumidorFinal = pedidoCliente.nombreConsumidorFinal || null;
 		this.#extraerLineas(json.lineas);
 		this.#sanearIncidenciasSap(json.incidencias);
 		
@@ -233,6 +234,7 @@ class PedidoSap {
 		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
 		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.alertas.length) json.alertas = this.alertas;
+		if (this.nombreConsumidorFinal) json.nombreConsumidorFinal = this.nombreConsumidorFinal;
 
 		if (this.metadatos.pedidoProcesado) {
 			json.numerosPedidoSap = this.metadatos.pedidosAsociadosSap.map(p => parseInt(p));

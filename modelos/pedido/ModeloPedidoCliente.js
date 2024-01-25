@@ -150,6 +150,10 @@ class PedidoCliente {
 			L.xd(txId, ['Se asigna el siguiente CRC para el pedido usando el numeroPedidoOrigen', this.crc], 'txCRC')
 		}
 
+		// Nombre del consumidor final (F+Online especifico)
+		if (Validador.esCadenaNoVacia(json.nombreConsumidorFinal)) {
+			this.nombreConsumidorFinal = json.nombreConsumidorFinal.trim().substring(0, 128);
+		}
 
 	}
 
