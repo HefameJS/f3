@@ -106,6 +106,7 @@ class Configuracion {
 		this.balanceador = await ConfiguracionBalanceadores.cargar(this);
 		this.logistica = await ConfiguracionLogistica.cargar(this);
 		this.listaNegra = await ConfiguracionListaNegra.cargar(this);
+		this.datosAdicionalesFmas = await ConfiguracionDatosAdicionalesFmas.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -499,6 +500,18 @@ class ConfiguracionListaNegra {
 	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('listaNegra');
 		return new ConfiguracionListaNegra(C, config);
+	}
+}
+
+class ConfiguracionDatosAdicionalesFmas {
+	constructor(C, config) {
+		this.activo = Boolean(config.url);
+		this.url = config.url;
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('datosAdicionalesFmas');
+		return new ConfiguracionDatosAdicionalesFmas(C, config);
 	}
 }
 
