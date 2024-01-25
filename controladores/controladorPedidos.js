@@ -144,7 +144,7 @@ exports.crearPedido = async function (req, res) {
 
 
 		// Si la respuesta de SAP es un Objeto, lo procesamos y mandamos las faltas al cliente
-		let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente.crc, txId);
+		let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente, txId);
 		let respuestaCliente = pedidoSap.generarJSON();
 
 		res.status(201).json(respuestaCliente);
@@ -166,7 +166,7 @@ exports.crearPedido = async function (req, res) {
 								MANDT: "020",
 								VBELN: String(numPedSap),
 								NUM_PED_WEB: pedidoCliente.numeroPedidoOrigen.substring(0, 20),
-								NOMBRE_CLI: pedidoCliente.nombreConsumidorFinal || ""
+								NOMBRE_CLI: (pedidoCliente.nombreConsumidorFinal || "").substring(0, 120)
 							}
 						}
 					})
