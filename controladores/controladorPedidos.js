@@ -83,21 +83,21 @@ exports.crearPedido = async function (req, res) {
 				}
 
 				// Adaptación del cuerpo de respuesta para ocultar que es un duplicado
-				if (pedidoCliente.metadatos.clienteListaNegra) {
-					cuerpoRespuesta.fechaPedido = Date.toFedicomDateTime();
-					cuerpoRespuesta.numeroPedido = CRC.generar(cuerpoRespuesta.fechaPedido);
-					cuerpoRespuesta.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
-					if (Array.isArray(cuerpoRespuesta.lineas)) {
-						cuerpoRespuesta.lineas.forEach(linea => {
-							linea.cantidadFalta = linea.cantidad;
+				cuerpoRespuesta.fechaPedido = Date.toFedicomDateTime();
+				cuerpoRespuesta.numeroPedido = CRC.generar(cuerpoRespuesta.fechaPedido);
+				cuerpoRespuesta.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
+				if (Array.isArray(cuerpoRespuesta.lineas)) {
+					cuerpoRespuesta.lineas.forEach(linea => {
+						linea.cantidadFalta = linea.cantidad;
+						if (!Array.isArray(linea.incidencias) || !linea.incidencias.length) {
 							linea.incidencias = [
 								{
 									codigo: "LIN-PED-WARN-002",
-									descripcion: "FALTA DE SUMINISTRO"
+									descripcion: "SERVICIO PARCIAL"
 								}
 							];
-						});
-					}
+						}
+					});
 				}
 
 				res.status(201).send(cuerpoRespuesta)
