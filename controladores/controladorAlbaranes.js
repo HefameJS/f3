@@ -252,9 +252,8 @@ const listadoAlbaranes = async function (req, res) {
 		// TODO: Hacer configurable
 		let diff = (fechaHasta.getTime() - fechaDesde.getTime()) / 1000;
 		if (diff > 31622400) { // 366 dias * 24h * 60m * 60s
-			let errorFedicom = new ErrorFedicom('ALB-ERR-009', 'El intervalo entre el parámetro "fechaDesde" y "fechaHasta" no puede ser superior a un año', 400);
-			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
-			iEventos.consultas.consultaListadoAlbaranes(req, res, cuerpoRespuesta, K.TX_STATUS.PETICION_INCORRECTA);
+			fechaHasta = new Date();
+			fechaDesde = new Date(new Date(fechaHasta).setMonth(fechaHasta.getMonth() - 1));
 			return;
 		}
 	}
