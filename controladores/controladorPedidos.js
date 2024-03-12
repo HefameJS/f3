@@ -83,24 +83,31 @@ exports.crearPedido = async function (req, res) {
 				}
 
 				// Adaptación del cuerpo de respuesta para ocultar que es un duplicado
-				cuerpoRespuesta.fechaPedido = Date.toFedicomDateTime();
-				cuerpoRespuesta.numeroPedido = CRC.generar(cuerpoRespuesta.fechaPedido);
-				cuerpoRespuesta.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
-				if (Array.isArray(cuerpoRespuesta.lineas)) {
-					cuerpoRespuesta.lineas.forEach(linea => {
-						linea.cantidadFalta = linea.cantidad;
-						if (!Array.isArray(linea.incidencias) || !linea.incidencias.length) {
-							linea.incidencias = [
-								{
-									codigo: "LIN-PED-WARN-002",
-									descripcion: "SERVICIO PARCIAL"
-								}
-							];
-						}
-					});
+				if (pedidoCliente.metadatos.clienteListaNegra) {
+
+					cuerpoRespuesta.fechaPedido = Date.toFedicomDateTime();
+					cuerpoRespuesta.numeroPedido = CRC.generar(cuerpoRespuesta.fechaPedido);
+					cuerpoRespuesta.numeroPedidoOrigen = pedidoCliente.numeroPedidoOrigen;
+					if (Array.isArray(cuerpoRespuesta.lineas)) {
+						cuerpoRespuesta.lineas.forEach(linea => {
+							linea.cantidadFalta = linea.cantidad;
+							if (!Array.isArray(linea.incidencias) || !linea.incidencias.length) {
+								linea.incidencias = [
+									{
+										codigo: "LIN-PED-WARN-002",
+										descripcion: "SERVICIO PARCIAL"
+									}
+								];
+							}
+						});
+					}
+					res.status(201).send(cuerpoRespuesta)
+
+				} else {
+					let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
+					cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
 				}
 
-				res.status(201).send(cuerpoRespuesta)
 				iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
 				return;
 			}
