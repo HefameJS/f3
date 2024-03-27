@@ -33,7 +33,7 @@ class PedidoCliente {
 			todasLineasInvalidas: true,
 			crcDeLineas: false,
 			crcLineas: '',
-			fechaRecepcion: fechaRecepcion || new Date()
+			fechaRecepcion: new Date(fechaRecepcion) || new Date()
 		}
 
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de un pedido
@@ -348,7 +348,8 @@ class PedidoCliente {
 			respuesta.sap_url_confirmacion = this.#generaUrlConfirmacion();
 			respuesta.crc = this.crc;
 			respuesta.login = this.login;
-			respuesta.fecha_recepcion = this.metadatos.fechaRecepcion;
+			respuesta.fecha_recepcion = this.metadatos.fechaRecepcion.toSapDate();
+			respuesta.hora_recepcion = this.metadatos.fechaRecepcion.toSapTime();
 		}
 
 		return respuesta;
