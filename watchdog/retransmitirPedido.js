@@ -102,7 +102,13 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	try {
 		dbTx.clientRequest.txId = dbTx._id;
 		dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-		pedidoCliente = new PedidoCliente(dbTx.clientRequest);
+		let opciones = {};
+
+		if (!opcionesRetransmision.regenerateCRC) {
+			opciones.fechaRecepcion = dbTx.createdAt
+		}
+
+		pedidoCliente = new PedidoCliente(dbTx.clientRequest, opciones);
 	} catch (excepcion) {
 		let fedicomError = new ErrorFedicom(excepcion);
 		L.xe(txIdRetransmision, ['Ocurrió un error al analizar la petición', fedicomError])

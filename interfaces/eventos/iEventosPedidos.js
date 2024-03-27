@@ -17,6 +17,7 @@ module.exports.inicioPedido = (req, pedido) => {
 	let transaccion = iEventosComun.generarEventoDeApertura(req, K.TX_TYPES.PEDIDO, K.TX_STATUS.RECEPCIONADO);
 	transaccion['$set'].crc = new M.ObjectID(pedido.crc);
 	transaccion['$set'].crcSap = parseInt(pedido.crc.substring(0, 8), 16);
+	pedido.metadatos.fechaRecepcion = transaccion['$setOnInsert'].createdAt;
 
 	L.xi(txId, ['Emitiendo COMMIT para evento InicioCrearPedido'], 'txCommit');
 	iMongo.transaccion.grabar(transaccion);
