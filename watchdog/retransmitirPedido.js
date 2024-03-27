@@ -102,11 +102,9 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	try {
 		dbTx.clientRequest.txId = dbTx._id;
 		dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-		let opciones = {};
-
-		if (!opcionesRetransmision.regenerateCRC) {
-			opciones.fechaRecepcion = dbTx.createdAt
-		}
+		let opciones = {
+			fechaRecepcion: dbTx.createdAt
+		};
 
 		pedidoCliente = new PedidoCliente(dbTx.clientRequest, opciones);
 	} catch (excepcion) {
@@ -125,6 +123,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	if (opcionesRetransmision.forzarAlmacen) {
 		L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedidoCliente.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
 		pedidoCliente.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
+		pedidoCliente.metadatos.fechaRecepcion = new Date();
 		// Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
 		opcionesRetransmision.regenerateCRC = true;
 	}
@@ -133,6 +132,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	if (opcionesRetransmision.regenerateCRC) {
 		L.xd(txIdRetransmision, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido.']);
 		pedidoCliente.inventarCRC();
+		pedidoCliente.metadatos.fechaRecepcion = new Date();
 
 		// Si cambia el CRC, nunca actualizaremos el pedido original sino que generaremos
 		// una nueva transmisión con su propio TxId
