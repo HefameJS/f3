@@ -149,7 +149,7 @@ if (!Date.toSapDate) {
 if (!Date.toSapTime) {
 	Date.toSapTime = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
-		return dateFormat(date, "sapDate")
+		return dateFormat(date, "sapTime")
 	}
 }
 
