@@ -33,7 +33,7 @@ class PedidoCliente {
 			todasLineasInvalidas: true,
 			crcDeLineas: false,
 			crcLineas: '',
-			fechaRecepcion: new Date(fechaRecepcion) || new Date()
+			fechaRecepcion: fechaRecepcion || new Date()
 		}
 
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de un pedido
