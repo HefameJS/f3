@@ -355,8 +355,8 @@ class PedidoCliente {
 				this.metadatos.fechaRecepcion = new Date(this.metadatos.fechaRecepcion);
 			}
 
-			respuesta.fecha_recepcion = this.metadatos.fechaRecepcion.toSapDate();
-			respuesta.hora_recepcion = this.metadatos.fechaRecepcion.toSapTime();
+			respuesta.fecha_recepcion = Date.toSapDate(this.metadatos.fechaRecepcion);
+			respuesta.hora_recepcion = Date.toSapTime(this.metadatos.fechaRecepcion);
 		}
 
 		return respuesta;
