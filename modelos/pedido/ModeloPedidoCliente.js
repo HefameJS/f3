@@ -348,6 +348,13 @@ class PedidoCliente {
 			respuesta.sap_url_confirmacion = this.#generaUrlConfirmacion();
 			respuesta.crc = this.crc;
 			respuesta.login = this.login;
+
+
+			L.xt(this.txId, ['Fecha de recepción indicada.', this.metadatos.fechaRecepcion])
+			if (!this.metadatos.fechaRecepcion.toSapDate) {
+				this.metadatos.fechaRecepcion = new Date(this.metadatos.fechaRecepcion);
+			}
+
 			respuesta.fecha_recepcion = this.metadatos.fechaRecepcion.toSapDate();
 			respuesta.hora_recepcion = this.metadatos.fechaRecepcion.toSapTime();
 		}
