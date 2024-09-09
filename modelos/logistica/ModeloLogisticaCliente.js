@@ -86,11 +86,6 @@ class LogisticaCliente {
 			this.fechaRecogidaSolicitada = json.fechaRecogidaSolicitada.trim();
 		}
 
-		// codigoBarrasExterno
-		if (Validador.esCadenaNoVacia(json.codigoBarrasExterno)) {
-			this.codigoBarrasExterno = json.codigoBarrasExterno.trim();
-		}
-
 
 		// Copiamos las líneas, no sin antes analizarlas.
 		this.#analizarPosiciones(req);
@@ -190,7 +185,6 @@ class LogisticaCliente {
 
 		if (this.fechaRecogidaSolicitada) respuesta.fechaRecogidaSolicitada = this.fechaRecogidaSolicitada;
 		if (this.observaciones) respuesta.observaciones = this.observaciones;
-		if (this.codigoBarrasExterno) respuesta.codigoBarrasExterno = this.codigoBarrasExterno;
 		
 		respuesta.lineas = this.lineas.map(l => l.generarJSON(generarParaSap));
 
