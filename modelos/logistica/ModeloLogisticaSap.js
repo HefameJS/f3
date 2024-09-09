@@ -44,6 +44,7 @@ class LogisticaSap {
 
 		this.observaciones = json.observaciones || null;
 		this.servicio = json.servicio || null;
+		this.codigoBarrasExterno = json.codigobarrasexterno || null;
 
 		this.#extraerLineas(json.lineas);
 		this.#sanearIncidenciasSap(json.incidencias);
@@ -133,6 +134,7 @@ class LogisticaSap {
 		if (this.tipoLogistica) json.tipoLogistica = this.tipoLogistica;
 		if (this.fechaLogistica) json.fechaLogistica = this.fechaLogistica;
 		if (this.fechaRecogidaSolicitada) json.fechaRecogidaSolicitada = this.fechaRecogidaSolicitada;
+		if (this.codigoBarrasExterno) json.codigoBarrasExterno = this.codigoBarrasExterno;
 		if (this.origen) json.origen = this.origen.generarJSON();
 		if (this.destino) json.destino = this.destino.generarJSON();
 
