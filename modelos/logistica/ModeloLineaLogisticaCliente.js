@@ -93,7 +93,7 @@ class LineaLogisticaCliente {
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.descripcionArticulo) json.descripcionArticulo = this.descripcionArticulo;
 		if (this.cantidad >= 0) json.cantidad = this.cantidad;
-		if (this.codigoBarrasExterno) respuesta.codigoBarrasExterno = this.codigoBarrasExterno;
+		if (this.codigoBarrasExterno) json.codigoBarrasExterno = this.codigoBarrasExterno;
 
 		json.observaciones = this.observaciones;
 		if (this.observaciones) json.observaciones = this.observaciones;
