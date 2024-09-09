@@ -18,6 +18,7 @@ class LineaLogisticaSap {
 		this.descripcionArticulo = json.descripcionarticulo || null;
 		this.codigoBarras = json.codbar || null;
 		this.localizador = json.localizador || null;
+		this.codigoBarrasExterno = json.codigobarrasexterno || null;
 
 		this.cantidad = parseInt(json.cantidad);
 		this.observaciones = json.observaciones || null;
@@ -35,6 +36,7 @@ class LineaLogisticaSap {
 		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
 		if (this.codigoBarras) json.codigoBarras = this.codigoBarras;
 		if (this.localizador) json.localizador = this.localizador;
+		if (this.codigoBarrasExterno) json.codigoBarrasExterno = this.codigoBarrasExterno;
 
 		if (this.incidencias) json.incidencias = this.incidencias;
 		if (this.observaciones) json.observaciones = this.observaciones;

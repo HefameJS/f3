@@ -32,7 +32,8 @@ const estadosRetransmitiblesForzando = [
 	K.TX_STATUS.PEDIDO.ESPERANDO_NUMERO_PEDIDO,
 	K.TX_STATUS.RECHAZADO_SAP,
 	K.TX_STATUS.PEDIDO.ESPERA_AGOTADA,
-	K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP
+	K.TX_STATUS.PEDIDO.SIN_NUMERO_PEDIDO_SAP,
+	K.TX_STATUS.MAX_RETRANSMISIONES
 ];
 
 /**
@@ -102,7 +103,11 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	try {
 		dbTx.clientRequest.txId = dbTx._id;
 		dbTx.clientRequest.token = dbTx.clientRequest.authentication;
-		pedidoCliente = new PedidoCliente(dbTx.clientRequest);
+		let opciones = {
+			fechaRecepcion: dbTx.createdAt
+		};
+
+		pedidoCliente = new PedidoCliente(dbTx.clientRequest, opciones);
 	} catch (excepcion) {
 		let fedicomError = new ErrorFedicom(excepcion);
 		L.xe(txIdRetransmision, ['Ocurrió un error al analizar la petición', fedicomError])
@@ -119,6 +124,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	if (opcionesRetransmision.forzarAlmacen) {
 		L.xd(txIdRetransmision, ['Se fuerza el cambio del almacén del pedido [' + (pedidoCliente.codigoAlmacenServicio || '<n/a>') + '] => [' + opcionesRetransmision.forzarAlmacen + ']']);
 		pedidoCliente.codigoAlmacenServicio = opcionesRetransmision.forzarAlmacen;
+		pedidoCliente.metadatos.fechaRecepcion = new Date();
 		// Si cambia el sistema SAP, forzamos la regeneración del CRC y por tanto la creación de una transmisión nueva
 		opcionesRetransmision.regenerateCRC = true;
 	}
@@ -127,6 +133,7 @@ const retransmitirPedido = async function (txIdOriginal, opcionesRetransmision) 
 	if (opcionesRetransmision.regenerateCRC) {
 		L.xd(txIdRetransmision, ['Se fuerza la regeneración aleatoria del NumeroPedidoOrigen y CRC del pedido.']);
 		pedidoCliente.inventarCRC();
+		pedidoCliente.metadatos.fechaRecepcion = new Date();
 
 		// Si cambia el CRC, nunca actualizaremos el pedido original sino que generaremos
 		// una nueva transmisión con su propio TxId

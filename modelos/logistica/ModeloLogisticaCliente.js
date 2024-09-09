@@ -191,6 +191,7 @@ class LogisticaCliente {
 		if (generarParaSap) {
 			respuesta.crc = this.crc;
 			respuesta.login = this.login;
+			
 		}
 
 		return respuesta;

@@ -21,16 +21,19 @@ const MAESTRO = require('global/maestro');
  */
 class PedidoCliente {
 
-	constructor(req) {
+	constructor(req, opciones = {}) {
 
 		let txId = req.txId;
 		let json = req.body;
+
+		let { fechaRecepcion } = opciones; 
 
 		this.txId = txId;
 		this.metadatos = {
 			todasLineasInvalidas: true,
 			crcDeLineas: false,
-			crcLineas: ''
+			crcLineas: '',
+			fechaRecepcion: fechaRecepcion || new Date()
 		}
 
 		// Comprobamos los campos mínimos que deben aparecer en la CABECERA de un pedido
@@ -345,6 +348,15 @@ class PedidoCliente {
 			respuesta.sap_url_confirmacion = this.#generaUrlConfirmacion();
 			respuesta.crc = this.crc;
 			respuesta.login = this.login;
+
+
+			L.xt(this.txId, ['Fecha de recepción indicada.', this.metadatos.fechaRecepcion])
+			if (!this.metadatos.fechaRecepcion.toSapDate) {
+				this.metadatos.fechaRecepcion = new Date(this.metadatos.fechaRecepcion);
+			}
+
+			respuesta.fecha_recepcion = Date.toSapDate(this.metadatos.fechaRecepcion);
+			respuesta.hora_recepcion = Date.toSapTime(this.metadatos.fechaRecepcion);
 		}
 
 		return respuesta;

@@ -23,6 +23,7 @@ dateFormat.masks.fedicomDate = 'dd/mm/yyyy';
 dateFormat.masks.fedicomDateTime = 'dd/mm/yyyy HH:MM:ss';
 
 dateFormat.masks.sapDate = 'yyyymmdd';
+dateFormat.masks.sapTime = 'HHMMss';
 
 dateFormat.masks.shortDate = 'yyyymmdd';
 dateFormat.masks.shortTime = 'HHMMss.l';
@@ -135,6 +136,20 @@ if (!Date.toSapDate) {
 	Date.toSapDate = (date) => {
 		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
 		return dateFormat(date, "sapDate")
+	}
+}
+
+/**
+ * Date.toSapTime(date)
+ * Devuelve una representación del objeto Date en formato SAP (hhMMss).
+ * Si no se especifica la fecha de entrada, se asume el instante actual.
+ * 
+ * Date() -> 'hhMMss'
+ */
+if (!Date.toSapTime) {
+	Date.toSapTime = (date) => {
+		if (!date || !(date instanceof Date) || isNaN(date)) date = new Date();
+		return dateFormat(date, "sapTime")
 	}
 }
 
