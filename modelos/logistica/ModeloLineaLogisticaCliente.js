@@ -69,6 +69,11 @@ class LineaLogisticaCliente {
 			this.descripcionArticulo = json.descripcionArticulo.trim();
 		}
 
+		// codigoBarrasExterno
+		if (Validador.esCadenaNoVacia(json.codigoBarrasExterno)) {
+			this.codigoBarrasExterno = json.codigoBarrasExterno.trim();
+		}
+
 
 		// observaciones
 		if (Validador.esCadenaNoVacia(json.observaciones)) {
@@ -88,7 +93,7 @@ class LineaLogisticaCliente {
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.descripcionArticulo) json.descripcionArticulo = this.descripcionArticulo;
 		if (this.cantidad >= 0) json.cantidad = this.cantidad;
-
+		if (this.codigoBarrasExterno) respuesta.codigoBarrasExterno = this.codigoBarrasExterno;
 
 		json.observaciones = this.observaciones;
 		if (this.observaciones) json.observaciones = this.observaciones;
