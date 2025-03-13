@@ -172,6 +172,14 @@ exports.crearPedido = async function (req, res) {
 
 		// Si la respuesta de SAP es un Objeto, lo procesamos y mandamos las faltas al cliente
 		let pedidoSap = new PedidoSap(cuerpoRespuestaSap, pedidoCliente, txId);
+		if (pedidoSap.metadatos.pedidoDuplicadoSap) {
+			L.xd(txId, ["SAP indica pedido duplicado, se responde incidencia al cliente"]);
+			let errorFedicom = new ErrorFedicom('PED-ERR-008', 'Pedido duplicado: ' + pedidoCliente.crc, 400);
+			let cuerpoRespuesta = errorFedicom.enviarRespuestaDeError(res);
+			iEventos.pedidos.pedidoDuplicado(req, res, cuerpoRespuesta, txIdOriginal);
+			return;
+		}
+
 		let respuestaCliente = pedidoSap.generarJSON();
 
 		res.status(201).json(respuestaCliente);
