@@ -7,6 +7,7 @@ const K = global.constants;
 const iTokens = require('global/tokens');
 const iSap = require('interfaces/isap/iSap');
 const iLdap = require('interfaces/iLdap');
+const iMicros = require('interfaces/iMicros');
 const iCacheCredencialesSap = require('interfaces/isap/iCacheCredencialesSap');
 
 // Modelos
@@ -86,13 +87,17 @@ class SolicitudAutenticacion {
 			password: this.clave
 		}
 	}
-	
+
 	async validarCredenciales() {
 		switch (this.dominio) {
 			case C.dominios.FEDICOM:
 			case C.dominios.TRANSFER:
 				// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
-				return await this.#autenticarContraSAP();
+				if (C.microservicios.autenticacion.activa) {
+					return await this.#delegarNuevoConcentrador();
+				} else {
+					return await this.#autenticarContraSAP();
+				}
 			case C.dominios.HEFAME:
 				// Las peticiones al dominio HEFAME se verifica contra el LDAP
 				return await this.#autenticarContraLDAP();
@@ -108,6 +113,30 @@ class SolicitudAutenticacion {
 				}
 			}
 		}
+	}
+
+
+	async #delegarNuevoConcentrador() {
+
+		L.xi(this.txId, ['Se delega la autenticación a la infraestructura de microservicios']);
+		let respuestaMicro = await iMicros.autenticar(this);
+
+		if (respuestaMicro.token) {
+			return {
+				tokenGenerado: true,
+				respuesta: respuestaMicro,
+				codigoEstado: 201,
+				estadoTransmision: K.TX_STATUS.OK
+			}
+		} else {
+			return {
+				tokenGenerado: false,
+				respuesta: respuestaMicro,
+				codigoEstado: 401,
+				estadoTransmision: K.TX_STATUS.FALLO_AUTENTICACION
+			}
+		}
+
 	}
 
 	async #autenticarContraSAP() {

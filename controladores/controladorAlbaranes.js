@@ -1,5 +1,5 @@
 'use strict';
-//const C = global.config;
+const C = global.config;
 const L = global.logger;
 const K = global.constants;
 
@@ -7,6 +7,7 @@ const K = global.constants;
 const iEventos = require('interfaces/eventos/iEventos');
 const iTokens = require('global/tokens');
 const iSap = require('interfaces/isap/iSap');
+const iMicros = require('interfaces/iMicros');
 
 // Modelos
 const CRC = require('modelos/CRC');
@@ -99,6 +100,13 @@ const consultaAlbaran = async function (req, res) {
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
 
+	if (C.microservicios.albaranes.activa) {
+		L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
+		iMicros.albaran(req, res);
+		return;
+	}
+
+
 	// Verificación del token del usuario
 	let estadoToken = iTokens.verificaPermisos(req, res, {
 		admitirSimulaciones: true,
@@ -188,7 +196,7 @@ const listadoAlbaranes = async function (req, res) {
 
 	// Si el código de cliente está en formato corto, vamos a utilizar el código de login
 	// aprovechando que la búsqueda se realiza entre todos los códigos del mismo cliente.
-	if (codigoCliente.length < 8 && req.token.sub ) {
+	if (codigoCliente.length < 8 && req.token.sub) {
 		let codigoClienteLargo = '0';
 		// Casos en donde el usuario es de la forma xxxxxxxx@hefame
 		if (req.token.sub.includes('@')) {
@@ -202,8 +210,8 @@ const listadoAlbaranes = async function (req, res) {
 		}
 
 		codigoCliente = codigoClienteLargo;
-	
-	} 
+
+	}
 
 	codigoCliente = codigoCliente.padStart(10, '0');
 
