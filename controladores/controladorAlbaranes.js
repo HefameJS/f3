@@ -100,12 +100,6 @@ const consultaAlbaran = async function (req, res) {
 	let txId = req.txId;
 	L.xi(txId, ['Procesando transmisión como CONSULTA DE ALBARAN']);
 
-	if (C.microservicios.albaranes.activa) {
-		L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
-		iMicros.albaran(req, res);
-		return;
-	}
-
 
 	// Verificación del token del usuario
 	let estadoToken = iTokens.verificaPermisos(req, res, {
@@ -117,6 +111,11 @@ const consultaAlbaran = async function (req, res) {
 		return;
 	}
 
+	if (C.microservicios.albaranes.activa) {
+		L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
+		iMicros.albaran(req, res);
+		return;
+	}
 
 	// Saneado del número del albarán
 	let numAlbaran = req.params.numeroAlbaran;
