@@ -93,7 +93,7 @@ class SolicitudAutenticacion {
 			case C.dominios.FEDICOM:
 			case C.dominios.TRANSFER:
 				// Las peticiones a los dominios FEDICOM y TRANSFER se verifican contra SAP
-				if (C.microservicios.autenticacion.activa) {
+				if (C.microservicios.autenticacion.activa || C.microservicios.pilotos.includes(this.usuario)) {
 					return await this.#delegarNuevoConcentrador();
 				} else {
 					return await this.#autenticarContraSAP();

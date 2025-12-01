@@ -111,10 +111,16 @@ const consultaAlbaran = async function (req, res) {
 		return;
 	}
 
-	if (C.microservicios.albaranes.activa) {
-		L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
-		iMicros.albaran(req, res);
-		return;
+
+	let username = req.token.sub;
+	if (C.microservicios.albaranes.activa || C.microservicios.pilotos.includes(username)) {
+		if (username.startsWith("208") || username.startsWith("180")) {
+			L.xw(txId, ['Detectado cliente legacy', username]);
+		} else {
+			L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
+			iMicros.albaran(req, res);
+			return;
+		}
 	}
 
 	// Saneado del número del albarán

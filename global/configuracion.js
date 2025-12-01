@@ -519,6 +519,11 @@ class ConfiguracionDatosAdicionalesFmas {
 
 class ConfiguracionMicroservicios {
 	constructor(C, config) {
+		this.pilotos = config.pilotos;
+		if (!this.pilotos || !Array.isArray(this.pilotos)) {
+			this.pilotos = [];
+		}
+
 		this.autenticacion = {
 			activa: Boolean(config.autenticacion.activa),
 			endpoint: config.autenticacion.endpoint
