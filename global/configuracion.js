@@ -107,6 +107,7 @@ class Configuracion {
 		this.logistica = await ConfiguracionLogistica.cargar(this);
 		this.listaNegra = await ConfiguracionListaNegra.cargar(this);
 		this.datosAdicionalesFmas = await ConfiguracionDatosAdicionalesFmas.cargar(this);
+		this.microservicios = await ConfiguracionMicroservicios.cargar(this);
 	}
 
 	static async cargarObjetoCluster(claveObjeto) {
@@ -512,6 +513,31 @@ class ConfiguracionDatosAdicionalesFmas {
 	static async cargar(C) {
 		let config = await Configuracion.cargarObjetoCluster('datosAdicionalesFmas');
 		return new ConfiguracionDatosAdicionalesFmas(C, config);
+	}
+}
+
+
+class ConfiguracionMicroservicios {
+	constructor(C, config) {
+		this.pilotos = config.pilotos;
+		if (!this.pilotos || !Array.isArray(this.pilotos)) {
+			this.pilotos = [];
+		}
+
+		this.autenticacion = {
+			activa: Boolean(config.autenticacion.activa),
+			endpoint: config.autenticacion.endpoint
+		};
+
+		this.albaranes = {
+			activa: Boolean(config.albaranes.activa),
+			endpoint: config.albaranes.endpoint
+		};
+	}
+
+	static async cargar(C) {
+		let config = await Configuracion.cargarObjetoCluster('microservicios');
+		return new ConfiguracionMicroservicios(C, config);
 	}
 }
 
