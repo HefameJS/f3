@@ -121,7 +121,7 @@ class SolicitudAutenticacion {
 		L.xi(this.txId, ['Se delega la autenticación a la infraestructura de microservicios']);
 		let respuestaMicro = await iMicros.autenticar(this);
 
-		if (respuestaMicro.token) {
+		if (respuestaMicro.auth_token) {
 			return {
 				tokenGenerado: true,
 				respuesta: respuestaMicro,
@@ -131,7 +131,7 @@ class SolicitudAutenticacion {
 		} else {
 			return {
 				tokenGenerado: false,
-				respuesta: respuestaMicro,
+				respuesta: new ErrorFedicom('AUTH-005', 'Imposible autenticar: ' + respuestaMicro?.listaErroresFedicom?.[0]?.descripcion, 401),
 				codigoEstado: 401,
 				estadoTransmision: K.TX_STATUS.FALLO_AUTENTICACION
 			}
