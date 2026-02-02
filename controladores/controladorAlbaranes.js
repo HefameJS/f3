@@ -16,7 +16,33 @@ const ConsultaAlbaran = require('modelos/albaran/ModeloConsultaAlbaran');
 const Albaran = require('modelos/albaran/ModeloAlbaran');
 const ConfirmacionAlbaran = require('modelos/albaran/ModeloConfirmacionAlbaran');
 
+const _usaMicro = (txId, username) => {
 
+	let activadoPorDefecto = C.microservicios.albaranes.activa;
+	let esPiloto = C.microservicios.pilotos.includes(username);
+
+	if (activadoPorDefecto || esPiloto) {
+		L.xw(txId, ['Uso de micro activado por defecto o el cliente está en lista de pilotos']);
+		return true;
+	}
+
+	let usuarioSaneado = parseInt(username.replace(/\D+/g, ''), 10);
+	let esGreenBlue = (usuarioSaneado % 100) + 1 <= C.microservicios.terminacionBlue;
+	if (!esGreenBlue) {
+		L.xw(txId, ['El cliente no cumple la condición Green-Blue']);
+		return false;
+	}
+
+	let esExcluido = C.microservicios.exclusiones.includes(username);
+	if (esExcluido) {
+		L.xw(txId, ['Cumple la condicion Green-Blue, pero está explícitamente excluido']);
+		return false;
+	}
+
+	L.xw(txId, ['Cumple la condicion Green-Blue. Usará micro']);
+	return true;
+
+}
 
 const _consultaAlbaranPDF = async function (req, res, numAlbaran) {
 
@@ -113,14 +139,9 @@ const consultaAlbaran = async function (req, res) {
 
 
 	let username = req.token.sub;
-	if (C.microservicios.albaranes.activa || C.microservicios.pilotos.includes(username)) {
-		if (username.startsWith("208") || username.startsWith("180")) {
-			L.xw(txId, ['Detectado cliente legacy', username]);
-		} else {
-			L.xi(txId, ['Se delega la consulta a la infraestructura de microservicios']);
-			iMicros.albaran(req, res);
-			return;
-		}
+	if (_usaMicro(txId, username)) {
+		iMicros.albaran(req, res);
+		return;
 	}
 
 	// Saneado del número del albarán

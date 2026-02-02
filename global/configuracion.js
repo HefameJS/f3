@@ -520,9 +520,16 @@ class ConfiguracionDatosAdicionalesFmas {
 class ConfiguracionMicroservicios {
 	constructor(C, config) {
 		this.pilotos = config.pilotos;
+		this.exclusiones = config.exclusiones;
+		this.terminacionBlue = parseInt(config.terminacionBlue, 10) || 0;
 		if (!this.pilotos || !Array.isArray(this.pilotos)) {
 			this.pilotos = [];
 		}
+
+		if (!this.exclusiones || !Array.isArray(this.exclusiones)) {
+			this.exclusiones = [];
+		}
+
 
 		this.autenticacion = {
 			activa: Boolean(config.autenticacion.activa),
