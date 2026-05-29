@@ -52,7 +52,7 @@ const _desviarMicro = async (txId, username) => {
 
 	let clientInfo = await iSap.getClientInfo(usuarioSaneado);
 
-	let relevante = clientInfo?.[0]?.it_kunnr?.find?.(e => e.vtweg === "FA" && e.spart === "FA")?.gestion_doc_entrega;
+	let relevante = clientInfo?.[0]?.it_kunnr?.[0]?.gestion_doc_entrega;
 
 	if (relevante) {
 		return true;
