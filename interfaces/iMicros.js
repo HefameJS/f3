@@ -148,7 +148,7 @@ const albaranes = async function (req, res) {
 			res.setHeader("Content-Type", error.response.headers['content-type']);
 			if (error.response.headers['content-disposition'])
 				res.setHeader("Content-Disposition", error.response.headers['content-disposition']);
-			res.send(error.response.data);
+			error.response.data.pipe(res);
 			return;
 		}
 
