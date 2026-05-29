@@ -22,9 +22,10 @@ const _usaMicro = (txId, username) => {
 	let esPiloto = C.microservicios.pilotos.includes(username);
 
 	if (activadoPorDefecto || esPiloto) {
-		L.xw(txId, ['Uso de micro activado por defecto o el cliente está en lista de pilotos']);
 		return true;
 	}
+
+	L.xi(txId, ['Uso de micro desactivado por defecto y el cliente NO está en lista de pilotos']);
 
 	let usuarioSaneado = parseInt(username.replace(/\D+/g, ''), 10);
 	let esGreenBlue = (usuarioSaneado % 100) + 1 <= C.microservicios.terminacionBlue;
@@ -41,6 +42,22 @@ const _usaMicro = (txId, username) => {
 
 	L.xw(txId, ['Cumple la condicion Green-Blue. Usará micro']);
 	return true;
+
+}
+
+const _desviarMicro = async (txId, username) => {
+
+	let usuarioSaneado = username.replace(/\D+/g, '');
+	usuarioSaneado = usuarioSaneado.padStart(10, '0');
+
+	let clientInfo = await iSap.getClientInfo(usuarioSaneado);
+
+	let relevante = clientInfo?.[0]?.it_kunnr?.find?.(e => e.vtweg === "FA" && e.spart === "FA")?.gestion_doc_entrega;
+
+	if (relevante) {
+		return true;
+	}
+	return false;
 
 }
 
@@ -198,6 +215,12 @@ const listadoAlbaranes = async function (req, res) {
 	});
 	if (!estadoToken.ok) {
 		iEventos.consultas.consultaListadoAlbaranes(req, res, estadoToken.respuesta, estadoToken.motivo);
+		return;
+	}
+
+	if (await _desviarMicro(txId, req.token.sub)) {
+		L.xi(txId, ['Delegando consulta de albaranes a la infraestructura de microservicios']);
+		iMicros.albaranes(req, res);
 		return;
 	}
 

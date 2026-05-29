@@ -108,8 +108,59 @@ const albaran = async function (req, res) {
 
 }
 
+
+
+const albaranes = async function (req, res) {
+
+	let txId = req.txId;
+
+
+	L.xi(txId, ['Consulta de albarán recibida:', req.query])
+	const authHeader = req.headers['authorization'];
+	const url = C.microservicios.albaranes.endpoint.replace("/{idAlbaran}", "");
+
+	try {
+		let respuesta = await axios({
+			url,
+			method: "GET",
+			headers: {
+				Accept: "application/json",
+				Authorization: authHeader
+			},
+			params: req.query,
+			responseType: "stream",
+			responseEncoding: 'latin1'
+		});
+
+		res.status(respuesta.status);
+
+		Object.entries(respuesta.headers).forEach(([key, value]) => {
+			if (value !== undefined) {
+				res.setHeader(key, value);
+			}
+		});
+
+		respuesta.data.pipe(res);
+
+	} catch (error) {
+		if (error.response) {
+			res.status(error.response.status)
+			res.setHeader("Content-Type", error.response.headers['content-type']);
+			if (error.response.headers['content-disposition'])
+				res.setHeader("Content-Disposition", error.response.headers['content-disposition']);
+			res.send(error.response.data);
+			return;
+		}
+
+		let errorFedicom = tratarError(txId, error, "albaran", "ALB-ERR-999", "Error al obtener los datos del albarán", 503);
+		errorFedicom.enviarRespuestaDeError(res);
+	}
+
+}
+
 module.exports = {
 	autenticar,
-	albaran
+	albaran,
+	albaranes
 }
 
