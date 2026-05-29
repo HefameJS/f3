@@ -53,6 +53,7 @@ const _desviarMicro = async (txId, username) => {
 	let clientInfo = await iSap.getClientInfo(usuarioSaneado);
 
 	let relevante = clientInfo?.[0]?.it_kunnr?.[0]?.gestion_doc_entrega;
+	L.xi(txId, [`Valor del nodo 'gestion_doc_entrega' para el cliente ${username} es '${relevante}'`]);
 
 	if (relevante) {
 		return true;
@@ -218,22 +219,6 @@ const listadoAlbaranes = async function (req, res) {
 		return;
 	}
 
-	if (await _desviarMicro(txId, req.token.sub)) {
-		L.xi(txId, ['Delegando consulta de albaranes a la infraestructura de microservicios']);
-		iMicros.albaranes(req, res);
-		return;
-	}
-
-
-	// En el caso de que se busque por un numeroAlbaran concreto hacemos la búsqueda de ese albaran JSON concreto
-	// usando el método de obtener un único albarán en JSON
-	if (req.query.numeroAlbaran) {
-		let numAlbaran = req.query.numeroAlbaran.padStart(10, '0');
-		_consultaAlbaranJSON(req, res, numAlbaran, true /*Responder en un array*/);
-		return;
-	}
-
-
 	// #1 - Saneado del código del cliente
 	let codigoCliente = req.query.codigoCliente
 	if (!codigoCliente) {
@@ -263,6 +248,13 @@ const listadoAlbaranes = async function (req, res) {
 	}
 
 	codigoCliente = codigoCliente.padStart(10, '0');
+
+
+	if (req.query.numeroAlbaran || await _desviarMicro(txId, codigoCliente)) {
+		L.xi(txId, ['Delegando consulta de albaranes a la infraestructura de microservicios']);
+		iMicros.albaranes(req, res);
+		return;
+	}
 
 
 	// #2 - Limpieza de offset y limit
