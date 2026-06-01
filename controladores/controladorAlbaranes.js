@@ -22,9 +22,10 @@ const _usaMicro = (txId, username) => {
 	let esPiloto = C.microservicios.pilotos.includes(username);
 
 	if (activadoPorDefecto || esPiloto) {
-		L.xw(txId, ['Uso de micro activado por defecto o el cliente está en lista de pilotos']);
 		return true;
 	}
+
+	L.xi(txId, ['Uso de micro desactivado por defecto y el cliente NO está en lista de pilotos']);
 
 	let usuarioSaneado = parseInt(username.replace(/\D+/g, ''), 10);
 	let esGreenBlue = (usuarioSaneado % 100) + 1 <= C.microservicios.terminacionBlue;
@@ -41,6 +42,23 @@ const _usaMicro = (txId, username) => {
 
 	L.xw(txId, ['Cumple la condicion Green-Blue. Usará micro']);
 	return true;
+
+}
+
+const _desviarMicro = async (txId, username) => {
+
+	let usuarioSaneado = username.replace(/\D+/g, '');
+	usuarioSaneado = usuarioSaneado.padStart(10, '0');
+
+	let clientInfo = await iSap.getClientInfo(usuarioSaneado);
+
+	let relevante = clientInfo?.[0]?.it_kunnr?.[0]?.gestion_doc_entrega;
+	L.xi(txId, [`Valor del nodo 'gestion_doc_entrega' para el cliente ${username} es '${relevante}'`]);
+
+	if (relevante) {
+		return true;
+	}
+	return false;
 
 }
 
@@ -201,16 +219,6 @@ const listadoAlbaranes = async function (req, res) {
 		return;
 	}
 
-
-	// En el caso de que se busque por un numeroAlbaran concreto hacemos la búsqueda de ese albaran JSON concreto
-	// usando el método de obtener un único albarán en JSON
-	if (req.query.numeroAlbaran) {
-		let numAlbaran = req.query.numeroAlbaran.padStart(10, '0');
-		_consultaAlbaranJSON(req, res, numAlbaran, true /*Responder en un array*/);
-		return;
-	}
-
-
 	// #1 - Saneado del código del cliente
 	let codigoCliente = req.query.codigoCliente
 	if (!codigoCliente) {
@@ -240,6 +248,13 @@ const listadoAlbaranes = async function (req, res) {
 	}
 
 	codigoCliente = codigoCliente.padStart(10, '0');
+
+
+	if (req.query.numeroAlbaran || await _desviarMicro(txId, codigoCliente)) {
+		L.xi(txId, ['Delegando consulta de albaranes a la infraestructura de microservicios']);
+		iMicros.albaranes(req, res);
+		return;
+	}
 
 
 	// #2 - Limpieza de offset y limit

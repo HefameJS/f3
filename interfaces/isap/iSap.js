@@ -25,10 +25,28 @@ const ping = async function () {
 
 }
 
+const getClientInfo = async function (clientCode) {
+
+	let parametrosHttp = C.sap.destino.obtenerParametrosLlamada({
+		url: `/api/zsf_customer_data/${clientCode}/basic`,
+		timeout: 3000
+	});
+
+	try {
+		let respuestaSap = await ejecutarLlamadaSap(null, parametrosHttp, { noGenerarEvento: true});
+		return respuestaSap;
+	} catch (errorComunicacion) {
+		L.w(['La consulta de información del cliente devolvió un error', errorComunicacion])
+		return false;
+	}
+
+}
+
 
 
 module.exports = {
 	ping,
+	getClientInfo,
 	autenticacion: require('./iSapAutenticacion'),
 	pedidos: require('./iSapPedidos'),
 	devoluciones: require('./iSapDevoluciones'),
