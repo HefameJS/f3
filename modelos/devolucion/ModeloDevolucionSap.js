@@ -149,7 +149,7 @@ class ModeloDevolucionSap {
 				}
 			}
 
-			return linea.generarJSON ? linea.generarJSON(numeroAlbaranLineaDevo) : linea
+			return lineaSap.generarJSON ? lineaSap.generarJSON(numeroAlbaranLineaDevo) : lineaSap
 		})
 		if (this.incidencias) json.incidencias = this.incidencias;
 
