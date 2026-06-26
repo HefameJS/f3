@@ -122,7 +122,7 @@ class ModeloDevolucionSap {
 	}
 
 
-	generarJSON() {
+	generarJSON(devolucionCliente = null) {
 		let json = {};
 		if (this.codigoCliente) json.codigoCliente = this.codigoCliente;
 		if (this.numeroDevolucion) json.numeroDevolucion = this.numeroDevolucion;
@@ -134,7 +134,23 @@ class ModeloDevolucionSap {
 		if (this.empresaFacturadora) json.empresaFacturadora = this.empresaFacturadora;
 		if (this.observaciones) json.observaciones = this.observaciones;
 
-		json.lineas = this.lineas.map(linea => linea.generarJSON ? linea.generarJSON() : linea)
+		json.lineas = this.lineas.map(lineaSap => {
+
+			let numeroAlbaranLineaDevo = lineaSap.numeroAlbaran;
+			if (devolucionCliente) {
+				let lineaOriginal = devolucionCliente.lineas.find(lineaCliente => {
+					return lineaCliente.codigoArticulo === lineaSap.codigoArticulo &&
+						lineaCliente.cantidad === lineaSap.cantidad &&
+						lineaCliente.codigoMotivo === lineaSap.codigoMotivo
+				});
+
+				if (lineaOriginal) {
+					numeroAlbaranLineaDevo = lineaOriginal.numeroAlbaran;
+				}
+			}
+
+			return linea.generarJSON ? linea.generarJSON(numeroAlbaranLineaDevo) : linea
+		})
 		if (this.incidencias) json.incidencias = this.incidencias;
 
 		return json;
@@ -226,7 +242,7 @@ class ModeloDevolucionSap {
 			puntoEntrega = puntoEntrega || devolucionSap.metadatos.puntoEntrega;
 			creaOrdenLogistica = creaOrdenLogistica || devolucionSap.metadatos.creaOrdenLogistica;
 
-			cuerpoRespuestaHttp.push(devolucionSap.generarJSON())
+			cuerpoRespuestaHttp.push(devolucionSap.generarJSON(devolucionCliente))
 
 		})
 

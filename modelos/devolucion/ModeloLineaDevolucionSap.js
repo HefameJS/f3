@@ -25,10 +25,14 @@ class LineaDevolucionSap {
 
 	}
 
-	generarJSON() {
+	generarJSON(numeroAlbaranOriginal = null) {
 		let json = {};
 		if (this.orden || this.orden === 0) json.orden = this.orden;
-		if (this.numeroAlbaran) json.numeroAlbaran = this.numeroAlbaran;
+		if (numeroAlbaranOriginal) {
+			json.numeroAlbaran = numeroAlbaranOriginal;
+		} else if (this.numeroAlbaran) {
+			json.numeroAlbaran = this.numeroAlbaran;
+		}
 		if (this.fechaAlbaran) json.fechaAlbaran = this.fechaAlbaran;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
