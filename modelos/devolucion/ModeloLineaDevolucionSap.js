@@ -12,6 +12,7 @@ class LineaDevolucionSap {
 		this.orden = json.orden;
 		this.numeroAlbaran = json.numeroalbaran || null;
 		this.fechaAlbaran = json.fechaalbaran || null;
+		this.ordenLineaAlbaran = json.ordenlineaalbaran || null;
 		this.codigoArticulo = json.codigoarticulo || null;
 		this.cantidad = parseInt(json.cantidad);
 		this.codigoMotivo = json.codigomotivo || null;
@@ -22,6 +23,7 @@ class LineaDevolucionSap {
 		this.incidencias = json.incidencias.length === 0 ? null : json.incidencias;
 		this.observaciones = json.observaciones || null;
 		this.numeroDevolucionSap = json.sap_num_devo_fedi || null;
+		
 
 	}
 
@@ -34,6 +36,8 @@ class LineaDevolucionSap {
 			json.numeroAlbaran = this.numeroAlbaran;
 		}
 		if (this.fechaAlbaran) json.fechaAlbaran = this.fechaAlbaran;
+
+		if (this.ordenLineaAlbaran) json.ordenLineaAlbaran = this.ordenLineaAlbaran;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;
 		if (this.codigoMotivo) json.codigoMotivo = this.codigoMotivo;
