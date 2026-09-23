@@ -36,7 +36,6 @@ class LineaDevolucionSap {
 			json.numeroAlbaran = this.numeroAlbaran;
 		}
 		if (this.fechaAlbaran) json.fechaAlbaran = this.fechaAlbaran;
-
 		if (this.ordenLineaAlbaran) json.ordenLineaAlbaran = this.ordenLineaAlbaran;
 		if (this.codigoArticulo) json.codigoArticulo = this.codigoArticulo;
 		if (this.cantidad || this.cantidad === 0) json.cantidad = this.cantidad;

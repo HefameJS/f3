@@ -82,14 +82,18 @@ class LineaDevolucionCliente {
 			}
 		}
 
+		L.xw(txId, ['La devolucion: ', json]);
+
 		// ordenLineaAlbaran
 		if (Validador.existe(json.ordenLineaAlbaran)) {
 			if (Validador.esEnteroPositivo(json.ordenLineaAlbaran)) {
 				this.ordenLineaAlbaran = parseInt(json.ordenLineaAlbaran);
+				L.xi(txId, ['El campo "ordenLineaAlbaran" es ', json.ordenLineaAlbaran]);
 			} else {
 				L.xw(txId, ['El campo "ordenLineaAlbaran" no es un entero >= 0', json.ordenLineaAlbaran]);
-				// Descartamos el valor en caso de error
 			}
+		} else {
+			L.xi(txId, ['El campo "ordenLineaAlbaran" no exsite']);
 		}
 
 		// lote
